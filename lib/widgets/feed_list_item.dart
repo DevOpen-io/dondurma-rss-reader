@@ -21,8 +21,15 @@ class FeedListItem extends StatelessWidget {
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
-        decoration: const BoxDecoration(
-          border: Border(bottom: BorderSide(color: Colors.white10, width: 1.0)),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.1),
+              width: 1.0,
+            ),
+          ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -36,7 +43,12 @@ class FeedListItem extends StatelessWidget {
                     ? item.iconBackgroundColor.withValues(alpha: 0.1)
                     : item.iconBackgroundColor,
                 borderRadius: BorderRadius.circular(12.0),
-                border: Border.all(color: Colors.white10, width: 0.5),
+                border: Border.all(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  width: 0.5,
+                ),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12.0),
@@ -110,7 +122,11 @@ class FeedListItem extends StatelessWidget {
                   Text(
                     item.title.trim(),
                     style: TextStyle(
-                      color: item.isRead ? Colors.white60 : Colors.white,
+                      color: item.isRead
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5)
+                          : Theme.of(context).colorScheme.onSurface,
                       fontSize: 16,
                       fontWeight: item.isRead
                           ? FontWeight.normal
@@ -125,7 +141,13 @@ class FeedListItem extends StatelessWidget {
                   Text(
                     item.description,
                     style: TextStyle(
-                      color: item.isRead ? Colors.grey[700] : Colors.grey[400],
+                      color: item.isRead
+                          ? Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.4)
+                          : Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.7),
                       fontSize: 14,
                       height: 1.4,
                     ),

@@ -9,9 +9,39 @@ class ArticleScreen extends StatelessWidget {
 
   const ArticleScreen({super.key, required this.item});
 
-  Future<void> _launchUrl(String url) async {
-    if (!await launchUrl(Uri.parse(url))) {
-      debugPrint('Could not launch $url');
+  Future<void> _launchUrl(BuildContext context, String url) async {
+    try {
+      String cleanUrl = url.trim();
+      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+        cleanUrl = 'https://$cleanUrl';
+      }
+
+      final uri = Uri.tryParse(cleanUrl);
+      if (uri == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Invalid URL format')));
+        }
+        return;
+      }
+
+      final success = await launchUrl(
+        uri,
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!success && context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not open $cleanUrl')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error opening link: $e')));
+      }
     }
   }
 
@@ -30,7 +60,7 @@ class ArticleScreen extends StatelessWidget {
             icon: const Icon(Icons.open_in_browser),
             onPressed: () {
               if (item.link.isNotEmpty) {
-                _launchUrl(item.link);
+                _launchUrl(context, item.link);
               }
             },
             tooltip: 'Open in Browser',
@@ -54,10 +84,10 @@ class ArticleScreen extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               item.title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Theme.of(context).colorScheme.onSurface,
                 height: 1.3,
               ),
             ),
@@ -92,7 +122,9 @@ class ArticleScreen extends StatelessWidget {
               style: {
                 "body": Style(
                   fontSize: FontSize(16.0),
-                  color: Colors.white70,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.8),
                   lineHeight: LineHeight(1.6),
                   margin: Margins.zero,
                   padding: HtmlPaddings.zero,
@@ -110,16 +142,16 @@ class ArticleScreen extends StatelessWidget {
                   padding: HtmlPaddings.zero,
                 ),
                 "p": Style(margin: Margins.only(bottom: 16)),
-                "h1": Style(color: Colors.white),
-                "h2": Style(color: Colors.white),
-                "h3": Style(color: Colors.white),
-                "h4": Style(color: Colors.white),
-                "h5": Style(color: Colors.white),
-                "h6": Style(color: Colors.white),
+                "h1": Style(color: Theme.of(context).colorScheme.onSurface),
+                "h2": Style(color: Theme.of(context).colorScheme.onSurface),
+                "h3": Style(color: Theme.of(context).colorScheme.onSurface),
+                "h4": Style(color: Theme.of(context).colorScheme.onSurface),
+                "h5": Style(color: Theme.of(context).colorScheme.onSurface),
+                "h6": Style(color: Theme.of(context).colorScheme.onSurface),
               },
               onLinkTap: (url, attributes, element) {
                 if (url != null && url.isNotEmpty) {
-                  _launchUrl(url);
+                  _launchUrl(context, url);
                 }
               },
             ),
@@ -131,7 +163,7 @@ class ArticleScreen extends StatelessWidget {
               child: ElevatedButton.icon(
                 onPressed: () {
                   if (item.link.isNotEmpty) {
-                    _launchUrl(item.link);
+                    _launchUrl(context, item.link);
                   }
                 },
                 icon: const Icon(Icons.public),

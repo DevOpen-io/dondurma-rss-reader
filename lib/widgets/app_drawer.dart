@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
-import '../screens/subscriptions_screen.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -30,13 +29,17 @@ class AppDrawer extends StatelessWidget {
                     'RSS Reader',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ],
               ),
             ),
-            const Divider(color: Colors.white12),
+            Divider(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.1),
+            ),
             Expanded(
               child: ListView(
                 padding: EdgeInsets.zero,
@@ -46,8 +49,12 @@ class AppDrawer extends StatelessWidget {
                     icon: Icons.article,
                     title: 'All News',
                     count: '${provider.items.length}',
-                    isSelected: true,
+                    isSelected: provider.selectedCategory == null,
                     context: context,
+                    onTap: () {
+                      provider.selectCategory(null);
+                      Navigator.pop(context);
+                    },
                   ),
 
                   ...categories.where((c) => c != 'Uncategorized').map((
@@ -60,11 +67,21 @@ class AppDrawer extends StatelessWidget {
                       icon: Icons.folder,
                       title: category,
                       count: count.toString(),
+                      isSelected: provider.selectedCategory == category,
                       context: context,
+                      onTap: () {
+                        provider.selectCategory(category);
+                        Navigator.pop(context);
+                      },
                     );
                   }),
 
-                  const Divider(color: Colors.white12, height: 32),
+                  Divider(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                    height: 32,
+                  ),
 
                   if (categories.contains('Uncategorized')) ...[
                     _buildSectionHeader('UNCATEGORIZED'),
@@ -75,32 +92,14 @@ class AppDrawer extends StatelessWidget {
                           .where((item) => item.category == 'Uncategorized')
                           .length
                           .toString(),
+                      isSelected: provider.selectedCategory == 'Uncategorized',
                       context: context,
+                      onTap: () {
+                        provider.selectCategory('Uncategorized');
+                        Navigator.pop(context);
+                      },
                     ),
                   ],
-
-                  const Divider(color: Colors.white12, height: 32),
-                  _buildSectionHeader('SETTINGS'),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.settings,
-                      color: Colors.grey,
-                      size: 22,
-                    ),
-                    title: const Text(
-                      'Manage Feeds',
-                      style: TextStyle(color: Colors.white70),
-                    ),
-                    onTap: () {
-                      Navigator.pop(context); // close drawer
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const SubscriptionsScreen(),
-                        ),
-                      );
-                    },
-                  ),
                 ],
               ),
             ),
@@ -136,6 +135,7 @@ class AppDrawer extends StatelessWidget {
     String? count,
     bool isSelected = false,
     required BuildContext context,
+    required VoidCallback onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     return ListTile(
@@ -147,7 +147,9 @@ class AppDrawer extends StatelessWidget {
       title: Text(
         title,
         style: TextStyle(
-          color: isSelected ? colorScheme.primary : Colors.white70,
+          color: isSelected
+              ? colorScheme.primary
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
@@ -172,10 +174,7 @@ class AppDrawer extends StatelessWidget {
           : null,
       selected: isSelected,
       selectedTileColor: colorScheme.primary.withAlpha((0.1 * 255).toInt()),
-      onTap: () {
-        // Handle navigation or filtering logic
-        Navigator.pop(context); // close drawer on selection
-      },
+      onTap: onTap,
     );
   }
 }

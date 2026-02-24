@@ -25,8 +25,12 @@ class SubscriptionsScreen extends StatelessWidget {
             )
           : ListView.separated(
               itemCount: subscriptions.length,
-              separatorBuilder: (context, index) =>
-                  const Divider(color: Colors.white10, height: 1),
+              separatorBuilder: (context, index) => Divider(
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
+                height: 1,
+              ),
               itemBuilder: (context, index) {
                 final sub = subscriptions[index];
                 return ListTile(
@@ -34,9 +38,11 @@ class SubscriptionsScreen extends StatelessWidget {
                     horizontal: 16.0,
                     vertical: 8.0,
                   ),
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.white10,
-                    child: Icon(Icons.rss_feed, color: Colors.blueAccent),
+                  leading: CircleAvatar(
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                    child: const Icon(Icons.rss_feed, color: Colors.blueAccent),
                   ),
                   title: Text(
                     sub.name,

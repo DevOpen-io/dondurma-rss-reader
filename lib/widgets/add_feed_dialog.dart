@@ -36,7 +36,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   filled: true,
-                  fillColor: Colors.white10,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -58,7 +60,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   filled: true,
-                  fillColor: Colors.white10,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -77,7 +81,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   filled: true,
-                  fillColor: Colors.white10,
+                  fillColor: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
               ),
             ],
