@@ -19,14 +19,17 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  Icon(
-                    Icons.rss_feed,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 28,
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/logo.ico',
+                      width: 28,
+                      height: 28,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'RSS Reader',
+                    'Ice Cream Reader',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface,
