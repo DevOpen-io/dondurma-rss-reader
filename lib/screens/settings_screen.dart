@@ -28,6 +28,7 @@ class SettingsScreen extends StatelessWidget {
               );
             }).toList(),
             borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 12),
             onChanged: (AppTheme? newValue) {
               if (newValue != null) {
                 context.read<FeedProvider>().setTheme(newValue);
@@ -66,6 +67,7 @@ class SettingsScreen extends StatelessWidget {
               );
             }).toList(),
             borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 12),
             onChanged: (int? newValue) {
               if (newValue != null) {
                 context.read<FeedProvider>().setOfflineCacheLimit(newValue);
@@ -89,6 +91,7 @@ class SettingsScreen extends StatelessWidget {
                 DropdownMenuItem<int>(value: 600, child: Text('10 Minutes')),
               ],
               borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.only(left: 12),
               onChanged: (int? newValue) {
                 if (newValue != null) {
                   context.read<FeedProvider>().setCacheIntervalSeconds(

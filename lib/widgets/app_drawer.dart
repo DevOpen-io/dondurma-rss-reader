@@ -3,7 +3,9 @@ import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
 
 class AppDrawer extends StatelessWidget {
-  const AppDrawer({super.key});
+  final VoidCallback? onFeedSelected;
+
+  const AppDrawer({super.key, this.onFeedSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +58,7 @@ class AppDrawer extends StatelessWidget {
                     context: context,
                     onTap: () {
                       provider.selectCategory(null);
+                      onFeedSelected?.call();
                       Navigator.pop(context);
                     },
                   ),
@@ -176,6 +179,7 @@ class AppDrawer extends StatelessWidget {
             behavior: HitTestBehavior.opaque,
             onTap: () {
               provider.selectCategory(targetCategory);
+              onFeedSelected?.call();
               Navigator.pop(context);
             },
             child: Row(
@@ -269,6 +273,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 onTap: () {
                   provider.selectFeed(sub.url);
+                  onFeedSelected?.call();
                   Navigator.pop(context);
                 },
               ),

@@ -227,7 +227,13 @@ class _HomeScreenState extends State<HomeScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      drawer: const AppDrawer(),
+      drawer: AppDrawer(
+        onFeedSelected: () {
+          if (_selectedIndex != 0) {
+            _onItemTapped(0);
+          }
+        },
+      ),
       body: _selectedIndex == 0
           ? _buildHomeBody(context, provider, todayItems, yesterdayItems)
           : _selectedIndex == 1
