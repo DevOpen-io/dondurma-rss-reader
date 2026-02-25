@@ -78,6 +78,8 @@ class ArticleScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 250,
                 fit: BoxFit.cover,
+                cacheWidth:
+                    800, // Downsample image to lower quality/memory for performance
                 errorBuilder: (context, error, stackTrace) {
                   return const SizedBox.shrink(); // Hide if image fails to load
                 },
@@ -127,6 +129,23 @@ class ArticleScreen extends StatelessWidget {
                   // Render rich HTML content directly
                   Html(
                     data: item.content ?? item.description,
+                    extensions: [
+                      TagExtension(
+                        tagsToExtend: {"img"},
+                        builder: (extensionContext) {
+                          final String? src =
+                              extensionContext.attributes['src'];
+                          if (src == null) return const SizedBox.shrink();
+                          return Image.network(
+                            src,
+                            cacheWidth: 800, // Clamp decoded memory size
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const SizedBox.shrink(),
+                          );
+                        },
+                      ),
+                    ],
                     style: {
                       "body": Style(
                         fontSize: FontSize(18.0),

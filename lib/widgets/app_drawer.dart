@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import 'explore_feeds_dialog.dart';
 
 class AppDrawer extends StatelessWidget {
   final VoidCallback? onFeedSelected;
@@ -99,6 +100,28 @@ class AppDrawer extends StatelessWidget {
                       isUncategorizedNode: true,
                     ),
                   ],
+
+                  Divider(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                    height: 32,
+                  ),
+
+                  _buildSectionHeader(context, 'DISCOVER'),
+                  _buildDrawerItem(
+                    icon: Icons.lightbulb_outline,
+                    title: 'Suggested Feeds',
+                    context: context,
+                    onTap: () {
+                      Navigator.pop(context);
+                      showDialog(
+                        context: context,
+                        builder: (context) => const ExploreFeedsDialog(),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
