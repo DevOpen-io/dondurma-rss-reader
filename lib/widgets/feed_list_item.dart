@@ -17,7 +17,7 @@ class FeedListItem extends StatelessWidget {
     final provider = context.watch<FeedProvider>();
     final isCached =
         provider.cachedItemIds.contains(item.id) ||
-        provider.bookmarkedItems.any((b) => b.id == item.id);
+        provider.bookmarkedItemIds.contains(item.id);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
@@ -59,6 +59,8 @@ class FeedListItem extends StatelessWidget {
                           child: Image.network(
                             item.imageUrl!,
                             fit: BoxFit.cover,
+                            cacheWidth:
+                                144, // Force strict downsample (48 * 3x dpi)
                             errorBuilder: (context, error, stackTrace) => Icon(
                               item.siteIcon,
                               color: item.isRead

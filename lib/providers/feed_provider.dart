@@ -46,10 +46,12 @@ class FeedProvider extends ChangeNotifier {
   int _offlineCacheLimit = 50;
   int _cacheIntervalSeconds = 0;
   Timer? _cacheTimer;
+  int _itemRenderLimit = 100;
 
   List<FeedSubscription> get subscriptions => _subscriptions;
   List<FeedItem> get items => _items;
   Set<String> get cachedItemIds => _cachedItemIds;
+  Set<String> get bookmarkedItemIds => _bookmarkedItemIds;
   bool get isLoading => _isLoading;
   bool get isDarkMode => _isDarkMode;
   int get offlineCacheLimit => _offlineCacheLimit;
@@ -138,16 +140,28 @@ class FeedProvider extends ChangeNotifier {
   }
 
   List<FeedItem> get todayItems {
-    // Highly simplified: realistically we'd sort by pubDate.
-    // Assuming everything fetched currently is "today" for demonstration
-    // unless explicitly grouped otherwise.
     final list = _filteredItems;
-    return list.take((list.length * 0.7).toInt()).toList();
+    final int targetLength = (list.length * 0.7).toInt();
+    // Cap at itemRenderLimit
+    return list
+        .take(targetLength > _itemRenderLimit ? _itemRenderLimit : targetLength)
+        .toList();
   }
 
   List<FeedItem> get yesterdayItems {
     final list = _filteredItems;
-    return list.skip((list.length * 0.7).toInt()).toList();
+    final int todayLength = (list.length * 0.7).toInt();
+    final remainingLimit = _itemRenderLimit - todayLength;
+
+    if (remainingLimit <= 0) return []; // We exhausted limits in today
+
+    return list.skip(todayLength).take(remainingLimit).toList();
+  }
+
+  void loadMoreItems() {
+    // Increase limit by 100 on scroll to bottom
+    _itemRenderLimit += 100;
+    notifyListeners();
   }
 
   Set<String> get categories {

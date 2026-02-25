@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/feed_list_item.dart';
@@ -28,58 +29,99 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(context: context, builder: (context) => const AddFeedDialog());
   }
 
-  Widget _buildHomeBody(FeedProvider provider) {
+  Widget _buildHomeBody(
+    BuildContext context,
+    FeedProvider provider,
+    List<FeedItem> todayItems,
+    List<FeedItem> yesterdayItems,
+  ) {
     return RefreshIndicator(
       onRefresh: () async {
         await provider.refreshAll();
       },
       child: provider.isLoading && provider.items.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                if (provider.todayItems.isNotEmpty) ...[
-                  _buildSectionHeader(
-                    'LATEST',
-                    trailingText: 'Subscribed Only',
-                  ),
-                  ...provider.todayItems.map(
-                    (feed) => FeedListItem(item: feed),
-                  ),
-                ],
-                if (provider.yesterdayItems.isNotEmpty) ...[
-                  _buildSectionHeader('OLDER'),
-                  ...provider.yesterdayItems.map(
-                    (feed) => FeedListItem(item: feed),
-                  ),
-                ],
-                if (provider.items.isEmpty && !provider.isLoading)
-                  const Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(
-                      child: Text(
-                        'No feeds found. Add a new feed using the + button.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
+          : NotificationListener<ScrollNotification>(
+              onNotification: (ScrollNotification scrollInfo) {
+                if (scrollInfo.metrics.pixels >=
+                    scrollInfo.metrics.maxScrollExtent - 200) {
+                  provider.loadMoreItems();
+                }
+                return false;
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  if (todayItems.isNotEmpty) ...[
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildSectionHeader(
+                          'LATEST',
+                          trailingText: 'Subscribed Only',
+                        ),
                       ),
                     ),
-                  )
-                else if (provider.todayItems.isEmpty &&
-                    provider.yesterdayItems.isEmpty &&
-                    !provider.isLoading)
-                  Padding(
-                    padding: const EdgeInsets.all(32.0),
-                    child: Center(
-                      child: Text(
-                        'No feeds found in \${provider.selectedCategory}.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: Colors.grey),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverList.builder(
+                        itemCount: todayItems.length,
+                        itemBuilder: (context, index) {
+                          return FeedListItem(item: todayItems[index]);
+                        },
                       ),
                     ),
-                  ),
-                const SizedBox(height: 80),
-              ],
+                  ],
+                  if (yesterdayItems.isNotEmpty) ...[
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildSectionHeader('OLDER'),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverList.builder(
+                        itemCount: yesterdayItems.length,
+                        itemBuilder: (context, index) {
+                          return FeedListItem(item: yesterdayItems[index]);
+                        },
+                      ),
+                    ),
+                  ],
+                  if (provider.items.isEmpty && !provider.isLoading)
+                    const SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            'No feeds found. Add a new feed using the + button.',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    )
+                  else if (todayItems.isEmpty &&
+                      yesterdayItems.isEmpty &&
+                      !provider.isLoading)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: Padding(
+                        padding: const EdgeInsets.all(32.0),
+                        child: Center(
+                          child: Text(
+                            'No feeds found in ${provider.selectedCategory}.',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                        ),
+                      ),
+                    ),
+                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                ],
+              ),
             ),
     );
   }
@@ -87,6 +129,8 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<FeedProvider>();
+    final todayItems = provider.todayItems;
+    final yesterdayItems = provider.yesterdayItems;
 
     String appBarTitle;
     switch (_selectedIndex) {
@@ -121,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       drawer: const AppDrawer(),
       body: _selectedIndex == 0
-          ? _buildHomeBody(provider)
+          ? _buildHomeBody(context, provider, todayItems, yesterdayItems)
           : _selectedIndex == 1
           ? const FoldersScreen()
           : _selectedIndex == 2
