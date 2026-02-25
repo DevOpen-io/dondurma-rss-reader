@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -39,13 +40,20 @@ class FeedProvider extends ChangeNotifier {
   String? _selectedFeedUrl;
   Set<String> _readItemIds = {};
   Set<String> _bookmarkedItemIds = {};
+  Set<String> _cachedItemIds = {};
   bool _isLoading = false;
   bool _isDarkMode = true;
+  int _offlineCacheLimit = 50;
+  int _cacheIntervalSeconds = 0;
+  Timer? _cacheTimer;
 
   List<FeedSubscription> get subscriptions => _subscriptions;
   List<FeedItem> get items => _items;
+  Set<String> get cachedItemIds => _cachedItemIds;
   bool get isLoading => _isLoading;
   bool get isDarkMode => _isDarkMode;
+  int get offlineCacheLimit => _offlineCacheLimit;
+  int get cacheIntervalSeconds => _cacheIntervalSeconds;
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
 
@@ -54,6 +62,45 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('isDarkMode', isDark);
+  }
+
+  Future<void> setOfflineCacheLimit(int limit) async {
+    _offlineCacheLimit = limit;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('offlineCacheLimit', limit);
+    await _saveCachedItems();
+
+    // Also restart timer logic
+    _startCacheTimer(executeImmediately: false);
+  }
+
+  Future<void> setCacheIntervalSeconds(int interval) async {
+    _cacheIntervalSeconds = interval;
+    notifyListeners();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('cacheIntervalSeconds', interval);
+
+    // If user enabled interval caching (>0) and we can cache, immediately execute once
+    final bool immediate = interval > 0 && _offlineCacheLimit > 0;
+    _startCacheTimer(executeImmediately: immediate);
+  }
+
+  void _startCacheTimer({bool executeImmediately = false}) {
+    _cacheTimer?.cancel();
+
+    if (_offlineCacheLimit == 0) return;
+
+    if (_cacheIntervalSeconds > 0) {
+      if (executeImmediately) {
+        refreshAll();
+      }
+      _cacheTimer = Timer.periodic(Duration(seconds: _cacheIntervalSeconds), (
+        timer,
+      ) {
+        refreshAll();
+      });
+    }
   }
 
   void selectCategory(String? category) {
@@ -114,6 +161,9 @@ class FeedProvider extends ChangeNotifier {
   Future<void> _loadSubscriptions() async {
     final prefs = await SharedPreferences.getInstance();
 
+    _offlineCacheLimit = prefs.getInt('offlineCacheLimit') ?? 50;
+    _cacheIntervalSeconds = prefs.getInt('cacheIntervalSeconds') ?? 0;
+
     // Load read item IDs
     final List<String>? readIds = prefs.getStringList('readItemIds');
     if (readIds != null) {
@@ -133,6 +183,19 @@ class FeedProvider extends ChangeNotifier {
       );
       if (bookmarkedIds != null) {
         _bookmarkedItemIds = bookmarkedIds.toSet();
+      }
+    }
+
+    // Load cached offline items
+    final String? cachedItemsData = prefs.getString('cachedItemsJson');
+    if (cachedItemsData != null) {
+      try {
+        final List<dynamic> jsonList = jsonDecode(cachedItemsData);
+        _items = jsonList.map((e) => FeedItem.fromJson(e)).toList();
+        _cachedItemIds = _items.map((e) => e.id).toSet();
+        notifyListeners();
+      } catch (e) {
+        debugPrint('Error loading cached items: $e');
       }
     }
 
@@ -167,7 +230,10 @@ class FeedProvider extends ChangeNotifier {
     _isDarkMode = prefs.getBool('isDarkMode') ?? true;
     notifyListeners();
 
+    // Initial refresh of all feeds
     await refreshAll();
+    // Start the cache timer after initial load
+    _startCacheTimer(executeImmediately: false);
   }
 
   Future<void> _saveSubscriptions() async {
@@ -298,6 +364,26 @@ class FeedProvider extends ChangeNotifier {
 
     _items = allItems;
     _isLoading = false;
+    notifyListeners();
+
+    await _saveCachedItems();
+  }
+
+  Future<void> _saveCachedItems() async {
+    final prefs = await SharedPreferences.getInstance();
+    final itemsToCache = _items.take(_offlineCacheLimit).toList();
+    _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
+    notifyListeners();
+    final String encodedData = jsonEncode(
+      itemsToCache.map((e) => e.toJson()).toList(),
+    );
+    await prefs.setString('cachedItemsJson', encodedData);
+  }
+
+  Future<void> clearCache() async {
+    final prefs = await SharedPreferences.getInstance();
+    _cachedItemIds.clear();
+    await prefs.remove('cachedItemsJson');
     notifyListeners();
   }
 

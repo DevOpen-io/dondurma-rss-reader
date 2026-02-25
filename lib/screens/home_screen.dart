@@ -127,12 +127,14 @@ class _HomeScreenState extends State<HomeScreen> {
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddFeedDialog,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add, size: 28),
-      ),
+      floatingActionButton: _selectedIndex == 0
+          ? FloatingActionButton(
+              onPressed: _showAddFeedDialog,
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+              child: const Icon(Icons.add, size: 28),
+            )
+          : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,

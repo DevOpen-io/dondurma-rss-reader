@@ -11,6 +11,14 @@ class FeedListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // We use context.watch instead of context.select here because Dart sets are not
+    // deeply equatable by default, so context.select won't trigger a rebuild when
+    // the elements within `cachedItemIds` change (e.g. via .clear()).
+    final provider = context.watch<FeedProvider>();
+    final isCached =
+        provider.cachedItemIds.contains(item.id) ||
+        provider.bookmarkedItems.any((b) => b.id == item.id);
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12.0),
       child: InkWell(
@@ -151,21 +159,41 @@ class FeedListItem extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              // Bookmark Icon
-              IconButton(
-                onPressed: () {
-                  context.read<FeedProvider>().toggleBookmark(item.id);
-                },
-                icon: Icon(
-                  item.isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  color: item.isBookmarked
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.grey.withValues(alpha: item.isRead ? 0.5 : 1.0),
-                  size: 22,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                alignment: Alignment.topRight,
+              // Actions Column
+              Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      context.read<FeedProvider>().toggleBookmark(item.id);
+                    },
+                    icon: Icon(
+                      item.isBookmarked
+                          ? Icons.bookmark
+                          : Icons.bookmark_border,
+                      color: item.isBookmarked
+                          ? Theme.of(context).colorScheme.primary
+                          : Colors.grey.withValues(
+                              alpha: item.isRead ? 0.5 : 1.0,
+                            ),
+                      size: 22,
+                    ),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    alignment: Alignment.topRight,
+                  ),
+                  if (isCached)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 12.0, right: 2.0),
+                      child: Icon(
+                        Icons.offline_pin,
+                        color: Theme.of(context).colorScheme.secondary
+                            .withValues(alpha: item.isRead ? 0.4 : 0.8),
+                        size: 16,
+                      ),
+                    ),
+                ],
               ),
             ],
           ),

@@ -33,6 +33,64 @@ class SettingsScreen extends StatelessWidget {
         ),
         _buildSectionHeader(context, 'Data & Storage'),
         ListTile(
+          leading: const Icon(Icons.download_for_offline),
+          title: const Text('Offline Cache Limit'),
+          subtitle: const Text('Recent articles kept for offline reading'),
+          trailing: DropdownButton<int>(
+            value: context.watch<FeedProvider>().offlineCacheLimit,
+            items: [0, 50, 100, 150, 200, 250, 300].map((int value) {
+              return DropdownMenuItem<int>(
+                value: value,
+                child: Text(value == 0 ? 'None' : value.toString()),
+              );
+            }).toList(),
+            borderRadius: BorderRadius.circular(12),
+            onChanged: (int? newValue) {
+              if (newValue != null) {
+                context.read<FeedProvider>().setOfflineCacheLimit(newValue);
+              }
+            },
+            underline: const SizedBox(),
+          ),
+        ),
+        if (context.watch<FeedProvider>().offlineCacheLimit > 0)
+          ListTile(
+            leading: const Icon(Icons.timer_outlined),
+            title: const Text('Cache Interval Time'),
+            subtitle: const Text('How often feeds sync automatically'),
+            trailing: DropdownButton<int>(
+              value: context.watch<FeedProvider>().cacheIntervalSeconds,
+              items: const [
+                DropdownMenuItem<int>(value: 0, child: Text('None')),
+                DropdownMenuItem<int>(value: 30, child: Text('30 Seconds')),
+                DropdownMenuItem<int>(value: 60, child: Text('1 Minute')),
+                DropdownMenuItem<int>(value: 300, child: Text('5 Minutes')),
+                DropdownMenuItem<int>(value: 600, child: Text('10 Minutes')),
+              ],
+              borderRadius: BorderRadius.circular(12),
+              onChanged: (int? newValue) {
+                if (newValue != null) {
+                  context.read<FeedProvider>().setCacheIntervalSeconds(
+                    newValue,
+                  );
+                }
+              },
+              underline: const SizedBox(),
+            ),
+          ),
+        ListTile(
+          leading: const Icon(Icons.delete_outline),
+          title: const Text('Clear Cache'),
+          onTap: () async {
+            await context.read<FeedProvider>().clearCache();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Cache cleared successfully.')),
+              );
+            }
+          },
+        ),
+        ListTile(
           leading: const Icon(Icons.sync),
           title: const Text('Sync Background'),
           trailing: Switch(
@@ -40,15 +98,6 @@ class SettingsScreen extends StatelessWidget {
             activeThumbColor: Theme.of(context).colorScheme.primary,
             onChanged: (val) {},
           ),
-        ),
-        ListTile(
-          leading: const Icon(Icons.delete_outline),
-          title: const Text('Clear Cache'),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Cache cleared successfully.')),
-            );
-          },
         ),
         ListTile(
           leading: const Icon(Icons.file_download_outlined),
