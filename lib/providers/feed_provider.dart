@@ -158,10 +158,23 @@ class FeedProvider extends ChangeNotifier {
     return list.skip(todayLength).take(remainingLimit).toList();
   }
 
+  bool _isLoadingMore = false;
+
   void loadMoreItems() {
-    // Increase limit by 100 on scroll to bottom
-    _itemRenderLimit += 100;
+    if (_isLoadingMore) return;
+
+    final int maxAvailable = _filteredItems.length;
+    if (_itemRenderLimit >= maxAvailable) return;
+
+    _isLoadingMore = true;
+    // Increase limit by 50 on scroll to bottom
+    _itemRenderLimit += 50;
     notifyListeners();
+
+    // Prevent scroll physics bounce from spamming the load trigger
+    Future.delayed(const Duration(milliseconds: 250), () {
+      _isLoadingMore = false;
+    });
   }
 
   Set<String> get categories {
@@ -445,6 +458,25 @@ class FeedProvider extends ChangeNotifier {
         notifyListeners();
       }
 
+      await _saveReadStates();
+    }
+  }
+
+  Future<void> toggleReadStatus(String id) async {
+    final index = _items.indexWhere((item) => item.id == id);
+    if (index != -1) {
+      final current = _items[index];
+      final newStatus = !current.isRead;
+
+      _items[index] = current.copyWith(isRead: newStatus);
+
+      if (newStatus) {
+        _readItemIds.add(id);
+      } else {
+        _readItemIds.remove(id);
+      }
+
+      notifyListeners();
       await _saveReadStates();
     }
   }

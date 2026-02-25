@@ -45,7 +45,9 @@ class _HomeScreenState extends State<HomeScreen> {
               onNotification: (ScrollNotification scrollInfo) {
                 if (scrollInfo.metrics.pixels >=
                     scrollInfo.metrics.maxScrollExtent - 200) {
-                  provider.loadMoreItems();
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    provider.loadMoreItems();
+                  });
                 }
                 return false;
               },
