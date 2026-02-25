@@ -18,6 +18,14 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _onItemTapped(int index) {
     setState(() {
@@ -152,16 +160,68 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          appBarTitle,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: _isSearching && _selectedIndex == 0
+            ? TextField(
+                controller: _searchController,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search feeds...',
+                  border: InputBorder.none,
+                  hintStyle: TextStyle(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurface,
+                  fontSize: 16,
+                ),
+                onChanged: (value) {
+                  provider.setSearchQuery(value);
+                },
+              )
+            : Text(
+                appBarTitle,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
         actions: [
-          IconButton(icon: const Icon(Icons.search), onPressed: () {}),
-          IconButton(
-            icon: const Icon(Icons.check_circle_outline, color: Colors.blue),
-            onPressed: () {},
-          ),
+          if (_selectedIndex == 0) ...[
+            if (_isSearching)
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = false;
+                    _searchController.clear();
+                  });
+                  provider.setSearchQuery('');
+                },
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.search),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = true;
+                  });
+                },
+              ),
+            if (!_isSearching)
+              IconButton(
+                icon: Icon(
+                  provider.showUnreadOnly
+                      ? Icons.check_circle
+                      : Icons.check_circle_outline,
+                  color: provider.showUnreadOnly
+                      ? Colors.blue
+                      : Colors.blue.withValues(alpha: 0.5),
+                ),
+                onPressed: () {
+                  provider.toggleShowUnreadOnly();
+                },
+              ),
+          ],
           const SizedBox(width: 8),
         ],
       ),

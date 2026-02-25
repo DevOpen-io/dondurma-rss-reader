@@ -58,6 +58,10 @@ class FeedProvider extends ChangeNotifier {
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
+  String _searchQuery = '';
+  String get searchQuery => _searchQuery;
+  bool _showUnreadOnly = false;
+  bool get showUnreadOnly => _showUnreadOnly;
 
   void toggleTheme(bool isDark) async {
     _isDarkMode = isDark;
@@ -111,6 +115,18 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void setSearchQuery(String query) {
+    _searchQuery = query;
+    _itemRenderLimit = 50; // Reset pagination on search
+    notifyListeners();
+  }
+
+  void toggleShowUnreadOnly() {
+    _showUnreadOnly = !_showUnreadOnly;
+    _itemRenderLimit = 50;
+    notifyListeners();
+  }
+
   void selectFeed(String? feedUrl) {
     _selectedFeedUrl = feedUrl;
     if (feedUrl != null) {
@@ -130,11 +146,26 @@ class FeedProvider extends ChangeNotifier {
 
   List<FeedItem> get _filteredItems {
     Iterable<FeedItem> filtered = _items;
+
+    // Check if showing unread strictly across the main view
+    if (_showUnreadOnly) {
+      filtered = filtered.where((i) => !i.isRead);
+    }
+
     if (_selectedCategory != null) {
       filtered = filtered.where((i) => i.category == _selectedCategory);
     }
     if (_selectedFeedUrl != null) {
       filtered = filtered.where((i) => i.feedUrl == _selectedFeedUrl);
+    }
+    if (_searchQuery.isNotEmpty) {
+      final query = _searchQuery.toLowerCase();
+      filtered = filtered.where(
+        (i) =>
+            i.title.toLowerCase().contains(query) ||
+            i.description.toLowerCase().contains(query) ||
+            i.siteName.toLowerCase().contains(query),
+      );
     }
     return filtered.toList();
   }
