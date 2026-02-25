@@ -34,7 +34,9 @@ class FeedProvider extends ChangeNotifier {
 
   List<FeedSubscription> _subscriptions = [];
   List<FeedItem> _items = [];
+  List<FeedItem> _savedBookmarks = [];
   String? _selectedCategory;
+  String? _selectedFeedUrl;
   Set<String> _readItemIds = {};
   Set<String> _bookmarkedItemIds = {};
   bool _isLoading = false;
@@ -45,6 +47,7 @@ class FeedProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isDarkMode => _isDarkMode;
   String? get selectedCategory => _selectedCategory;
+  String? get selectedFeedUrl => _selectedFeedUrl;
 
   void toggleTheme(bool isDark) async {
     _isDarkMode = isDark;
@@ -55,6 +58,21 @@ class FeedProvider extends ChangeNotifier {
 
   void selectCategory(String? category) {
     _selectedCategory = category;
+    _selectedFeedUrl = null;
+    notifyListeners();
+  }
+
+  void selectFeed(String? feedUrl) {
+    _selectedFeedUrl = feedUrl;
+    if (feedUrl != null) {
+      final sub = _subscriptions.firstWhere(
+        (s) => s.url == feedUrl,
+        orElse: () => FeedSubscription(name: '', url: '', category: ''),
+      );
+      if (sub.url.isNotEmpty) {
+        _selectedCategory = sub.category;
+      }
+    }
     notifyListeners();
   }
 
@@ -62,8 +80,14 @@ class FeedProvider extends ChangeNotifier {
       _items.where((i) => i.isBookmarked).toList();
 
   List<FeedItem> get _filteredItems {
-    if (_selectedCategory == null) return _items;
-    return _items.where((i) => i.category == _selectedCategory).toList();
+    Iterable<FeedItem> filtered = _items;
+    if (_selectedCategory != null) {
+      filtered = filtered.where((i) => i.category == _selectedCategory);
+    }
+    if (_selectedFeedUrl != null) {
+      filtered = filtered.where((i) => i.feedUrl == _selectedFeedUrl);
+    }
+    return filtered.toList();
   }
 
   List<FeedItem> get todayItems {
@@ -96,12 +120,20 @@ class FeedProvider extends ChangeNotifier {
       _readItemIds = readIds.toSet();
     }
 
-    // Load bookmarked item IDs
-    final List<String>? bookmarkedIds = prefs.getStringList(
-      'bookmarkedItemIds',
-    );
-    if (bookmarkedIds != null) {
-      _bookmarkedItemIds = bookmarkedIds.toSet();
+    // Load bookmarked items (full objects)
+    final String? bookmarkedItemsData = prefs.getString('bookmarkedItemsJson');
+    if (bookmarkedItemsData != null) {
+      final List<dynamic> jsonList = jsonDecode(bookmarkedItemsData);
+      _savedBookmarks = jsonList.map((e) => FeedItem.fromJson(e)).toList();
+      _bookmarkedItemIds = _savedBookmarks.map((e) => e.id).toSet();
+    } else {
+      // Fallback for legacy ID-only bookmarks
+      final List<String>? bookmarkedIds = prefs.getStringList(
+        'bookmarkedItemIds',
+      );
+      if (bookmarkedIds != null) {
+        _bookmarkedItemIds = bookmarkedIds.toSet();
+      }
     }
 
     final String? data = prefs.getString('subscriptions');
@@ -153,6 +185,14 @@ class FeedProvider extends ChangeNotifier {
 
   Future<void> _saveBookmarkStates() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Save full items as JSON
+    final String data = jsonEncode(
+      _savedBookmarks.map((b) => b.toJson()).toList(),
+    );
+    await prefs.setString('bookmarkedItemsJson', data);
+
+    // Still save IDs for quick fallback or legacy compliance
     await prefs.setStringList('bookmarkedItemIds', _bookmarkedItemIds.toList());
   }
 
@@ -240,6 +280,14 @@ class FeedProvider extends ChangeNotifier {
       allItems.addAll(items);
     }
 
+    // Ensure our saved bookmarks are always present in our known items array
+    // so they are visible even if the RSS feed dropped them.
+    for (var saved in _savedBookmarks) {
+      if (!allItems.any((item) => item.id == saved.id)) {
+        allItems.add(saved);
+      }
+    }
+
     // Sort by pubDate descending (newest first)
     allItems.sort((a, b) {
       if (a.pubDate == null && b.pubDate == null) return 0;
@@ -259,16 +307,31 @@ class FeedProvider extends ChangeNotifier {
       final current = _items[index];
       final newStatus = !current.isBookmarked;
 
-      _items[index] = current.copyWith(isBookmarked: newStatus);
+      final updatedItem = current.copyWith(isBookmarked: newStatus);
+
+      _items[index] = updatedItem;
 
       if (newStatus) {
         _bookmarkedItemIds.add(id);
+        if (!_savedBookmarks.any((b) => b.id == id)) {
+          _savedBookmarks.add(updatedItem);
+        }
       } else {
         _bookmarkedItemIds.remove(id);
+        _savedBookmarks.removeWhere((b) => b.id == id);
       }
 
       notifyListeners();
       _saveBookmarkStates();
+    } else {
+      // In case we are trying to unbookmark something that only exists in saved memory
+      final savedIndex = _savedBookmarks.indexWhere((item) => item.id == id);
+      if (savedIndex != -1) {
+        _savedBookmarks.removeAt(savedIndex);
+        _bookmarkedItemIds.remove(id);
+        notifyListeners();
+        _saveBookmarkStates();
+      }
     }
   }
 

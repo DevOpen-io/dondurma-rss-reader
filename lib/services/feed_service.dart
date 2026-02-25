@@ -26,12 +26,12 @@ class FeedService {
 
       try {
         final rssFeed = RssFeed.parse(bodyString);
-        return _mapRssItems(rssFeed, category);
+        return _mapRssItems(rssFeed, category, url);
       } catch (e) {
         // Try parsing as Atom if RSS parsing fails
         try {
           final atomFeed = AtomFeed.parse(bodyString);
-          return _mapAtomItems(atomFeed, category);
+          return _mapAtomItems(atomFeed, category, url);
         } catch (e2) {
           throw Exception('Failed to parse RSS/Atom feed: $e2');
         }
@@ -42,7 +42,7 @@ class FeedService {
     }
   }
 
-  List<FeedItem> _mapRssItems(RssFeed feed, String category) {
+  List<FeedItem> _mapRssItems(RssFeed feed, String category, String sourceUrl) {
     final siteName = feed.title ?? 'Unknown Site';
 
     return feed.items.map((item) {
@@ -74,11 +74,16 @@ class FeedService {
         content: content,
         pubDate: _parseRssDate(item.pubDate),
         category: category,
+        feedUrl: sourceUrl,
       );
     }).toList();
   }
 
-  List<FeedItem> _mapAtomItems(AtomFeed feed, String category) {
+  List<FeedItem> _mapAtomItems(
+    AtomFeed feed,
+    String category,
+    String sourceUrl,
+  ) {
     final siteName = feed.title ?? 'Unknown Site';
 
     return feed.items.map((item) {
@@ -119,6 +124,7 @@ class FeedService {
         content: content.isEmpty ? (item.title ?? '') : content,
         pubDate: _parseRssDate(item.updated ?? item.published),
         category: category,
+        feedUrl: sourceUrl,
       );
     }).toList();
   }

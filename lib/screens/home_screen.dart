@@ -36,6 +36,7 @@ class _HomeScreenState extends State<HomeScreen> {
       child: provider.isLoading && provider.items.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
               physics: const AlwaysScrollableScrollPhysics(),
               children: [
                 if (provider.todayItems.isNotEmpty) ...[
@@ -133,22 +134,28 @@ class _HomeScreenState extends State<HomeScreen> {
         child: const Icon(Icons.add, size: 28),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: BottomNavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        type: BottomNavigationBarType.fixed,
-        unselectedItemColor: Colors.grey,
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Feeds'),
-          BottomNavigationBarItem(icon: Icon(Icons.folder), label: 'Folders'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.bookmark),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onItemTapped,
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.list_outlined),
+            selectedIcon: Icon(Icons.list),
+            label: 'Feeds',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.folder_outlined),
+            selectedIcon: Icon(Icons.folder),
+            label: 'Folders',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bookmark_border),
+            selectedIcon: Icon(Icons.bookmark),
             label: 'Bookmarks',
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
+          NavigationDestination(
+            icon: Icon(Icons.settings_outlined),
+            selectedIcon: Icon(Icons.settings),
             label: 'Settings',
           ),
         ],
@@ -158,8 +165,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSectionHeader(String title, {String? trailingText}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-      color: Theme.of(context).scaffoldBackgroundColor,
+      padding: const EdgeInsets.symmetric(vertical: 12.0),
+      color: Colors.transparent,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

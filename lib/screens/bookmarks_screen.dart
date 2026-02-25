@@ -21,6 +21,7 @@ class BookmarksScreen extends StatelessWidget {
     }
 
     return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
       itemCount: bookmarkedItems.length,
       itemBuilder: (context, index) {
         return FeedListItem(item: bookmarkedItems[index]);

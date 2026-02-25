@@ -68,117 +68,135 @@ class ArticleScreen extends StatelessWidget {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              item.category.toUpperCase(),
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.primary,
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                letterSpacing: 1.2,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              item.title,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Theme.of(context).colorScheme.onSurface,
-                height: 1.3,
-              ),
-            ),
-            if (dateStr.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                dateStr,
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-            ],
-            const SizedBox(height: 24),
-
-            // If an image was extracted, display it here prominently as cover
+            // If an image was extracted, display it here as a bleeding hero cover
             if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: Image.network(
-                  item.imageUrl!,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) {
-                    return const SizedBox.shrink(); // Hide if image fails to load
-                  },
-                ),
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // Render rich HTML content directly
-            Html(
-              data: item.content ?? item.description,
-              style: {
-                "body": Style(
-                  fontSize: FontSize(16.0),
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.8),
-                  lineHeight: LineHeight(1.6),
-                  margin: Margins.zero,
-                  padding: HtmlPaddings.zero,
-                ),
-                "a": Style(
-                  color: Theme.of(context).colorScheme.primary,
-                  textDecoration: TextDecoration.none,
-                ),
-                "img": Style(
-                  width: Width(MediaQuery.of(context).size.width - 32),
-                  margin: Margins.only(top: 16, bottom: 16),
-                ),
-                "figure": Style(
-                  margin: Margins.zero,
-                  padding: HtmlPaddings.zero,
-                ),
-                "p": Style(margin: Margins.only(bottom: 16)),
-                "h1": Style(color: Theme.of(context).colorScheme.onSurface),
-                "h2": Style(color: Theme.of(context).colorScheme.onSurface),
-                "h3": Style(color: Theme.of(context).colorScheme.onSurface),
-                "h4": Style(color: Theme.of(context).colorScheme.onSurface),
-                "h5": Style(color: Theme.of(context).colorScheme.onSurface),
-                "h6": Style(color: Theme.of(context).colorScheme.onSurface),
-              },
-              onLinkTap: (url, attributes, element) {
-                if (url != null && url.isNotEmpty) {
-                  _launchUrl(context, url);
-                }
-              },
-            ),
-
-            const SizedBox(height: 48),
-
-            // Read on Original Webpage button prominently at the end
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  if (item.link.isNotEmpty) {
-                    _launchUrl(context, item.link);
-                  }
+              Image.network(
+                item.imageUrl!,
+                width: double.infinity,
+                height: 250,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return const SizedBox.shrink(); // Hide if image fails to load
                 },
-                icon: const Icon(Icons.public),
-                label: const Text('Read on Original Webpage'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 24.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    item.category.toUpperCase(),
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      letterSpacing: 1.5,
+                    ),
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    item.title,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      height: 1.25,
+                    ),
+                  ),
+                  if (dateStr.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      dateStr,
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                    ),
+                  ],
+                  const SizedBox(height: 24),
+
+                  // Render rich HTML content directly
+                  Html(
+                    data: item.content ?? item.description,
+                    style: {
+                      "body": Style(
+                        fontSize: FontSize(18.0),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.85),
+                        lineHeight: LineHeight(1.8),
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
+                      ),
+                      "a": Style(
+                        color: Theme.of(context).colorScheme.primary,
+                        textDecoration: TextDecoration.none,
+                      ),
+                      "img": Style(
+                        width: Width(MediaQuery.of(context).size.width - 40),
+                        margin: Margins.only(top: 24, bottom: 24),
+                      ),
+                      "figure": Style(
+                        margin: Margins.zero,
+                        padding: HtmlPaddings.zero,
+                      ),
+                      "p": Style(margin: Margins.only(bottom: 16)),
+                      "h1": Style(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      "h2": Style(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      "h3": Style(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      "h4": Style(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      "h5": Style(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                      "h6": Style(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    },
+                    onLinkTap: (url, attributes, element) {
+                      if (url != null && url.isNotEmpty) {
+                        _launchUrl(context, url);
+                      }
+                    },
+                  ),
+
+                  const SizedBox(height: 48),
+
+                  // Read on Original Webpage button prominently at the end
+                  Center(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        if (item.link.isNotEmpty) {
+                          _launchUrl(context, item.link);
+                        }
+                      },
+                      icon: const Icon(Icons.public),
+                      label: const Text('Read on Original Webpage'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).colorScheme.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
           ],
         ),
       ),

@@ -178,17 +178,6 @@ class FoldersScreen extends StatelessWidget {
 
         return Card(
           margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          color: Theme.of(
-            context,
-          ).colorScheme.onSurface.withValues(alpha: 0.05),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-            side: BorderSide(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.1),
-            ),
-          ),
           child: ExpansionTile(
             shape: const Border(),
             collapsedShape: const Border(),
@@ -206,12 +195,16 @@ class FoldersScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                  onPressed: () =>
-                      _showEditCategoryDialog(context, categoryName, provider),
-                  tooltip: 'Rename Folder',
-                ),
+                if (categoryName != 'Uncategorized')
+                  IconButton(
+                    icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
+                    onPressed: () => _showEditCategoryDialog(
+                      context,
+                      categoryName,
+                      provider,
+                    ),
+                    tooltip: 'Rename Folder',
+                  ),
               ],
             ),
             children: subs.map((sub) {

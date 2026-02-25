@@ -60,19 +60,16 @@ class AppDrawer extends StatelessWidget {
                   ...categories.where((c) => c != 'Uncategorized').map((
                     category,
                   ) {
-                    final count = provider.items
-                        .where((item) => item.category == category)
-                        .length;
-                    return _buildDrawerItem(
+                    final feedSources = provider.subscriptions
+                        .where((sub) => sub.category == category)
+                        .toList();
+
+                    return _buildExpandableCategoryItem(
                       icon: Icons.folder,
                       title: category,
-                      count: count.toString(),
-                      isSelected: provider.selectedCategory == category,
+                      feedSources: feedSources,
+                      provider: provider,
                       context: context,
-                      onTap: () {
-                        provider.selectCategory(category);
-                        Navigator.pop(context);
-                      },
                     );
                   }),
 
@@ -85,19 +82,15 @@ class AppDrawer extends StatelessWidget {
 
                   if (categories.contains('Uncategorized')) ...[
                     _buildSectionHeader('UNCATEGORIZED'),
-                    _buildDrawerItem(
+                    _buildExpandableCategoryItem(
                       icon: Icons.rss_feed,
                       title: 'Random Blogs',
-                      count: provider.items
-                          .where((item) => item.category == 'Uncategorized')
-                          .length
-                          .toString(),
-                      isSelected: provider.selectedCategory == 'Uncategorized',
+                      feedSources: provider.subscriptions
+                          .where((sub) => sub.category == 'Uncategorized')
+                          .toList(),
+                      provider: provider,
                       context: context,
-                      onTap: () {
-                        provider.selectCategory('Uncategorized');
-                        Navigator.pop(context);
-                      },
+                      isUncategorizedNode: true,
                     ),
                   ],
                 ],
@@ -129,6 +122,150 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  Widget _buildExpandableCategoryItem({
+    required IconData icon,
+    required String title,
+    required List<FeedSubscription> feedSources,
+    required FeedProvider provider,
+    required BuildContext context,
+    bool isUncategorizedNode = false,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final String targetCategory = isUncategorizedNode ? 'Uncategorized' : title;
+    final bool isCategorySelected =
+        provider.selectedCategory == targetCategory &&
+        provider.selectedFeedUrl == null;
+
+    final count = provider.items
+        .where((item) => item.category == targetCategory)
+        .length;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
+      child: Theme(
+        data: Theme.of(context).copyWith(
+          dividerColor: Colors.transparent, // Remove expansion lines
+        ),
+        child: ExpansionTile(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          collapsedShape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          backgroundColor: isCategorySelected
+              ? colorScheme.primary.withAlpha((0.05 * 255).toInt())
+              : Colors.transparent,
+          collapsedBackgroundColor: isCategorySelected
+              ? colorScheme.primary.withAlpha((0.1 * 255).toInt())
+              : Colors.transparent,
+          leading: Icon(
+            icon,
+            color: isCategorySelected ? colorScheme.primary : Colors.grey,
+            size: 22,
+          ),
+          title: GestureDetector(
+            onTap: () {
+              provider.selectCategory(targetCategory);
+              Navigator.pop(context);
+            },
+            child: Text(
+              title,
+              style: TextStyle(
+                color: isCategorySelected
+                    ? colorScheme.primary
+                    : Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.7),
+                fontWeight: isCategorySelected
+                    ? FontWeight.bold
+                    : FontWeight.normal,
+              ),
+            ),
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (count > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isCategorySelected
+                        ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    count.toString(),
+                    style: TextStyle(
+                      color: isCategorySelected
+                          ? colorScheme.primary
+                          : Colors.grey,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              const Icon(Icons.expand_more, color: Colors.grey, size: 20),
+            ],
+          ),
+          children: feedSources.map((sub) {
+            final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
+            final feedCount = provider.items
+                .where((item) => item.feedUrl == sub.url)
+                .length;
+
+            return Padding(
+              padding: const EdgeInsets.only(left: 16.0, bottom: 2.0),
+              child: ListTile(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                title: Text(
+                  sub.name,
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: isFeedSelected
+                        ? colorScheme.primary
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: isFeedSelected
+                        ? FontWeight.bold
+                        : FontWeight.w500,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: feedCount > 0
+                    ? Text(
+                        feedCount.toString(),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 11,
+                        ),
+                      )
+                    : null,
+                selected: isFeedSelected,
+                selectedTileColor: colorScheme.primary.withAlpha(
+                  (0.05 * 255).toInt(),
+                ),
+                onTap: () {
+                  provider.selectFeed(sub.url);
+                  Navigator.pop(context);
+                },
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,
@@ -138,43 +275,49 @@ class AppDrawer extends StatelessWidget {
     required VoidCallback onTap,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return ListTile(
-      leading: Icon(
-        icon,
-        color: isSelected ? colorScheme.primary : Colors.grey,
-        size: 22,
-      ),
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isSelected
-              ? colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
+      child: ListTile(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        leading: Icon(
+          icon,
+          color: isSelected ? colorScheme.primary : Colors.grey,
+          size: 22,
         ),
-      ),
-      trailing: (count != null && count != '0')
-          ? Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                count,
-                style: TextStyle(
-                  color: isSelected ? colorScheme.primary : Colors.grey,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isSelected
+                ? colorScheme.primary
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.7),
+            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        trailing: (count != null && count != '0')
+            ? Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(10),
                 ),
-              ),
-            )
-          : null,
-      selected: isSelected,
-      selectedTileColor: colorScheme.primary.withAlpha((0.1 * 255).toInt()),
-      onTap: onTap,
+                child: Text(
+                  count,
+                  style: TextStyle(
+                    color: isSelected ? colorScheme.primary : Colors.grey,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            : null,
+        selected: isSelected,
+        selectedTileColor: colorScheme.primary.withAlpha((0.1 * 255).toInt()),
+        onTap: onTap,
+      ),
     );
   }
 }

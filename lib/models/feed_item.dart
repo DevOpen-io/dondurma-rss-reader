@@ -18,6 +18,7 @@ class FeedItem {
   final String? content;
   final DateTime? pubDate;
   final String category;
+  final String feedUrl;
 
   FeedItem({
     required this.id,
@@ -35,6 +36,7 @@ class FeedItem {
     this.content,
     this.pubDate,
     this.category = 'Uncategorized',
+    this.feedUrl = '',
   });
 
   FeedItem copyWith({
@@ -53,6 +55,7 @@ class FeedItem {
     String? content,
     DateTime? pubDate,
     String? category,
+    String? feedUrl,
   }) {
     return FeedItem(
       id: id ?? this.id,
@@ -70,6 +73,59 @@ class FeedItem {
       content: content ?? this.content,
       pubDate: pubDate ?? this.pubDate,
       category: category ?? this.category,
+      feedUrl: feedUrl ?? this.feedUrl,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'siteName': siteName,
+      'title': title,
+      'description': description,
+      'timeAgo': timeAgo,
+      'isBookmarked': isBookmarked,
+      'isRead': isRead,
+      'siteIconCodePoint': siteIcon.codePoint,
+      'siteIconFontFamily': siteIcon.fontFamily,
+      'siteIconFontPackage': siteIcon.fontPackage,
+      'iconColor': iconColor.toARGB32(),
+      'iconBackgroundColor': iconBackgroundColor.toARGB32(),
+      'link': link,
+      'imageUrl': imageUrl,
+      'content': content,
+      'pubDate': pubDate?.toIso8601String(),
+      'category': category,
+      'feedUrl': feedUrl,
+    };
+  }
+
+  factory FeedItem.fromJson(Map<String, dynamic> json) {
+    return FeedItem(
+      id: json['id'] as String? ?? '',
+      siteName: json['siteName'] as String? ?? 'Unknown',
+      title: json['title'] as String? ?? 'No Title',
+      description: json['description'] as String? ?? '',
+      timeAgo: json['timeAgo'] as String? ?? '',
+      isBookmarked: json['isBookmarked'] as bool? ?? false,
+      isRead: json['isRead'] as bool? ?? false,
+      siteIcon: IconData(
+        json['siteIconCodePoint'] as int? ?? Icons.rss_feed.codePoint,
+        fontFamily: json['siteIconFontFamily'] as String? ?? 'MaterialIcons',
+        fontPackage: json['siteIconFontPackage'] as String?,
+      ),
+      iconColor: Color(json['iconColor'] as int? ?? 0xFF12A8FF),
+      iconBackgroundColor: Color(
+        json['iconBackgroundColor'] as int? ?? 0xFF12A8FF,
+      ),
+      link: json['link'] as String? ?? '',
+      imageUrl: json['imageUrl'] as String?,
+      content: json['content'] as String?,
+      pubDate: json['pubDate'] != null
+          ? DateTime.tryParse(json['pubDate'] as String)
+          : null,
+      category: json['category'] as String? ?? 'Uncategorized',
+      feedUrl: json['feedUrl'] as String? ?? '',
     );
   }
 }
