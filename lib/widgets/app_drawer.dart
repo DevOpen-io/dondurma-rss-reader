@@ -147,6 +147,7 @@ class AppDrawer extends StatelessWidget {
           dividerColor: Colors.transparent, // Remove expansion lines
         ),
         child: ExpansionTile(
+          initiallyExpanded: provider.selectedCategory == targetCategory,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -165,53 +166,56 @@ class AppDrawer extends StatelessWidget {
             size: 22,
           ),
           title: GestureDetector(
+            behavior: HitTestBehavior.opaque,
             onTap: () {
               provider.selectCategory(targetCategory);
               Navigator.pop(context);
             },
-            child: Text(
-              title,
-              style: TextStyle(
-                color: isCategorySelected
-                    ? colorScheme.primary
-                    : Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.7),
-                fontWeight: isCategorySelected
-                    ? FontWeight.bold
-                    : FontWeight.normal,
-              ),
-            ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (count > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isCategorySelected
-                        ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+            child: Row(
+              children: [
+                Expanded(
                   child: Text(
-                    count.toString(),
+                    title,
                     style: TextStyle(
                       color: isCategorySelected
                           ? colorScheme.primary
-                          : Colors.grey,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                          : Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.7),
+                      fontWeight: isCategorySelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              const SizedBox(width: 8),
-              const Icon(Icons.expand_more, color: Colors.grey, size: 20),
-            ],
+                if (count > 0)
+                  Container(
+                    margin: const EdgeInsets.only(left: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isCategorySelected
+                          ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: TextStyle(
+                        color: isCategorySelected
+                            ? colorScheme.primary
+                            : Colors.grey,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
           children: feedSources.map((sub) {
             final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
