@@ -214,8 +214,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? Icons.check_circle
                       : Icons.check_circle_outline,
                   color: provider.showUnreadOnly
-                      ? Colors.blue
-                      : Colors.blue.withValues(alpha: 0.5),
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
                 onPressed: () {
                   provider.toggleShowUnreadOnly();
@@ -280,8 +282,10 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: Colors.grey,
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.6),
               fontSize: 12.0,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
@@ -298,8 +302,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               child: Text(
                 trailingText,
-                style: const TextStyle(
-                  color: Colors.grey,
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
                   fontSize: 11.0,
                   fontWeight: FontWeight.w600,
                 ),

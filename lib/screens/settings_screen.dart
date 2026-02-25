@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -13,19 +14,39 @@ class SettingsScreen extends StatelessWidget {
         _buildSectionHeader(context, 'General'),
         ListTile(
           leading: const Icon(Icons.palette),
-          title: const Text('Dark Mode'),
-          trailing: Switch(
-            value: context.watch<FeedProvider>().isDarkMode,
-            activeThumbColor: Theme.of(context).colorScheme.primary,
-            onChanged: (val) {
-              context.read<FeedProvider>().toggleTheme(val);
+          title: const Text('Theme'),
+          subtitle: const Text('Select application style'),
+          trailing: DropdownButton<AppTheme>(
+            value: context.watch<FeedProvider>().selectedTheme,
+            items: AppTheme.values.map((AppTheme theme) {
+              return DropdownMenuItem<AppTheme>(
+                value: theme,
+                child: Text(
+                  theme.displayName,
+                  style: const TextStyle(fontSize: 14),
+                ),
+              );
+            }).toList(),
+            borderRadius: BorderRadius.circular(12),
+            onChanged: (AppTheme? newValue) {
+              if (newValue != null) {
+                context.read<FeedProvider>().setTheme(newValue);
+              }
             },
+            underline: const SizedBox(),
           ),
         ),
         ListTile(
           leading: const Icon(Icons.language),
           title: const Text('Language'),
-          trailing: const Text('English', style: TextStyle(color: Colors.grey)),
+          trailing: Text(
+            'English',
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
           onTap: () {},
         ),
         Divider(
@@ -117,7 +138,14 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('Version'),
-          trailing: const Text('1.0.0', style: TextStyle(color: Colors.grey)),
+          trailing: Text(
+            '1.0.0',
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
         ),
         ListTile(
           leading: const Icon(Icons.star_border),

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/feed_item.dart';
 import '../services/feed_service.dart';
+import '../theme/app_theme.dart';
 
 class FeedSubscription {
   final String url;
@@ -42,7 +43,7 @@ class FeedProvider extends ChangeNotifier {
   Set<String> _bookmarkedItemIds = {};
   Set<String> _cachedItemIds = {};
   bool _isLoading = false;
-  bool _isDarkMode = true;
+  AppTheme _selectedTheme = AppTheme.system;
   int _offlineCacheLimit = 50;
   int _cacheIntervalSeconds = 0;
   Timer? _cacheTimer;
@@ -53,7 +54,7 @@ class FeedProvider extends ChangeNotifier {
   Set<String> get cachedItemIds => _cachedItemIds;
   Set<String> get bookmarkedItemIds => _bookmarkedItemIds;
   bool get isLoading => _isLoading;
-  bool get isDarkMode => _isDarkMode;
+  AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
   String? get selectedCategory => _selectedCategory;
@@ -63,11 +64,11 @@ class FeedProvider extends ChangeNotifier {
   bool _showUnreadOnly = false;
   bool get showUnreadOnly => _showUnreadOnly;
 
-  void toggleTheme(bool isDark) async {
-    _isDarkMode = isDark;
+  void setTheme(AppTheme theme) async {
+    _selectedTheme = theme;
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isDarkMode', isDark);
+    await prefs.setString('selectedTheme', theme.name);
   }
 
   Future<void> setOfflineCacheLimit(int limit) async {
@@ -285,7 +286,18 @@ class FeedProvider extends ChangeNotifier {
       _saveSubscriptions();
     }
 
-    _isDarkMode = prefs.getBool('isDarkMode') ?? true;
+    final themeName = prefs.getString('selectedTheme');
+    if (themeName != null) {
+      try {
+        _selectedTheme = AppTheme.values.firstWhere((e) => e.name == themeName);
+      } catch (_) {
+        _selectedTheme = AppTheme.system;
+      }
+    } else {
+      final isDark = prefs.getBool('isDarkMode') ?? true;
+      _selectedTheme = isDark ? AppTheme.dark : AppTheme.system;
+    }
+
     notifyListeners();
 
     // Initial refresh of all feeds

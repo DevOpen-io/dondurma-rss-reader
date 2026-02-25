@@ -16,11 +16,16 @@ class SubscriptionsScreen extends StatelessWidget {
         backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: subscriptions.isEmpty
-          ? const Center(
+          ? Center(
               child: Text(
                 'No feeds subscribed.\nAdd one from the Home Screen.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey, fontSize: 16),
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontSize: 16,
+                ),
               ),
             )
           : ListView.builder(
@@ -42,9 +47,9 @@ class SubscriptionsScreen extends StatelessWidget {
                       backgroundColor: Theme.of(
                         context,
                       ).colorScheme.onSurface.withValues(alpha: 0.1),
-                      child: const Icon(
+                      child: Icon(
                         Icons.rss_feed,
-                        color: Colors.blueAccent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                     title: Text(
@@ -57,8 +62,10 @@ class SubscriptionsScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Text(
                           sub.url,
-                          style: const TextStyle(
-                            color: Colors.grey,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                             fontSize: 12,
                           ),
                           maxLines: 1,

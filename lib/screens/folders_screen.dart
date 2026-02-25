@@ -127,15 +127,15 @@ class FoldersScreen extends StatelessWidget {
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.redAccent,
+                backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
                 provider.removeFeed(sub.url);
                 Navigator.pop(context);
               },
-              child: const Text(
+              child: Text(
                 'Delete',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Theme.of(context).colorScheme.onError),
               ),
             ),
           ],
@@ -161,10 +161,14 @@ class FoldersScreen extends StatelessWidget {
     final sortedCategoryNames = categories.keys.toList()..sort();
 
     if (sortedCategoryNames.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No folders yet. Categories will appear here.',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
         ),
       );
     }
@@ -195,16 +199,18 @@ class FoldersScreen extends StatelessWidget {
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                 ),
-                if (categoryName != 'Uncategorized')
-                  IconButton(
-                    icon: const Icon(Icons.edit, size: 20, color: Colors.grey),
-                    onPressed: () => _showEditCategoryDialog(
+                IconButton(
+                  icon: Icon(
+                    Icons.edit,
+                    size: 20,
+                    color: Theme.of(
                       context,
-                      categoryName,
-                      provider,
-                    ),
-                    tooltip: 'Rename Folder',
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
+                  onPressed: () =>
+                      _showEditCategoryDialog(context, categoryName, provider),
+                  tooltip: 'Rename Folder',
+                ),
               ],
             ),
             children: subs.map((sub) {
@@ -234,7 +240,9 @@ class FoldersScreen extends StatelessWidget {
                       sub.url,
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.grey.withValues(alpha: 0.7),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -243,10 +251,12 @@ class FoldersScreen extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.edit_outlined,
                             size: 18,
-                            color: Colors.grey,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
                           ),
                           onPressed: () => _showEditSubscriptionDialog(
                             context,
@@ -256,10 +266,10 @@ class FoldersScreen extends StatelessWidget {
                           tooltip: 'Edit Feed',
                         ),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline,
                             size: 18,
-                            color: Colors.redAccent,
+                            color: Theme.of(context).colorScheme.error,
                           ),
                           onPressed: () =>
                               _showDeleteConfirmation(context, sub, provider),

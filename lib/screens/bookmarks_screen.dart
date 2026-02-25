@@ -12,10 +12,14 @@ class BookmarksScreen extends StatelessWidget {
     final bookmarkedItems = provider.bookmarkedItems;
 
     if (bookmarkedItems.isEmpty) {
-      return const Center(
+      return Center(
         child: Text(
           'No bookmarked articles yet.',
-          style: TextStyle(color: Colors.grey),
+          style: TextStyle(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
+          ),
         ),
       );
     }

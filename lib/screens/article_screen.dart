@@ -114,7 +114,12 @@ class ArticleScreen extends StatelessWidget {
                     const SizedBox(height: 12),
                     Text(
                       dateStr,
-                      style: const TextStyle(color: Colors.grey, fontSize: 13),
+                      style: TextStyle(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                   const SizedBox(height: 24),
@@ -185,7 +190,9 @@ class ArticleScreen extends StatelessWidget {
                       label: const Text('Read on Original Webpage'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Colors.white,
+                        foregroundColor: Theme.of(
+                          context,
+                        ).colorScheme.onPrimary,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 24,
                           vertical: 12,

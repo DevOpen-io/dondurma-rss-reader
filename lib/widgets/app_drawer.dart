@@ -47,7 +47,7 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _buildSectionHeader('CATEGORIES'),
+                  _buildSectionHeader(context, 'CATEGORIES'),
                   _buildDrawerItem(
                     icon: Icons.article,
                     title: 'All News',
@@ -84,7 +84,7 @@ class AppDrawer extends StatelessWidget {
                   ),
 
                   if (categories.contains('Uncategorized')) ...[
-                    _buildSectionHeader('UNCATEGORIZED'),
+                    _buildSectionHeader(context, 'UNCATEGORIZED'),
                     _buildExpandableCategoryItem(
                       icon: Icons.rss_feed,
                       title: 'Random Blogs',
@@ -105,7 +105,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title) {
+  Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(
         left: 16.0,
@@ -115,8 +115,8 @@ class AppDrawer extends StatelessWidget {
       ),
       child: Text(
         title,
-        style: const TextStyle(
-          color: Colors.grey,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           fontSize: 12.0,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.2,
@@ -165,7 +165,11 @@ class AppDrawer extends StatelessWidget {
               : Colors.transparent,
           leading: Icon(
             icon,
-            color: isCategorySelected ? colorScheme.primary : Colors.grey,
+            color: isCategorySelected
+                ? colorScheme.primary
+                : Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
             size: 22,
           ),
           title: GestureDetector(
@@ -211,7 +215,9 @@ class AppDrawer extends StatelessWidget {
                       style: TextStyle(
                         color: isCategorySelected
                             ? colorScheme.primary
-                            : Colors.grey,
+                            : Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.5),
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -288,7 +294,9 @@ class AppDrawer extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         leading: Icon(
           icon,
-          color: isSelected ? colorScheme.primary : Colors.grey,
+          color: isSelected
+              ? colorScheme.primary
+              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           size: 22,
         ),
         title: Text(
@@ -314,7 +322,11 @@ class AppDrawer extends StatelessWidget {
                 child: Text(
                   count,
                   style: TextStyle(
-                    color: isSelected ? colorScheme.primary : Colors.grey,
+                    color: isSelected
+                        ? colorScheme.primary
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
