@@ -195,6 +195,22 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           if (_selectedIndex == 0) ...[
+            if (!_isSearching)
+              IconButton(
+                icon: Icon(
+                  provider.showUnreadOnly
+                      ? Icons.visibility_off
+                      : Icons.visibility,
+                  color: provider.showUnreadOnly
+                      ? Theme.of(context).colorScheme.primary
+                      : Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+                onPressed: () {
+                  provider.toggleShowUnreadOnly();
+                },
+              ),
             if (_isSearching)
               IconButton(
                 icon: const Icon(Icons.close),
@@ -213,22 +229,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     _isSearching = true;
                   });
-                },
-              ),
-            if (!_isSearching)
-              IconButton(
-                icon: Icon(
-                  provider.showUnreadOnly
-                      ? Icons.check_circle
-                      : Icons.check_circle_outline,
-                  color: provider.showUnreadOnly
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-                onPressed: () {
-                  provider.toggleShowUnreadOnly();
                 },
               ),
           ],
