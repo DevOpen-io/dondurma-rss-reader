@@ -104,6 +104,21 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                       ),
                       itemBuilder: (context, index) {
                         final feed = _popularFeeds[index];
+                        final String feedUrlStr = feed['url']!;
+                        final Uri feedUri = Uri.parse(feedUrlStr);
+                        String domain = feedUri.host;
+
+                        // If it's a google search redirect, extract the actual URL from the 'q' parameter
+                        if (domain.contains('google.com') &&
+                            feedUri.queryParameters.containsKey('q')) {
+                          try {
+                            final actualUrl = feedUri.queryParameters['q']!;
+                            domain = Uri.parse(actualUrl).host;
+                          } catch (e) {
+                            // fallback to google.com if parsing fails
+                          }
+                        }
+
                         return ListTile(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 20,
@@ -116,7 +131,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                               color: Colors.transparent,
                               child: CachedNetworkImage(
                                 imageUrl:
-                                    'https://www.google.com/s2/favicons?domain=${Uri.parse(feed['url']!).host}&sz=128',
+                                    'https://www.google.com/s2/favicons?domain=$domain&sz=128',
                                 fit: BoxFit.cover,
                                 placeholder: (context, url) => Container(
                                   color: Theme.of(
