@@ -1,0 +1,14 @@
+image: ghcr.io/cirruslabs/flutter:stable
+
+stages:
+  - build
+
+build_android:
+  stage: build
+  script:
+    - flutter clean
+    - flutter pub get
+    - flutter build apk --release
+  artifacts:
+    paths:
+      - build/app/outputs/flutter-apk/app-release.apk
