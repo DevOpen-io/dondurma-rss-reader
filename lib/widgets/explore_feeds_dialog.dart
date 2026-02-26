@@ -16,6 +16,7 @@ class ExploreFeedsDialog extends StatefulWidget {
 class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
   List<Map<String, String>> _popularFeeds = [];
   bool _isLoading = true;
+  String? _selectedCategory;
 
   @override
   void initState() {
@@ -88,134 +89,214 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.1),
             ),
+            if (!_isLoading && _popularFeeds.isNotEmpty) ...[
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 8.0,
+                ),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8.0),
+                        child: FilterChip(
+                          label: const Text('All'),
+                          selected: _selectedCategory == null,
+                          onSelected: (selected) {
+                            setState(() {
+                              _selectedCategory = null;
+                            });
+                          },
+                        ),
+                      ),
+                      ...(() {
+                        final cats = _popularFeeds
+                            .map((f) => f['category']!)
+                            .toSet()
+                            .toList();
+                        cats.sort();
+                        return cats.map((category) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 8.0),
+                            child: FilterChip(
+                              label: Text(category),
+                              selected: _selectedCategory == category,
+                              onSelected: (selected) {
+                                setState(() {
+                                  _selectedCategory = selected
+                                      ? category
+                                      : null;
+                                });
+                              },
+                            ),
+                          );
+                        });
+                      })(),
+                    ],
+                  ),
+                ),
+              ),
+              Divider(
+                height: 1,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+            ],
             Flexible(
               child: _isLoading
                   ? const Padding(
                       padding: EdgeInsets.all(32.0),
                       child: Center(child: CircularProgressIndicator()),
                     )
-                  : ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: _popularFeeds.length,
-                      separatorBuilder: (context, index) => Divider(
-                        height: 1,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.05),
-                      ),
-                      itemBuilder: (context, index) {
-                        final feed = _popularFeeds[index];
-                        final String feedUrlStr = feed['url']!;
-                        final provider = context.watch<FeedProvider>();
-                        final bool isSubscribed = provider.subscriptions.any(
-                          (s) => s.url == feedUrlStr,
-                        );
-                        final Uri feedUri = Uri.parse(feedUrlStr);
-                        String domain = feedUri.host;
+                  : Builder(
+                      builder: (context) {
+                        final displayedFeeds = _selectedCategory == null
+                            ? _popularFeeds
+                            : _popularFeeds
+                                  .where(
+                                    (f) => f['category'] == _selectedCategory,
+                                  )
+                                  .toList();
 
-                        // If it's a google search redirect, extract the actual URL from the 'q' parameter
-                        if (domain.contains('google.com') &&
-                            feedUri.queryParameters.containsKey('q')) {
-                          try {
-                            final actualUrl = feedUri.queryParameters['q']!;
-                            domain = Uri.parse(actualUrl).host;
-                          } catch (e) {
-                            // fallback to google.com if parsing fails
-                          }
+                        if (displayedFeeds.isEmpty) {
+                          return const Padding(
+                            padding: EdgeInsets.all(32.0),
+                            child: Center(
+                              child: Text('No feeds in this category'),
+                            ),
+                          );
                         }
 
-                        return ListTile(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 4,
+                        return ListView.separated(
+                          shrinkWrap: true,
+                          itemCount: displayedFeeds.length,
+                          separatorBuilder: (context, index) => Divider(
+                            height: 1,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.05),
                           ),
-                          leading: ClipOval(
-                            child: Container(
-                              width: 40,
-                              height: 40,
-                              color: Colors.transparent,
-                              child: CachedNetworkImage(
-                                imageUrl:
-                                    'https://www.google.com/s2/favicons?domain=$domain&sz=128',
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                                  child: Icon(
-                                    Icons.rss_feed,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimaryContainer,
-                                    size: 20,
-                                  ),
-                                ),
-                                errorWidget: (context, url, error) => Container(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primaryContainer,
-                                  child: Icon(
-                                    Icons.rss_feed,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimaryContainer,
-                                    size: 20,
+                          itemBuilder: (context, index) {
+                            final feed = displayedFeeds[index];
+                            final String feedUrlStr = feed['url']!;
+                            final provider = context.watch<FeedProvider>();
+                            final bool isSubscribed = provider.subscriptions
+                                .any((s) => s.url == feedUrlStr);
+                            final Uri feedUri = Uri.parse(feedUrlStr);
+                            String domain = feedUri.host;
+
+                            // If it's a google search redirect, extract the actual URL from the 'q' parameter
+                            if (domain.contains('google.com') &&
+                                feedUri.queryParameters.containsKey('q')) {
+                              try {
+                                final actualUrl = feedUri.queryParameters['q']!;
+                                domain = Uri.parse(actualUrl).host;
+                              } catch (e) {
+                                // fallback to google.com if parsing fails
+                              }
+                            }
+
+                            return ListTile(
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 4,
+                              ),
+                              leading: ClipOval(
+                                child: Container(
+                                  width: 40,
+                                  height: 40,
+                                  color: Colors.transparent,
+                                  child: CachedNetworkImage(
+                                    imageUrl:
+                                        'https://www.google.com/s2/favicons?domain=$domain&sz=128',
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primaryContainer,
+                                      child: Icon(
+                                        Icons.rss_feed,
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.onPrimaryContainer,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.primaryContainer,
+                                          child: Icon(
+                                            Icons.rss_feed,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onPrimaryContainer,
+                                            size: 20,
+                                          ),
+                                        ),
                                   ),
                                 ),
                               ),
-                            ),
-                          ),
-                          title: Text(
-                            feed['name']!,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 4.0),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 2,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.secondaryContainer,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    feed['category']!,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.onSecondaryContainer,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
+                              title: Text(
+                                feed['name']!,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
-                          ),
-                          trailing: Icon(
-                            isSubscribed
-                                ? Icons.check_circle
-                                : Icons.add_circle_outline,
-                            color: isSubscribed
-                                ? Theme.of(context).colorScheme.secondary
-                                : Theme.of(context).colorScheme.primary,
-                          ),
-                          onTap: isSubscribed
-                              ? null
-                              : () {
-                                  _showConfirmationDialog(
-                                    context,
-                                    feed['name']!,
-                                    feed['url']!,
-                                    feed['category']!,
-                                  );
-                                },
+                              ),
+                              subtitle: Padding(
+                                padding: const EdgeInsets.only(top: 4.0),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.secondaryContainer,
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                      child: Text(
+                                        feed['category']!,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.onSecondaryContainer,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              trailing: Icon(
+                                isSubscribed
+                                    ? Icons.check_circle
+                                    : Icons.add_circle_outline,
+                                color: isSubscribed
+                                    ? Theme.of(context).colorScheme.secondary
+                                    : Theme.of(context).colorScheme.primary,
+                              ),
+                              onTap: isSubscribed
+                                  ? null
+                                  : () {
+                                      _showConfirmationDialog(
+                                        context,
+                                        feed['name']!,
+                                        feed['url']!,
+                                        feed['category']!,
+                                      );
+                                    },
+                            );
+                          },
                         );
                       },
                     ),
