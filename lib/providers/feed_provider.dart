@@ -62,10 +62,10 @@ class FeedProvider extends ChangeNotifier {
   void _manageCacheTimer() {
     _cacheTimer?.cancel();
     if (settingsProvider == null) return;
-    final limit = settingsProvider!.offlineCacheLimit;
     final interval = settingsProvider!.cacheIntervalSeconds;
+    final syncEnabled = settingsProvider!.syncBackground;
 
-    if (limit > 0 && interval > 0) {
+    if (interval > 0 && syncEnabled) {
       _cacheTimer = Timer.periodic(Duration(seconds: interval), (timer) {
         refreshAll();
       });

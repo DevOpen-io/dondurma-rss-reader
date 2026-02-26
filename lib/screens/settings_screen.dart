@@ -41,6 +41,7 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.language),
           title: const Text('Language'),
+          subtitle: const Text('Change the app language'),
           trailing: Text(
             'English',
             style: TextStyle(
@@ -77,35 +78,38 @@ class SettingsScreen extends StatelessWidget {
             underline: const SizedBox(),
           ),
         ),
-        if (context.watch<SettingsProvider>().offlineCacheLimit > 0)
-          ListTile(
-            leading: const Icon(Icons.timer_outlined),
-            title: const Text('Cache Interval Time'),
-            subtitle: const Text('How often feeds sync automatically'),
-            trailing: DropdownButton<int>(
-              value: context.watch<SettingsProvider>().cacheIntervalSeconds,
-              items: const [
-                DropdownMenuItem<int>(value: 0, child: Text('None')),
-                DropdownMenuItem<int>(value: 30, child: Text('30 Seconds')),
-                DropdownMenuItem<int>(value: 60, child: Text('1 Minute')),
-                DropdownMenuItem<int>(value: 300, child: Text('5 Minutes')),
-                DropdownMenuItem<int>(value: 600, child: Text('10 Minutes')),
-              ],
-              borderRadius: BorderRadius.circular(12),
-              padding: const EdgeInsets.only(left: 12),
-              onChanged: (int? newValue) {
-                if (newValue != null) {
-                  context.read<SettingsProvider>().setCacheIntervalSeconds(
-                    newValue,
-                  );
-                }
-              },
-              underline: const SizedBox(),
-            ),
+        ListTile(
+          leading: const Icon(Icons.timer_outlined),
+          title: const Text('Auto Refresh Feeds'),
+          subtitle: const Text('How often feeds sync in background'),
+          trailing: DropdownButton<int>(
+            value:
+                [30, 60, 300].contains(
+                  context.watch<SettingsProvider>().cacheIntervalSeconds,
+                )
+                ? context.watch<SettingsProvider>().cacheIntervalSeconds
+                : 30,
+            items: const [
+              DropdownMenuItem<int>(value: 30, child: Text('30 Seconds')),
+              DropdownMenuItem<int>(value: 60, child: Text('1 Minute')),
+              DropdownMenuItem<int>(value: 300, child: Text('5 Minutes')),
+            ],
+            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 12),
+            onChanged: (int? newValue) {
+              if (newValue != null) {
+                context.read<SettingsProvider>().setCacheIntervalSeconds(
+                  newValue,
+                );
+              }
+            },
+            underline: const SizedBox(),
           ),
+        ),
         ListTile(
           leading: const Icon(Icons.delete_outline),
           title: const Text('Clear Cache'),
+          subtitle: const Text('Remove downloaded articles to free up space'),
           onTap: () async {
             await context.read<FeedProvider>().clearCache();
             if (context.mounted) {
@@ -118,15 +122,19 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.sync),
           title: const Text('Sync Background'),
+          subtitle: const Text('Fetch new articles while app is open'),
           trailing: Switch(
-            value: true,
+            value: context.watch<SettingsProvider>().syncBackground,
             activeThumbColor: Theme.of(context).colorScheme.primary,
-            onChanged: (val) {},
+            onChanged: (val) {
+              context.read<SettingsProvider>().setSyncBackground(val);
+            },
           ),
         ),
         ListTile(
           leading: const Icon(Icons.file_download_outlined),
           title: const Text('Export Subscriptions (OPML)'),
+          subtitle: const Text('Backup your feeds to a file'),
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -142,6 +150,7 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.info_outline),
           title: const Text('Version'),
+          subtitle: const Text('Current build of Ice Cream Reader'),
           trailing: Text(
             '1.0.0',
             style: TextStyle(
@@ -154,6 +163,7 @@ class SettingsScreen extends StatelessWidget {
         ListTile(
           leading: const Icon(Icons.star_border),
           title: const Text('Rate the App'),
+          subtitle: const Text('Support the development on the App Store'),
           onTap: () {},
         ),
       ],

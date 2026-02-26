@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:html/parser.dart' show parse;
 
 class FeedItem {
   final String id;
@@ -101,10 +102,19 @@ class FeedItem {
   }
 
   factory FeedItem.fromJson(Map<String, dynamic> json) {
+    String decodeHtml(String text) {
+      if (text.isEmpty) return text;
+      try {
+        return parse(text).documentElement?.text ?? text;
+      } catch (_) {
+        return text;
+      }
+    }
+
     return FeedItem(
       id: json['id'] as String? ?? '',
-      siteName: json['siteName'] as String? ?? 'Unknown',
-      title: json['title'] as String? ?? 'No Title',
+      siteName: decodeHtml(json['siteName'] as String? ?? 'Unknown'),
+      title: decodeHtml(json['title'] as String? ?? 'No Title'),
       description: json['description'] as String? ?? '',
       timeAgo: json['timeAgo'] as String? ?? '',
       isBookmarked: json['isBookmarked'] as bool? ?? false,

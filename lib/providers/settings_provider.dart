@@ -5,11 +5,13 @@ import '../theme/app_theme.dart';
 class SettingsProvider extends ChangeNotifier {
   AppTheme _selectedTheme = AppTheme.system;
   int _offlineCacheLimit = 50;
-  int _cacheIntervalSeconds = 0;
+  int _cacheIntervalSeconds = 30;
+  bool _syncBackground = true;
 
   AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
+  bool get syncBackground => _syncBackground;
 
   SettingsProvider() {
     _loadSettings();
@@ -19,7 +21,11 @@ class SettingsProvider extends ChangeNotifier {
     final box = Hive.box('settings');
 
     _offlineCacheLimit = box.get('offlineCacheLimit', defaultValue: 50);
-    _cacheIntervalSeconds = box.get('cacheIntervalSeconds', defaultValue: 0);
+    final savedInterval = box.get('cacheIntervalSeconds');
+    _cacheIntervalSeconds = (savedInterval == null || savedInterval == 0)
+        ? 30
+        : savedInterval;
+    _syncBackground = box.get('syncBackground', defaultValue: true);
 
     final themeName = box.get('selectedTheme');
     if (themeName != null) {
@@ -55,5 +61,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final box = Hive.box('settings');
     await box.put('cacheIntervalSeconds', interval);
+  }
+
+  Future<void> setSyncBackground(bool value) async {
+    _syncBackground = value;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('syncBackground', value);
   }
 }
