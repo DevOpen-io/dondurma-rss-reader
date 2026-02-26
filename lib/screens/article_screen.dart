@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../models/feed_item.dart';
 
 class ArticleScreen extends StatelessWidget {
@@ -73,14 +74,14 @@ class ArticleScreen extends StatelessWidget {
           children: [
             // If an image was extracted, display it here as a bleeding hero cover
             if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
-              Image.network(
-                item.imageUrl!,
+              CachedNetworkImage(
+                imageUrl: item.imageUrl!,
                 width: double.infinity,
                 height: 250,
                 fit: BoxFit.cover,
-                cacheWidth:
+                memCacheWidth:
                     800, // Downsample image to lower quality/memory for performance
-                errorBuilder: (context, error, stackTrace) {
+                errorWidget: (context, url, error) {
                   return const SizedBox.shrink(); // Hide if image fails to load
                 },
               ),
@@ -136,11 +137,11 @@ class ArticleScreen extends StatelessWidget {
                           final String? src =
                               extensionContext.attributes['src'];
                           if (src == null) return const SizedBox.shrink();
-                          return Image.network(
-                            src,
-                            cacheWidth: 800, // Clamp decoded memory size
+                          return CachedNetworkImage(
+                            imageUrl: src,
+                            memCacheWidth: 800, // Clamp decoded memory size
                             fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) =>
+                            errorWidget: (context, url, error) =>
                                 const SizedBox.shrink(),
                           );
                         },

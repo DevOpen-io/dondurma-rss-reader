@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
 import '../services/feed_service.dart';
 import '../theme/app_theme.dart';
@@ -67,15 +67,15 @@ class FeedProvider extends ChangeNotifier {
   void setTheme(AppTheme theme) async {
     _selectedTheme = theme;
     notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('selectedTheme', theme.name);
+    final box = Hive.box('settings');
+    await box.put('selectedTheme', theme.name);
   }
 
   Future<void> setOfflineCacheLimit(int limit) async {
     _offlineCacheLimit = limit;
     notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('offlineCacheLimit', limit);
+    final box = Hive.box('settings');
+    await box.put('offlineCacheLimit', limit);
     await _saveCachedItems();
 
     // Also restart timer logic
@@ -85,8 +85,8 @@ class FeedProvider extends ChangeNotifier {
   Future<void> setCacheIntervalSeconds(int interval) async {
     _cacheIntervalSeconds = interval;
     notifyListeners();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt('cacheIntervalSeconds', interval);
+    final box = Hive.box('settings');
+    await box.put('cacheIntervalSeconds', interval);
 
     // If user enabled interval caching (>0) and we can cache, immediately execute once
     final bool immediate = interval > 0 && _offlineCacheLimit > 0;
@@ -218,35 +218,33 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> _loadSubscriptions() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('settings');
 
-    _offlineCacheLimit = prefs.getInt('offlineCacheLimit') ?? 50;
-    _cacheIntervalSeconds = prefs.getInt('cacheIntervalSeconds') ?? 0;
+    _offlineCacheLimit = box.get('offlineCacheLimit', defaultValue: 50);
+    _cacheIntervalSeconds = box.get('cacheIntervalSeconds', defaultValue: 0);
 
     // Load read item IDs
-    final List<String>? readIds = prefs.getStringList('readItemIds');
+    final List<dynamic>? readIds = box.get('readItemIds');
     if (readIds != null) {
-      _readItemIds = readIds.toSet();
+      _readItemIds = readIds.cast<String>().toSet();
     }
 
     // Load bookmarked items (full objects)
-    final String? bookmarkedItemsData = prefs.getString('bookmarkedItemsJson');
+    final String? bookmarkedItemsData = box.get('bookmarkedItemsJson');
     if (bookmarkedItemsData != null) {
       final List<dynamic> jsonList = jsonDecode(bookmarkedItemsData);
       _savedBookmarks = jsonList.map((e) => FeedItem.fromJson(e)).toList();
       _bookmarkedItemIds = _savedBookmarks.map((e) => e.id).toSet();
     } else {
       // Fallback for legacy ID-only bookmarks
-      final List<String>? bookmarkedIds = prefs.getStringList(
-        'bookmarkedItemIds',
-      );
+      final List<dynamic>? bookmarkedIds = box.get('bookmarkedItemIds');
       if (bookmarkedIds != null) {
-        _bookmarkedItemIds = bookmarkedIds.toSet();
+        _bookmarkedItemIds = bookmarkedIds.cast<String>().toSet();
       }
     }
 
     // Load cached offline items
-    final String? cachedItemsData = prefs.getString('cachedItemsJson');
+    final String? cachedItemsData = box.get('cachedItemsJson');
     if (cachedItemsData != null) {
       try {
         final List<dynamic> jsonList = jsonDecode(cachedItemsData);
@@ -258,7 +256,7 @@ class FeedProvider extends ChangeNotifier {
       }
     }
 
-    final String? data = prefs.getString('subscriptions');
+    final String? data = box.get('subscriptions');
     if (data != null) {
       final List<dynamic> jsonList = jsonDecode(data);
       _subscriptions = jsonList
@@ -286,7 +284,7 @@ class FeedProvider extends ChangeNotifier {
       _saveSubscriptions();
     }
 
-    final themeName = prefs.getString('selectedTheme');
+    final themeName = box.get('selectedTheme');
     if (themeName != null) {
       try {
         _selectedTheme = AppTheme.values.firstWhere((e) => e.name == themeName);
@@ -294,7 +292,7 @@ class FeedProvider extends ChangeNotifier {
         _selectedTheme = AppTheme.system;
       }
     } else {
-      final isDark = prefs.getBool('isDarkMode') ?? true;
+      final isDark = box.get('isDarkMode', defaultValue: true);
       _selectedTheme = isDark ? AppTheme.dark : AppTheme.system;
     }
 
@@ -307,29 +305,29 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> _saveSubscriptions() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('settings');
     final String data = jsonEncode(
       _subscriptions.map((s) => s.toJson()).toList(),
     );
-    await prefs.setString('subscriptions', data);
+    await box.put('subscriptions', data);
   }
 
   Future<void> _saveReadStates() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('readItemIds', _readItemIds.toList());
+    final box = Hive.box('settings');
+    await box.put('readItemIds', _readItemIds.toList());
   }
 
   Future<void> _saveBookmarkStates() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('settings');
 
     // Save full items as JSON
     final String data = jsonEncode(
       _savedBookmarks.map((b) => b.toJson()).toList(),
     );
-    await prefs.setString('bookmarkedItemsJson', data);
+    await box.put('bookmarkedItemsJson', data);
 
     // Still save IDs for quick fallback or legacy compliance
-    await prefs.setStringList('bookmarkedItemIds', _bookmarkedItemIds.toList());
+    await box.put('bookmarkedItemIds', _bookmarkedItemIds.toList());
   }
 
   Future<void> addFeed(String url, String name, String category) async {
@@ -440,20 +438,20 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> _saveCachedItems() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('settings');
     final itemsToCache = _items.take(_offlineCacheLimit).toList();
     _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
     notifyListeners();
     final String encodedData = jsonEncode(
       itemsToCache.map((e) => e.toJson()).toList(),
     );
-    await prefs.setString('cachedItemsJson', encodedData);
+    await box.put('cachedItemsJson', encodedData);
   }
 
   Future<void> clearCache() async {
-    final prefs = await SharedPreferences.getInstance();
+    final box = Hive.box('settings');
     _cachedItemIds.clear();
-    await prefs.remove('cachedItemsJson');
+    await box.delete('cachedItemsJson');
     notifyListeners();
   }
 

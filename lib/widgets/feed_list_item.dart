@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../screens/article_screen.dart';
@@ -184,13 +185,13 @@ class _FeedListItemState extends State<FeedListItem>
                             child: widget.item.imageUrl != null
                                 ? Opacity(
                                     opacity: widget.item.isRead ? 0.6 : 1.0,
-                                    child: Image.network(
-                                      widget.item.imageUrl!,
+                                    child: CachedNetworkImage(
+                                      imageUrl: widget.item.imageUrl!,
                                       fit: BoxFit.cover,
-                                      cacheWidth:
+                                      memCacheWidth:
                                           144, // Force strict downsample (48 * 3x dpi)
-                                      errorBuilder:
-                                          (context, error, stackTrace) => Icon(
+                                      errorWidget: (context, url, error) =>
+                                          Icon(
                                             widget.item.siteIcon,
                                             color: widget.item.isRead
                                                 ? widget.item.iconColor
