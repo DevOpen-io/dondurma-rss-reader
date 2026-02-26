@@ -65,6 +65,61 @@
     "url": "https://www.omgubuntu.co.uk/feed"
   },
   {
+    "category": "Technology",
+    "name": "MIT Technology Review",
+    "url": "https://www.technologyreview.com/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "ZDNet",
+    "url": "https://www.zdnet.com/news/rss.xml"
+  },
+  {
+    "category": "Technology",
+    "name": "9to5Mac",
+    "url": "https://9to5mac.com/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "9to5Google",
+    "url": "https://9to5google.com/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "Android Authority",
+    "url": "https://www.androidauthority.com/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "MacRumors",
+    "url": "https://feeds.macrumors.com/MacRumors-All"
+  },
+  {
+    "category": "Technology",
+    "name": "Tom's Hardware",
+    "url": "https://www.tomshardware.com/feeds/all"
+  },
+  {
+    "category": "Technology",
+    "name": "AnandTech",
+    "url": "https://www.anandtech.com/rss/"
+  },
+  {
+    "category": "Technology",
+    "name": "SlashDot",
+    "url": "http://rss.slashdot.org/Slashdot/slashdotMain"
+  },
+  {
+    "category": "Technology",
+    "name": "The Register",
+    "url": "https://www.theregister.com/headlines.atom"
+  },
+  {
+    "category": "Technology",
+    "name": "ReadWrite",
+    "url": "https://readwrite.com/feed/"
+  },
+  {
     "category": "World News",
     "name": "BBC News",
     "url": "http://feeds.bbci.co.uk/news/world/rss.xml"
@@ -93,6 +148,41 @@
     "category": "World News",
     "name": "The Guardian",
     "url": "https://www.theguardian.com/world/rss"
+  },
+  {
+    "category": "World News",
+    "name": "Associated Press",
+    "url": "https://feeds.apnews.com/apnews/topnews"
+  },
+  {
+    "category": "World News",
+    "name": "NPR News",
+    "url": "https://feeds.npr.org/1001/rss.xml"
+  },
+  {
+    "category": "World News",
+    "name": "DW News",
+    "url": "https://rss.dw.com/rdf/rss-en-all"
+  },
+  {
+    "category": "World News",
+    "name": "France 24",
+    "url": "https://www.france24.com/en/rss"
+  },
+  {
+    "category": "World News",
+    "name": "VOA News",
+    "url": "https://www.voanews.com/api/z_qoeqiomit"
+  },
+  {
+    "category": "World News",
+    "name": "The Independent",
+    "url": "https://www.independent.co.uk/news/world/rss"
+  },
+  {
+    "category": "World News",
+    "name": "Washington Post World",
+    "url": "https://feeds.washingtonpost.com/rss/world"
   },
   {
     "category": "Programming",
@@ -145,6 +235,66 @@
     "url": "https://web.dev/feed.xml"
   },
   {
+    "category": "Programming",
+    "name": "GitHub Blog",
+    "url": "https://github.blog/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Stack Overflow Blog",
+    "url": "https://stackoverflow.blog/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Python Official Blog",
+    "url": "https://blog.python.org/feeds/posts/default"
+  },
+  {
+    "category": "Programming",
+    "name": "Go Blog",
+    "url": "https://go.dev/blog/feed.atom"
+  },
+  {
+    "category": "Programming",
+    "name": "Node.js Blog",
+    "url": "https://nodejs.org/en/feed/blog.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Vue.js Blog",
+    "url": "https://blog.vuejs.org/feed.rss"
+  },
+  {
+    "category": "Programming",
+    "name": "CSS Weekly",
+    "url": "https://css-weekly.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "JavaScript Weekly",
+    "url": "https://javascriptweekly.com/rss/1a1oc1f6"
+  },
+  {
+    "category": "Programming",
+    "name": "Lobsters",
+    "url": "https://lobste.rs/rss"
+  },
+  {
+    "category": "Programming",
+    "name": "InfoQ",
+    "url": "https://feed.infoq.com/"
+  },
+  {
+    "category": "Programming",
+    "name": "DZone",
+    "url": "https://dzone.com/aD/feed.rss"
+  },
+  {
+    "category": "Programming",
+    "name": "Martin Fowler",
+    "url": "https://martinfowler.com/feed.atom"
+  },
+  {
     "category": "Design",
     "name": "Smashing Magazine",
     "url": "https://www.smashingmagazine.com/feed/"
@@ -173,6 +323,41 @@
     "category": "Design",
     "name": "Awwwards",
     "url": "https://www.awwwards.com/blog/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "Nielsen Norman Group",
+    "url": "https://www.nngroup.com/feed/rss/"
+  },
+  {
+    "category": "Design",
+    "name": "Creative Bloq",
+    "url": "https://www.creativebloq.com/feed"
+  },
+  {
+    "category": "Design",
+    "name": "Codrops",
+    "url": "https://tympanus.net/codrops/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "Designmodo",
+    "url": "https://designmodo.com/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "Dribbble Blog",
+    "url": "https://dribbble.com/stories/feed"
+  },
+  {
+    "category": "Design",
+    "name": "Figma Blog",
+    "url": "https://www.figma.com/blog/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "A List Apart",
+    "url": "https://alistapart.com/main/feed/"
   },
   {
     "category": "Gaming",
@@ -230,6 +415,41 @@
     "url": "https://www.destructoid.com/feed/"
   },
   {
+    "category": "Gaming",
+    "name": "VG247",
+    "url": "https://www.vg247.com/feed"
+  },
+  {
+    "category": "Gaming",
+    "name": "Giant Bomb",
+    "url": "https://www.giantbomb.com/feeds/news/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Hardcore Gamer",
+    "url": "https://hardcoregamer.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Nintendo Life",
+    "url": "https://www.nintendolife.com/feeds/news"
+  },
+  {
+    "category": "Gaming",
+    "name": "Push Square",
+    "url": "https://www.pushsquare.com/feeds/news"
+  },
+  {
+    "category": "Gaming",
+    "name": "Pure Xbox",
+    "url": "https://www.purexbox.com/feeds/news"
+  },
+  {
+    "category": "Gaming",
+    "name": "Gamasutra (Game Developer)",
+    "url": "https://www.gamedeveloper.com/rss.xml"
+  },
+  {
     "category": "Sports",
     "name": "ESPN Top News",
     "url": "https://www.espn.com/espn/rss/news"
@@ -243,6 +463,41 @@
     "category": "Sports",
     "name": "Sky Sports",
     "url": "https://www.skysports.com/rss/12040"
+  },
+  {
+    "category": "Sports",
+    "name": "BBC Sport",
+    "url": "http://feeds.bbci.co.uk/sport/rss.xml"
+  },
+  {
+    "category": "Sports",
+    "name": "CBS Sports",
+    "url": "https://www.cbssports.com/rss/headlines/"
+  },
+  {
+    "category": "Sports",
+    "name": "The Athletic",
+    "url": "https://theathletic.com/rss-feed/"
+  },
+  {
+    "category": "Sports",
+    "name": "Sports Illustrated",
+    "url": "https://www.si.com/rss/si_topstories.rss"
+  },
+  {
+    "category": "Sports",
+    "name": "Yahoo Sports",
+    "url": "https://sports.yahoo.com/rss/"
+  },
+  {
+    "category": "Sports",
+    "name": "Goal.com",
+    "url": "https://www.goal.com/feeds/en/news"
+  },
+  {
+    "category": "Sports",
+    "name": "NBA Official News",
+    "url": "https://www.nba.com/feeds/rss/nba_rss.xml"
   },
   {
     "category": "Science",
@@ -270,6 +525,41 @@
     "url": "https://www.nationalgeographic.com/rss/index.xml"
   },
   {
+    "category": "Science",
+    "name": "Nature News",
+    "url": "https://www.nature.com/nature.rss"
+  },
+  {
+    "category": "Science",
+    "name": "New Scientist",
+    "url": "https://www.newscientist.com/feed/home/"
+  },
+  {
+    "category": "Science",
+    "name": "Popular Science",
+    "url": "https://www.popsci.com/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "Live Science",
+    "url": "https://www.livescience.com/feeds/all"
+  },
+  {
+    "category": "Science",
+    "name": "Phys.org",
+    "url": "https://phys.org/rss-feed/"
+  },
+  {
+    "category": "Science",
+    "name": "EurekAlert!",
+    "url": "https://www.eurekalert.org/rss/technology_engineering.xml"
+  },
+  {
+    "category": "Science",
+    "name": "The Planetary Society",
+    "url": "https://www.planetary.org/articles/rss"
+  },
+  {
     "category": "Anime",
     "name": "Anime News Network",
     "url": "https://www.animenewsnetwork.com/news/rss.xml"
@@ -295,6 +585,26 @@
     "url": "https://www.otakuusamagazine.com/feed/"
   },
   {
+    "category": "Anime",
+    "name": "AnimeUK News",
+    "url": "https://animeuknews.net/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Anime Trending",
+    "url": "https://anitrendz.net/news/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "HIDIVE Blog",
+    "url": "https://www.hidive.com/blog/rss"
+  },
+  {
+    "category": "Anime",
+    "name": "Manga Mogura RE",
+    "url": "https://mangamogura.com/feed/"
+  },
+  {
     "category": "Business",
     "name": "Forbes Business",
     "url": "https://www.forbes.com/business/feed/"
@@ -310,6 +620,41 @@
     "url": "https://www.ft.com/%3Fformat%3Drss"
   },
   {
+    "category": "Business",
+    "name": "Harvard Business Review",
+    "url": "https://hbr.org/feed"
+  },
+  {
+    "category": "Business",
+    "name": "The Economist",
+    "url": "https://www.economist.com/business/rss.xml"
+  },
+  {
+    "category": "Business",
+    "name": "Wall Street Journal Business",
+    "url": "https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml"
+  },
+  {
+    "category": "Business",
+    "name": "Inc. Magazine",
+    "url": "https://www.inc.com/rss/"
+  },
+  {
+    "category": "Business",
+    "name": "Fast Company",
+    "url": "https://www.fastcompany.com/latest/rss"
+  },
+  {
+    "category": "Business",
+    "name": "Business Insider",
+    "url": "https://www.businessinsider.com/rss"
+  },
+  {
+    "category": "Business",
+    "name": "Entrepreneur",
+    "url": "https://www.entrepreneur.com/latest.rss"
+  },
+  {
     "category": "Lifestyle",
     "name": "Lifehacker",
     "url": "https://lifehacker.com/rss"
@@ -323,5 +668,330 @@
     "category": "Lifestyle",
     "name": "TED Blog",
     "url": "https://blog.ted.com/feed/"
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Medium Daily Digest",
+    "url": "https://medium.com/feed/topic/self-improvement"
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Apartment Therapy",
+    "url": "https://www.apartmenttherapy.com/main.rss"
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Real Simple",
+    "url": "https://www.realsimple.com/feeds"
+  },
+  {
+    "category": "Lifestyle",
+    "name": "MindBodyGreen",
+    "url": "https://www.mindbodygreen.com/rss.xml"
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Refinery29",
+    "url": "https://www.refinery29.com/rss.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Anthropic Blog",
+    "url": "https://www.anthropic.com/rss.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "OpenAI Blog",
+    "url": "https://openai.com/blog/rss.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Google AI Blog",
+    "url": "https://blog.google/technology/ai/rss/"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "DeepMind Blog",
+    "url": "https://deepmind.google/blog/rss.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Hugging Face Blog",
+    "url": "https://huggingface.co/blog/feed.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Import AI (Jack Clark)",
+    "url": "https://importai.substack.com/feed"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "The Batch (Andrew Ng)",
+    "url": "https://www.deeplearning.ai/the-batch/feed/"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI Alignment Forum",
+    "url": "https://www.alignmentforum.org/feed.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Papers With Code",
+    "url": "https://paperswithcode.com/latest.rss"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "MIT News - AI",
+    "url": "https://news.mit.edu/rss/topic/artificial-intelligence2"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "CoinDesk",
+    "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "CoinTelegraph",
+    "url": "https://cointelegraph.com/rss"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "Decrypt",
+    "url": "https://decrypt.co/feed"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "The Motley Fool",
+    "url": "https://www.fool.com/feeds/index.aspx"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "Investopedia",
+    "url": "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "MarketWatch",
+    "url": "https://feeds.marketwatch.com/marketwatch/topstories/"
+  },
+  {
+    "category": "Finance & Crypto",
+    "name": "Seeking Alpha",
+    "url": "https://seekingalpha.com/feed.xml"
+  },
+  {
+    "category": "Health",
+    "name": "WebMD Health",
+    "url": "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC"
+  },
+  {
+    "category": "Health",
+    "name": "Healthline",
+    "url": "https://www.healthline.com/rss/health-news"
+  },
+  {
+    "category": "Health",
+    "name": "Medical News Today",
+    "url": "https://www.medicalnewstoday.com/rss"
+  },
+  {
+    "category": "Health",
+    "name": "Harvard Health Blog",
+    "url": "https://www.health.harvard.edu/blog/feed"
+  },
+  {
+    "category": "Health",
+    "name": "NHS News",
+    "url": "https://www.nhs.uk/news/rss.aspx"
+  },
+  {
+    "category": "Health",
+    "name": "WHO News",
+    "url": "https://www.who.int/rss-feeds/news-english.xml"
+  },
+  {
+    "category": "Environment",
+    "name": "The Guardian Environment",
+    "url": "https://www.theguardian.com/environment/rss"
+  },
+  {
+    "category": "Environment",
+    "name": "Climate Central",
+    "url": "https://www.climatecentral.org/feeds/news"
+  },
+  {
+    "category": "Environment",
+    "name": "Grist",
+    "url": "https://grist.org/feed/"
+  },
+  {
+    "category": "Environment",
+    "name": "Treehugger",
+    "url": "https://www.treehugger.com/feeds/latest/"
+  },
+  {
+    "category": "Environment",
+    "name": "Yale Environment 360",
+    "url": "https://e360.yale.edu/feed"
+  },
+  {
+    "category": "Environment",
+    "name": "Carbon Brief",
+    "url": "https://www.carbonbrief.org/feed"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Collider",
+    "url": "https://collider.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Screen Rant",
+    "url": "https://screenrant.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Variety",
+    "url": "https://variety.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "The Hollywood Reporter",
+    "url": "https://www.hollywoodreporter.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Deadline",
+    "url": "https://deadline.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "IndieWire",
+    "url": "https://www.indiewire.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "AV Club",
+    "url": "https://www.avclub.com/rss"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Roger Ebert",
+    "url": "https://www.rogerebert.com/feed"
+  },
+  {
+    "category": "Music",
+    "name": "Pitchfork",
+    "url": "https://pitchfork.com/rss/news/"
+  },
+  {
+    "category": "Music",
+    "name": "Rolling Stone",
+    "url": "https://www.rollingstone.com/music/music-news/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "NME",
+    "url": "https://www.nme.com/feed"
+  },
+  {
+    "category": "Music",
+    "name": "Stereogum",
+    "url": "https://www.stereogum.com/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "Billboard",
+    "url": "https://www.billboard.com/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "Consequence of Sound",
+    "url": "https://consequence.net/feed/"
+  },
+  {
+    "category": "Food",
+    "name": "Bon Appétit",
+    "url": "https://www.bonappetit.com/feed/rss"
+  },
+  {
+    "category": "Food",
+    "name": "Serious Eats",
+    "url": "https://www.seriouseats.com/feeds/all.rss.xml"
+  },
+  {
+    "category": "Food",
+    "name": "Eater",
+    "url": "https://www.eater.com/rss/index.xml"
+  },
+  {
+    "category": "Food",
+    "name": "Food52",
+    "url": "https://food52.com/blog.rss"
+  },
+  {
+    "category": "Food",
+    "name": "The Kitchn",
+    "url": "https://www.thekitchn.com/main.rss"
+  },
+  {
+    "category": "Food",
+    "name": "Epicurious",
+    "url": "https://www.epicurious.com/feed/news-and-trends/rss"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Krebs on Security",
+    "url": "https://krebsonsecurity.com/feed/"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Threatpost",
+    "url": "https://threatpost.com/feed/"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "The Hacker News",
+    "url": "https://feeds.feedburner.com/TheHackersNews"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Dark Reading",
+    "url": "https://www.darkreading.com/rss.xml"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Schneier on Security",
+    "url": "https://www.schneier.com/feed/atom/"
+  },
+  {
+    "category": "Cybersecurity",
+    "name": "Bleeping Computer",
+    "url": "https://www.bleepingcomputer.com/feed/"
+  },
+  {
+    "category": "Space",
+    "name": "SpaceX News",
+    "url": "https://www.spacex.com/updates/rss.xml"
+  },
+  {
+    "category": "Space",
+    "name": "SpaceFlightNow",
+    "url": "https://spaceflightnow.com/feed/"
+  },
+  {
+    "category": "Space",
+    "name": "Spaceflight Insider",
+    "url": "https://www.spaceflightinsider.com/feed/"
+  },
+  {
+    "category": "Space",
+    "name": "Astronomy Magazine",
+    "url": "https://astronomy.com/rss/news"
+  },
+  {
+    "category": "Space",
+    "name": "Sky & Telescope",
+    "url": "https://skyandtelescope.org/astronomy-news/feed/"
   }
 ]
