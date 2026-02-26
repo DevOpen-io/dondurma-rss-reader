@@ -94,7 +94,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16.0,
-                  vertical: 8.0,
+                  vertical: 12.0,
                 ),
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
@@ -104,7 +104,30 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                         padding: const EdgeInsets.only(right: 8.0),
                         child: FilterChip(
                           label: const Text('All'),
+                          labelStyle: TextStyle(
+                            color: _selectedCategory == null
+                                ? Theme.of(context).colorScheme.onPrimary
+                                : Theme.of(context).colorScheme.onSurface,
+                            fontWeight: FontWeight.w600,
+                          ),
                           selected: _selectedCategory == null,
+                          backgroundColor: Theme.of(context)
+                              .colorScheme
+                              .surfaceContainerHighest
+                              .withValues(alpha: 0.5),
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          checkmarkColor: Theme.of(
+                            context,
+                          ).colorScheme.onPrimary,
+                          showCheckmark: _selectedCategory == null,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: BorderSide.none,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
                           onSelected: (selected) {
                             setState(() {
                               _selectedCategory = null;
@@ -123,7 +146,32 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                             padding: const EdgeInsets.only(right: 8.0),
                             child: FilterChip(
                               label: Text(category),
+                              labelStyle: TextStyle(
+                                color: _selectedCategory == category
+                                    ? Theme.of(context).colorScheme.onPrimary
+                                    : Theme.of(context).colorScheme.onSurface,
+                                fontWeight: FontWeight.w600,
+                              ),
                               selected: _selectedCategory == category,
+                              backgroundColor: Theme.of(context)
+                                  .colorScheme
+                                  .surfaceContainerHighest
+                                  .withValues(alpha: 0.5),
+                              selectedColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              checkmarkColor: Theme.of(
+                                context,
+                              ).colorScheme.onPrimary,
+                              showCheckmark: _selectedCategory == category,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                                side: BorderSide.none,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
                               onSelected: (selected) {
                                 setState(() {
                                   _selectedCategory = selected
@@ -171,15 +219,13 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                           );
                         }
 
-                        return ListView.separated(
+                        return ListView.builder(
                           shrinkWrap: true,
-                          itemCount: displayedFeeds.length,
-                          separatorBuilder: (context, index) => Divider(
-                            height: 1,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.05),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
                           ),
+                          itemCount: displayedFeeds.length,
                           itemBuilder: (context, index) {
                             final feed = displayedFeeds[index];
                             final String feedUrlStr = feed['url']!;
@@ -200,101 +246,122 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                               }
                             }
 
-                            return ListTile(
-                              contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 4,
-                              ),
-                              leading: ClipOval(
-                                child: Container(
-                                  width: 40,
-                                  height: 40,
-                                  color: Colors.transparent,
-                                  child: CachedNetworkImage(
-                                    imageUrl:
-                                        'https://www.google.com/s2/favicons?domain=$domain&sz=128',
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      color: Theme.of(
-                                        context,
-                                      ).colorScheme.primaryContainer,
-                                      child: Icon(
-                                        Icons.rss_feed,
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.onPrimaryContainer,
-                                        size: 20,
-                                      ),
-                                    ),
-                                    errorWidget: (context, url, error) =>
-                                        Container(
-                                          color: Theme.of(
-                                            context,
-                                          ).colorScheme.primaryContainer,
-                                          child: Icon(
-                                            Icons.rss_feed,
-                                            color: Theme.of(
-                                              context,
-                                            ).colorScheme.onPrimaryContainer,
-                                            size: 20,
-                                          ),
-                                        ),
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12.0),
+                              child: ListTile(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(20),
+                                  side: BorderSide(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.surfaceContainerHighest,
+                                    width: 1,
                                   ),
                                 ),
-                              ),
-                              title: Text(
-                                feed['name']!,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
+                                tileColor: Theme.of(context)
+                                    .colorScheme
+                                    .surfaceContainerHighest
+                                    .withValues(alpha: 0.3),
+                                splashColor: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.1),
+                                contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 6,
                                 ),
-                              ),
-                              subtitle: Padding(
-                                padding: const EdgeInsets.only(top: 4.0),
-                                child: Row(
-                                  children: [
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8,
-                                        vertical: 2,
-                                      ),
-                                      decoration: BoxDecoration(
+                                leading: ClipOval(
+                                  child: Container(
+                                    width: 40,
+                                    height: 40,
+                                    color: Colors.transparent,
+                                    child: CachedNetworkImage(
+                                      imageUrl:
+                                          'https://www.google.com/s2/favicons?domain=$domain&sz=128',
+                                      fit: BoxFit.cover,
+                                      placeholder: (context, url) => Container(
                                         color: Theme.of(
                                           context,
-                                        ).colorScheme.secondaryContainer,
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                      child: Text(
-                                        feed['category']!,
-                                        style: TextStyle(
-                                          fontSize: 11,
+                                        ).colorScheme.primaryContainer,
+                                        child: Icon(
+                                          Icons.rss_feed,
                                           color: Theme.of(
                                             context,
-                                          ).colorScheme.onSecondaryContainer,
-                                          fontWeight: FontWeight.bold,
+                                          ).colorScheme.onPrimaryContainer,
+                                          size: 20,
                                         ),
                                       ),
+                                      errorWidget: (context, url, error) =>
+                                          Container(
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.primaryContainer,
+                                            child: Icon(
+                                              Icons.rss_feed,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.onPrimaryContainer,
+                                              size: 20,
+                                            ),
+                                          ),
                                     ),
-                                  ],
+                                  ),
                                 ),
+                                title: Text(
+                                  feed['name']!,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle: Padding(
+                                  padding: const EdgeInsets.only(top: 4.0),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(
+                                            context,
+                                          ).colorScheme.secondaryContainer,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          feed['category']!,
+                                          style: TextStyle(
+                                            fontSize: 11,
+                                            color: Theme.of(
+                                              context,
+                                            ).colorScheme.onSecondaryContainer,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                trailing: Icon(
+                                  isSubscribed
+                                      ? Icons.check_circle
+                                      : Icons.add_circle_outline,
+                                  color: isSubscribed
+                                      ? Theme.of(context).colorScheme.secondary
+                                      : Theme.of(context).colorScheme.primary,
+                                ),
+                                onTap: isSubscribed
+                                    ? null
+                                    : () {
+                                        _showConfirmationDialog(
+                                          context,
+                                          feed['name']!,
+                                          feed['url']!,
+                                          feed['category']!,
+                                        );
+                                      },
                               ),
-                              trailing: Icon(
-                                isSubscribed
-                                    ? Icons.check_circle
-                                    : Icons.add_circle_outline,
-                                color: isSubscribed
-                                    ? Theme.of(context).colorScheme.secondary
-                                    : Theme.of(context).colorScheme.primary,
-                              ),
-                              onTap: isSubscribed
-                                  ? null
-                                  : () {
-                                      _showConfirmationDialog(
-                                        context,
-                                        feed['name']!,
-                                        feed['url']!,
-                                        feed['category']!,
-                                      );
-                                    },
                             );
                           },
                         );
