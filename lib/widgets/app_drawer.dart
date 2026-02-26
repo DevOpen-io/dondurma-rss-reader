@@ -100,14 +100,13 @@ class AppDrawer extends StatelessWidget {
                       context: context,
                       isUncategorizedNode: true,
                     ),
+                    Divider(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.1),
+                      height: 32,
+                    ),
                   ],
-
-                  Divider(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.1),
-                    height: 32,
-                  ),
 
                   _buildSectionHeader(context, 'DISCOVER'),
                   _buildDrawerItem(

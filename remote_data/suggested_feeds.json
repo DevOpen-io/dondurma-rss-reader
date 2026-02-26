@@ -295,6 +295,91 @@
     "url": "https://martinfowler.com/feed.atom"
   },
   {
+    "category": "Programming",
+    "name": "TypeScript Blog",
+    "url": "https://devblogs.microsoft.com/typescript/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Kotlin Blog",
+    "url": "https://blog.jetbrains.com/kotlin/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Swift Blog (Apple)",
+    "url": "https://www.swift.org/atom.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Ruby on Rails Blog",
+    "url": "https://rubyonrails.org/feed/releases.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "PHP Blog",
+    "url": "https://www.php.net/feed.atom"
+  },
+  {
+    "category": "Programming",
+    "name": "C++ Blog (isocpp)",
+    "url": "https://isocpp.org/blog/rss"
+  },
+  {
+    "category": "Programming",
+    "name": "Java Blog (Oracle)",
+    "url": "https://blogs.oracle.com/java/rss"
+  },
+  {
+    "category": "Programming",
+    "name": "Scala Blog",
+    "url": "https://www.scala-lang.org/feed/blog.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Elixir Blog",
+    "url": "https://elixir-lang.org/blog.rss"
+  },
+  {
+    "category": "Programming",
+    "name": "Svelte Blog",
+    "url": "https://svelte.dev/blog/rss.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Deno Blog",
+    "url": "https://deno.com/feed"
+  },
+  {
+    "category": "Programming",
+    "name": "Bun Blog",
+    "url": "https://bun.sh/rss.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Zig Blog",
+    "url": "https://ziglang.org/news/index.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "JetBrains Blog",
+    "url": "https://blog.jetbrains.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Docker Blog",
+    "url": "https://www.docker.com/blog/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Kubernetes Blog",
+    "url": "https://kubernetes.io/feed.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "HashiCorp Blog",
+    "url": "https://www.hashicorp.com/blog/feed.xml"
+  },
+  {
     "category": "Design",
     "name": "Smashing Magazine",
     "url": "https://www.smashingmagazine.com/feed/"
@@ -450,6 +535,116 @@
     "url": "https://www.gamedeveloper.com/rss.xml"
   },
   {
+    "category": "Gaming",
+    "name": "Dexerto",
+    "url": "https://www.dexerto.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Dot Esports",
+    "url": "https://dotesports.com/feed"
+  },
+  {
+    "category": "Gaming",
+    "name": "TheGamer",
+    "url": "https://www.thegamer.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "GamesRadar+",
+    "url": "https://www.gamesradar.com/rss/"
+  },
+  {
+    "category": "Gaming",
+    "name": "WCCFTech Gaming",
+    "url": "https://wccftech.com/category/gaming/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Screen Rant Gaming",
+    "url": "https://screenrant.com/gaming/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Gameranx",
+    "url": "https://gameranx.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "MP1st",
+    "url": "https://mp1st.com/feed"
+  },
+  {
+    "category": "Gaming",
+    "name": "Twinfinite",
+    "url": "https://twinfinite.net/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Attack of the Fanboy",
+    "url": "https://attackofthefanboy.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "PlayStation Blog",
+    "url": "https://blog.playstation.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Xbox Wire",
+    "url": "https://news.xbox.com/en-us/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Nintendo Newsroom",
+    "url": "https://www.nintendo.com/en-US/feed/news/rss.xml"
+  },
+  {
+    "category": "Gaming",
+    "name": "Steam News",
+    "url": "https://store.steampowered.com/feeds/news.xml"
+  },
+  {
+    "category": "Esports",
+    "name": "ESPN Esports",
+    "url": "https://www.espn.com/espn/rss/esports/news"
+  },
+  {
+    "category": "Esports",
+    "name": "Dot Esports",
+    "url": "https://dotesports.com/feed"
+  },
+  {
+    "category": "Esports",
+    "name": "Dexerto",
+    "url": "https://www.dexerto.com/feed/"
+  },
+  {
+    "category": "Esports",
+    "name": "The Esports Observer",
+    "url": "https://esportsobserver.com/feed/"
+  },
+  {
+    "category": "Esports",
+    "name": "HLTV.org",
+    "url": "https://www.hltv.org/rss/news"
+  },
+  {
+    "category": "Esports",
+    "name": "Liquipedia News",
+    "url": "https://liquipedia.net/commons/index.php?title=Special:NewPages&feed=rss"
+  },
+  {
+    "category": "Esports",
+    "name": "Nerd Street",
+    "url": "https://www.nerdstreet.com/news?format=rss"
+  },
+  {
+    "category": "Esports",
+    "name": "ValorantZone",
+    "url": "https://www.thespike.gg/feed"
+  },
+  {
     "category": "Sports",
     "name": "ESPN Top News",
     "url": "https://www.espn.com/espn/rss/news"
@@ -603,6 +798,66 @@
     "category": "Anime",
     "name": "Manga Mogura RE",
     "url": "https://mangamogura.com/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Anime Feminist",
+    "url": "https://www.animefeminist.com/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Manga Tokyo",
+    "url": "https://www.manga.tokyo/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Anime Collective",
+    "url": "https://animecollective.com/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Anime Senpai",
+    "url": "https://www.animesenpai.net/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Anime Herald",
+    "url": "https://www.animeherald.com/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Funimation Blog",
+    "url": "https://www.funimation.com/blog/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "ComicBook Anime",
+    "url": "https://comicbook.com/anime/rss/"
+  },
+  {
+    "category": "Manga",
+    "name": "Manga Plus (Shonen Jump)",
+    "url": "https://mangaplus.shueisha.co.jp/feed"
+  },
+  {
+    "category": "Manga",
+    "name": "Comic Natalie",
+    "url": "https://natalie.mu/comic/feed/news"
+  },
+  {
+    "category": "Manga",
+    "name": "ComiXology Blog",
+    "url": "https://blog.comixology.com/feed/"
+  },
+  {
+    "category": "Manga",
+    "name": "ICv2 Manga News",
+    "url": "https://icv2.com/rss/manga"
+  },
+  {
+    "category": "Manga",
+    "name": "Baka-Updates Manga",
+    "url": "https://www.mangaupdates.com/rss.php"
   },
   {
     "category": "Business",
@@ -880,6 +1135,46 @@
     "url": "https://www.rogerebert.com/feed"
   },
   {
+    "category": "Movies & TV",
+    "name": "Den of Geek",
+    "url": "https://www.denofgeek.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Slash Film",
+    "url": "https://www.slashfilm.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Empire",
+    "url": "https://www.empireonline.com/movies/news/rss/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Digital Spy",
+    "url": "https://www.digitalspy.com/rss/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "CBR (Comic Book Resources)",
+    "url": "https://www.cbr.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "The Wrap",
+    "url": "https://www.thewrap.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "What's on Netflix",
+    "url": "https://www.whats-on-netflix.com/feed/"
+  },
+  {
+    "category": "Movies & TV",
+    "name": "What to Watch",
+    "url": "https://www.whattowatch.com/rss"
+  },
+  {
     "category": "Music",
     "name": "Pitchfork",
     "url": "https://pitchfork.com/rss/news/"
@@ -908,6 +1203,151 @@
     "category": "Music",
     "name": "Consequence of Sound",
     "url": "https://consequence.net/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "Hypebeast Music",
+    "url": "https://hypebeast.com/music/rss"
+  },
+  {
+    "category": "Music",
+    "name": "Complex Music",
+    "url": "https://www.complex.com/music/rss"
+  },
+  {
+    "category": "Music",
+    "name": "Genius News",
+    "url": "https://genius.com/news.rss"
+  },
+  {
+    "category": "Music",
+    "name": "The Source",
+    "url": "https://thesource.com/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "XXL Magazine",
+    "url": "https://www.xxlmag.com/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "HipHopDX",
+    "url": "https://hiphopdx.com/feed"
+  },
+  {
+    "category": "Music",
+    "name": "Resident Advisor",
+    "url": "https://ra.co/feed/news.xml"
+  },
+  {
+    "category": "Music",
+    "name": "The FADER",
+    "url": "https://www.thefader.com/rss"
+  },
+  {
+    "category": "Music",
+    "name": "Mixmag",
+    "url": "https://mixmag.net/feed"
+  },
+  {
+    "category": "Music",
+    "name": "DJ Mag",
+    "url": "https://djmag.com/rss.xml"
+  },
+  {
+    "category": "Music",
+    "name": "Kerrang!",
+    "url": "https://www.kerrang.com/feed"
+  },
+  {
+    "category": "Music",
+    "name": "Loudwire",
+    "url": "https://loudwire.com/feed/"
+  },
+  {
+    "category": "Music",
+    "name": "Metal Hammer",
+    "url": "https://www.loudersound.com/metal-hammer/rss"
+  },
+  {
+    "category": "Music",
+    "name": "Bandcamp Daily",
+    "url": "https://daily.bandcamp.com/feed/"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Hypebeast",
+    "url": "https://hypebeast.com/feed"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Complex",
+    "url": "https://www.complex.com/rss"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "The Ringer",
+    "url": "https://www.theringer.com/rss/index.xml"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Buzzfeed",
+    "url": "https://www.buzzfeed.com/index.xml"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Vulture",
+    "url": "https://www.vulture.com/feed/all/rss.xml"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Seventeen",
+    "url": "https://www.seventeen.com/rss/all.xml/"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "i-D Magazine",
+    "url": "https://i-d.vice.com/en/rss"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Nylon",
+    "url": "https://www.nylon.com/rss"
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Highsnobiety",
+    "url": "https://www.highsnobiety.com/feed/"
+  },
+  {
+    "category": "Comics & Superhero",
+    "name": "CBR (Comic Book Resources)",
+    "url": "https://www.cbr.com/feed/"
+  },
+  {
+    "category": "Comics & Superhero",
+    "name": "ComicBook.com",
+    "url": "https://comicbook.com/rss/"
+  },
+  {
+    "category": "Comics & Superhero",
+    "name": "Marvel.com News",
+    "url": "https://www.marvel.com/articles/rss"
+  },
+  {
+    "category": "Comics & Superhero",
+    "name": "DC Comics Blog",
+    "url": "https://www.dc.com/blog/rss"
+  },
+  {
+    "category": "Comics & Superhero",
+    "name": "Newsarama",
+    "url": "https://www.gamesradar.com/comics/rss/"
+  },
+  {
+    "category": "Comics & Superhero",
+    "name": "The Beat",
+    "url": "https://www.comicsbeat.com/feed/"
   },
   {
     "category": "Food",
