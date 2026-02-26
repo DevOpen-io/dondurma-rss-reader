@@ -12,7 +12,7 @@ class AddFeedDialog extends StatefulWidget {
 class _AddFeedDialogState extends State<AddFeedDialog> {
   final _urlController = TextEditingController();
   final _nameController = TextEditingController();
-  final _categoryController = TextEditingController();
+  TextEditingController? _autoCompleteCategoryController;
   final _formKey = GlobalKey<FormState>();
 
   @override
@@ -72,19 +72,51 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                 },
               ),
               const SizedBox(height: 12),
-              TextFormField(
-                controller: _categoryController,
-                decoration: InputDecoration(
-                  labelText: 'Category (Optional)',
-                  hintText: 'Technology, News, etc.',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.1),
-                ),
+              Autocomplete<String>(
+                optionsBuilder: (TextEditingValue textEditingValue) {
+                  final provider = context.read<FeedProvider>();
+                  final categories = provider.subscriptions
+                      .map((s) => s.category)
+                      .where((c) => c != 'Uncategorized' && c.isNotEmpty)
+                      .toSet()
+                      .toList();
+                  if (textEditingValue.text.isEmpty) {
+                    return categories;
+                  }
+                  return categories.where((String option) {
+                    return option.toLowerCase().contains(
+                      textEditingValue.text.toLowerCase(),
+                    );
+                  });
+                },
+                fieldViewBuilder:
+                    (
+                      context,
+                      textEditingController,
+                      focusNode,
+                      onFieldSubmitted,
+                    ) {
+                      _autoCompleteCategoryController = textEditingController;
+                      return TextFormField(
+                        controller: textEditingController,
+                        focusNode: focusNode,
+                        decoration: InputDecoration(
+                          labelText: 'Category (Optional)',
+                          hintText: 'Technology, News, etc.',
+                          suffixIcon: const Icon(Icons.arrow_drop_down),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          filled: true,
+                          fillColor: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.1),
+                        ),
+                        onFieldSubmitted: (String value) {
+                          onFieldSubmitted();
+                        },
+                      );
+                    },
               ),
             ],
           ),
@@ -100,7 +132,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
             if (_formKey.currentState!.validate()) {
               final url = _urlController.text.trim();
               final name = _nameController.text.trim();
-              String category = _categoryController.text.trim();
+              String category =
+                  _autoCompleteCategoryController?.text.trim() ?? '';
               if (category.isEmpty) {
                 category = 'Uncategorized'; // Explicitly set if empty
               }
@@ -137,7 +170,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void dispose() {
     _urlController.dispose();
     _nameController.dispose();
-    _categoryController.dispose();
+
     super.dispose();
   }
 }

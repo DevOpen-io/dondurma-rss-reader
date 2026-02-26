@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../providers/feed_provider.dart';
@@ -24,23 +24,29 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
 
   Future<void> _loadFeeds() async {
     try {
-      final String jsonString = await rootBundle.loadString(
-        'assets/data/suggested_feeds.json',
+      final response = await http.get(
+        Uri.parse(
+          'https://gitlab.com/alhaKK/ice_cream_rss_reader/-/raw/main/remote_data/suggested_feeds.json?ref_type=heads',
+        ),
       );
-      final List<dynamic> jsonData = json.decode(jsonString);
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
 
-      setState(() {
-        _popularFeeds = jsonData
-            .map(
-              (item) => {
-                'name': item['name'].toString(),
-                'url': item['url'].toString(),
-                'category': item['category'].toString(),
-              },
-            )
-            .toList();
-        _isLoading = false;
-      });
+        setState(() {
+          _popularFeeds = jsonData
+              .map(
+                (item) => {
+                  'name': item['name'].toString(),
+                  'url': item['url'].toString(),
+                  'category': item['category'].toString(),
+                },
+              )
+              .toList();
+          _isLoading = false;
+        });
+      } else {
+        throw Exception('Failed to load feeds: ${response.statusCode}');
+      }
     } catch (e) {
       debugPrint('Error loading suggested feeds: $e');
       setState(() {
@@ -107,26 +113,34 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                             child: Container(
                               width: 40,
                               height: 40,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.primaryContainer,
+                              color: Colors.transparent,
                               child: CachedNetworkImage(
                                 imageUrl:
                                     'https://www.google.com/s2/favicons?domain=${Uri.parse(feed['url']!).host}&sz=128',
                                 fit: BoxFit.cover,
-                                placeholder: (context, url) => Icon(
-                                  Icons.rss_feed,
+                                placeholder: (context, url) => Container(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.onPrimaryContainer,
-                                  size: 20,
+                                  ).colorScheme.primaryContainer,
+                                  child: Icon(
+                                    Icons.rss_feed,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                    size: 20,
+                                  ),
                                 ),
-                                errorWidget: (context, url, error) => Icon(
-                                  Icons.rss_feed,
+                                errorWidget: (context, url, error) => Container(
                                   color: Theme.of(
                                     context,
-                                  ).colorScheme.onPrimaryContainer,
-                                  size: 20,
+                                  ).colorScheme.primaryContainer,
+                                  child: Icon(
+                                    Icons.rss_feed,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimaryContainer,
+                                    size: 20,
+                                  ),
                                 ),
                               ),
                             ),
