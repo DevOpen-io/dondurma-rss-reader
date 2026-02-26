@@ -50,7 +50,7 @@ class FeedService {
   }
 
   List<FeedItem> _mapRssItems(RssFeed feed, String category, String sourceUrl) {
-    final siteName = feed.title ?? 'Unknown Site';
+    final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
     return feed.items.map((item) {
       String content = item.content?.value ?? item.description ?? '';
@@ -70,7 +70,7 @@ class FeedService {
       return FeedItem(
         id: item.guid ?? item.link ?? DateTime.now().toIso8601String(),
         siteName: siteName,
-        title: item.title ?? 'No Title',
+        title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: description,
         timeAgo: '', // Will be calculated by UI based on pubDate
         siteIcon: Icons.rss_feed,
@@ -91,7 +91,7 @@ class FeedService {
     String category,
     String sourceUrl,
   ) {
-    final siteName = feed.title ?? 'Unknown Site';
+    final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
     return feed.items.map((item) {
       String content = item.content ?? item.summary ?? '';
@@ -120,7 +120,7 @@ class FeedService {
             item.id ??
             (link.isNotEmpty ? link : DateTime.now().toIso8601String()),
         siteName: siteName,
-        title: item.title ?? 'No Title',
+        title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: description,
         timeAgo: '',
         siteIcon: Icons.rss_feed,
@@ -142,6 +142,13 @@ class FeedService {
     final String parsedString =
         parse(document.body?.text ?? '').documentElement?.text ?? '';
     return parsedString.replaceAll('\n', ' ').trim();
+  }
+
+  // Helper to decode HTML entities like &#8216;
+  String _decodeHtmlEntities(String text) {
+    if (text.isEmpty) return text;
+    final document = parse(text);
+    return document.documentElement?.text ?? text;
   }
 
   // Helper to extract all <img> src attributes from HTML content
