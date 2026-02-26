@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:dart_rss/dart_rss.dart';
 import 'package:html/parser.dart' show parse;
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
 
@@ -22,7 +23,12 @@ class FeedService {
         );
       }
 
-      final bodyString = response.body;
+      String bodyString;
+      try {
+        bodyString = utf8.decode(response.bodyBytes, allowMalformed: true);
+      } catch (e) {
+        bodyString = response.body;
+      }
 
       try {
         final rssFeed = RssFeed.parse(bodyString);

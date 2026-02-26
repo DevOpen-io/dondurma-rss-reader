@@ -826,18 +826,8 @@
   },
   {
     "category": "Anime",
-    "name": "Funimation Blog",
-    "url": "https://www.funimation.com/blog/feed/"
-  },
-  {
-    "category": "Anime",
     "name": "ComicBook Anime",
     "url": "https://comicbook.com/anime/rss/"
-  },
-  {
-    "category": "Manga",
-    "name": "Manga Plus (Shonen Jump)",
-    "url": "https://mangaplus.shueisha.co.jp/feed"
   },
   {
     "category": "Manga",
