@@ -368,6 +368,25 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                       },
                     ),
             ),
+            Padding(
+              padding: const EdgeInsets.only(
+                bottom: 16.0,
+                left: 16.0,
+                right: 16.0,
+                top: 4.0,
+              ),
+              child: Text(
+                'Warning: Some RSS sources may be broken or no longer work.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ),
           ],
         ),
       ),
