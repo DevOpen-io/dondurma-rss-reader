@@ -45,11 +45,10 @@ dependencies:
   cached_network_image_ce: ^4.2.0
   hive_ce: ^2.19.3
   hive_ce_flutter: ^2.3.4
+  google_fonts: ^8.0.2
 
 dev_dependencies:
   flutter_test:
-    sdk: flutter
-  flutter_driver:
     sdk: flutter
 
   # The "flutter_lints" package below contains a set of recommended lints to

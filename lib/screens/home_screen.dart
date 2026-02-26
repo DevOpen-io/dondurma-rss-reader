@@ -160,31 +160,39 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: _isSearching && _selectedIndex == 0
-            ? TextField(
-                controller: _searchController,
-                autofocus: true,
-                decoration: InputDecoration(
-                  hintText: 'Search feeds...',
-                  border: InputBorder.none,
-                  hintStyle: TextStyle(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+        title: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          transitionBuilder: (Widget child, Animation<double> animation) {
+            return FadeTransition(opacity: animation, child: child);
+          },
+          child: _isSearching && _selectedIndex == 0
+              ? TextField(
+                  key: const ValueKey('searchField'),
+                  controller: _searchController,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    hintText: 'Search feeds...',
+                    border: InputBorder.none,
+                    hintStyle: TextStyle(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: 16,
+                  ),
+                  onChanged: (value) {
+                    provider.setSearchQuery(value);
+                  },
+                )
+              : Text(
+                  appBarTitle,
+                  key: ValueKey(appBarTitle),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurface,
-                  fontSize: 16,
-                ),
-                onChanged: (value) {
-                  provider.setSearchQuery(value);
-                },
-              )
-            : Text(
-                appBarTitle,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
+        ),
         actions: [
           if (_selectedIndex == 0) ...[
             if (_isSearching)

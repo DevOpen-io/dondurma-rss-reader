@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 enum AppTheme {
   system,
@@ -97,6 +98,7 @@ class AppThemeBuilder {
         }),
       ),
       useMaterial3: true,
+      textTheme: GoogleFonts.outfitTextTheme(),
     );
   }
 
@@ -137,7 +139,9 @@ class AppThemeBuilder {
           return const IconThemeData(color: Colors.white54);
         }),
       ),
-      textTheme: const TextTheme(bodyMedium: TextStyle(color: Colors.white)),
+      textTheme: GoogleFonts.outfitTextTheme(
+        ThemeData(brightness: Brightness.dark).textTheme,
+      ),
       useMaterial3: true,
     );
   }
@@ -205,7 +209,11 @@ class AppThemeBuilder {
           return IconThemeData(color: flavor.subtext0);
         }),
       ),
-      textTheme: TextTheme(bodyMedium: TextStyle(color: flavor.text)),
+      textTheme: GoogleFonts.outfitTextTheme(
+        ThemeData(
+          brightness: isLight ? Brightness.light : Brightness.dark,
+        ).textTheme,
+      ).apply(bodyColor: flavor.text, displayColor: flavor.text),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: flavor.sapphire,
         foregroundColor: flavor.base,
