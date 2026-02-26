@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
-import '../screens/article_screen.dart';
 
 class FeedListItem extends StatefulWidget {
   final FeedItem item;
@@ -163,13 +163,7 @@ class _FeedListItemState extends State<FeedListItem>
                           context.read<FeedProvider>().markAsRead(
                             widget.item.id,
                           );
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ArticleScreen(item: widget.item),
-                            ),
-                          );
+                          context.push('/article', extra: widget.item);
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),

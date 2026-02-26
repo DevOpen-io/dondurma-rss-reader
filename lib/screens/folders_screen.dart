@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
 
@@ -28,7 +29,7 @@ class FoldersScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -37,7 +38,7 @@ class FoldersScreen extends StatelessWidget {
                 if (newName.isNotEmpty && newName != currentCategory) {
                   provider.renameCategory(currentCategory, newName);
                 }
-                Navigator.pop(context);
+                context.pop();
               },
               child: const Text('Save'),
             ),
@@ -87,7 +88,7 @@ class FoldersScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -97,7 +98,7 @@ class FoldersScreen extends StatelessWidget {
                 if (newName.isNotEmpty && newUrl.isNotEmpty) {
                   provider.editSubscription(sub.url, newUrl, newName);
                 }
-                Navigator.pop(context);
+                context.pop();
               },
               child: const Text('Save'),
             ),
@@ -122,7 +123,7 @@ class FoldersScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -131,7 +132,7 @@ class FoldersScreen extends StatelessWidget {
               ),
               onPressed: () {
                 provider.removeFeed(sub.url);
-                Navigator.pop(context);
+                context.pop();
               },
               child: Text(
                 'Delete',
@@ -160,7 +161,7 @@ class FoldersScreen extends StatelessWidget {
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => context.pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -169,7 +170,7 @@ class FoldersScreen extends StatelessWidget {
               ),
               onPressed: () {
                 provider.removeCategory(categoryName);
-                Navigator.pop(context);
+                context.pop();
               },
               child: Text(
                 'Delete All',

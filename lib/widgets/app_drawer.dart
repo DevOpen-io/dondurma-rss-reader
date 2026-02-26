@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
 import 'explore_feeds_dialog.dart';
@@ -60,7 +61,7 @@ class AppDrawer extends StatelessWidget {
                     onTap: () {
                       provider.selectCategory(null);
                       onFeedSelected?.call();
-                      Navigator.pop(context);
+                      context.pop();
                     },
                   ),
 
@@ -114,7 +115,7 @@ class AppDrawer extends StatelessWidget {
                     title: 'Suggested Feeds',
                     context: context,
                     onTap: () {
-                      Navigator.pop(context);
+                      context.pop();
                       showDialog(
                         context: context,
                         builder: (context) => const ExploreFeedsDialog(),
@@ -203,7 +204,7 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               provider.selectCategory(targetCategory);
               onFeedSelected?.call();
-              Navigator.pop(context);
+              context.pop();
             },
             child: Row(
               children: [
@@ -297,7 +298,7 @@ class AppDrawer extends StatelessWidget {
                 onTap: () {
                   provider.selectFeed(sub.url);
                   onFeedSelected?.call();
-                  Navigator.pop(context);
+                  context.pop();
                 },
               ),
             );

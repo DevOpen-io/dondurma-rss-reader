@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'providers/feed_provider.dart';
 import 'theme/app_theme.dart';
-import 'screens/home_screen.dart';
+import 'router/app_router.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,11 +30,11 @@ class MyApp extends StatelessWidget {
       platformBrightness,
     );
 
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'RSS Reader',
       debugShowCheckedModeBanner: false,
       theme: themeData,
-      home: const HomeScreen(),
+      routerConfig: appRouter,
     );
   }
 }

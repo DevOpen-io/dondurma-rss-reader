@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
 
@@ -144,7 +145,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
       actionsPadding: const EdgeInsets.only(right: 24, bottom: 24, top: 16),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: () => context.pop(),
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
@@ -170,7 +171,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                   .addFeed(url, name, category)
                   .then((_) {
                     if (context.mounted) {
-                      Navigator.pop(context);
+                      context.pop();
                     }
                   })
                   .catchError((error) {

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
@@ -76,7 +77,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                   ),
                   IconButton(
                     icon: const Icon(Icons.close),
-                    onPressed: () => Navigator.of(context).pop(),
+                    onPressed: () => context.pop(),
                   ),
                 ],
               ),
@@ -242,7 +243,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
           content: Text('Do you want to add "$name" to your feed list?'),
           actions: [
             TextButton(
-              onPressed: () => Navigator.of(context).pop(),
+              onPressed: () => context.pop(),
               child: const Text('Cancel'),
             ),
             ElevatedButton(
@@ -252,8 +253,8 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
               ),
               onPressed: () {
                 parentContext.read<FeedProvider>().addFeed(url, name, category);
-                Navigator.of(context).pop(); // Close confirm dialog
-                Navigator.of(parentContext).pop(); // Close explore dialog
+                context.pop(); // Close confirm dialog
+                parentContext.pop(); // Close explore dialog
 
                 ScaffoldMessenger.of(parentContext).showSnackBar(
                   SnackBar(

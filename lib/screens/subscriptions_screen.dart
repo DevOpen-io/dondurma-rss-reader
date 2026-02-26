@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
 
@@ -124,13 +125,13 @@ class SubscriptionsScreen extends StatelessWidget {
         content: Text('Are you sure you want to stop following "$name"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx),
+            onPressed: () => ctx.pop(),
             child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
           ),
           TextButton(
             onPressed: () {
               provider.removeFeed(url);
-              Navigator.pop(ctx);
+              ctx.pop();
             },
             child: const Text(
               'Remove',
