@@ -105,6 +105,10 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                       itemBuilder: (context, index) {
                         final feed = _popularFeeds[index];
                         final String feedUrlStr = feed['url']!;
+                        final provider = context.watch<FeedProvider>();
+                        final bool isSubscribed = provider.subscriptions.any(
+                          (s) => s.url == feedUrlStr,
+                        );
                         final Uri feedUri = Uri.parse(feedUrlStr);
                         String domain = feedUri.host;
 
@@ -194,17 +198,23 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                             ),
                           ),
                           trailing: Icon(
-                            Icons.add_circle_outline,
-                            color: Theme.of(context).colorScheme.primary,
+                            isSubscribed
+                                ? Icons.check_circle
+                                : Icons.add_circle_outline,
+                            color: isSubscribed
+                                ? Theme.of(context).colorScheme.secondary
+                                : Theme.of(context).colorScheme.primary,
                           ),
-                          onTap: () {
-                            _showConfirmationDialog(
-                              context,
-                              feed['name']!,
-                              feed['url']!,
-                              feed['category']!,
-                            );
-                          },
+                          onTap: isSubscribed
+                              ? null
+                              : () {
+                                  _showConfirmationDialog(
+                                    context,
+                                    feed['name']!,
+                                    feed['url']!,
+                                    feed['category']!,
+                                  );
+                                },
                         );
                       },
                     ),
