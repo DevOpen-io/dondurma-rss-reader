@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../providers/feed_provider.dart';
 
 class ExploreFeedsDialog extends StatelessWidget {
@@ -166,13 +167,30 @@ class ExploreFeedsDialog extends StatelessWidget {
                       horizontal: 20,
                       vertical: 4,
                     ),
-                    leading: CircleAvatar(
-                      backgroundColor: Theme.of(
-                        context,
-                      ).colorScheme.primaryContainer,
-                      child: Icon(
-                        Icons.rss_feed,
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                    leading: ClipOval(
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        child: CachedNetworkImage(
+                          imageUrl:
+                              'https://www.google.com/s2/favicons?domain=${Uri.parse(feed['url']!).host}&sz=128',
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Icon(
+                            Icons.rss_feed,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                            size: 20,
+                          ),
+                          errorWidget: (context, url, error) => Icon(
+                            Icons.rss_feed,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onPrimaryContainer,
+                            size: 20,
+                          ),
+                        ),
                       ),
                     ),
                     title: Text(
