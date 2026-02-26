@@ -17,9 +17,44 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final baseInputDecoration = InputDecoration(
+      filled: true,
+      fillColor: colorScheme.onSurface.withValues(alpha: 0.05),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide.none,
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: BorderSide(color: colorScheme.primary, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+    );
+
     return AlertDialog(
-      title: const Text('Add RSS Feed'),
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      title: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: colorScheme.primaryContainer,
+              shape: BoxShape.circle,
+            ),
+            child: Icon(Icons.rss_feed, color: colorScheme.onPrimaryContainer),
+          ),
+          const SizedBox(width: 12),
+          const Text(
+            'Add RSS Feed',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+      backgroundColor: colorScheme.surface,
+      contentPadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
       content: Form(
         key: _formKey,
         child: SingleChildScrollView(
@@ -28,17 +63,10 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
             children: [
               TextFormField(
                 controller: _urlController,
-                decoration: InputDecoration(
+                decoration: baseInputDecoration.copyWith(
                   labelText: 'Feed URL',
-                  hintText:
-                      'e.g. https://techcrunch.com/feed/', // Add clear hint here
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  hintText: 'e.g. https://techcrunch.com/feed/',
+                  prefixIcon: Icon(Icons.link, color: colorScheme.primary),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -54,15 +82,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               const SizedBox(height: 12),
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(
+                decoration: baseInputDecoration.copyWith(
                   labelText: 'Site Name',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  filled: true,
-                  fillColor: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  prefixIcon: Icon(Icons.title, color: colorScheme.primary),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -100,17 +122,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                       return TextFormField(
                         controller: textEditingController,
                         focusNode: focusNode,
-                        decoration: InputDecoration(
+                        decoration: baseInputDecoration.copyWith(
                           labelText: 'Category (Optional)',
                           hintText: 'Technology, News, etc.',
-                          suffixIcon: const Icon(Icons.arrow_drop_down),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
+                          prefixIcon: Icon(
+                            Icons.folder_outlined,
+                            color: colorScheme.primary,
                           ),
-                          filled: true,
-                          fillColor: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.1),
+                          suffixIcon: const Icon(Icons.arrow_drop_down),
                         ),
                         onFieldSubmitted: (String value) {
                           onFieldSubmitted();
@@ -122,12 +141,19 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
           ),
         ),
       ),
+      actionsPadding: const EdgeInsets.only(right: 24, bottom: 24, top: 16),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+          child: Text(
+            'Cancel',
+            style: TextStyle(color: colorScheme.onSurfaceVariant),
+          ),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               final url = _urlController.text.trim();
@@ -156,11 +182,16 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                   });
             }
           },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.white,
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
           ),
-          child: const Text('Add'),
+          child: const Text(
+            'Save Feed',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
         ),
       ],
     );
