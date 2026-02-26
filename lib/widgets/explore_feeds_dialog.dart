@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../providers/feed_provider.dart';
+import '../providers/subscription_provider.dart';
 
 class ExploreFeedsDialog extends StatefulWidget {
   const ExploreFeedsDialog({super.key});
@@ -229,8 +230,10 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                           itemBuilder: (context, index) {
                             final feed = displayedFeeds[index];
                             final String feedUrlStr = feed['url']!;
-                            final provider = context.watch<FeedProvider>();
-                            final bool isSubscribed = provider.subscriptions
+                            final subscriptionProvider = context
+                                .watch<SubscriptionProvider>();
+                            final bool isSubscribed = subscriptionProvider
+                                .subscriptions
                                 .any((s) => s.url == feedUrlStr);
                             final Uri feedUri = Uri.parse(feedUrlStr);
                             String domain = feedUri.host;
@@ -419,11 +422,19 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                 foregroundColor: Theme.of(context).colorScheme.onPrimary,
               ),
               onPressed: () {
-                parentContext.read<FeedProvider>().addFeed(url, name, category);
+                final scaffoldMessenger = ScaffoldMessenger.of(parentContext);
+                parentContext
+                    .read<SubscriptionProvider>()
+                    .addFeed(url, name, category)
+                    .then((_) {
+                      if (parentContext.mounted) {
+                        parentContext.read<FeedProvider>().refreshAll();
+                      }
+                    });
                 context.pop(); // Close confirm dialog
                 parentContext.pop(); // Close explore dialog
 
-                ScaffoldMessenger.of(parentContext).showSnackBar(
+                scaffoldMessenger.showSnackBar(
                   SnackBar(
                     content: Text('Added $name to your subscriptions!'),
                     behavior: SnackBarBehavior.floating,

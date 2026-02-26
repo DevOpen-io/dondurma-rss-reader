@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/subscription_provider.dart';
+import '../models/feed_subscription.dart';
 import 'explore_feeds_dialog.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -12,7 +14,8 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<FeedProvider>();
-    final categories = provider.categories.toList()..sort();
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
+    final categories = subscriptionProvider.categories.toList()..sort();
 
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -68,7 +71,7 @@ class AppDrawer extends StatelessWidget {
                   ...categories.where((c) => c != 'Uncategorized').map((
                     category,
                   ) {
-                    final feedSources = provider.subscriptions
+                    final feedSources = subscriptionProvider.subscriptions
                         .where((sub) => sub.category == category)
                         .toList();
 
@@ -93,7 +96,7 @@ class AppDrawer extends StatelessWidget {
                     _buildExpandableCategoryItem(
                       icon: Icons.rss_feed,
                       title: 'Random Blogs',
-                      feedSources: provider.subscriptions
+                      feedSources: subscriptionProvider.subscriptions
                           .where((sub) => sub.category == 'Uncategorized')
                           .toList(),
                       provider: provider,

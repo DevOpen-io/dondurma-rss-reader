@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'providers/feed_provider.dart';
+import 'providers/settings_provider.dart';
+import 'providers/subscription_provider.dart';
+import 'providers/bookmark_provider.dart';
 import 'theme/app_theme.dart';
 import 'router/app_router.dart';
 
@@ -12,7 +15,22 @@ void main() async {
 
   runApp(
     MultiProvider(
-      providers: [ChangeNotifierProvider(create: (_) => FeedProvider())],
+      providers: [
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        ChangeNotifierProvider(create: (_) => BookmarkProvider()),
+        ChangeNotifierProxyProvider3<
+          SubscriptionProvider,
+          SettingsProvider,
+          BookmarkProvider,
+          FeedProvider
+        >(
+          create: (_) => FeedProvider(),
+          update: (_, subscription, settings, bookmark, feed) =>
+              (feed ?? FeedProvider())
+                ..update(subscription, settings, bookmark),
+        ),
+      ],
       child: const MyApp(),
     ),
   );
@@ -23,10 +41,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<FeedProvider>();
+    final settingsProvider = context.watch<SettingsProvider>();
     final platformBrightness = MediaQuery.platformBrightnessOf(context);
     final themeData = AppThemeBuilder.getTheme(
-      provider.selectedTheme,
+      settingsProvider.selectedTheme,
       platformBrightness,
     );
 

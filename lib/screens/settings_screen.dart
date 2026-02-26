@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/settings_provider.dart';
 import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -17,7 +18,7 @@ class SettingsScreen extends StatelessWidget {
           title: const Text('Theme'),
           subtitle: const Text('Select application style'),
           trailing: DropdownButton<AppTheme>(
-            value: context.watch<FeedProvider>().selectedTheme,
+            value: context.watch<SettingsProvider>().selectedTheme,
             items: AppTheme.values.map((AppTheme theme) {
               return DropdownMenuItem<AppTheme>(
                 value: theme,
@@ -31,7 +32,7 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.only(left: 12),
             onChanged: (AppTheme? newValue) {
               if (newValue != null) {
-                context.read<FeedProvider>().setTheme(newValue);
+                context.read<SettingsProvider>().setTheme(newValue);
               }
             },
             underline: const SizedBox(),
@@ -59,7 +60,7 @@ class SettingsScreen extends StatelessWidget {
           title: const Text('Offline Cache Limit'),
           subtitle: const Text('Recent articles kept for offline reading'),
           trailing: DropdownButton<int>(
-            value: context.watch<FeedProvider>().offlineCacheLimit,
+            value: context.watch<SettingsProvider>().offlineCacheLimit,
             items: [0, 50, 100, 150, 200, 250, 300].map((int value) {
               return DropdownMenuItem<int>(
                 value: value,
@@ -70,19 +71,19 @@ class SettingsScreen extends StatelessWidget {
             padding: const EdgeInsets.only(left: 12),
             onChanged: (int? newValue) {
               if (newValue != null) {
-                context.read<FeedProvider>().setOfflineCacheLimit(newValue);
+                context.read<SettingsProvider>().setOfflineCacheLimit(newValue);
               }
             },
             underline: const SizedBox(),
           ),
         ),
-        if (context.watch<FeedProvider>().offlineCacheLimit > 0)
+        if (context.watch<SettingsProvider>().offlineCacheLimit > 0)
           ListTile(
             leading: const Icon(Icons.timer_outlined),
             title: const Text('Cache Interval Time'),
             subtitle: const Text('How often feeds sync automatically'),
             trailing: DropdownButton<int>(
-              value: context.watch<FeedProvider>().cacheIntervalSeconds,
+              value: context.watch<SettingsProvider>().cacheIntervalSeconds,
               items: const [
                 DropdownMenuItem<int>(value: 0, child: Text('None')),
                 DropdownMenuItem<int>(value: 30, child: Text('30 Seconds')),
@@ -94,7 +95,7 @@ class SettingsScreen extends StatelessWidget {
               padding: const EdgeInsets.only(left: 12),
               onChanged: (int? newValue) {
                 if (newValue != null) {
-                  context.read<FeedProvider>().setCacheIntervalSeconds(
+                  context.read<SettingsProvider>().setCacheIntervalSeconds(
                     newValue,
                   );
                 }

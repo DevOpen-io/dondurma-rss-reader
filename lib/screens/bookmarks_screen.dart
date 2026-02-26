@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../providers/feed_provider.dart';
+import '../providers/bookmark_provider.dart';
 import '../widgets/feed_list_item.dart';
 
 class BookmarksScreen extends StatelessWidget {
@@ -8,8 +8,8 @@ class BookmarksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<FeedProvider>();
-    final bookmarkedItems = provider.bookmarkedItems;
+    final bookmarkProvider = context.watch<BookmarkProvider>();
+    final bookmarkedItems = bookmarkProvider.bookmarkedItems;
 
     if (bookmarkedItems.isEmpty) {
       return Center(

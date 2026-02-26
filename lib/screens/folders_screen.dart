@@ -2,15 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/subscription_provider.dart';
+import '../models/feed_subscription.dart';
 
 class FoldersScreen extends StatelessWidget {
   const FoldersScreen({super.key});
 
-  void _showEditCategoryDialog(
-    BuildContext context,
-    String currentCategory,
-    FeedProvider provider,
-  ) {
+  void _showEditCategoryDialog(BuildContext context, String currentCategory) {
     final TextEditingController nameController = TextEditingController(
       text: currentCategory,
     );
@@ -36,7 +34,14 @@ class FoldersScreen extends StatelessWidget {
               onPressed: () {
                 final newName = nameController.text.trim();
                 if (newName.isNotEmpty && newName != currentCategory) {
-                  provider.renameCategory(currentCategory, newName);
+                  context
+                      .read<SubscriptionProvider>()
+                      .renameCategory(currentCategory, newName)
+                      .then((_) {
+                        if (context.mounted) {
+                          context.read<FeedProvider>().refreshAll();
+                        }
+                      });
                 }
                 context.pop();
               },
@@ -48,11 +53,7 @@ class FoldersScreen extends StatelessWidget {
     );
   }
 
-  void _showEditSubscriptionDialog(
-    BuildContext context,
-    FeedSubscription sub,
-    FeedProvider provider,
-  ) {
+  void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
     final TextEditingController feedNameController = TextEditingController(
       text: sub.name,
     );
@@ -96,7 +97,14 @@ class FoldersScreen extends StatelessWidget {
                 final newName = feedNameController.text.trim();
                 final newUrl = feedUrlController.text.trim();
                 if (newName.isNotEmpty && newUrl.isNotEmpty) {
-                  provider.editSubscription(sub.url, newUrl, newName);
+                  context
+                      .read<SubscriptionProvider>()
+                      .editSubscription(sub.url, newUrl, newName)
+                      .then((_) {
+                        if (context.mounted) {
+                          context.read<FeedProvider>().refreshAll();
+                        }
+                      });
                 }
                 context.pop();
               },
@@ -108,11 +116,7 @@ class FoldersScreen extends StatelessWidget {
     );
   }
 
-  void _showDeleteConfirmation(
-    BuildContext context,
-    FeedSubscription sub,
-    FeedProvider provider,
-  ) {
+  void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
     showDialog(
       context: context,
       builder: (context) {
@@ -131,7 +135,13 @@ class FoldersScreen extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
-                provider.removeFeed(sub.url);
+                context.read<SubscriptionProvider>().removeFeed(sub.url).then((
+                  _,
+                ) {
+                  if (context.mounted) {
+                    context.read<FeedProvider>().refreshAll();
+                  }
+                });
                 context.pop();
               },
               child: Text(
@@ -149,7 +159,6 @@ class FoldersScreen extends StatelessWidget {
     BuildContext context,
     String categoryName,
     int feedCount,
-    FeedProvider provider,
   ) {
     showDialog(
       context: context,
@@ -169,7 +178,14 @@ class FoldersScreen extends StatelessWidget {
                 backgroundColor: Theme.of(context).colorScheme.error,
               ),
               onPressed: () {
-                provider.removeCategory(categoryName);
+                context
+                    .read<SubscriptionProvider>()
+                    .removeCategory(categoryName)
+                    .then((_) {
+                      if (context.mounted) {
+                        context.read<FeedProvider>().refreshAll();
+                      }
+                    });
                 context.pop();
               },
               child: Text(
@@ -185,8 +201,8 @@ class FoldersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<FeedProvider>();
-    final subscriptions = provider.subscriptions;
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
+    final subscriptions = subscriptionProvider.subscriptions;
 
     // Group subscriptions by category
     final Map<String, List<FeedSubscription>> categories = {};
@@ -250,7 +266,6 @@ class FoldersScreen extends StatelessWidget {
                     context,
                     categoryName,
                     subs.length,
-                    provider,
                   ),
                   tooltip: 'Delete Folder',
                 ),
@@ -263,7 +278,7 @@ class FoldersScreen extends StatelessWidget {
                     ).colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                   onPressed: () =>
-                      _showEditCategoryDialog(context, categoryName, provider),
+                      _showEditCategoryDialog(context, categoryName),
                   tooltip: 'Rename Folder',
                 ),
               ],
@@ -313,11 +328,8 @@ class FoldersScreen extends StatelessWidget {
                               context,
                             ).colorScheme.onSurface.withValues(alpha: 0.5),
                           ),
-                          onPressed: () => _showEditSubscriptionDialog(
-                            context,
-                            sub,
-                            provider,
-                          ),
+                          onPressed: () =>
+                              _showEditSubscriptionDialog(context, sub),
                           tooltip: 'Edit Feed',
                         ),
                         IconButton(
@@ -327,7 +339,7 @@ class FoldersScreen extends StatelessWidget {
                             color: Theme.of(context).colorScheme.error,
                           ),
                           onPressed: () =>
-                              _showDeleteConfirmation(context, sub, provider),
+                              _showDeleteConfirmation(context, sub),
                           tooltip: 'Delete Feed',
                         ),
                       ],

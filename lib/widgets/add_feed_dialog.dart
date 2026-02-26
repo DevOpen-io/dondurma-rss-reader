@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/subscription_provider.dart';
 
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
@@ -97,8 +98,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               const SizedBox(height: 12),
               Autocomplete<String>(
                 optionsBuilder: (TextEditingValue textEditingValue) {
-                  final provider = context.read<FeedProvider>();
-                  final categories = provider.subscriptions
+                  final subscriptionProvider = context
+                      .read<SubscriptionProvider>();
+                  final categories = subscriptionProvider.subscriptions
                       .map((s) => s.category)
                       .where((c) => c != 'Uncategorized' && c.isNotEmpty)
                       .toSet()
@@ -166,10 +168,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               }
 
               // Explicitly wait or handle adding via provider
-              final provider = context.read<FeedProvider>();
-              provider
+              final subscriptionProvider = context.read<SubscriptionProvider>();
+              final feedProvider = context.read<FeedProvider>();
+              subscriptionProvider
                   .addFeed(url, name, category)
-                  .then((_) {
+                  .then((success) {
+                    if (success) {
+                      feedProvider.refreshAll();
+                    }
                     if (context.mounted) {
                       context.pop();
                     }

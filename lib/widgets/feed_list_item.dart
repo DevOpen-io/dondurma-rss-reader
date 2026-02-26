@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
+import '../providers/bookmark_provider.dart';
 
 class FeedListItem extends StatefulWidget {
   final FeedItem item;
@@ -75,7 +76,7 @@ class _FeedListItemState extends State<FeedListItem>
     if (_dragExtent > 0 && swipedRight) {
       context.read<FeedProvider>().toggleReadStatus(widget.item.id);
     } else if (_dragExtent < 0 && swipedLeft) {
-      context.read<FeedProvider>().toggleBookmark(widget.item.id);
+      context.read<BookmarkProvider>().toggleBookmark(widget.item);
     }
 
     _actionTriggered = false;
@@ -92,10 +93,10 @@ class _FeedListItemState extends State<FeedListItem>
     final isSwipingRight = _dragExtent > 0;
     final isSwipingLeft = _dragExtent < 0;
 
-    return Selector<FeedProvider, bool>(
-      selector: (context, provider) =>
+    return Selector2<FeedProvider, BookmarkProvider, bool>(
+      selector: (context, provider, bookmarkProvider) =>
           provider.cachedItemIds.contains(widget.item.id) ||
-          provider.bookmarkedItemIds.contains(widget.item.id),
+          bookmarkProvider.bookmarkedItemIds.contains(widget.item.id),
       builder: (context, isCached, child) {
         return Container(
           margin: const EdgeInsets.only(bottom: 12.0),
@@ -323,8 +324,8 @@ class _FeedListItemState extends State<FeedListItem>
                                   IconButton(
                                     onPressed: () {
                                       context
-                                          .read<FeedProvider>()
-                                          .toggleBookmark(widget.item.id);
+                                          .read<BookmarkProvider>()
+                                          .toggleBookmark(widget.item);
                                     },
                                     icon: Icon(
                                       widget.item.isBookmarked

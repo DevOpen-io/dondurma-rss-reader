@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/subscription_provider.dart';
 
 class SubscriptionsScreen extends StatelessWidget {
   const SubscriptionsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final provider = context.watch<FeedProvider>();
-    final subscriptions = provider.subscriptions;
+    final subscriptionProvider = context.watch<SubscriptionProvider>();
+    final subscriptions = subscriptionProvider.subscriptions;
 
     return Scaffold(
       appBar: AppBar(
@@ -101,7 +102,7 @@ class SubscriptionsScreen extends StatelessWidget {
                       ),
                       tooltip: 'Remove Feed',
                       onPressed: () {
-                        _confirmDelete(context, provider, sub.url, sub.name);
+                        _confirmDelete(context, sub.url, sub.name);
                       },
                     ),
                   ),
@@ -111,12 +112,7 @@ class SubscriptionsScreen extends StatelessWidget {
     );
   }
 
-  void _confirmDelete(
-    BuildContext context,
-    FeedProvider provider,
-    String url,
-    String name,
-  ) {
+  void _confirmDelete(BuildContext context, String url, String name) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -130,7 +126,11 @@ class SubscriptionsScreen extends StatelessWidget {
           ),
           TextButton(
             onPressed: () {
-              provider.removeFeed(url);
+              context.read<SubscriptionProvider>().removeFeed(url).then((_) {
+                if (context.mounted) {
+                  context.read<FeedProvider>().refreshAll();
+                }
+              });
               ctx.pop();
             },
             child: const Text(
