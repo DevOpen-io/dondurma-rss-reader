@@ -118,7 +118,7 @@ class FoldersScreen extends StatelessWidget {
         return AlertDialog(
           title: const Text('Delete Feed'),
           content: Text(
-            'Are you sure you want to completely remove "\${sub.name}" from your subscriptions?',
+            'Are you sure you want to completely remove "${sub.name}" from your subscriptions?',
           ),
           actions: [
             TextButton(
@@ -135,6 +135,44 @@ class FoldersScreen extends StatelessWidget {
               },
               child: Text(
                 'Delete',
+                style: TextStyle(color: Theme.of(context).colorScheme.onError),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showDeleteCategoryConfirmation(
+    BuildContext context,
+    String categoryName,
+    int feedCount,
+    FeedProvider provider,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Delete Folder'),
+          content: Text(
+            'Are you sure you want to delete the folder "$categoryName"?\n\nThis will permanently remove all $feedCount RSS feeds inside it from your subscriptions.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+              onPressed: () {
+                provider.removeCategory(categoryName);
+                Navigator.pop(context);
+              },
+              child: Text(
+                'Delete All',
                 style: TextStyle(color: Theme.of(context).colorScheme.onError),
               ),
             ),
@@ -198,6 +236,22 @@ class FoldersScreen extends StatelessWidget {
                     categoryName,
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.error.withValues(alpha: 0.8),
+                  ),
+                  onPressed: () => _showDeleteCategoryConfirmation(
+                    context,
+                    categoryName,
+                    subs.length,
+                    provider,
+                  ),
+                  tooltip: 'Delete Folder',
                 ),
                 IconButton(
                   icon: Icon(

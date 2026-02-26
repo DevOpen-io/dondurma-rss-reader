@@ -364,6 +364,18 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> removeCategory(String category) async {
+    int initialLength = _subscriptions.length;
+    _subscriptions.removeWhere((s) => s.category == category);
+    if (_subscriptions.length < initialLength) {
+      if (_selectedCategory == category) {
+        _selectedCategory = null;
+      }
+      await _saveSubscriptions();
+      await refreshAll();
+    }
+  }
+
   Future<void> editSubscription(
     String oldUrl,
     String newUrl,
