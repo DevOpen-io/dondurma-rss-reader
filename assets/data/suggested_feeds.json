@@ -1,0 +1,107 @@
+[
+  {
+    "name": "TechCrunch",
+    "url": "https://techcrunch.com/feed/",
+    "category": "Technology"
+  },
+  {
+    "name": "The Verge",
+    "url": "https://www.theverge.com/rss/index.xml",
+    "category": "Technology"
+  },
+  {
+    "name": "Wired",
+    "url": "https://www.wired.com/feed/rss",
+    "category": "Technology"
+  },
+  {
+    "name": "Engadget",
+    "url": "https://www.engadget.com/rss.xml",
+    "category": "Technology"
+  },
+  {
+    "name": "BBC News",
+    "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "category": "World News"
+  },
+  {
+    "name": "NYT World News",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "category": "World News"
+  },
+  {
+    "name": "Hacker News",
+    "url": "https://hnrss.org/frontpage",
+    "category": "Programming"
+  },
+  {
+    "name": "Flutter Blog",
+    "url": "https://medium.com/feed/flutter",
+    "category": "Programming"
+  },
+  {
+    "name": "Dart Blog",
+    "url": "https://medium.com/feed/dartlang",
+    "category": "Programming"
+  },
+  {
+    "name": "Smashing Magazine",
+    "url": "https://www.smashingmagazine.com/feed/",
+    "category": "Design"
+  },
+  {
+    "name": "CSS-Tricks",
+    "url": "https://css-tricks.com/feed/",
+    "category": "Design"
+  },
+  {
+    "name": "Polygon",
+    "url": "https://www.polygon.com/rss/index.xml",
+    "category": "Gaming"
+  },
+  {
+    "name": "IGN",
+    "url": "https://feeds.ign.com/ign/news",
+    "category": "Gaming"
+  },
+  {
+    "name": "Kotaku",
+    "url": "https://kotaku.com/rss",
+    "category": "Gaming"
+  },
+  {
+    "name": "ESPN Top News",
+    "url": "https://www.espn.com/espn/rss/news",
+    "category": "Sports"
+  },
+  {
+    "name": "Bleacher Report",
+    "url": "https://bleacherreport.com/articles/feed",
+    "category": "Sports"
+  },
+  {
+    "name": "NASA Breaking News",
+    "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+    "category": "Science"
+  },
+  {
+    "name": "Science Daily",
+    "url": "https://www.sciencedaily.com/rss/all.xml",
+    "category": "Science"
+  },
+  {
+    "name": "Anime News Network",
+    "url": "https://www.animenewsnetwork.com/news/rss.xml",
+    "category": "Anime"
+  },
+  {
+    "name": "Crunchyroll News",
+    "url": "https://cr-news-api-service.prd.crunchyrollsvc.com/v1/en-US/rss",
+    "category": "Anime"
+  },
+  {
+    "name": "MyAnimeList News",
+    "url": "https://myanimelist.net/rss/news.xml",
+    "category": "Anime"
+  }
+]
