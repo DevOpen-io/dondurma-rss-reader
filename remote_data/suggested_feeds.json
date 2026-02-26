@@ -22,22 +22,47 @@
   {
     "category": "Technology",
     "name": "Ars Technica",
-    "url": "https://www.google.com/search?q=https://feeds.arstechnica.com/arstechnica/index"
+    "url": "https://feeds.arstechnica.com/arstechnica/index"
   },
   {
     "category": "Technology",
     "name": "Gizmodo",
-    "url": "https://www.google.com/search?q=https://gizmodo.com/rss"
+    "url": "https://gizmodo.com/rss"
   },
   {
     "category": "Technology",
     "name": "VentureBeat",
-    "url": "https://www.google.com/search?q=https://venturebeat.com/feed/"
+    "url": "https://venturebeat.com/feed/"
   },
   {
     "category": "Technology",
     "name": "CNET",
-    "url": "https://www.google.com/search?q=https://www.cnet.com/rss/news/"
+    "url": "https://www.cnet.com/rss/news/"
+  },
+  {
+    "category": "Technology",
+    "name": "TechRadar",
+    "url": "https://www.techradar.com/rss"
+  },
+  {
+    "category": "Technology",
+    "name": "Mashable",
+    "url": "https://mashable.com/feed"
+  },
+  {
+    "category": "Technology",
+    "name": "How-To Geek",
+    "url": "https://www.howtogeek.com/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "Phoronix",
+    "url": "https://www.phoronix.com/rss.php"
+  },
+  {
+    "category": "Technology",
+    "name": "OMG! Ubuntu",
+    "url": "https://www.omgubuntu.co.uk/feed"
   },
   {
     "category": "World News",
@@ -52,22 +77,22 @@
   {
     "category": "World News",
     "name": "Al Jazeera",
-    "url": "https://www.google.com/search?q=https://www.aljazeera.com/xml/rss/all.xml"
+    "url": "https://www.aljazeera.com/xml/rss/all.xml"
   },
   {
     "category": "World News",
     "name": "Reuters World News",
-    "url": "https://www.google.com/search?q=https://www.reutersagency.com/feed/%3Fbest-types%3Dworld-news%26post_type%3Dbest"
+    "url": "https://www.reutersagency.com/feed/%3Fbest-types%3Dworld-news%26post_type%3Dbest"
   },
   {
     "category": "World News",
     "name": "CNN Top Stories",
-    "url": "https://www.google.com/search?q=http://rss.cnn.com/rss/edition.rss"
+    "url": "http://rss.cnn.com/rss/edition.rss"
   },
   {
     "category": "World News",
     "name": "The Guardian",
-    "url": "https://www.google.com/search?q=https://www.theguardian.com/world/rss"
+    "url": "https://www.theguardian.com/world/rss"
   },
   {
     "category": "Programming",
@@ -87,17 +112,37 @@
   {
     "category": "Programming",
     "name": "Dev.to",
-    "url": "https://www.google.com/search?q=https://dev.to/feed"
+    "url": "https://dev.to/feed"
   },
   {
     "category": "Programming",
     "name": "Reddit Programming",
-    "url": "https://www.google.com/search?q=https://www.reddit.com/r/programming/.rss"
+    "url": "https://www.reddit.com/r/programming/.rss"
   },
   {
     "category": "Programming",
     "name": "Microsoft Dev Blog",
     "url": "https://devblogs.microsoft.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "React Official Blog",
+    "url": "https://react.dev/rss.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Next.js Blog",
+    "url": "https://nextjs.org/feed.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Rust Blog",
+    "url": "https://blog.rust-lang.org/feed.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "web.dev",
+    "url": "https://web.dev/feed.xml"
   },
   {
     "category": "Design",
@@ -112,12 +157,22 @@
   {
     "category": "Design",
     "name": "Design Milk",
-    "url": "https://www.google.com/search?q=https://design-milk.com/feed/"
+    "url": "https://design-milk.com/feed/"
   },
   {
     "category": "Design",
     "name": "Abduzeedo",
-    "url": "https://www.google.com/search?q=https://abduzeedo.com/rss.xml"
+    "url": "https://abduzeedo.com/rss.xml"
+  },
+  {
+    "category": "Design",
+    "name": "UX Collective",
+    "url": "https://uxdesign.cc/feed"
+  },
+  {
+    "category": "Design",
+    "name": "Awwwards",
+    "url": "https://www.awwwards.com/blog/feed/"
   },
   {
     "category": "Gaming",
@@ -142,12 +197,37 @@
   {
     "category": "Gaming",
     "name": "PC Gamer",
-    "url": "https://www.google.com/search?q=https://www.pcgamer.com/rss/"
+    "url": "https://www.pcgamer.com/rss/"
   },
   {
     "category": "Gaming",
     "name": "Eurogamer",
-    "url": "https://www.google.com/search?q=https://www.eurogamer.net/feed/news"
+    "url": "https://www.eurogamer.net/feed/news"
+  },
+  {
+    "category": "Gaming",
+    "name": "Rock Paper Shotgun",
+    "url": "https://www.rockpapershotgun.com/feed"
+  },
+  {
+    "category": "Gaming",
+    "name": "Gematsu",
+    "url": "https://www.gematsu.com/feed"
+  },
+  {
+    "category": "Gaming",
+    "name": "RPG Site",
+    "url": "https://www.rpgsite.net/feed/news"
+  },
+  {
+    "category": "Gaming",
+    "name": "Siliconera",
+    "url": "https://www.siliconera.com/feed/"
+  },
+  {
+    "category": "Gaming",
+    "name": "Destructoid",
+    "url": "https://www.destructoid.com/feed/"
   },
   {
     "category": "Sports",
@@ -162,7 +242,7 @@
   {
     "category": "Sports",
     "name": "Sky Sports",
-    "url": "https://www.google.com/search?q=https://www.skysports.com/rss/12040"
+    "url": "https://www.skysports.com/rss/12040"
   },
   {
     "category": "Science",
@@ -177,17 +257,17 @@
   {
     "category": "Science",
     "name": "Scientific American",
-    "url": "https://www.google.com/search?q=http://rss.sciam.com/ScientificAmerican-Global"
+    "url": "http://rss.sciam.com/ScientificAmerican-Global"
   },
   {
     "category": "Science",
     "name": "Space.com",
-    "url": "https://www.google.com/search?q=https://www.space.com/feeds/all"
+    "url": "https://www.space.com/feeds/all"
   },
   {
     "category": "Science",
     "name": "National Geographic",
-    "url": "https://www.google.com/search?q=https://www.nationalgeographic.com/rss/index.xml"
+    "url": "https://www.nationalgeographic.com/rss/index.xml"
   },
   {
     "category": "Anime",
@@ -205,33 +285,43 @@
     "url": "https://myanimelist.net/rss/news.xml"
   },
   {
+    "category": "Anime",
+    "name": "Anime Corner",
+    "url": "https://animecorner.me/feed/"
+  },
+  {
+    "category": "Anime",
+    "name": "Otaku USA Magazine",
+    "url": "https://www.otakuusamagazine.com/feed/"
+  },
+  {
     "category": "Business",
     "name": "Forbes Business",
-    "url": "https://www.google.com/search?q=https://www.forbes.com/business/feed/"
+    "url": "https://www.forbes.com/business/feed/"
   },
   {
     "category": "Business",
     "name": "Bloomberg",
-    "url": "https://www.google.com/search?q=https://www.bloomberg.com/politics/feeds/site.xml"
+    "url": "https://www.bloomberg.com/politics/feeds/site.xml"
   },
   {
     "category": "Business",
     "name": "Financial Times",
-    "url": "https://www.google.com/search?q=https://www.ft.com/%3Fformat%3Drss"
+    "url": "https://www.ft.com/%3Fformat%3Drss"
   },
   {
     "category": "Lifestyle",
     "name": "Lifehacker",
-    "url": "https://www.google.com/search?q=https://lifehacker.com/rss"
+    "url": "https://lifehacker.com/rss"
   },
   {
     "category": "Lifestyle",
     "name": "Zen Habits",
-    "url": "https://www.google.com/search?q=https://zenhabits.net/feed/"
+    "url": "https://zenhabits.net/feed/"
   },
   {
     "category": "Lifestyle",
     "name": "TED Blog",
-    "url": "https://www.google.com/search?q=https://blog.ted.com/feed/"
+    "url": "https://blog.ted.com/feed/"
   }
 ]
