@@ -50,6 +50,7 @@ dependencies:
   file_picker: ^10.1.9
   share_plus: ^11.0.0
   path_provider: ^2.1.5
+  webview_flutter: ^4.10.0
 
 dev_dependencies:
   flutter_test:

@@ -1,55 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../models/feed_item.dart';
+import '../widgets/in_app_browser.dart';
 
 class ArticleScreen extends StatelessWidget {
   final FeedItem item;
 
   const ArticleScreen({super.key, required this.item});
 
-  Future<void> _launchUrl(BuildContext context, String url) async {
-    try {
-      String cleanUrl = url.trim();
-      if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-        cleanUrl = 'https://$cleanUrl';
-      }
-
-      final uri = Uri.tryParse(cleanUrl);
-      if (uri == null) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('Invalid URL format')));
-        }
-        return;
-      }
-
-      final success = await launchUrl(
-        uri,
-        mode: LaunchMode.externalApplication,
-      );
-
-      if (!success && context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Could not open $cleanUrl')));
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error opening link: $e')));
-      }
+  /// Opens [url] in the in-app browser. Falls back to the external browser if
+  /// the URL is invalid.
+  void _openUrl(BuildContext context, String url, {String? title}) {
+    String cleanUrl = url.trim();
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+      cleanUrl = 'https://$cleanUrl';
     }
+
+    final uri = Uri.tryParse(cleanUrl);
+    if (uri == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Invalid URL format')));
+      return;
+    }
+
+    openInAppBrowser(context, cleanUrl, title: title);
   }
 
   @override
   Widget build(BuildContext context) {
-    // If we have an image URL, we can display it at the top
-    String dateStr = item.pubDate != null
+    final String dateStr = item.pubDate != null
         ? DateFormat('MMM d, yyyy  h:mm a').format(item.pubDate!.toLocal())
         : '';
 
@@ -61,7 +43,7 @@ class ArticleScreen extends StatelessWidget {
             icon: const Icon(Icons.open_in_browser),
             onPressed: () {
               if (item.link.isNotEmpty) {
-                _launchUrl(context, item.link);
+                _openUrl(context, item.link, title: item.title);
               }
             },
             tooltip: 'Open in Browser',
@@ -72,17 +54,16 @@ class ArticleScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // If an image was extracted, display it here as a bleeding hero cover
+            // Hero cover image
             if (item.imageUrl != null && item.imageUrl!.isNotEmpty) ...[
               CachedNetworkImage(
                 imageUrl: item.imageUrl!,
                 width: double.infinity,
                 height: 250,
                 fit: BoxFit.cover,
-                memCacheWidth:
-                    800, // Downsample image to lower quality/memory for performance
+                memCacheWidth: 800,
                 errorWidget: (context, url, error) {
-                  return const SizedBox.shrink(); // Hide if image fails to load
+                  return const SizedBox.shrink();
                 },
               ),
             ],
@@ -127,7 +108,7 @@ class ArticleScreen extends StatelessWidget {
                   ],
                   const SizedBox(height: 24),
 
-                  // Render rich HTML content directly
+                  // Rich HTML content
                   Html(
                     data: item.content ?? item.description,
                     extensions: [
@@ -139,7 +120,7 @@ class ArticleScreen extends StatelessWidget {
                           if (src == null) return const SizedBox.shrink();
                           return CachedNetworkImage(
                             imageUrl: src,
-                            memCacheWidth: 800, // Clamp decoded memory size
+                            memCacheWidth: 800,
                             fit: BoxFit.contain,
                             errorWidget: (context, url, error) =>
                                 const SizedBox.shrink(),
@@ -191,19 +172,19 @@ class ArticleScreen extends StatelessWidget {
                     },
                     onLinkTap: (url, attributes, element) {
                       if (url != null && url.isNotEmpty) {
-                        _launchUrl(context, url);
+                        _openUrl(context, url);
                       }
                     },
                   ),
 
                   const SizedBox(height: 48),
 
-                  // Read on Original Webpage button prominently at the end
+                  // "Read on Original Webpage" button — opens in-app browser
                   Center(
                     child: ElevatedButton.icon(
                       onPressed: () {
                         if (item.link.isNotEmpty) {
-                          _launchUrl(context, item.link);
+                          _openUrl(context, item.link, title: item.title);
                         }
                       },
                       icon: const Icon(Icons.public),
