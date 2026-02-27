@@ -8,8 +8,25 @@ import 'providers/settings_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/bookmark_provider.dart';
 import 'theme/app_theme.dart';
+import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
 import 'services/notification_service.dart';
+
+class PremiumScrollBehavior extends MaterialScrollBehavior {
+  const PremiumScrollBehavior();
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+  }
+
+  @override
+  Set<PointerDeviceKind> get dragDevices => {
+    PointerDeviceKind.touch,
+    PointerDeviceKind.mouse,
+    PointerDeviceKind.trackpad,
+  };
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -100,6 +117,7 @@ class MyApp extends StatelessWidget {
       title: 'RSS Reader',
       debugShowCheckedModeBanner: false,
       theme: themeData,
+      scrollBehavior: const PremiumScrollBehavior(),
       locale: settingsProvider.locale,
       supportedLocales: const [Locale('en'), Locale('tr')],
       localizationsDelegates: const [

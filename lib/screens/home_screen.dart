@@ -204,7 +204,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       return false;
                     },
                     child: ScrollablePositionedList.builder(
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics(),
+                      ),
                       itemCount: listItems.length,
                       itemBuilder: (context, index) {
                         return listItems[index];
