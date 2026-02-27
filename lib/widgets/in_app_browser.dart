@@ -50,6 +50,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
+            if (!mounted) return;
             setState(() {
               _isLoading = true;
               _loadingProgress = 0.0;
@@ -57,12 +58,14 @@ class _InAppBrowserState extends State<InAppBrowser> {
             _refreshNavState();
           },
           onProgress: (progress) {
+            if (!mounted) return;
             setState(() {
               _loadingProgress = progress / 100.0;
             });
           },
           onPageFinished: (url) async {
             final title = await _controller.getTitle();
+            if (!mounted) return;
             setState(() {
               _isLoading = false;
               _loadingProgress = 1.0;
@@ -73,6 +76,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
             _refreshNavState();
           },
           onWebResourceError: (error) {
+            if (!mounted) return;
             setState(() {
               _isLoading = false;
             });
