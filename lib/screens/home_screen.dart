@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
@@ -50,6 +51,100 @@ class _HomeScreenState extends State<HomeScreen> {
         todayItems.isNotEmpty ||
         yesterdayItems.isNotEmpty ||
         olderItems.isNotEmpty;
+
+    // Flatten items into a single list with headers
+    final List<Widget> listItems = [];
+
+    if (todayItems.isNotEmpty) {
+      listItems.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: _buildSectionHeader(
+            l10n.today,
+            trailingText: l10n.subscribedOnly,
+          ),
+        ),
+      );
+      listItems.addAll(
+        todayItems.map(
+          (item) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: FeedListItem(item: item),
+          ),
+        ),
+      );
+    }
+
+    if (yesterdayItems.isNotEmpty) {
+      listItems.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: _buildSectionHeader(l10n.yesterday),
+        ),
+      );
+      listItems.addAll(
+        yesterdayItems.map(
+          (item) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: FeedListItem(item: item),
+          ),
+        ),
+      );
+    }
+
+    if (olderItems.isNotEmpty) {
+      listItems.add(
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: _buildSectionHeader(l10n.older),
+        ),
+      );
+      listItems.addAll(
+        olderItems.map(
+          (item) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: FeedListItem(item: item),
+          ),
+        ),
+      );
+    }
+
+    // Pagination footer
+    listItems.add(_PaginationFooter(provider: provider));
+
+    // Empty states
+    if (provider.items.isEmpty && !provider.isLoading) {
+      listItems.add(
+        Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(
+            child: Text(
+              l10n.noFeedsFound,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+        ),
+      );
+    } else if (!hasAnyItems && !provider.isLoading) {
+      listItems.add(
+        Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(
+            child: Text(
+              provider.selectedCategory != null
+                  ? l10n.noFeedsInCategory(provider.selectedCategory!)
+                  : l10n.noFeedsMatchFilter,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Bottom padding
+    listItems.add(const SizedBox(height: 80));
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -108,124 +203,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                       return false;
                     },
-                    child: CustomScrollView(
+                    child: ScrollablePositionedList.builder(
                       physics: const AlwaysScrollableScrollPhysics(),
-                      slivers: [
-                        // ── Today ──────────────────────────────────────────
-                        if (todayItems.isNotEmpty) ...[
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: _buildSectionHeader(
-                                l10n.today,
-                                trailingText: l10n.subscribedOnly,
-                              ),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            sliver: SliverList.builder(
-                              itemCount: todayItems.length,
-                              itemBuilder: (context, index) {
-                                return FeedListItem(item: todayItems[index]);
-                              },
-                            ),
-                          ),
-                        ],
-
-                        // ── Yesterday ──────────────────────────────────────
-                        if (yesterdayItems.isNotEmpty) ...[
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: _buildSectionHeader(l10n.yesterday),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            sliver: SliverList.builder(
-                              itemCount: yesterdayItems.length,
-                              itemBuilder: (context, index) {
-                                return FeedListItem(
-                                  item: yesterdayItems[index],
-                                );
-                              },
-                            ),
-                          ),
-                        ],
-
-                        // ── Older ──────────────────────────────────────────
-                        if (olderItems.isNotEmpty) ...[
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            sliver: SliverToBoxAdapter(
-                              child: _buildSectionHeader(l10n.older),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                            ),
-                            sliver: SliverList.builder(
-                              itemCount: olderItems.length,
-                              itemBuilder: (context, index) {
-                                return FeedListItem(item: olderItems[index]);
-                              },
-                            ),
-                          ),
-                        ],
-
-                        // ── Pagination footer ──────────────────────────────
-                        SliverToBoxAdapter(
-                          child: _PaginationFooter(provider: provider),
-                        ),
-
-                        // ── Empty states ───────────────────────────────────
-                        if (provider.items.isEmpty && !provider.isLoading)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Padding(
-                              padding: const EdgeInsets.all(32.0),
-                              child: Center(
-                                child: Text(
-                                  l10n.noFeedsFound,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
-                              ),
-                            ),
-                          )
-                        else if (!hasAnyItems && !provider.isLoading)
-                          SliverFillRemaining(
-                            hasScrollBody: false,
-                            child: Padding(
-                              padding: const EdgeInsets.all(32.0),
-                              child: Center(
-                                child: Text(
-                                  provider.selectedCategory != null
-                                      ? l10n.noFeedsInCategory(
-                                          provider.selectedCategory!,
-                                        )
-                                      : l10n.noFeedsMatchFilter,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(color: Colors.grey),
-                                ),
-                              ),
-                            ),
-                          ),
-
-                        const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                      ],
+                      itemCount: listItems.length,
+                      itemBuilder: (context, index) {
+                        return listItems[index];
+                      },
                     ),
                   ),
                 ),

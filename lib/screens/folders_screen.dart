@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
@@ -424,7 +425,7 @@ class FoldersScreen extends StatelessWidget {
 
     return Stack(
       children: [
-        ListView.builder(
+        ScrollablePositionedList.builder(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           itemCount: sortedCategoryNames.length,
           itemBuilder: (context, index) {
