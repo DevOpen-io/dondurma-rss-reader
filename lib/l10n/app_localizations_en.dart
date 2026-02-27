@@ -373,4 +373,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get remove => 'Remove';
+
+  @override
+  String get addFolder => 'Add Folder';
+
+  @override
+  String get newFolderName => 'New Folder Name';
+
+  @override
+  String get folderAlreadyExists => 'A folder with this name already exists.';
+
+  @override
+  String get pleaseEnterFolderName => 'Please enter a folder name';
+
+  @override
+  String get moveToFolder => 'Move to Folder';
+
+  @override
+  String get moveFeed => 'Move Feed';
+
+  @override
+  String feedMovedToFolder(String feedName, String folderName) {
+    return '\"$feedName\" moved to \"$folderName\"';
+  }
 }

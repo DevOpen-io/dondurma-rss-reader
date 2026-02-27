@@ -170,5 +170,19 @@
       "name": { "type": "String" }
     }
   },
-  "remove": "Remove"
+  "remove": "Remove",
+
+  "addFolder": "Add Folder",
+  "newFolderName": "New Folder Name",
+  "folderAlreadyExists": "A folder with this name already exists.",
+  "pleaseEnterFolderName": "Please enter a folder name",
+  "moveToFolder": "Move to Folder",
+  "moveFeed": "Move Feed",
+  "feedMovedToFolder": "\"{feedName}\" moved to \"{folderName}\"",
+  "@feedMovedToFolder": {
+    "placeholders": {
+      "feedName": { "type": "String" },
+      "folderName": { "type": "String" }
+    }
+  }
 }

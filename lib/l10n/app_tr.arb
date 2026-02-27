@@ -129,5 +129,13 @@
   "noFeedsSubscribed": "Abone olunan kaynak yok.\nAna Ekrandan bir tane ekleyin.",
   "removeFeed": "Kaynağı Kaldır",
   "removeFeedConfirm": "\"{name}\" kaynağını takip etmeyi bırakmak istediğinizden emin misiniz?",
-  "remove": "Kaldır"
+  "remove": "Kaldır",
+
+  "addFolder": "Klasör Ekle",
+  "newFolderName": "Yeni Klasör Adı",
+  "folderAlreadyExists": "Bu isimde bir klasör zaten mevcut.",
+  "pleaseEnterFolderName": "Lütfen bir klasör adı girin",
+  "moveToFolder": "Klasöre Taşı",
+  "moveFeed": "Kaynağı Taşı",
+  "feedMovedToFolder": "\"{feedName}\" \"{folderName}\" klasörüne taşındı"
 }

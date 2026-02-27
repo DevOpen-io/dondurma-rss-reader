@@ -371,4 +371,27 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get remove => 'Kaldır';
+
+  @override
+  String get addFolder => 'Klasör Ekle';
+
+  @override
+  String get newFolderName => 'Yeni Klasör Adı';
+
+  @override
+  String get folderAlreadyExists => 'Bu isimde bir klasör zaten mevcut.';
+
+  @override
+  String get pleaseEnterFolderName => 'Lütfen bir klasör adı girin';
+
+  @override
+  String get moveToFolder => 'Klasöre Taşı';
+
+  @override
+  String get moveFeed => 'Kaynağı Taşı';
+
+  @override
+  String feedMovedToFolder(String feedName, String folderName) {
+    return '\"$feedName\" \"$folderName\" klasörüne taşındı';
+  }
 }

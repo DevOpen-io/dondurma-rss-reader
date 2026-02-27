@@ -5,11 +5,13 @@ import '../models/feed_subscription.dart';
 
 class SubscriptionProvider extends ChangeNotifier {
   List<FeedSubscription> _subscriptions = [];
+  Set<String> _customCategories = {};
 
   List<FeedSubscription> get subscriptions => _subscriptions;
 
   Set<String> get categories {
-    return _subscriptions.map((s) => s.category).toSet();
+    final fromSubs = _subscriptions.map((s) => s.category).toSet();
+    return fromSubs.union(_customCategories);
   }
 
   SubscriptionProvider() {
@@ -19,6 +21,13 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> _loadSubscriptions() async {
     final box = Hive.box('settings');
     final String? data = box.get('subscriptions');
+
+    // Load custom categories
+    final String? catData = box.get('custom_categories');
+    if (catData != null) {
+      final List<dynamic> catList = jsonDecode(catData);
+      _customCategories = catList.cast<String>().toSet();
+    }
 
     if (data != null) {
       final List<dynamic> jsonList = jsonDecode(data);
@@ -57,6 +66,37 @@ class SubscriptionProvider extends ChangeNotifier {
     await box.put('subscriptions', data);
   }
 
+  Future<void> _saveCustomCategories() async {
+    final box = Hive.box('settings');
+    final String data = jsonEncode(_customCategories.toList());
+    await box.put('custom_categories', data);
+  }
+
+  /// Adds a new empty category/folder. Returns false if it already exists.
+  Future<bool> addCategory(String name) async {
+    if (categories.contains(name)) {
+      return false;
+    }
+    _customCategories.add(name);
+    await _saveCustomCategories();
+    notifyListeners();
+    return true;
+  }
+
+  /// Moves a feed to a different category.
+  Future<void> moveFeedToCategory(String feedUrl, String newCategory) async {
+    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
+    if (index != -1) {
+      _subscriptions[index] = FeedSubscription(
+        url: _subscriptions[index].url,
+        name: _subscriptions[index].name,
+        category: newCategory,
+      );
+      await _saveSubscriptions();
+      notifyListeners();
+    }
+  }
+
   Future<bool> addFeed(String url, String name, String category) async {
     if (!_subscriptions.any((s) => s.url == url)) {
       _subscriptions.add(
@@ -87,6 +127,11 @@ class SubscriptionProvider extends ChangeNotifier {
         changed = true;
       }
     }
+    if (_customCategories.remove(oldCategory)) {
+      _customCategories.add(newCategory);
+      await _saveCustomCategories();
+      changed = true;
+    }
     if (changed) {
       await _saveSubscriptions();
       notifyListeners();
@@ -94,10 +139,18 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> removeCategory(String category) async {
+    bool changed = false;
     int initialLength = _subscriptions.length;
     _subscriptions.removeWhere((s) => s.category == category);
     if (_subscriptions.length < initialLength) {
       await _saveSubscriptions();
+      changed = true;
+    }
+    if (_customCategories.remove(category)) {
+      await _saveCustomCategories();
+      changed = true;
+    }
+    if (changed) {
       notifyListeners();
     }
   }

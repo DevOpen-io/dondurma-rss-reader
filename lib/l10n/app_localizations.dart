@@ -775,6 +775,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove'**
   String get remove;
+
+  /// No description provided for @addFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Folder'**
+  String get addFolder;
+
+  /// No description provided for @newFolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'New Folder Name'**
+  String get newFolderName;
+
+  /// No description provided for @folderAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'A folder with this name already exists.'**
+  String get folderAlreadyExists;
+
+  /// No description provided for @pleaseEnterFolderName.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a folder name'**
+  String get pleaseEnterFolderName;
+
+  /// No description provided for @moveToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'Move to Folder'**
+  String get moveToFolder;
+
+  /// No description provided for @moveFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Move Feed'**
+  String get moveFeed;
+
+  /// No description provided for @feedMovedToFolder.
+  ///
+  /// In en, this message translates to:
+  /// **'\"{feedName}\" moved to \"{folderName}\"'**
+  String feedMovedToFolder(String feedName, String folderName);
 }
 
 class _AppLocalizationsDelegate
