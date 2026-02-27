@@ -7,6 +7,7 @@ import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import '../theme/app_theme.dart';
+import '../widgets/keyword_input_dialog.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -181,6 +182,18 @@ class SettingsScreen extends StatelessWidget {
               }
             },
           ),
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
+        _buildSectionHeader(context, l10n.contentFiltering),
+        ListTile(
+          leading: const Icon(Icons.filter_alt_off_outlined),
+          title: Text(l10n.globalExcludedKeywords),
+          subtitle: Text(l10n.globalExcludedKeywordsDesc),
+          onTap: () {
+            _showGlobalKeywordsDialog(context);
+          },
         ),
         Divider(
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
@@ -589,6 +602,27 @@ class SettingsScreen extends StatelessWidget {
           letterSpacing: 1.2,
         ),
       ),
+    );
+  }
+
+  void _showGlobalKeywordsDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final settingsProvider = context.read<SettingsProvider>();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return KeywordInputDialog(
+          title: l10n.globalExcludedKeywords,
+          initialKeywords: settingsProvider.globalExcludedKeywords,
+          onSave: (keywords) {
+            settingsProvider.setGlobalExcludedKeywords(keywords);
+          },
+          onReset: () {
+            settingsProvider.setGlobalExcludedKeywords([]);
+          },
+        );
+      },
     );
   }
 }

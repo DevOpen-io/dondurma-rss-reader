@@ -296,6 +296,12 @@ abstract class AppLocalizations {
   /// **'Delete'**
   String get delete;
 
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
   /// No description provided for @addRssFeed.
   ///
   /// In en, this message translates to:
@@ -745,6 +751,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Relaxed'**
   String get lineSpacingRelaxed;
+
+  /// No description provided for @contentFiltering.
+  ///
+  /// In en, this message translates to:
+  /// **'Content Filtering'**
+  String get contentFiltering;
+
+  /// No description provided for @globalExcludedKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Global Excluded Keywords'**
+  String get globalExcludedKeywords;
+
+  /// No description provided for @globalExcludedKeywordsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide articles containing these words across all feeds'**
+  String get globalExcludedKeywordsDesc;
+
+  /// No description provided for @excludedKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Excluded Keywords'**
+  String get excludedKeywords;
+
+  /// No description provided for @excludedKeywordsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'e.g. ad, sponsor, spoiler'**
+  String get excludedKeywordsHint;
+
+  /// No description provided for @commaSeparated.
+  ///
+  /// In en, this message translates to:
+  /// **'Comma separated'**
+  String get commaSeparated;
+
+  /// No description provided for @addKeyword.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Keyword'**
+  String get addKeyword;
+
+  /// No description provided for @noKeywordsAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No keywords added yet.'**
+  String get noKeywordsAdded;
 
   /// No description provided for @openInBrowser.
   ///

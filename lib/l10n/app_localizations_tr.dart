@@ -116,6 +116,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get delete => 'Sil';
 
   @override
+  String get reset => 'Sıfırla';
+
+  @override
   String get addRssFeed => 'RSS Kaynağı Ekle';
 
   @override
@@ -353,6 +356,31 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get lineSpacingRelaxed => 'Geniş';
+
+  @override
+  String get contentFiltering => 'İçerik Filtreleme';
+
+  @override
+  String get globalExcludedKeywords => 'Genel Hariç Tutulan Kelimeler';
+
+  @override
+  String get globalExcludedKeywordsDesc =>
+      'Tüm kaynaklarda bu kelimeleri içeren makaleleri gizle';
+
+  @override
+  String get excludedKeywords => 'Hariç Tutulan Kelimeler';
+
+  @override
+  String get excludedKeywordsHint => 'örn. reklam, sponsor, spoiler';
+
+  @override
+  String get commaSeparated => 'Virgülle ayırın';
+
+  @override
+  String get addKeyword => 'Kelime Ekle';
+
+  @override
+  String get noKeywordsAdded => 'Henüz kelime eklenmedi.';
 
   @override
   String get openInBrowser => 'Tarayıcıda Aç';

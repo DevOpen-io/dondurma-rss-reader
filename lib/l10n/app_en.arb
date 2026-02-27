@@ -56,6 +56,7 @@
   "cancel": "Cancel",
   "save": "Save",
   "delete": "Delete",
+  "reset": "Reset",
 
   "addRssFeed": "Add RSS Feed",
   "feedUrlLabel": "Feed URL",
@@ -158,6 +159,15 @@
   "lineSpacingTight": "Tight",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Relaxed",
+
+  "contentFiltering": "Content Filtering",
+  "globalExcludedKeywords": "Global Excluded Keywords",
+  "globalExcludedKeywordsDesc": "Hide articles containing these words across all feeds",
+  "excludedKeywords": "Excluded Keywords",
+  "excludedKeywordsHint": "e.g. ad, sponsor, spoiler",
+  "commaSeparated": "Comma separated",
+  "addKeyword": "Add Keyword",
+  "noKeywordsAdded": "No keywords added yet.",
 
   "openInBrowser": "Open in Browser",
   "readOnOriginalWebpage": "Read on Original Webpage",

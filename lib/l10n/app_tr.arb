@@ -40,6 +40,7 @@
   "cancel": "İptal",
   "save": "Kaydet",
   "delete": "Sil",
+  "reset": "Sıfırla",
 
   "addRssFeed": "RSS Kaynağı Ekle",
   "feedUrlLabel": "Kaynak URL'si",
@@ -122,6 +123,15 @@
   "lineSpacingTight": "Dar",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Geniş",
+
+  "contentFiltering": "İçerik Filtreleme",
+  "globalExcludedKeywords": "Genel Hariç Tutulan Kelimeler",
+  "globalExcludedKeywordsDesc": "Tüm kaynaklarda bu kelimeleri içeren makaleleri gizle",
+  "excludedKeywords": "Hariç Tutulan Kelimeler",
+  "excludedKeywordsHint": "örn. reklam, sponsor, spoiler",
+  "commaSeparated": "Virgülle ayırın",
+  "addKeyword": "Kelime Ekle",
+  "noKeywordsAdded": "Henüz kelime eklenmedi.",
 
   "openInBrowser": "Tarayıcıda Aç",
   "readOnOriginalWebpage": "Orijinal Web Sitesinde Oku",

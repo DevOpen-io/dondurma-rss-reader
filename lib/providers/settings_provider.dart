@@ -20,6 +20,9 @@ class SettingsProvider extends ChangeNotifier {
   String _typeface = 'system'; // 'system', 'serif', 'sans-serif', 'mono'
   double _lineSpacing = 1.5; // 1.2 (tight), 1.5 (normal), 1.8 (relaxed)
 
+  // Content Filtering
+  List<String> _globalExcludedKeywords = [];
+
   AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
@@ -34,6 +37,8 @@ class SettingsProvider extends ChangeNotifier {
   String get fontSize => _fontSize;
   String get typeface => _typeface;
   double get lineSpacing => _lineSpacing;
+
+  List<String> get globalExcludedKeywords => _globalExcludedKeywords;
 
   SettingsProvider() {
     _loadSettings();
@@ -81,6 +86,13 @@ class SettingsProvider extends ChangeNotifier {
     _fontSize = box.get('fontSize', defaultValue: 'medium');
     _typeface = box.get('typeface', defaultValue: 'system');
     _lineSpacing = box.get('lineSpacing', defaultValue: 1.5);
+
+    // Load filtering settings
+    _globalExcludedKeywords =
+        (box.get('globalExcludedKeywords') as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
 
     notifyListeners();
   }
@@ -167,5 +179,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final box = Hive.box('settings');
     await box.put('lineSpacing', spacing);
+  }
+
+  Future<void> setGlobalExcludedKeywords(List<String> keywords) async {
+    _globalExcludedKeywords = keywords;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('globalExcludedKeywords', keywords);
   }
 }

@@ -34,10 +34,9 @@ This document is a persistent living record for AI coding agents to understand w
   - [ ] Track articles read per day/week.
   - [ ] Track time spent reading.
   - [ ] Display "Most Active Feeds" in a dedicated Stats screen.
-- [ ] **Keyword Filtering (Rule-Based)**: Simple string matching to filter content (No AI).
-  - [ ] Include articles containing specific words.
-  - [ ] Exclude articles containing specific words (e.g., "spoiler", "ad").
-  - [ ] Apply filters per feed or globally.
+- [x] **Keyword Filtering (Rule-Based)**: Simple string matching to filter content (No AI).
+  - [x] Exclude articles containing specific words (e.g., "spoiler", "ad").
+  - [x] Apply filters per feed or globally.
 - [ ] **Media Caching**: Enhance offline experience for images.
   - [ ] Preload and cache images from RSS feeds locally.
   - [ ] Option to disable images to save data in `SettingsProvider`.

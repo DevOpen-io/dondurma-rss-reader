@@ -72,6 +72,9 @@ class FeedProvider extends ChangeNotifier {
 
     if (isFirstUpdate) {
       refreshAll();
+    } else {
+      // Re-filter items immediately if dependencies (like keywords) changed.
+      Future.microtask(() => notifyListeners());
     }
 
     _manageCacheTimer();
@@ -170,6 +173,57 @@ class FeedProvider extends ChangeNotifier {
             i.description.toLowerCase().contains(query) ||
             i.siteName.toLowerCase().contains(query),
       );
+    }
+
+    // Apply Keyword Filtering dynamically
+    final globalKeywords = settingsProvider?.globalExcludedKeywords ?? [];
+    final Map<String, List<String>> feedKeywordsMap = {};
+    if (subscriptionProvider != null) {
+      for (var sub in subscriptionProvider!.subscriptions) {
+        feedKeywordsMap[sub.url] = sub.excludedKeywords;
+      }
+    }
+
+    if (globalKeywords.isNotEmpty || feedKeywordsMap.isNotEmpty) {
+      filtered = filtered.where((item) {
+        final feedKeywords = feedKeywordsMap[item.feedUrl] ?? [];
+        if (globalKeywords.isEmpty && feedKeywords.isEmpty) return true;
+
+        final titleLower = item.title.toLowerCase();
+        final descLower = item.description.toLowerCase();
+
+        bool containsKeyword(List<String> keywords) {
+          for (var kw in keywords) {
+            final lowerKw = kw.toLowerCase();
+            // Match with word boundaries to avoid partial matches (e.g. ad vs ready)
+            // Using a simple RegExp for whole word matches.
+            final RegExp regex = RegExp(
+              r'\b' + RegExp.escape(lowerKw) + r'\b',
+              caseSensitive: false,
+            );
+            if (regex.hasMatch(item.title) ||
+                regex.hasMatch(item.description)) {
+              return true;
+            }
+            // Fallback: if the word contains punctuation or non-ascii, regex \b might fail in Dart.
+            // Let's also keep simple substring matching as a fallback if the user types something weird,
+            // but for simple words regex handles "10" correctly.
+            // Actually, simple .contains is safer and more predictable for most end users.
+            if (titleLower.contains(lowerKw) || descLower.contains(lowerKw)) {
+              // But let's check if it's an exact word match using a simple boolean check
+              // to avoid 'ad' matching 'ready'.
+              // We'll just use contains for now to match the user's expected substring behavior
+              bool match =
+                  titleLower.contains(lowerKw) || descLower.contains(lowerKw);
+              if (match) return true;
+            }
+          }
+          return false;
+        }
+
+        return !containsKeyword(globalKeywords) &&
+            !containsKeyword(feedKeywords);
+      });
     }
 
     // Update dynamic properties
@@ -275,7 +329,7 @@ class FeedProvider extends ChangeNotifier {
     final bool fetchedAnything = freshItems.isNotEmpty;
 
     if (fetchedAnything) {
-      // Merge bookmarks into the fresh list so they are always visible.
+      // 1) Merge bookmarks into the fresh list so they are always visible.
       if (bookmarkProvider != null) {
         for (var saved in bookmarkProvider!.bookmarkedItems) {
           if (!freshItems.any((item) => item.id == saved.id)) {

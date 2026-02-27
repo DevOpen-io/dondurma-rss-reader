@@ -3,12 +3,14 @@ class FeedSubscription {
   final String name;
   final String category;
   final bool notificationsEnabled;
+  final List<String> excludedKeywords;
 
   FeedSubscription({
     required this.url,
     required this.name,
     required this.category,
     this.notificationsEnabled = true,
+    this.excludedKeywords = const [],
   });
 
   Map<String, dynamic> toJson() => {
@@ -16,6 +18,7 @@ class FeedSubscription {
     'name': name,
     'category': category,
     'notificationsEnabled': notificationsEnabled,
+    'excludedKeywords': excludedKeywords,
   };
 
   factory FeedSubscription.fromJson(Map<String, dynamic> json) =>
@@ -24,6 +27,11 @@ class FeedSubscription {
         name: json['name'],
         category: json['category'],
         notificationsEnabled: json['notificationsEnabled'] ?? true,
+        excludedKeywords:
+            (json['excludedKeywords'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
       );
 
   FeedSubscription copyWith({
@@ -31,12 +39,14 @@ class FeedSubscription {
     String? name,
     String? category,
     bool? notificationsEnabled,
+    List<String>? excludedKeywords,
   }) {
     return FeedSubscription(
       url: url ?? this.url,
       name: name ?? this.name,
       category: category ?? this.category,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      excludedKeywords: excludedKeywords ?? this.excludedKeywords,
     );
   }
 }

@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../models/feed_subscription.dart';
+import '../widgets/keyword_input_dialog.dart';
 
 class FoldersScreen extends StatelessWidget {
   const FoldersScreen({super.key});
@@ -127,56 +128,100 @@ class FoldersScreen extends StatelessWidget {
       text: sub.url,
     );
 
+    // Hold local state for keywords so we can pass it on save
+    List<String> currentKeywords = List.from(sub.excludedKeywords);
+
     showDialog(
       context: context,
       builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.editFeed),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: feedNameController,
-                decoration: InputDecoration(
-                  labelText: l10n.feedName,
-                  border: const OutlineInputBorder(),
-                ),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text(l10n.editFeed),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextField(
+                    controller: feedNameController,
+                    decoration: InputDecoration(
+                      labelText: l10n.feedName,
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: feedUrlController,
+                    decoration: InputDecoration(
+                      labelText: l10n.feedUrl,
+                      border: const OutlineInputBorder(),
+                    ),
+                    keyboardType: TextInputType.url,
+                  ),
+                  const SizedBox(height: 16),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (ctx) {
+                          return KeywordInputDialog(
+                            title: l10n.excludedKeywords,
+                            initialKeywords: currentKeywords,
+                            onSave: (keywords) {
+                              setState(() {
+                                currentKeywords = keywords;
+                              });
+                            },
+                            onReset: () {
+                              setState(() {
+                                currentKeywords = [];
+                              });
+                            },
+                          );
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.filter_alt_off_outlined),
+                    label: Text(
+                      currentKeywords.isEmpty
+                          ? l10n.excludedKeywords
+                          : '${l10n.excludedKeywords} (${currentKeywords.length})',
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: feedUrlController,
-                decoration: InputDecoration(
-                  labelText: l10n.feedUrl,
-                  border: const OutlineInputBorder(),
+              actions: [
+                TextButton(
+                  onPressed: () => context.pop(),
+                  child: Text(l10n.cancel),
                 ),
-                keyboardType: TextInputType.url,
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final newName = feedNameController.text.trim();
-                final newUrl = feedUrlController.text.trim();
-                if (newName.isNotEmpty && newUrl.isNotEmpty) {
-                  context
-                      .read<SubscriptionProvider>()
-                      .editSubscription(sub.url, newUrl, newName)
-                      .then((_) {
-                        if (context.mounted) {
-                          context.read<FeedProvider>().refreshAll();
-                        }
-                      });
-                }
-                context.pop();
-              },
-              child: Text(l10n.save),
-            ),
-          ],
+                ElevatedButton(
+                  onPressed: () {
+                    final newName = feedNameController.text.trim();
+                    final newUrl = feedUrlController.text.trim();
+
+                    if (newName.isNotEmpty && newUrl.isNotEmpty) {
+                      context
+                          .read<SubscriptionProvider>()
+                          .editSubscription(
+                            sub.url,
+                            newUrl,
+                            newName,
+                            excludedKeywords: currentKeywords,
+                          )
+                          .then((_) {
+                            if (context.mounted) {
+                              context.read<FeedProvider>().refreshAll();
+                            }
+                          });
+                    }
+                    context.pop();
+                  },
+                  child: Text(l10n.save),
+                ),
+              ],
+            );
+          },
         );
       },
     );

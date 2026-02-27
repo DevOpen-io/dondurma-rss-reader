@@ -115,6 +115,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
+  String get reset => 'Reset';
+
+  @override
   String get addRssFeed => 'Add RSS Feed';
 
   @override
@@ -355,6 +358,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lineSpacingRelaxed => 'Relaxed';
+
+  @override
+  String get contentFiltering => 'Content Filtering';
+
+  @override
+  String get globalExcludedKeywords => 'Global Excluded Keywords';
+
+  @override
+  String get globalExcludedKeywordsDesc =>
+      'Hide articles containing these words across all feeds';
+
+  @override
+  String get excludedKeywords => 'Excluded Keywords';
+
+  @override
+  String get excludedKeywordsHint => 'e.g. ad, sponsor, spoiler';
+
+  @override
+  String get commaSeparated => 'Comma separated';
+
+  @override
+  String get addKeyword => 'Add Keyword';
+
+  @override
+  String get noKeywordsAdded => 'No keywords added yet.';
 
   @override
   String get openInBrowser => 'Open in Browser';

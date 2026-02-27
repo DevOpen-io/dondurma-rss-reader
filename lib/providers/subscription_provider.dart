@@ -158,13 +158,15 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> editSubscription(
     String oldUrl,
     String newUrl,
-    String newName,
-  ) async {
+    String newName, {
+    List<String>? excludedKeywords,
+  }) async {
     final index = _subscriptions.indexWhere((s) => s.url == oldUrl);
     if (index != -1) {
       _subscriptions[index] = _subscriptions[index].copyWith(
         url: newUrl,
         name: newName,
+        excludedKeywords: excludedKeywords,
       );
       await _saveSubscriptions();
       notifyListeners();
