@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 
@@ -60,6 +61,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: SafeArea(
@@ -72,7 +74,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Suggested Feeds',
+                    l10n.suggestedFeeds,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -104,7 +106,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                       Padding(
                         padding: const EdgeInsets.only(right: 8.0),
                         child: FilterChip(
-                          label: const Text('All'),
+                          label: Text(l10n.all),
                           labelStyle: TextStyle(
                             color: _selectedCategory == null
                                 ? Theme.of(context).colorScheme.onPrimary
@@ -212,10 +214,10 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                                   .toList();
 
                         if (displayedFeeds.isEmpty) {
-                          return const Padding(
-                            padding: EdgeInsets.all(32.0),
+                          return Padding(
+                            padding: const EdgeInsets.all(32.0),
                             child: Center(
-                              child: Text('No feeds in this category'),
+                              child: Text(l10n.noFeedsInThisCategory),
                             ),
                           );
                         }
@@ -379,7 +381,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                 top: 4.0,
               ),
               child: Text(
-                'Warning: Some RSS sources may be broken or no longer work.',
+                l10n.suggestedFeedsWarning,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,
@@ -402,6 +404,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
     String url,
     String category,
   ) {
+    final l10n = AppLocalizations.of(parentContext);
     showDialog(
       context: parentContext,
       builder: (BuildContext context) {
@@ -409,12 +412,12 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          title: const Text('Add Subscription'),
-          content: Text('Do you want to add "$name" to your feed list?'),
+          title: Text(l10n.addSubscription),
+          content: Text(l10n.addSubscriptionConfirm(name)),
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -436,12 +439,12 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
 
                 scaffoldMessenger.showSnackBar(
                   SnackBar(
-                    content: Text('Added $name to your subscriptions!'),
+                    content: Text(l10n.addedSubscription(name)),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );
               },
-              child: const Text('Add Source'),
+              child: Text(l10n.addSource),
             ),
           ],
         );

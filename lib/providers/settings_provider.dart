@@ -7,11 +7,13 @@ class SettingsProvider extends ChangeNotifier {
   int _offlineCacheLimit = 50;
   int _cacheIntervalSeconds = 30;
   bool _syncBackground = true;
+  Locale _locale = const Locale('en');
 
   AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
   bool get syncBackground => _syncBackground;
+  Locale get locale => _locale;
 
   SettingsProvider() {
     _loadSettings();
@@ -37,6 +39,16 @@ class SettingsProvider extends ChangeNotifier {
     } else {
       final isDark = box.get('isDarkMode', defaultValue: true);
       _selectedTheme = isDark ? AppTheme.dark : AppTheme.system;
+    }
+
+    // Load locale
+    final savedLocale = box.get('locale');
+    if (savedLocale != null) {
+      try {
+        _locale = Locale(savedLocale);
+      } catch (_) {
+        _locale = const Locale('en');
+      }
     }
 
     notifyListeners();
@@ -68,5 +80,12 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final box = Hive.box('settings');
     await box.put('syncBackground', value);
+  }
+
+  Future<void> setLocale(Locale newLocale) async {
+    _locale = newLocale;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('locale', newLocale.languageCode);
   }
 }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/app_drawer.dart';
@@ -44,6 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<FeedItem> yesterdayItems,
     List<FeedItem> olderItems,
   ) {
+    final l10n = AppLocalizations.of(context);
     final bool hasAnyItems =
         todayItems.isNotEmpty ||
         yesterdayItems.isNotEmpty ||
@@ -78,7 +80,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              "You're offline — showing cached articles.",
+                              l10n.offlineBanner,
                               style: TextStyle(
                                 fontSize: 13,
                                 color: Theme.of(
@@ -117,8 +119,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                             sliver: SliverToBoxAdapter(
                               child: _buildSectionHeader(
-                                'TODAY',
-                                trailingText: 'Subscribed Only',
+                                l10n.today,
+                                trailingText: l10n.subscribedOnly,
                               ),
                             ),
                           ),
@@ -142,7 +144,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               horizontal: 16.0,
                             ),
                             sliver: SliverToBoxAdapter(
-                              child: _buildSectionHeader('YESTERDAY'),
+                              child: _buildSectionHeader(l10n.yesterday),
                             ),
                           ),
                           SliverPadding(
@@ -167,7 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               horizontal: 16.0,
                             ),
                             sliver: SliverToBoxAdapter(
-                              child: _buildSectionHeader('OLDER'),
+                              child: _buildSectionHeader(l10n.older),
                             ),
                           ),
                           SliverPadding(
@@ -190,15 +192,15 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         // ── Empty states ───────────────────────────────────
                         if (provider.items.isEmpty && !provider.isLoading)
-                          const SliverFillRemaining(
+                          SliverFillRemaining(
                             hasScrollBody: false,
                             child: Padding(
-                              padding: EdgeInsets.all(32.0),
+                              padding: const EdgeInsets.all(32.0),
                               child: Center(
                                 child: Text(
-                                  'No feeds found. Add a new feed using the + button.',
+                                  l10n.noFeedsFound,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(color: Colors.grey),
+                                  style: const TextStyle(color: Colors.grey),
                                 ),
                               ),
                             ),
@@ -211,8 +213,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               child: Center(
                                 child: Text(
                                   provider.selectedCategory != null
-                                      ? 'No feeds found in ${provider.selectedCategory}.'
-                                      : 'No feeds match your current filter.',
+                                      ? l10n.noFeedsInCategory(
+                                          provider.selectedCategory!,
+                                        )
+                                      : l10n.noFeedsMatchFilter,
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(color: Colors.grey),
                                 ),
@@ -232,6 +236,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final provider = context.watch<FeedProvider>();
     final todayItems = provider.todayItems;
     final yesterdayItems = provider.yesterdayItems;
@@ -240,17 +245,17 @@ class _HomeScreenState extends State<HomeScreen> {
     String appBarTitle;
     switch (_selectedIndex) {
       case 1:
-        appBarTitle = 'Folders';
+        appBarTitle = l10n.foldersTab;
         break;
       case 2:
-        appBarTitle = 'Bookmarks';
+        appBarTitle = l10n.bookmarksTab;
         break;
       case 3:
-        appBarTitle = 'Settings';
+        appBarTitle = l10n.settingsTab;
         break;
       case 0:
       default:
-        appBarTitle = provider.selectedCategory ?? 'My Feeds';
+        appBarTitle = provider.selectedCategory ?? l10n.myFeeds;
     }
 
     return Scaffold(
@@ -266,7 +271,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   controller: _searchController,
                   autofocus: true,
                   decoration: InputDecoration(
-                    hintText: 'Search feeds...',
+                    hintText: l10n.searchFeeds,
                     border: InputBorder.none,
                     hintStyle: TextStyle(
                       color: Theme.of(
@@ -362,26 +367,26 @@ class _HomeScreenState extends State<HomeScreen> {
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: _onItemTapped,
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.list_outlined),
-            selectedIcon: Icon(Icons.list),
-            label: 'Feeds',
+            icon: const Icon(Icons.list_outlined),
+            selectedIcon: const Icon(Icons.list),
+            label: l10n.feedsTab,
           ),
           NavigationDestination(
-            icon: Icon(Icons.folder_outlined),
-            selectedIcon: Icon(Icons.folder),
-            label: 'Folders',
+            icon: const Icon(Icons.folder_outlined),
+            selectedIcon: const Icon(Icons.folder),
+            label: l10n.foldersTab,
           ),
           NavigationDestination(
-            icon: Icon(Icons.bookmark_border),
-            selectedIcon: Icon(Icons.bookmark),
-            label: 'Bookmarks',
+            icon: const Icon(Icons.bookmark_border),
+            selectedIcon: const Icon(Icons.bookmark),
+            label: l10n.bookmarksTab,
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            selectedIcon: const Icon(Icons.settings),
+            label: l10n.settingsTab,
           ),
         ],
       ),
@@ -445,6 +450,7 @@ class _PaginationFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     if (provider.items.isEmpty) return const SizedBox.shrink();
 
     if (provider.isLoadingMore) {
@@ -461,7 +467,7 @@ class _PaginationFooter extends StatelessWidget {
           child: TextButton.icon(
             onPressed: provider.loadMoreItems,
             icon: const Icon(Icons.expand_more),
-            label: const Text('Load more'),
+            label: Text(l10n.loadMore),
           ),
         ),
       );
@@ -473,7 +479,7 @@ class _PaginationFooter extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 24.0),
         child: Center(
           child: Text(
-            "You're all caught up ✓",
+            l10n.allCaughtUp,
             style: TextStyle(
               color: Theme.of(
                 context,

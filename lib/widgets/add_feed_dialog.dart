@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 
@@ -19,6 +20,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -49,9 +51,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
             child: Icon(Icons.rss_feed, color: colorScheme.onPrimaryContainer),
           ),
           const SizedBox(width: 12),
-          const Text(
-            'Add RSS Feed',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          Text(
+            l10n.addRssFeed,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -66,17 +68,17 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               TextFormField(
                 controller: _urlController,
                 decoration: baseInputDecoration.copyWith(
-                  labelText: 'Feed URL',
-                  hintText: 'e.g. https://techcrunch.com/feed/',
+                  labelText: l10n.feedUrlLabel,
+                  hintText: l10n.feedUrlHint,
                   prefixIcon: Icon(Icons.link, color: colorScheme.primary),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a URL';
+                    return l10n.pleaseEnterUrl;
                   }
                   final uri = Uri.tryParse(value.trim());
                   if (uri == null || !uri.isAbsolute) {
-                    return 'Please enter a valid URL';
+                    return l10n.pleaseEnterValidUrl;
                   }
                   return null;
                 },
@@ -85,12 +87,12 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               TextFormField(
                 controller: _nameController,
                 decoration: baseInputDecoration.copyWith(
-                  labelText: 'Site Name',
+                  labelText: l10n.siteNameLabel,
                   prefixIcon: Icon(Icons.title, color: colorScheme.primary),
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name';
+                    return l10n.pleaseEnterName;
                   }
                   return null;
                 },
@@ -126,8 +128,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                         controller: textEditingController,
                         focusNode: focusNode,
                         decoration: baseInputDecoration.copyWith(
-                          labelText: 'Category (Optional)',
-                          hintText: 'Technology, News, etc.',
+                          labelText: l10n.categoryOptional,
+                          hintText: l10n.categoryHint,
                           prefixIcon: Icon(
                             Icons.folder_outlined,
                             color: colorScheme.primary,
@@ -152,7 +154,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
           child: Text(
-            'Cancel',
+            l10n.cancel,
             style: TextStyle(color: colorScheme.onSurfaceVariant),
           ),
         ),
@@ -183,7 +185,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                   .catchError((error) {
                     if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Error adding feed: $error')),
+                        SnackBar(
+                          content: Text(l10n.errorAddingFeed(error.toString())),
+                        ),
                       );
                     }
                   });
@@ -195,9 +199,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: const Text(
-            'Save Feed',
-            style: TextStyle(fontWeight: FontWeight.bold),
+          child: Text(
+            l10n.saveFeed,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
         ),
       ],

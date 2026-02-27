@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 
@@ -9,18 +10,19 @@ class SubscriptionsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final subscriptionProvider = context.watch<SubscriptionProvider>();
     final subscriptions = subscriptionProvider.subscriptions;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Feeds'),
+        title: Text(l10n.manageFeeds),
         backgroundColor: Theme.of(context).colorScheme.surface,
       ),
       body: subscriptions.isEmpty
           ? Center(
               child: Text(
-                'No feeds subscribed.\nAdd one from the Home Screen.',
+                l10n.noFeedsSubscribed,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(
@@ -100,7 +102,7 @@ class SubscriptionsScreen extends StatelessWidget {
                         Icons.delete_outline,
                         color: Colors.redAccent,
                       ),
-                      tooltip: 'Remove Feed',
+                      tooltip: l10n.removeFeed,
                       onPressed: () {
                         _confirmDelete(context, sub.url, sub.name);
                       },
@@ -113,16 +115,20 @@ class SubscriptionsScreen extends StatelessWidget {
   }
 
   void _confirmDelete(BuildContext context, String url, String name) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         backgroundColor: Theme.of(context).colorScheme.surface,
-        title: const Text('Remove Feed?'),
-        content: Text('Are you sure you want to stop following "$name"?'),
+        title: Text(l10n.removeFeed),
+        content: Text(l10n.removeFeedConfirm(name)),
         actions: [
           TextButton(
             onPressed: () => ctx.pop(),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              l10n.cancel,
+              style: const TextStyle(color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
@@ -133,9 +139,9 @@ class SubscriptionsScreen extends StatelessWidget {
               });
               ctx.pop();
             },
-            child: const Text(
-              'Remove',
-              style: TextStyle(color: Colors.redAccent),
+            child: Text(
+              l10n.remove,
+              style: const TextStyle(color: Colors.redAccent),
             ),
           ),
         ],

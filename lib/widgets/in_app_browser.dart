@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import '../l10n/app_localizations.dart';
 
 /// Returns `true` when the current platform supports [WebViewWidget].
 ///
@@ -122,11 +123,12 @@ class _InAppBrowserState extends State<InAppBrowser> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.close),
-          tooltip: 'Close',
+          tooltip: l10n.close,
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -138,7 +140,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
         actions: [
           IconButton(
             icon: const Icon(Icons.open_in_browser),
-            tooltip: 'Open in External Browser',
+            tooltip: l10n.openInExternalBrowser,
             onPressed: _openExternal,
           ),
         ],
@@ -168,7 +170,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
             // Back
             IconButton(
               icon: const Icon(Icons.arrow_back_ios_new, size: 20),
-              tooltip: 'Back',
+              tooltip: l10n.back,
               onPressed: _canGoBack
                   ? () async {
                       await _controller.goBack();
@@ -179,7 +181,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
             // Forward
             IconButton(
               icon: const Icon(Icons.arrow_forward_ios, size: 20),
-              tooltip: 'Forward',
+              tooltip: l10n.forward,
               onPressed: _canGoForward
                   ? () async {
                       await _controller.goForward();
@@ -190,13 +192,13 @@ class _InAppBrowserState extends State<InAppBrowser> {
             // Refresh
             IconButton(
               icon: const Icon(Icons.refresh, size: 22),
-              tooltip: 'Refresh',
+              tooltip: l10n.refresh,
               onPressed: () => _controller.reload(),
             ),
             // Share / Open external
             IconButton(
               icon: const Icon(Icons.ios_share, size: 22),
-              tooltip: 'Open in External Browser',
+              tooltip: l10n.openInExternalBrowser,
               onPressed: _openExternal,
             ),
           ],

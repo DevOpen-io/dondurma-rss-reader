@@ -1,0 +1,174 @@
+{
+  "@@locale": "en",
+
+  "appTitle": "RSS Reader",
+  "appName": "Ice Cream Reader",
+
+  "feedsTab": "Feeds",
+  "foldersTab": "Folders",
+  "bookmarksTab": "Bookmarks",
+  "settingsTab": "Settings",
+
+  "myFeeds": "My Feeds",
+  "searchFeeds": "Search feeds...",
+  "today": "TODAY",
+  "yesterday": "YESTERDAY",
+  "older": "OLDER",
+  "subscribedOnly": "Subscribed Only",
+  "noFeedsFound": "No feeds found. Add a new feed using the + button.",
+  "noFeedsInCategory": "No feeds found in {category}.",
+  "@noFeedsInCategory": {
+    "placeholders": {
+      "category": { "type": "String" }
+    }
+  },
+  "noFeedsMatchFilter": "No feeds match your current filter.",
+  "offlineBanner": "You're offline — showing cached articles.",
+  "loadMore": "Load more",
+  "allCaughtUp": "You're all caught up ✓",
+
+  "noBookmarks": "No bookmarked articles yet.",
+
+  "noFolders": "No folders yet. Categories will appear here.",
+  "renameFolder": "Rename Folder",
+  "folderName": "Folder Name",
+  "deleteFolder": "Delete Folder",
+  "deleteFolderConfirm": "Are you sure you want to delete the folder \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.",
+  "@deleteFolderConfirm": {
+    "placeholders": {
+      "categoryName": { "type": "String" },
+      "feedCount": { "type": "int" }
+    }
+  },
+  "deleteAll": "Delete All",
+
+  "editFeed": "Edit Feed",
+  "feedName": "Feed Name",
+  "feedUrl": "Feed URL",
+  "deleteFeed": "Delete Feed",
+  "deleteFeedConfirm": "Are you sure you want to completely remove \"{feedName}\" from your subscriptions?",
+  "@deleteFeedConfirm": {
+    "placeholders": {
+      "feedName": { "type": "String" }
+    }
+  },
+
+  "cancel": "Cancel",
+  "save": "Save",
+  "delete": "Delete",
+
+  "addRssFeed": "Add RSS Feed",
+  "feedUrlLabel": "Feed URL",
+  "feedUrlHint": "e.g. https://techcrunch.com/feed/",
+  "siteNameLabel": "Site Name",
+  "categoryOptional": "Category (Optional)",
+  "categoryHint": "Technology, News, etc.",
+  "pleaseEnterUrl": "Please enter a URL",
+  "pleaseEnterValidUrl": "Please enter a valid URL",
+  "pleaseEnterName": "Please enter a name",
+  "saveFeed": "Save Feed",
+  "errorAddingFeed": "Error adding feed: {error}",
+  "@errorAddingFeed": {
+    "placeholders": {
+      "error": { "type": "String" }
+    }
+  },
+
+  "categories": "CATEGORIES",
+  "allNews": "All News",
+  "uncategorized": "UNCATEGORIZED",
+  "randomBlogs": "Random Blogs",
+  "discover": "DISCOVER",
+  "suggestedFeeds": "Suggested Feeds",
+
+  "all": "All",
+  "noFeedsInThisCategory": "No feeds in this category",
+  "addSubscription": "Add Subscription",
+  "addSubscriptionConfirm": "Do you want to add \"{name}\" to your feed list?",
+  "@addSubscriptionConfirm": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "addSource": "Add Source",
+  "addedSubscription": "Added {name} to your subscriptions!",
+  "@addedSubscription": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "suggestedFeedsWarning": "Warning: Some RSS sources may be broken or no longer work.",
+
+  "general": "General",
+  "theme": "Theme",
+  "selectAppStyle": "Select application style",
+  "language": "Language",
+  "changeAppLanguage": "Change the app language",
+  "english": "English",
+  "turkish": "Türkçe",
+
+  "dataAndStorage": "Data & Storage",
+  "offlineCacheLimit": "Offline Cache Limit",
+  "offlineCacheLimitDesc": "Recent articles kept for offline reading",
+  "none": "None",
+  "autoRefreshFeeds": "Auto Refresh Feeds",
+  "autoRefreshFeedsDesc": "How often feeds sync in background",
+  "thirtySeconds": "30 Seconds",
+  "oneMinute": "1 Minute",
+  "fiveMinutes": "5 Minutes",
+  "clearCache": "Clear Cache",
+  "clearCacheDesc": "Remove downloaded articles to free up space",
+  "cacheClearedSuccess": "Cache cleared successfully.",
+  "syncBackground": "Sync Background",
+  "syncBackgroundDesc": "Fetch new articles while app is open",
+  "exportSubscriptions": "Export Subscriptions (OPML)",
+  "exportSubscriptionsDesc": "Backup your feeds to a file",
+  "noSubscriptionsToExport": "No subscriptions to export.",
+  "exportSuccess": "Subscriptions exported successfully.",
+  "exportFailed": "Export failed. Please try again.",
+  "importSubscriptions": "Import Subscriptions (OPML)",
+  "importSubscriptionsDesc": "Restore feeds from an OPML file",
+  "noFeedsFoundOrCancelled": "No feeds found or import was cancelled.",
+  "importedFeeds": "Imported {count} new feed{count, plural, =1{} other{s}}.",
+  "@importedFeeds": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "allFeedsExist": "All feeds already exist — nothing new imported.",
+
+  "about": "About",
+  "version": "Version",
+  "versionDesc": "Current build of Ice Cream Reader",
+  "rateTheApp": "Rate the App",
+  "rateTheAppDesc": "Support the development on the App Store",
+
+  "openInBrowser": "Open in Browser",
+  "readOnOriginalWebpage": "Read on Original Webpage",
+  "invalidUrlFormat": "Invalid URL format",
+
+  "close": "Close",
+  "openInExternalBrowser": "Open in External Browser",
+  "back": "Back",
+  "forward": "Forward",
+  "refresh": "Refresh",
+
+  "themeSystemDefault": "System Default",
+  "themeLightClassic": "Light (Classic)",
+  "themeDarkClassic": "Dark (Classic)",
+  "themeLatte": "Latte (Light)",
+  "themeFrappe": "Frappé (Dark)",
+  "themeMacchiato": "Macchiato (Dark)",
+  "themeMocha": "Mocha (Dark)",
+
+  "manageFeeds": "Manage Feeds",
+  "noFeedsSubscribed": "No feeds subscribed.\nAdd one from the Home Screen.",
+  "removeFeed": "Remove Feed",
+  "removeFeedConfirm": "Are you sure you want to stop following \"{name}\"?",
+  "@removeFeedConfirm": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "remove": "Remove"
+}

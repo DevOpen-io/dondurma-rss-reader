@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/bookmark_provider.dart';
 import '../widgets/feed_list_item.dart';
 
@@ -8,13 +9,14 @@ class BookmarksScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final bookmarkProvider = context.watch<BookmarkProvider>();
     final bookmarkedItems = bookmarkProvider.bookmarkedItems;
 
     if (bookmarkedItems.isEmpty) {
       return Center(
         child: Text(
-          'No bookmarked articles yet.',
+          l10n.noBookmarks,
           style: TextStyle(
             color: Theme.of(
               context,

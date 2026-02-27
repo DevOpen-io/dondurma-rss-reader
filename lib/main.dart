@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'l10n/app_localizations.dart';
 import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/subscription_provider.dart';
@@ -52,6 +54,14 @@ class MyApp extends StatelessWidget {
       title: 'RSS Reader',
       debugShowCheckedModeBanner: false,
       theme: themeData,
+      locale: settingsProvider.locale,
+      supportedLocales: const [Locale('en'), Locale('tr')],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       routerConfig: appRouter,
     );
   }

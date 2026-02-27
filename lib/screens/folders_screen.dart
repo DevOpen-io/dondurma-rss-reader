@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../models/feed_subscription.dart';
@@ -9,6 +10,7 @@ class FoldersScreen extends StatelessWidget {
   const FoldersScreen({super.key});
 
   void _showEditCategoryDialog(BuildContext context, String currentCategory) {
+    final l10n = AppLocalizations.of(context);
     final TextEditingController nameController = TextEditingController(
       text: currentCategory,
     );
@@ -16,19 +18,19 @@ class FoldersScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Rename Folder'),
+          title: Text(l10n.renameFolder),
           content: TextField(
             controller: nameController,
-            decoration: const InputDecoration(
-              labelText: 'Folder Name',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: l10n.folderName,
+              border: const OutlineInputBorder(),
             ),
             autofocus: true,
           ),
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -45,7 +47,7 @@ class FoldersScreen extends StatelessWidget {
                 }
                 context.pop();
               },
-              child: const Text('Save'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -54,6 +56,7 @@ class FoldersScreen extends StatelessWidget {
   }
 
   void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
+    final l10n = AppLocalizations.of(context);
     final TextEditingController feedNameController = TextEditingController(
       text: sub.name,
     );
@@ -65,23 +68,23 @@ class FoldersScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Edit Feed'),
+          title: Text(l10n.editFeed),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: feedNameController,
-                decoration: const InputDecoration(
-                  labelText: 'Feed Name',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.feedName,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16),
               TextField(
                 controller: feedUrlController,
-                decoration: const InputDecoration(
-                  labelText: 'Feed URL',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.feedUrl,
+                  border: const OutlineInputBorder(),
                 ),
                 keyboardType: TextInputType.url,
               ),
@@ -90,7 +93,7 @@ class FoldersScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               onPressed: () {
@@ -108,7 +111,7 @@ class FoldersScreen extends StatelessWidget {
                 }
                 context.pop();
               },
-              child: const Text('Save'),
+              child: Text(l10n.save),
             ),
           ],
         );
@@ -117,18 +120,17 @@ class FoldersScreen extends StatelessWidget {
   }
 
   void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Feed'),
-          content: Text(
-            'Are you sure you want to completely remove "${sub.name}" from your subscriptions?',
-          ),
+          title: Text(l10n.deleteFeed),
+          content: Text(l10n.deleteFeedConfirm(sub.name)),
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -145,7 +147,7 @@ class FoldersScreen extends StatelessWidget {
                 context.pop();
               },
               child: Text(
-                'Delete',
+                l10n.delete,
                 style: TextStyle(color: Theme.of(context).colorScheme.onError),
               ),
             ),
@@ -160,18 +162,17 @@ class FoldersScreen extends StatelessWidget {
     String categoryName,
     int feedCount,
   ) {
+    final l10n = AppLocalizations.of(context);
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Delete Folder'),
-          content: Text(
-            'Are you sure you want to delete the folder "$categoryName"?\n\nThis will permanently remove all $feedCount RSS feeds inside it from your subscriptions.',
-          ),
+          title: Text(l10n.deleteFolder),
+          content: Text(l10n.deleteFolderConfirm(categoryName, feedCount)),
           actions: [
             TextButton(
               onPressed: () => context.pop(),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -189,7 +190,7 @@ class FoldersScreen extends StatelessWidget {
                 context.pop();
               },
               child: Text(
-                'Delete All',
+                l10n.deleteAll,
                 style: TextStyle(color: Theme.of(context).colorScheme.onError),
               ),
             ),
@@ -201,6 +202,7 @@ class FoldersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final subscriptionProvider = context.watch<SubscriptionProvider>();
     final subscriptions = subscriptionProvider.subscriptions;
 
@@ -218,7 +220,7 @@ class FoldersScreen extends StatelessWidget {
     if (sortedCategoryNames.isEmpty) {
       return Center(
         child: Text(
-          'No folders yet. Categories will appear here.',
+          l10n.noFolders,
           style: TextStyle(
             color: Theme.of(
               context,
@@ -267,7 +269,7 @@ class FoldersScreen extends StatelessWidget {
                     categoryName,
                     subs.length,
                   ),
-                  tooltip: 'Delete Folder',
+                  tooltip: l10n.deleteFolder,
                 ),
                 IconButton(
                   icon: Icon(
@@ -279,7 +281,7 @@ class FoldersScreen extends StatelessWidget {
                   ),
                   onPressed: () =>
                       _showEditCategoryDialog(context, categoryName),
-                  tooltip: 'Rename Folder',
+                  tooltip: l10n.renameFolder,
                 ),
               ],
             ),
@@ -330,7 +332,7 @@ class FoldersScreen extends StatelessWidget {
                           ),
                           onPressed: () =>
                               _showEditSubscriptionDialog(context, sub),
-                          tooltip: 'Edit Feed',
+                          tooltip: l10n.editFeed,
                         ),
                         IconButton(
                           icon: Icon(
@@ -340,7 +342,7 @@ class FoldersScreen extends StatelessWidget {
                           ),
                           onPressed: () =>
                               _showDeleteConfirmation(context, sub),
-                          tooltip: 'Delete Feed',
+                          tooltip: l10n.deleteFeed,
                         ),
                       ],
                     ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../models/feed_subscription.dart';
@@ -13,6 +14,7 @@ class AppDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final provider = context.watch<FeedProvider>();
     final subscriptionProvider = context.watch<SubscriptionProvider>();
     final categories = subscriptionProvider.categories.toList()..sort();
@@ -36,7 +38,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Ice Cream Reader',
+                    l10n.appName,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).colorScheme.onSurface,
@@ -54,10 +56,10 @@ class AppDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
-                  _buildSectionHeader(context, 'CATEGORIES'),
+                  _buildSectionHeader(context, l10n.categories),
                   _buildDrawerItem(
                     icon: Icons.article,
-                    title: 'All News',
+                    title: l10n.allNews,
                     count: '${provider.items.length}',
                     isSelected: provider.selectedCategory == null,
                     context: context,
@@ -92,10 +94,10 @@ class AppDrawer extends StatelessWidget {
                   ),
 
                   if (categories.contains('Uncategorized')) ...[
-                    _buildSectionHeader(context, 'UNCATEGORIZED'),
+                    _buildSectionHeader(context, l10n.uncategorized),
                     _buildExpandableCategoryItem(
                       icon: Icons.rss_feed,
-                      title: 'Random Blogs',
+                      title: l10n.randomBlogs,
                       feedSources: subscriptionProvider.subscriptions
                           .where((sub) => sub.category == 'Uncategorized')
                           .toList(),
@@ -111,10 +113,10 @@ class AppDrawer extends StatelessWidget {
                     ),
                   ],
 
-                  _buildSectionHeader(context, 'DISCOVER'),
+                  _buildSectionHeader(context, l10n.discover),
                   _buildDrawerItem(
                     icon: Icons.lightbulb_outline,
-                    title: 'Suggested Feeds',
+                    title: l10n.suggestedFeeds,
                     context: context,
                     onTap: () {
                       context.pop();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
+import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../widgets/in_app_browser.dart';
 
@@ -20,9 +21,10 @@ class ArticleScreen extends StatelessWidget {
 
     final uri = Uri.tryParse(cleanUrl);
     if (uri == null) {
+      final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Invalid URL format')));
+      ).showSnackBar(SnackBar(content: Text(l10n.invalidUrlFormat)));
       return;
     }
 
@@ -31,6 +33,7 @@ class ArticleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
     final String dateStr = item.pubDate != null
         ? DateFormat('MMM d, yyyy  h:mm a').format(item.pubDate!.toLocal())
         : '';
@@ -46,7 +49,7 @@ class ArticleScreen extends StatelessWidget {
                 _openUrl(context, item.link, title: item.title);
               }
             },
-            tooltip: 'Open in Browser',
+            tooltip: l10n.openInBrowser,
           ),
         ],
       ),
@@ -188,7 +191,7 @@ class ArticleScreen extends StatelessWidget {
                         }
                       },
                       icon: const Icon(Icons.public),
-                      label: const Text('Read on Original Webpage'),
+                      label: Text(l10n.readOnOriginalWebpage),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Theme.of(context).colorScheme.primary,
                         foregroundColor: Theme.of(
