@@ -17,6 +17,7 @@ class FeedProvider extends ChangeNotifier {
   Set<String> _readItemIds = {};
   Set<String> _cachedItemIds = {};
   bool _isLoading = false;
+  bool _isOffline = false;
 
   /// How many items from [_filteredItems] are currently rendered.
   int _itemRenderLimit = 50;
@@ -37,6 +38,7 @@ class FeedProvider extends ChangeNotifier {
   Set<String> get cachedItemIds => _cachedItemIds;
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
+  bool get isOffline => _isOffline;
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
 
@@ -255,36 +257,62 @@ class FeedProvider extends ChangeNotifier {
 
     final results = await Future.wait(futures);
 
-    List<FeedItem> allItems = [];
+    List<FeedItem> freshItems = [];
     for (var items in results) {
-      allItems.addAll(items);
+      freshItems.addAll(items);
     }
 
-    if (bookmarkProvider != null) {
-      for (var saved in bookmarkProvider!.bookmarkedItems) {
-        if (!allItems.any((item) => item.id == saved.id)) {
-          allItems.add(saved);
+    // If every single fetch failed (e.g. device is offline), keep the
+    // previously loaded items so cached articles remain visible.
+    final bool fetchedAnything = freshItems.isNotEmpty;
+
+    if (fetchedAnything) {
+      // Merge bookmarks into the fresh list so they are always visible.
+      if (bookmarkProvider != null) {
+        for (var saved in bookmarkProvider!.bookmarkedItems) {
+          if (!freshItems.any((item) => item.id == saved.id)) {
+            freshItems.add(saved);
+          }
         }
       }
+
+      freshItems.sort((a, b) {
+        if (a.pubDate == null && b.pubDate == null) return 0;
+        if (a.pubDate == null) return 1;
+        if (b.pubDate == null) return -1;
+        return b.pubDate!.compareTo(a.pubDate!);
+      });
+
+      _items = freshItems;
+    } else {
+      // Offline: keep existing _items but still ensure bookmarks are present.
+      if (bookmarkProvider != null) {
+        for (var saved in bookmarkProvider!.bookmarkedItems) {
+          if (!_items.any((item) => item.id == saved.id)) {
+            _items.add(saved);
+          }
+        }
+      }
+      debugPrint('FeedProvider: all fetches failed — showing cached items.');
     }
 
-    allItems.sort((a, b) {
-      if (a.pubDate == null && b.pubDate == null) return 0;
-      if (a.pubDate == null) return 1;
-      if (b.pubDate == null) return -1;
-      return b.pubDate!.compareTo(a.pubDate!);
-    });
-
-    _items = allItems;
+    _isOffline = !fetchedAnything;
     _isLoading = false;
     notifyListeners();
 
-    await _saveCachedItems();
+    // Only persist a new cache snapshot when we actually fetched fresh data.
+    if (fetchedAnything) {
+      await _saveCachedItems();
+    }
   }
 
   Future<void> _saveCachedItems() async {
     if (settingsProvider == null) return;
-    final limit = settingsProvider!.offlineCacheLimit;
+    final int limit = settingsProvider!.offlineCacheLimit;
+
+    // offlineCacheLimit == 0 means "no offline cache" — don't save anything
+    // and don't wipe an existing cache.
+    if (limit == 0) return;
 
     final box = Hive.box('settings');
     final itemsToCache = _items.take(limit).toList();

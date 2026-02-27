@@ -55,121 +55,177 @@ class _HomeScreenState extends State<HomeScreen> {
       },
       child: provider.isLoading && provider.items.isEmpty
           ? const Center(child: CircularProgressIndicator())
-          : NotificationListener<ScrollNotification>(
-              onNotification: (ScrollNotification scrollInfo) {
-                if (!provider.isLoadingMore &&
-                    provider.hasMoreItems &&
-                    scrollInfo.metrics.pixels >=
-                        scrollInfo.metrics.maxScrollExtent - 300) {
-                  WidgetsBinding.instance.addPostFrameCallback((_) {
-                    provider.loadMoreItems();
-                  });
-                }
-                return false;
-              },
-              child: CustomScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                slivers: [
-                  // ── Today ──────────────────────────────────────────────────
-                  if (todayItems.isNotEmpty) ...[
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverToBoxAdapter(
-                        child: _buildSectionHeader(
-                          'TODAY',
-                          trailingText: 'Subscribed Only',
-                        ),
+          : Column(
+              children: [
+                // ── Offline banner ─────────────────────────────────────────
+                if (provider.isOffline && provider.items.isNotEmpty)
+                  Material(
+                    color: Theme.of(context).colorScheme.errorContainer,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.wifi_off,
+                            size: 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onErrorContainer,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              "You're offline — showing cached articles.",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onErrorContainer,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverList.builder(
-                        itemCount: todayItems.length,
-                        itemBuilder: (context, index) {
-                          return FeedListItem(item: todayItems[index]);
-                        },
-                      ),
-                    ),
-                  ],
-
-                  // ── Yesterday ──────────────────────────────────────────────
-                  if (yesterdayItems.isNotEmpty) ...[
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverToBoxAdapter(
-                        child: _buildSectionHeader('YESTERDAY'),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverList.builder(
-                        itemCount: yesterdayItems.length,
-                        itemBuilder: (context, index) {
-                          return FeedListItem(item: yesterdayItems[index]);
-                        },
-                      ),
-                    ),
-                  ],
-
-                  // ── Older ──────────────────────────────────────────────────
-                  if (olderItems.isNotEmpty) ...[
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverToBoxAdapter(
-                        child: _buildSectionHeader('OLDER'),
-                      ),
-                    ),
-                    SliverPadding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                      sliver: SliverList.builder(
-                        itemCount: olderItems.length,
-                        itemBuilder: (context, index) {
-                          return FeedListItem(item: olderItems[index]);
-                        },
-                      ),
-                    ),
-                  ],
-
-                  // ── Pagination footer ──────────────────────────────────────
-                  SliverToBoxAdapter(
-                    child: _PaginationFooter(provider: provider),
                   ),
 
-                  // ── Empty states ───────────────────────────────────────────
-                  if (provider.items.isEmpty && !provider.isLoading)
-                    const SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: EdgeInsets.all(32.0),
-                        child: Center(
-                          child: Text(
-                            'No feeds found. Add a new feed using the + button.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: Colors.grey),
+                // ── Feed list ──────────────────────────────────────────────
+                Expanded(
+                  child: NotificationListener<ScrollNotification>(
+                    onNotification: (ScrollNotification scrollInfo) {
+                      if (!provider.isLoadingMore &&
+                          provider.hasMoreItems &&
+                          scrollInfo.metrics.pixels >=
+                              scrollInfo.metrics.maxScrollExtent - 300) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          provider.loadMoreItems();
+                        });
+                      }
+                      return false;
+                    },
+                    child: CustomScrollView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      slivers: [
+                        // ── Today ──────────────────────────────────────────
+                        if (todayItems.isNotEmpty) ...[
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: _buildSectionHeader(
+                                'TODAY',
+                                trailingText: 'Subscribed Only',
+                              ),
+                            ),
                           ),
-                        ),
-                      ),
-                    )
-                  else if (!hasAnyItems && !provider.isLoading)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Center(
-                          child: Text(
-                            provider.selectedCategory != null
-                                ? 'No feeds found in ${provider.selectedCategory}.'
-                                : 'No feeds match your current filter.',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.grey),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            sliver: SliverList.builder(
+                              itemCount: todayItems.length,
+                              itemBuilder: (context, index) {
+                                return FeedListItem(item: todayItems[index]);
+                              },
+                            ),
                           ),
-                        ),
-                      ),
-                    ),
+                        ],
 
-                  const SliverToBoxAdapter(child: SizedBox(height: 80)),
-                ],
-              ),
+                        // ── Yesterday ──────────────────────────────────────
+                        if (yesterdayItems.isNotEmpty) ...[
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: _buildSectionHeader('YESTERDAY'),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            sliver: SliverList.builder(
+                              itemCount: yesterdayItems.length,
+                              itemBuilder: (context, index) {
+                                return FeedListItem(
+                                  item: yesterdayItems[index],
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+
+                        // ── Older ──────────────────────────────────────────
+                        if (olderItems.isNotEmpty) ...[
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: _buildSectionHeader('OLDER'),
+                            ),
+                          ),
+                          SliverPadding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            sliver: SliverList.builder(
+                              itemCount: olderItems.length,
+                              itemBuilder: (context, index) {
+                                return FeedListItem(item: olderItems[index]);
+                              },
+                            ),
+                          ),
+                        ],
+
+                        // ── Pagination footer ──────────────────────────────
+                        SliverToBoxAdapter(
+                          child: _PaginationFooter(provider: provider),
+                        ),
+
+                        // ── Empty states ───────────────────────────────────
+                        if (provider.items.isEmpty && !provider.isLoading)
+                          const SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Padding(
+                              padding: EdgeInsets.all(32.0),
+                              child: Center(
+                                child: Text(
+                                  'No feeds found. Add a new feed using the + button.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          )
+                        else if (!hasAnyItems && !provider.isLoading)
+                          SliverFillRemaining(
+                            hasScrollBody: false,
+                            child: Padding(
+                              padding: const EdgeInsets.all(32.0),
+                              child: Center(
+                                child: Text(
+                                  provider.selectedCategory != null
+                                      ? 'No feeds found in ${provider.selectedCategory}.'
+                                      : 'No feeds match your current filter.',
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(color: Colors.grey),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        const SliverToBoxAdapter(child: SizedBox(height: 80)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
     );
   }
