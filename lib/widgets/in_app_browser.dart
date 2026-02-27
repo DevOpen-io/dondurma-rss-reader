@@ -1,6 +1,21 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+
+/// Returns `true` when the current platform supports [WebViewWidget].
+///
+/// `webview_flutter` v4.x ships implementations for Android, iOS, and macOS.
+/// On Web, Windows, and Linux there is no native WebView – we fall back to
+/// [url_launcher] instead.
+bool get _webViewSupported {
+  if (kIsWeb) return false;
+  final platform = defaultTargetPlatform;
+  return platform == TargetPlatform.android ||
+      platform == TargetPlatform.iOS ||
+      platform == TargetPlatform.macOS;
+}
 
 /// A full-screen in-app browser page built on [WebView].
 ///
@@ -192,15 +207,27 @@ class _InAppBrowserState extends State<InAppBrowser> {
 }
 
 /// Convenience function to push [InAppBrowser] as a full-screen route.
+///
+/// On platforms where `webview_flutter` is not available (Windows, Linux, Web)
+/// the URL is opened in the system's default external browser via
+/// [url_launcher] instead.
 Future<void> openInAppBrowser(
   BuildContext context,
   String url, {
   String? title,
-}) {
-  return Navigator.of(context).push(
-    MaterialPageRoute(
-      builder: (_) => InAppBrowser(url: url, title: title),
-      fullscreenDialog: true,
-    ),
-  );
+}) async {
+  if (_webViewSupported) {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => InAppBrowser(url: url, title: title),
+        fullscreenDialog: true,
+      ),
+    );
+  } else {
+    // Fallback: open in the system's external browser
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 }
