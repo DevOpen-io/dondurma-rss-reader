@@ -15,6 +15,11 @@ class SettingsProvider extends ChangeNotifier {
   int _quietHoursStart = 22;
   int _quietHoursEnd = 7;
 
+  // Display & Readability settings
+  String _fontSize = 'medium'; // 'small', 'medium', 'large', 'xl'
+  String _typeface = 'system'; // 'system', 'serif', 'sans-serif', 'mono'
+  double _lineSpacing = 1.5; // 1.2 (tight), 1.5 (normal), 1.8 (relaxed)
+
   AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
@@ -25,6 +30,10 @@ class SettingsProvider extends ChangeNotifier {
   String get digestMode => _digestMode;
   int get quietHoursStart => _quietHoursStart;
   int get quietHoursEnd => _quietHoursEnd;
+
+  String get fontSize => _fontSize;
+  String get typeface => _typeface;
+  double get lineSpacing => _lineSpacing;
 
   SettingsProvider() {
     _loadSettings();
@@ -67,6 +76,11 @@ class SettingsProvider extends ChangeNotifier {
     _digestMode = box.get('digestMode', defaultValue: 'instant');
     _quietHoursStart = box.get('quietHoursStart', defaultValue: 22);
     _quietHoursEnd = box.get('quietHoursEnd', defaultValue: 7);
+
+    // Load display settings
+    _fontSize = box.get('fontSize', defaultValue: 'medium');
+    _typeface = box.get('typeface', defaultValue: 'system');
+    _lineSpacing = box.get('lineSpacing', defaultValue: 1.5);
 
     notifyListeners();
   }
@@ -132,5 +146,26 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final box = Hive.box('settings');
     await box.put('quietHoursEnd', hour);
+  }
+
+  Future<void> setFontSize(String size) async {
+    _fontSize = size;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('fontSize', size);
+  }
+
+  Future<void> setTypeface(String face) async {
+    _typeface = face;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('typeface', face);
+  }
+
+  Future<void> setLineSpacing(double spacing) async {
+    _lineSpacing = spacing;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('lineSpacing', spacing);
   }
 }

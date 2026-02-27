@@ -310,6 +310,51 @@ class AppLocalizationsTr extends AppLocalizations {
   String get rateTheAppDesc => 'App Store\'da geliştirmeyi destekleyin';
 
   @override
+  String get displayAndReadability => 'Görünüm ve Okunabilirlik';
+
+  @override
+  String get fontSize => 'Yazı Tipi Boyutu';
+
+  @override
+  String get fontSizeSmall => 'Küçük';
+
+  @override
+  String get fontSizeMedium => 'Orta';
+
+  @override
+  String get fontSizeLarge => 'Büyük';
+
+  @override
+  String get fontSizeXl => 'Çok Büyük';
+
+  @override
+  String get typeface => 'Yazı Tipi Ailesi';
+
+  @override
+  String get typefaceDefault => 'Sistem Varsayılanı';
+
+  @override
+  String get typefaceSerif => 'Serif';
+
+  @override
+  String get typefaceSansSerif => 'Sans-Serif';
+
+  @override
+  String get typefaceMono => 'Aralıklı (Monospace)';
+
+  @override
+  String get lineSpacing => 'Satır Aralığı';
+
+  @override
+  String get lineSpacingTight => 'Dar';
+
+  @override
+  String get lineSpacingNormal => 'Normal';
+
+  @override
+  String get lineSpacingRelaxed => 'Geniş';
+
+  @override
   String get openInBrowser => 'Tarayıcıda Aç';
 
   @override

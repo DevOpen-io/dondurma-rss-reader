@@ -312,6 +312,51 @@ class AppLocalizationsEn extends AppLocalizations {
   String get rateTheAppDesc => 'Support the development on the App Store';
 
   @override
+  String get displayAndReadability => 'Display & Readability';
+
+  @override
+  String get fontSize => 'Font Size';
+
+  @override
+  String get fontSizeSmall => 'Small';
+
+  @override
+  String get fontSizeMedium => 'Medium';
+
+  @override
+  String get fontSizeLarge => 'Large';
+
+  @override
+  String get fontSizeXl => 'Extra Large';
+
+  @override
+  String get typeface => 'Typeface';
+
+  @override
+  String get typefaceDefault => 'System Default';
+
+  @override
+  String get typefaceSerif => 'Serif';
+
+  @override
+  String get typefaceSansSerif => 'Sans-Serif';
+
+  @override
+  String get typefaceMono => 'Monospace';
+
+  @override
+  String get lineSpacing => 'Line Spacing';
+
+  @override
+  String get lineSpacingTight => 'Tight';
+
+  @override
+  String get lineSpacingNormal => 'Normal';
+
+  @override
+  String get lineSpacingRelaxed => 'Relaxed';
+
+  @override
   String get openInBrowser => 'Open in Browser';
 
   @override

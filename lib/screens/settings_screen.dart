@@ -107,6 +107,84 @@ class SettingsScreen extends StatelessWidget {
         Divider(
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
         ),
+        _buildSectionHeader(context, l10n.displayAndReadability),
+        ListTile(
+          leading: const Icon(Icons.format_size),
+          title: Text(l10n.fontSize),
+          trailing: DropdownButton<String>(
+            value: context.watch<SettingsProvider>().fontSize,
+            items: [
+              DropdownMenuItem(value: 'small', child: Text(l10n.fontSizeSmall)),
+              DropdownMenuItem(
+                value: 'medium',
+                child: Text(l10n.fontSizeMedium),
+              ),
+              DropdownMenuItem(value: 'large', child: Text(l10n.fontSizeLarge)),
+              DropdownMenuItem(value: 'xl', child: Text(l10n.fontSizeXl)),
+            ],
+            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 12),
+            underline: const SizedBox(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                context.read<SettingsProvider>().setFontSize(newValue);
+              }
+            },
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.font_download_outlined),
+          title: Text(l10n.typeface),
+          trailing: DropdownButton<String>(
+            value: context.watch<SettingsProvider>().typeface,
+            items: [
+              DropdownMenuItem(
+                value: 'system',
+                child: Text(l10n.typefaceDefault),
+              ),
+              DropdownMenuItem(value: 'serif', child: Text(l10n.typefaceSerif)),
+              DropdownMenuItem(
+                value: 'sans-serif',
+                child: Text(l10n.typefaceSansSerif),
+              ),
+              DropdownMenuItem(value: 'mono', child: Text(l10n.typefaceMono)),
+            ],
+            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 12),
+            underline: const SizedBox(),
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                context.read<SettingsProvider>().setTypeface(newValue);
+              }
+            },
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.format_line_spacing),
+          title: Text(l10n.lineSpacing),
+          trailing: DropdownButton<double>(
+            value: context.watch<SettingsProvider>().lineSpacing,
+            items: [
+              DropdownMenuItem(value: 1.2, child: Text(l10n.lineSpacingTight)),
+              DropdownMenuItem(value: 1.5, child: Text(l10n.lineSpacingNormal)),
+              DropdownMenuItem(
+                value: 1.8,
+                child: Text(l10n.lineSpacingRelaxed),
+              ),
+            ],
+            borderRadius: BorderRadius.circular(12),
+            padding: const EdgeInsets.only(left: 12),
+            underline: const SizedBox(),
+            onChanged: (double? newValue) {
+              if (newValue != null) {
+                context.read<SettingsProvider>().setLineSpacing(newValue);
+              }
+            },
+          ),
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
         _buildSectionHeader(context, l10n.notifications),
         if (!NotificationService.instance.isSupported)
           Padding(

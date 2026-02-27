@@ -26,10 +26,10 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Text-to-Speech (TTS)**: Integrate native OS TTS engines to allow users to listen to articles.
   - [ ] Add play/pause/speed controls in the Article View.
   - [ ] Ensure TTS stops when leaving the article screen.
-- [ ] **Font & Display Customization**: Enhance readability settings beyond basic themes.
-  - [ ] Allow font size adjustment (Small, Medium, Large, XL).
-  - [ ] Allow typeface selection (Serif, Sans-Serif, Mono).
-  - [ ] Allow line spacing adjustments in the Article View.
+- [x] **Font & Display Customization**: Enhance readability settings beyond basic themes.
+  - [x] Allow font size adjustment (Small, Medium, Large, XL).
+  - [x] Allow typeface selection (Serif, Sans-Serif, Mono).
+  - [x] Allow line spacing adjustments in the Article View.
 - [ ] **Reading Statistics**: Track user engagement without compromising privacy.
   - [ ] Track articles read per day/week.
   - [ ] Track time spent reading.

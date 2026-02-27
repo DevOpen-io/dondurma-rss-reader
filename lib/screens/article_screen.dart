@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/in_app_browser.dart';
 
 class ArticleScreen extends StatelessWidget {
@@ -34,9 +36,44 @@ class ArticleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final settings = context.watch<SettingsProvider>();
     final String dateStr = item.pubDate != null
         ? DateFormat('MMM d, yyyy  h:mm a').format(item.pubDate!.toLocal())
         : '';
+
+    // Calculate display values
+    double baseFontSize = 18.0;
+    switch (settings.fontSize) {
+      case 'small':
+        baseFontSize = 14.0;
+        break;
+      case 'medium':
+        baseFontSize = 18.0;
+        break;
+      case 'large':
+        baseFontSize = 22.0;
+        break;
+      case 'xl':
+        baseFontSize = 26.0;
+        break;
+    }
+
+    String? fontFamily;
+    switch (settings.typeface) {
+      case 'serif':
+        fontFamily = 'serif, Georgia, Times New Roman';
+        break;
+      case 'sans-serif':
+        fontFamily = 'sans-serif, Arial, Helvetica';
+        break;
+      case 'mono':
+        fontFamily = 'monospace, Courier';
+        break;
+      case 'system':
+      default:
+        fontFamily = null;
+        break; // Uses Outfit / AppTheme default
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -133,11 +170,12 @@ class ArticleScreen extends StatelessWidget {
                     ],
                     style: {
                       "body": Style(
-                        fontSize: FontSize(18.0),
+                        fontSize: FontSize(baseFontSize),
+                        fontFamily: fontFamily,
                         color: Theme.of(
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.85),
-                        lineHeight: LineHeight(1.8),
+                        lineHeight: LineHeight(settings.lineSpacing),
                         margin: Margins.zero,
                         padding: HtmlPaddings.zero,
                       ),

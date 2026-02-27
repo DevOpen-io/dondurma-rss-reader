@@ -656,6 +656,96 @@ abstract class AppLocalizations {
   /// **'Support the development on the App Store'**
   String get rateTheAppDesc;
 
+  /// No description provided for @displayAndReadability.
+  ///
+  /// In en, this message translates to:
+  /// **'Display & Readability'**
+  String get displayAndReadability;
+
+  /// No description provided for @fontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Font Size'**
+  String get fontSize;
+
+  /// No description provided for @fontSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get fontSizeSmall;
+
+  /// No description provided for @fontSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get fontSizeMedium;
+
+  /// No description provided for @fontSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get fontSizeLarge;
+
+  /// No description provided for @fontSizeXl.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra Large'**
+  String get fontSizeXl;
+
+  /// No description provided for @typeface.
+  ///
+  /// In en, this message translates to:
+  /// **'Typeface'**
+  String get typeface;
+
+  /// No description provided for @typefaceDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get typefaceDefault;
+
+  /// No description provided for @typefaceSerif.
+  ///
+  /// In en, this message translates to:
+  /// **'Serif'**
+  String get typefaceSerif;
+
+  /// No description provided for @typefaceSansSerif.
+  ///
+  /// In en, this message translates to:
+  /// **'Sans-Serif'**
+  String get typefaceSansSerif;
+
+  /// No description provided for @typefaceMono.
+  ///
+  /// In en, this message translates to:
+  /// **'Monospace'**
+  String get typefaceMono;
+
+  /// No description provided for @lineSpacing.
+  ///
+  /// In en, this message translates to:
+  /// **'Line Spacing'**
+  String get lineSpacing;
+
+  /// No description provided for @lineSpacingTight.
+  ///
+  /// In en, this message translates to:
+  /// **'Tight'**
+  String get lineSpacingTight;
+
+  /// No description provided for @lineSpacingNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get lineSpacingNormal;
+
+  /// No description provided for @lineSpacingRelaxed.
+  ///
+  /// In en, this message translates to:
+  /// **'Relaxed'**
+  String get lineSpacingRelaxed;
+
   /// No description provided for @openInBrowser.
   ///
   /// In en, this message translates to:
