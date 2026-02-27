@@ -42,7 +42,13 @@ class _HomeScreenState extends State<HomeScreen> {
     FeedProvider provider,
     List<FeedItem> todayItems,
     List<FeedItem> yesterdayItems,
+    List<FeedItem> olderItems,
   ) {
+    final bool hasAnyItems =
+        todayItems.isNotEmpty ||
+        yesterdayItems.isNotEmpty ||
+        olderItems.isNotEmpty;
+
     return RefreshIndicator(
       onRefresh: () async {
         await provider.refreshAll();
@@ -51,8 +57,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ? const Center(child: CircularProgressIndicator())
           : NotificationListener<ScrollNotification>(
               onNotification: (ScrollNotification scrollInfo) {
-                if (scrollInfo.metrics.pixels >=
-                    scrollInfo.metrics.maxScrollExtent - 200) {
+                if (!provider.isLoadingMore &&
+                    provider.hasMoreItems &&
+                    scrollInfo.metrics.pixels >=
+                        scrollInfo.metrics.maxScrollExtent - 300) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
                     provider.loadMoreItems();
                   });
@@ -62,12 +70,13 @@ class _HomeScreenState extends State<HomeScreen> {
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
+                  // ── Today ──────────────────────────────────────────────────
                   if (todayItems.isNotEmpty) ...[
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       sliver: SliverToBoxAdapter(
                         child: _buildSectionHeader(
-                          'LATEST',
+                          'TODAY',
                           trailingText: 'Subscribed Only',
                         ),
                       ),
@@ -82,11 +91,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ],
+
+                  // ── Yesterday ──────────────────────────────────────────────
                   if (yesterdayItems.isNotEmpty) ...[
                     SliverPadding(
                       padding: const EdgeInsets.symmetric(horizontal: 16.0),
                       sliver: SliverToBoxAdapter(
-                        child: _buildSectionHeader('OLDER'),
+                        child: _buildSectionHeader('YESTERDAY'),
                       ),
                     ),
                     SliverPadding(
@@ -99,6 +110,32 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                   ],
+
+                  // ── Older ──────────────────────────────────────────────────
+                  if (olderItems.isNotEmpty) ...[
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverToBoxAdapter(
+                        child: _buildSectionHeader('OLDER'),
+                      ),
+                    ),
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                      sliver: SliverList.builder(
+                        itemCount: olderItems.length,
+                        itemBuilder: (context, index) {
+                          return FeedListItem(item: olderItems[index]);
+                        },
+                      ),
+                    ),
+                  ],
+
+                  // ── Pagination footer ──────────────────────────────────────
+                  SliverToBoxAdapter(
+                    child: _PaginationFooter(provider: provider),
+                  ),
+
+                  // ── Empty states ───────────────────────────────────────────
                   if (provider.items.isEmpty && !provider.isLoading)
                     const SliverFillRemaining(
                       hasScrollBody: false,
@@ -113,22 +150,23 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       ),
                     )
-                  else if (todayItems.isEmpty &&
-                      yesterdayItems.isEmpty &&
-                      !provider.isLoading)
+                  else if (!hasAnyItems && !provider.isLoading)
                     SliverFillRemaining(
                       hasScrollBody: false,
                       child: Padding(
                         padding: const EdgeInsets.all(32.0),
                         child: Center(
                           child: Text(
-                            'No feeds found in ${provider.selectedCategory}.',
+                            provider.selectedCategory != null
+                                ? 'No feeds found in ${provider.selectedCategory}.'
+                                : 'No feeds match your current filter.',
                             textAlign: TextAlign.center,
                             style: const TextStyle(color: Colors.grey),
                           ),
                         ),
                       ),
                     ),
+
                   const SliverToBoxAdapter(child: SizedBox(height: 80)),
                 ],
               ),
@@ -141,6 +179,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final provider = context.watch<FeedProvider>();
     final todayItems = provider.todayItems;
     final yesterdayItems = provider.yesterdayItems;
+    final olderItems = provider.olderItems;
 
     String appBarTitle;
     switch (_selectedIndex) {
@@ -243,7 +282,13 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: _selectedIndex == 0
-          ? _buildHomeBody(context, provider, todayItems, yesterdayItems)
+          ? _buildHomeBody(
+              context,
+              provider,
+              todayItems,
+              yesterdayItems,
+              olderItems,
+            )
           : _selectedIndex == 1
           ? const FoldersScreen()
           : _selectedIndex == 2
@@ -328,5 +373,62 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
     );
+  }
+}
+
+/// Footer widget shown at the bottom of the feed list.
+///
+/// - While [FeedProvider.isLoadingMore] is true: shows a spinner.
+/// - When [FeedProvider.hasMoreItems] is true but not loading: shows a
+///   "Load more" button as a fallback for users who prefer tapping.
+/// - When all items are loaded: shows a subtle "You're all caught up" message.
+class _PaginationFooter extends StatelessWidget {
+  const _PaginationFooter({required this.provider});
+
+  final FeedProvider provider;
+
+  @override
+  Widget build(BuildContext context) {
+    if (provider.items.isEmpty) return const SizedBox.shrink();
+
+    if (provider.isLoadingMore) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24.0),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (provider.hasMoreItems) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 16.0),
+        child: Center(
+          child: TextButton.icon(
+            onPressed: provider.loadMoreItems,
+            icon: const Icon(Icons.expand_more),
+            label: const Text('Load more'),
+          ),
+        ),
+      );
+    }
+
+    // All items rendered
+    if (provider.items.isNotEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24.0),
+        child: Center(
+          child: Text(
+            "You're all caught up ✓",
+            style: TextStyle(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.4),
+              fontSize: 13,
+            ),
+          ),
+        ),
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

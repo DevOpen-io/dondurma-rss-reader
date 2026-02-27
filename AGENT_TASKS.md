@@ -15,7 +15,7 @@ This document is a persistent living record for AI coding agents to understand w
 ## Missing / Pending Features
 - [x] **OPML Export / Import**: Allow users to backup or restore their feed subscriptions via OPML files. Export shares an `.opml` file via the system share sheet; Import opens a file picker to load `.opml`/`.xml` files. Both nested (category folders) and flat OPML structures are supported. Duplicate feeds are skipped on import.
 - [ ] **Notifications**: Implement local OS notifications when the background sync finds new unread articles.
-- [ ] **Pagination / Infinite Scroll**: The `todayItems` and `yesterdayItems` getters are mocked with simple limits (`_itemRenderLimit`). A more robust pagination mechanism could be added.
+- [x] **Pagination / Infinite Scroll**: Replaced the fake 70/30 split with real date-based sections (Today / Yesterday / Older). `FeedProvider` now exposes `olderItems`, `isLoadingMore`, and `hasMoreItems`. The home screen uses a `NotificationListener` for automatic infinite scroll and a `_PaginationFooter` widget that shows a spinner while loading, a "Load more" fallback button, and a "You're all caught up" message when all items are rendered. The render limit resets to 50 on every filter/category/search change.
 - [ ] **Custom Category Management**: Allow users to add/delete/rename feed categories inside a dedicated "Manage Folders" screen.
 - [ ] **In-App Browser**: Opening articles currently pushes them out; could implement an integrated `webview_flutter` modal to read source articles without leaving the app.
 - [ ] **Internationalization (i18n)**: Prepare strings and implement `flutter_localizations`. The Language setting is currently an inactive dropdown.

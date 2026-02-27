@@ -17,7 +17,14 @@ class FeedProvider extends ChangeNotifier {
   Set<String> _readItemIds = {};
   Set<String> _cachedItemIds = {};
   bool _isLoading = false;
-  int _itemRenderLimit = 100;
+
+  /// How many items from [_filteredItems] are currently rendered.
+  int _itemRenderLimit = 50;
+
+  /// Incremented in batches when the user scrolls near the bottom.
+  static const int _pageSize = 50;
+
+  bool _isLoadingMore = false;
 
   Timer? _cacheTimer;
 
@@ -29,6 +36,7 @@ class FeedProvider extends ChangeNotifier {
   List<FeedItem> get items => _items;
   Set<String> get cachedItemIds => _cachedItemIds;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
 
@@ -37,6 +45,9 @@ class FeedProvider extends ChangeNotifier {
 
   bool _showUnreadOnly = false;
   bool get showUnreadOnly => _showUnreadOnly;
+
+  /// Whether there are more items beyond the current render window.
+  bool get hasMoreItems => _itemRenderLimit < _filteredItems.length;
 
   FeedProvider() {
     _loadState();
@@ -101,23 +112,25 @@ class FeedProvider extends ChangeNotifier {
   void selectCategory(String? category) {
     _selectedCategory = category;
     _selectedFeedUrl = null;
+    _itemRenderLimit = _pageSize;
     notifyListeners();
   }
 
   void setSearchQuery(String query) {
     _searchQuery = query;
-    _itemRenderLimit = 50;
+    _itemRenderLimit = _pageSize;
     notifyListeners();
   }
 
   void toggleShowUnreadOnly() {
     _showUnreadOnly = !_showUnreadOnly;
-    _itemRenderLimit = 50;
+    _itemRenderLimit = _pageSize;
     notifyListeners();
   }
 
   void selectFeed(String? feedUrl) {
     _selectedFeedUrl = feedUrl;
+    _itemRenderLimit = _pageSize;
     if (feedUrl != null && subscriptionProvider != null) {
       try {
         final sub = subscriptionProvider!.subscriptions.firstWhere(
@@ -160,38 +173,66 @@ class FeedProvider extends ChangeNotifier {
     }).toList();
   }
 
-  List<FeedItem> get todayItems {
-    final list = _filteredItems;
-    final int targetLength = (list.length * 0.7).toInt();
-    return list
-        .take(targetLength > _itemRenderLimit ? _itemRenderLimit : targetLength)
-        .toList();
+  /// The current render window — a slice of [_filteredItems] up to
+  /// [_itemRenderLimit].
+  List<FeedItem> get _visibleItems {
+    final all = _filteredItems;
+    if (_itemRenderLimit >= all.length) return all;
+    return all.sublist(0, _itemRenderLimit);
   }
 
-  List<FeedItem> get yesterdayItems {
-    final list = _filteredItems;
-    final int todayLength = (list.length * 0.7).toInt();
-    final remainingLimit = _itemRenderLimit - todayLength;
+  // ---------------------------------------------------------------------------
+  // Date-based section getters
+  // ---------------------------------------------------------------------------
 
-    if (remainingLimit <= 0) return [];
-
-    return list.skip(todayLength).take(remainingLimit).toList();
+  static bool _isToday(DateTime? date) {
+    if (date == null) return false;
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
   }
 
-  bool _isLoadingMore = false;
+  static bool _isYesterday(DateTime? date) {
+    if (date == null) return false;
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    return date.year == yesterday.year &&
+        date.month == yesterday.month &&
+        date.day == yesterday.day;
+  }
 
+  /// Items published today, within the current render window.
+  List<FeedItem> get todayItems =>
+      _visibleItems.where((i) => _isToday(i.pubDate)).toList();
+
+  /// Items published yesterday, within the current render window.
+  List<FeedItem> get yesterdayItems =>
+      _visibleItems.where((i) => _isYesterday(i.pubDate)).toList();
+
+  /// Items older than yesterday (or with no date), within the current render
+  /// window.
+  List<FeedItem> get olderItems => _visibleItems
+      .where((i) => !_isToday(i.pubDate) && !_isYesterday(i.pubDate))
+      .toList();
+
+  // ---------------------------------------------------------------------------
+  // Pagination
+  // ---------------------------------------------------------------------------
+
+  /// Loads the next page of items. Safe to call multiple times — debounced
+  /// internally.
   void loadMoreItems() {
     if (_isLoadingMore) return;
-
-    final int maxAvailable = _filteredItems.length;
-    if (_itemRenderLimit >= maxAvailable) return;
+    if (!hasMoreItems) return;
 
     _isLoadingMore = true;
-    _itemRenderLimit += 50;
     notifyListeners();
 
-    Future.delayed(const Duration(milliseconds: 250), () {
+    // Simulate a brief async delay so the loading indicator is visible.
+    Future.delayed(const Duration(milliseconds: 300), () {
+      _itemRenderLimit += _pageSize;
       _isLoadingMore = false;
+      notifyListeners();
     });
   }
 
