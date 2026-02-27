@@ -93,11 +93,24 @@ class _FeedListItemState extends State<FeedListItem>
     final isSwipingRight = _dragExtent > 0;
     final isSwipingLeft = _dragExtent < 0;
 
-    return Selector2<FeedProvider, BookmarkProvider, bool>(
-      selector: (context, provider, bookmarkProvider) =>
-          provider.cachedItemIds.contains(widget.item.id) ||
-          bookmarkProvider.bookmarkedItemIds.contains(widget.item.id),
-      builder: (context, isCached, child) {
+    // Read bookmark and cache state directly from providers so the UI updates
+    // immediately when the user swipes or taps the bookmark button — without
+    // waiting for the FeedProvider proxy rebuild cycle.
+    return Selector2<
+      FeedProvider,
+      BookmarkProvider,
+      ({bool isCached, bool isBookmarked})
+    >(
+      selector: (context, feedProvider, bookmarkProvider) => (
+        isCached: feedProvider.cachedItemIds.contains(widget.item.id),
+        isBookmarked: bookmarkProvider.bookmarkedItemIds.contains(
+          widget.item.id,
+        ),
+      ),
+      builder: (context, state, child) {
+        final bool isBookmarked = state.isBookmarked;
+        final bool isCached = state.isCached;
+
         return Container(
           margin: const EdgeInsets.only(bottom: 12.0),
           child: Stack(
@@ -128,7 +141,7 @@ class _FeedListItemState extends State<FeedListItem>
                           ? (widget.item.isRead
                                 ? Icons.mark_email_unread
                                 : Icons.mark_email_read)
-                          : (widget.item.isBookmarked
+                          : (isBookmarked
                                 ? Icons.bookmark_remove
                                 : Icons.bookmark_add),
                       color: isSwipingRight
@@ -328,10 +341,10 @@ class _FeedListItemState extends State<FeedListItem>
                                           .toggleBookmark(widget.item);
                                     },
                                     icon: Icon(
-                                      widget.item.isBookmarked
+                                      isBookmarked
                                           ? Icons.bookmark
                                           : Icons.bookmark_border,
-                                      color: widget.item.isBookmarked
+                                      color: isBookmarked
                                           ? Theme.of(
                                               context,
                                             ).colorScheme.primary
