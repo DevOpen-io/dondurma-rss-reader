@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import '../theme/app_theme.dart';
 
@@ -101,6 +102,202 @@ class SettingsScreen extends StatelessWidget {
                 context.read<SettingsProvider>().setLocale(newValue);
               }
             },
+          ),
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
+        _buildSectionHeader(context, l10n.notifications),
+        if (!NotificationService.instance.isSupported)
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 4.0,
+            ),
+            child: Card(
+              color: Theme.of(context).colorScheme.errorContainer,
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      color: Theme.of(context).colorScheme.onErrorContainer,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        l10n.notificationsNotSupported,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onErrorContainer,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        Opacity(
+          opacity: NotificationService.instance.isSupported ? 1.0 : 0.4,
+          child: IgnorePointer(
+            ignoring: !NotificationService.instance.isSupported,
+            child: Column(
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.notifications_outlined),
+                  title: Text(l10n.enableNotifications),
+                  subtitle: Text(l10n.enableNotificationsDesc),
+                  trailing: Switch(
+                    value: context
+                        .watch<SettingsProvider>()
+                        .notificationsEnabled,
+                    activeThumbColor: Theme.of(context).colorScheme.primary,
+                    onChanged: (val) {
+                      context.read<SettingsProvider>().setNotificationsEnabled(
+                        val,
+                      );
+                    },
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.schedule),
+                  title: Text(l10n.digestMode),
+                  subtitle: Text(l10n.digestModeDesc),
+                  trailing: DropdownButton<String>(
+                    value: context.watch<SettingsProvider>().digestMode,
+                    items: [
+                      DropdownMenuItem<String>(
+                        value: 'instant',
+                        child: Text(l10n.digestInstant),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'daily',
+                        child: Text(l10n.digestDaily),
+                      ),
+                      DropdownMenuItem<String>(
+                        value: 'weekly',
+                        child: Text(l10n.digestWeekly),
+                      ),
+                    ],
+                    borderRadius: BorderRadius.circular(12),
+                    padding: const EdgeInsets.only(left: 12),
+                    onChanged:
+                        context.watch<SettingsProvider>().notificationsEnabled
+                        ? (String? newValue) {
+                            if (newValue != null) {
+                              context.read<SettingsProvider>().setDigestMode(
+                                newValue,
+                              );
+                            }
+                          }
+                        : null,
+                    underline: const SizedBox(),
+                  ),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.do_not_disturb_on_outlined),
+                  title: Text(l10n.quietHours),
+                  subtitle: Text(l10n.quietHoursDesc),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.quietHoursFrom,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          DropdownButton<int>(
+                            value: context
+                                .watch<SettingsProvider>()
+                                .quietHoursStart,
+                            items: List.generate(24, (i) => i)
+                                .map(
+                                  (h) => DropdownMenuItem<int>(
+                                    value: h,
+                                    child: Text(
+                                      '${h.toString().padLeft(2, '0')}:00',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged:
+                                context
+                                    .watch<SettingsProvider>()
+                                    .notificationsEnabled
+                                ? (int? v) {
+                                    if (v != null) {
+                                      context
+                                          .read<SettingsProvider>()
+                                          .setQuietHoursStart(v);
+                                    }
+                                  }
+                                : null,
+                            underline: const SizedBox(),
+                            isDense: true,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 8),
+                      Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.quietHoursTo,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                          DropdownButton<int>(
+                            value: context
+                                .watch<SettingsProvider>()
+                                .quietHoursEnd,
+                            items: List.generate(24, (i) => i)
+                                .map(
+                                  (h) => DropdownMenuItem<int>(
+                                    value: h,
+                                    child: Text(
+                                      '${h.toString().padLeft(2, '0')}:00',
+                                      style: const TextStyle(fontSize: 13),
+                                    ),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged:
+                                context
+                                    .watch<SettingsProvider>()
+                                    .notificationsEnabled
+                                ? (int? v) {
+                                    if (v != null) {
+                                      context
+                                          .read<SettingsProvider>()
+                                          .setQuietHoursEnd(v);
+                                    }
+                                  }
+                                : null,
+                            underline: const SizedBox(),
+                            isDense: true,
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         Divider(

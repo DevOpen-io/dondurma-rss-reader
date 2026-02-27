@@ -396,4 +396,52 @@ class AppLocalizationsEn extends AppLocalizations {
   String feedMovedToFolder(String feedName, String folderName) {
     return '\"$feedName\" moved to \"$folderName\"';
   }
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get enableNotifications => 'Enable Notifications';
+
+  @override
+  String get enableNotificationsDesc => 'Get notified about new articles';
+
+  @override
+  String get digestMode => 'Notification Mode';
+
+  @override
+  String get digestModeDesc => 'How you receive notifications';
+
+  @override
+  String get digestInstant => 'Instant';
+
+  @override
+  String get digestDaily => 'Daily Summary';
+
+  @override
+  String get digestWeekly => 'Weekly Summary';
+
+  @override
+  String get quietHours => 'Quiet Hours';
+
+  @override
+  String get quietHoursDesc => 'Mute notifications during these hours';
+
+  @override
+  String get quietHoursFrom => 'From';
+
+  @override
+  String get quietHoursTo => 'To';
+
+  @override
+  String newArticlesNotification(int count) {
+    return '$count new articles';
+  }
+
+  @override
+  String get feedNotifications => 'Feed Notifications';
+
+  @override
+  String get notificationsNotSupported =>
+      'Notifications are not supported on this platform';
 }

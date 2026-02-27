@@ -162,10 +162,21 @@ class SubscriptionProvider extends ChangeNotifier {
   ) async {
     final index = _subscriptions.indexWhere((s) => s.url == oldUrl);
     if (index != -1) {
-      _subscriptions[index] = FeedSubscription(
+      _subscriptions[index] = _subscriptions[index].copyWith(
         url: newUrl,
         name: newName,
-        category: _subscriptions[index].category,
+      );
+      await _saveSubscriptions();
+      notifyListeners();
+    }
+  }
+
+  /// Toggles notification enabled/disabled for a specific feed.
+  Future<void> toggleFeedNotifications(String feedUrl) async {
+    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
+    if (index != -1) {
+      _subscriptions[index] = _subscriptions[index].copyWith(
+        notificationsEnabled: !_subscriptions[index].notificationsEnabled,
       );
       await _saveSubscriptions();
       notifyListeners();

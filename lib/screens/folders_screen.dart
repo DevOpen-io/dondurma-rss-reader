@@ -476,6 +476,25 @@ class FoldersScreen extends StatelessWidget {
                           children: [
                             IconButton(
                               icon: Icon(
+                                sub.notificationsEnabled
+                                    ? Icons.notifications_active_outlined
+                                    : Icons.notifications_off_outlined,
+                                size: 18,
+                                color: sub.notificationsEnabled
+                                    ? Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.7)
+                                    : Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.3),
+                              ),
+                              onPressed: () {
+                                context
+                                    .read<SubscriptionProvider>()
+                                    .toggleFeedNotifications(sub.url);
+                              },
+                              tooltip: l10n.feedNotifications,
+                            ),
+                            IconButton(
+                              icon: Icon(
                                 Icons.drive_file_move_outline,
                                 size: 18,
                                 color: Theme.of(

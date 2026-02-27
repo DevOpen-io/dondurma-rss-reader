@@ -137,5 +137,21 @@
   "pleaseEnterFolderName": "Lütfen bir klasör adı girin",
   "moveToFolder": "Klasöre Taşı",
   "moveFeed": "Kaynağı Taşı",
-  "feedMovedToFolder": "\"{feedName}\" \"{folderName}\" klasörüne taşındı"
+  "feedMovedToFolder": "\"{feedName}\" \"{folderName}\" klasörüne taşındı",
+
+  "notifications": "Bildirimler",
+  "enableNotifications": "Bildirimleri Etkinleştir",
+  "enableNotificationsDesc": "Yeni makaleler hakkında bildirim al",
+  "digestMode": "Bildirim Modu",
+  "digestModeDesc": "Bildirimleri nasıl alacağınız",
+  "digestInstant": "Anında",
+  "digestDaily": "Günlük Özet",
+  "digestWeekly": "Haftalık Özet",
+  "quietHours": "Sessiz Saatler",
+  "quietHoursDesc": "Bu saatlerde bildirimleri sessize al",
+  "quietHoursFrom": "Başlangıç",
+  "quietHoursTo": "Bitiş",
+  "newArticlesNotification": "{count} yeni makale",
+  "feedNotifications": "Kaynak Bildirimleri",
+  "notificationsNotSupported": "Bu platformda bildirimler desteklenmiyor"
 }

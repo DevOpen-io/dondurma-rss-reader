@@ -9,11 +9,14 @@ import 'providers/subscription_provider.dart';
 import 'providers/bookmark_provider.dart';
 import 'theme/app_theme.dart';
 import 'router/app_router.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('settings');
+  await NotificationService.instance.init();
+  await NotificationService.instance.requestPermission();
 
   runApp(
     MultiProvider(

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
 import '../services/feed_service.dart';
+import '../services/notification_service.dart';
 import 'subscription_provider.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
@@ -28,6 +29,10 @@ class FeedProvider extends ChangeNotifier {
   bool _isLoadingMore = false;
 
   Timer? _cacheTimer;
+
+  /// Tracks whether the first load has completed, so we don't fire
+  /// notifications on initial startup.
+  bool _hasLoadedOnce = false;
 
   // Dependencies that need to be updated via ProxyProvider
   SubscriptionProvider? subscriptionProvider;
@@ -257,6 +262,9 @@ class FeedProvider extends ChangeNotifier {
 
     final results = await Future.wait(futures);
 
+    // Capture old item IDs for notification diff
+    final oldItemIds = _items.map((e) => e.id).toSet();
+
     List<FeedItem> freshItems = [];
     for (var items in results) {
       freshItems.addAll(items);
@@ -300,10 +308,45 @@ class FeedProvider extends ChangeNotifier {
     _isLoading = false;
     notifyListeners();
 
+    // Fire notifications for newly discovered items (skip the initial load).
+    if (fetchedAnything && _hasLoadedOnce) {
+      _notifyNewArticles(oldItemIds, freshItems);
+    }
+    _hasLoadedOnce = true;
+
     // Only persist a new cache snapshot when we actually fetched fresh data.
     if (fetchedAnything) {
       await _saveCachedItems();
     }
+  }
+
+  /// Computes newly discovered articles and triggers a notification.
+  void _notifyNewArticles(Set<String> oldItemIds, List<FeedItem> freshItems) {
+    if (settingsProvider == null || subscriptionProvider == null) return;
+
+    // Build a set of feed URLs that have notifications disabled
+    final mutedFeedUrls = subscriptionProvider!.subscriptions
+        .where((s) => !s.notificationsEnabled)
+        .map((s) => s.url)
+        .toSet();
+
+    final newItems = freshItems
+        .where(
+          (item) =>
+              !oldItemIds.contains(item.id) &&
+              !mutedFeedUrls.contains(item.feedUrl),
+        )
+        .toList();
+
+    if (newItems.isEmpty) return;
+
+    NotificationService.instance.showNewArticlesNotification(
+      newItems: newItems,
+      notificationsEnabled: settingsProvider!.notificationsEnabled,
+      digestMode: settingsProvider!.digestMode,
+      quietHoursStart: settingsProvider!.quietHoursStart,
+      quietHoursEnd: settingsProvider!.quietHoursEnd,
+    );
   }
 
   Future<void> _saveCachedItems() async {

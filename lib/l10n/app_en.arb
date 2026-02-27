@@ -184,5 +184,26 @@
       "feedName": { "type": "String" },
       "folderName": { "type": "String" }
     }
-  }
+  },
+
+  "notifications": "Notifications",
+  "enableNotifications": "Enable Notifications",
+  "enableNotificationsDesc": "Get notified about new articles",
+  "digestMode": "Notification Mode",
+  "digestModeDesc": "How you receive notifications",
+  "digestInstant": "Instant",
+  "digestDaily": "Daily Summary",
+  "digestWeekly": "Weekly Summary",
+  "quietHours": "Quiet Hours",
+  "quietHoursDesc": "Mute notifications during these hours",
+  "quietHoursFrom": "From",
+  "quietHoursTo": "To",
+  "newArticlesNotification": "{count} new articles",
+  "@newArticlesNotification": {
+    "placeholders": {
+      "count": { "type": "int" }
+    }
+  },
+  "feedNotifications": "Feed Notifications",
+  "notificationsNotSupported": "Notifications are not supported on this platform"
 }

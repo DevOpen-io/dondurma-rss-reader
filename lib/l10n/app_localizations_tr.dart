@@ -394,4 +394,52 @@ class AppLocalizationsTr extends AppLocalizations {
   String feedMovedToFolder(String feedName, String folderName) {
     return '\"$feedName\" \"$folderName\" klasörüne taşındı';
   }
+
+  @override
+  String get notifications => 'Bildirimler';
+
+  @override
+  String get enableNotifications => 'Bildirimleri Etkinleştir';
+
+  @override
+  String get enableNotificationsDesc => 'Yeni makaleler hakkında bildirim al';
+
+  @override
+  String get digestMode => 'Bildirim Modu';
+
+  @override
+  String get digestModeDesc => 'Bildirimleri nasıl alacağınız';
+
+  @override
+  String get digestInstant => 'Anında';
+
+  @override
+  String get digestDaily => 'Günlük Özet';
+
+  @override
+  String get digestWeekly => 'Haftalık Özet';
+
+  @override
+  String get quietHours => 'Sessiz Saatler';
+
+  @override
+  String get quietHoursDesc => 'Bu saatlerde bildirimleri sessize al';
+
+  @override
+  String get quietHoursFrom => 'Başlangıç';
+
+  @override
+  String get quietHoursTo => 'Bitiş';
+
+  @override
+  String newArticlesNotification(int count) {
+    return '$count yeni makale';
+  }
+
+  @override
+  String get feedNotifications => 'Kaynak Bildirimleri';
+
+  @override
+  String get notificationsNotSupported =>
+      'Bu platformda bildirimler desteklenmiyor';
 }

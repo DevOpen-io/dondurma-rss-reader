@@ -9,11 +9,22 @@ class SettingsProvider extends ChangeNotifier {
   bool _syncBackground = true;
   Locale _locale = const Locale('en');
 
+  // Notification settings
+  bool _notificationsEnabled = true;
+  String _digestMode = 'instant'; // 'instant', 'daily', 'weekly'
+  int _quietHoursStart = 22;
+  int _quietHoursEnd = 7;
+
   AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
   bool get syncBackground => _syncBackground;
   Locale get locale => _locale;
+
+  bool get notificationsEnabled => _notificationsEnabled;
+  String get digestMode => _digestMode;
+  int get quietHoursStart => _quietHoursStart;
+  int get quietHoursEnd => _quietHoursEnd;
 
   SettingsProvider() {
     _loadSettings();
@@ -51,6 +62,12 @@ class SettingsProvider extends ChangeNotifier {
       }
     }
 
+    // Load notification settings
+    _notificationsEnabled = box.get('notificationsEnabled', defaultValue: true);
+    _digestMode = box.get('digestMode', defaultValue: 'instant');
+    _quietHoursStart = box.get('quietHoursStart', defaultValue: 22);
+    _quietHoursEnd = box.get('quietHoursEnd', defaultValue: 7);
+
     notifyListeners();
   }
 
@@ -87,5 +104,33 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     final box = Hive.box('settings');
     await box.put('locale', newLocale.languageCode);
+  }
+
+  Future<void> setNotificationsEnabled(bool value) async {
+    _notificationsEnabled = value;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('notificationsEnabled', value);
+  }
+
+  Future<void> setDigestMode(String mode) async {
+    _digestMode = mode;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('digestMode', mode);
+  }
+
+  Future<void> setQuietHoursStart(int hour) async {
+    _quietHoursStart = hour;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('quietHoursStart', hour);
+  }
+
+  Future<void> setQuietHoursEnd(int hour) async {
+    _quietHoursEnd = hour;
+    notifyListeners();
+    final box = Hive.box('settings');
+    await box.put('quietHoursEnd', hour);
   }
 }

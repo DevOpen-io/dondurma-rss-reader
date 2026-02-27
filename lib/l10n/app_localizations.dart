@@ -817,6 +817,96 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'\"{feedName}\" moved to \"{folderName}\"'**
   String feedMovedToFolder(String feedName, String folderName);
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @enableNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Notifications'**
+  String get enableNotifications;
+
+  /// No description provided for @enableNotificationsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Get notified about new articles'**
+  String get enableNotificationsDesc;
+
+  /// No description provided for @digestMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Notification Mode'**
+  String get digestMode;
+
+  /// No description provided for @digestModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How you receive notifications'**
+  String get digestModeDesc;
+
+  /// No description provided for @digestInstant.
+  ///
+  /// In en, this message translates to:
+  /// **'Instant'**
+  String get digestInstant;
+
+  /// No description provided for @digestDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Summary'**
+  String get digestDaily;
+
+  /// No description provided for @digestWeekly.
+  ///
+  /// In en, this message translates to:
+  /// **'Weekly Summary'**
+  String get digestWeekly;
+
+  /// No description provided for @quietHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Quiet Hours'**
+  String get quietHours;
+
+  /// No description provided for @quietHoursDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Mute notifications during these hours'**
+  String get quietHoursDesc;
+
+  /// No description provided for @quietHoursFrom.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get quietHoursFrom;
+
+  /// No description provided for @quietHoursTo.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get quietHoursTo;
+
+  /// No description provided for @newArticlesNotification.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} new articles'**
+  String newArticlesNotification(int count);
+
+  /// No description provided for @feedNotifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed Notifications'**
+  String get feedNotifications;
+
+  /// No description provided for @notificationsNotSupported.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are not supported on this platform'**
+  String get notificationsNotSupported;
 }
 
 class _AppLocalizationsDelegate
