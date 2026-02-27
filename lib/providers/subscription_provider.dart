@@ -118,4 +118,21 @@ class SubscriptionProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  /// Imports a list of [FeedSubscription]s, skipping any whose URL already
+  /// exists. Returns the number of newly added feeds.
+  Future<int> importFeeds(List<FeedSubscription> feeds) async {
+    int added = 0;
+    for (final feed in feeds) {
+      if (!_subscriptions.any((s) => s.url == feed.url)) {
+        _subscriptions.add(feed);
+        added++;
+      }
+    }
+    if (added > 0) {
+      await _saveSubscriptions();
+      notifyListeners();
+    }
+    return added;
+  }
 }

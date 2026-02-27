@@ -13,7 +13,7 @@ This document is a persistent living record for AI coding agents to understand w
 - [x] **GitLab CI/CD**: Added `.gitlab-ci.yml` template to automatically build Android `app-release.apk` on every push.
 
 ## Missing / Pending Features
-- [ ] **OPML Export / Import**: Allow users to backup or restore their feed subscriptions via OPML files (Currently just a dummy button in Settings).
+- [x] **OPML Export / Import**: Allow users to backup or restore their feed subscriptions via OPML files. Export shares an `.opml` file via the system share sheet; Import opens a file picker to load `.opml`/`.xml` files. Both nested (category folders) and flat OPML structures are supported. Duplicate feeds are skipped on import.
 - [ ] **Notifications**: Implement local OS notifications when the background sync finds new unread articles.
 - [ ] **Pagination / Infinite Scroll**: The `todayItems` and `yesterdayItems` getters are mocked with simple limits (`_itemRenderLimit`). A more robust pagination mechanism could be added.
 - [ ] **Custom Category Management**: Allow users to add/delete/rename feed categories inside a dedicated "Manage Folders" screen.

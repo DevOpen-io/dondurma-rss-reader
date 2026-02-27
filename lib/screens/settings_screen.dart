@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/subscription_provider.dart';
+import '../services/opml_service.dart';
 import '../theme/app_theme.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -135,12 +137,63 @@ class SettingsScreen extends StatelessWidget {
           leading: const Icon(Icons.file_download_outlined),
           title: const Text('Export Subscriptions (OPML)'),
           subtitle: const Text('Backup your feeds to a file'),
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Exporting OPML is not implemented yet.'),
-              ),
-            );
+          onTap: () async {
+            final subscriptions = context
+                .read<SubscriptionProvider>()
+                .subscriptions;
+            if (subscriptions.isEmpty) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('No subscriptions to export.')),
+                );
+              }
+              return;
+            }
+            final success = await OpmlService().exportOpml(subscriptions);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    success
+                        ? 'Subscriptions exported successfully.'
+                        : 'Export failed. Please try again.',
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.file_upload_outlined),
+          title: const Text('Import Subscriptions (OPML)'),
+          subtitle: const Text('Restore feeds from an OPML file'),
+          onTap: () async {
+            final imported = await OpmlService().importOpml();
+            if (imported.isEmpty) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('No feeds found or import was cancelled.'),
+                  ),
+                );
+              }
+              return;
+            }
+            if (!context.mounted) return;
+            final added = await context
+                .read<SubscriptionProvider>()
+                .importFeeds(imported);
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    added > 0
+                        ? 'Imported $added new feed${added == 1 ? '' : 's'}.'
+                        : 'All feeds already exist — nothing new imported.',
+                  ),
+                ),
+              );
+            }
           },
         ),
         Divider(
