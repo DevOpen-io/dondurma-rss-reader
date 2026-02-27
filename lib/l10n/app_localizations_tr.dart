@@ -442,4 +442,8 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get notificationsNotSupported =>
       'Bu platformda bildirimler desteklenmiyor';
+
+  @override
+  String get notificationsSupportedPlatforms =>
+      'Desteklenen platformlar: Android, iOS';
 }

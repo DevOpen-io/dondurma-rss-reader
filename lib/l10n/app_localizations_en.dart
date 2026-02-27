@@ -444,4 +444,8 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationsNotSupported =>
       'Notifications are not supported on this platform';
+
+  @override
+  String get notificationsSupportedPlatforms =>
+      'Supported platforms: Android, iOS';
 }

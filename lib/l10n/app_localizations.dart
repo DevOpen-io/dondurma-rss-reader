@@ -907,6 +907,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications are not supported on this platform'**
   String get notificationsNotSupported;
+
+  /// No description provided for @notificationsSupportedPlatforms.
+  ///
+  /// In en, this message translates to:
+  /// **'Supported platforms: Android, iOS'**
+  String get notificationsSupportedPlatforms;
 }
 
 class _AppLocalizationsDelegate

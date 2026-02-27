@@ -205,5 +205,6 @@
     }
   },
   "feedNotifications": "Feed Notifications",
-  "notificationsNotSupported": "Notifications are not supported on this platform"
+  "notificationsNotSupported": "Notifications are not supported on this platform",
+  "notificationsSupportedPlatforms": "Supported platforms: Android, iOS"
 }

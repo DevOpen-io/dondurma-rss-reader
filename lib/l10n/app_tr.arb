@@ -153,5 +153,6 @@
   "quietHoursTo": "Bitiş",
   "newArticlesNotification": "{count} yeni makale",
   "feedNotifications": "Kaynak Bildirimleri",
-  "notificationsNotSupported": "Bu platformda bildirimler desteklenmiyor"
+  "notificationsNotSupported": "Bu platformda bildirimler desteklenmiyor",
+  "notificationsSupportedPlatforms": "Desteklenen platformlar: Android, iOS"
 }
