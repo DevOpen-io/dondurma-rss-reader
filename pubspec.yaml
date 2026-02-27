@@ -54,6 +54,7 @@ dependencies:
   path_provider: ^2.1.5
   webview_flutter: ^4.10.0
   flutter_local_notifications: ^20.1.0
+  xml: ^6.6.1
 
 dev_dependencies:
   flutter_test:

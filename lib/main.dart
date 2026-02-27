@@ -15,6 +15,9 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
   await Hive.openBox('settings');
+  await Hive.openBox('feeds');
+  await Hive.openBox('bookmarks');
+  await _migrateHiveBoxes();
   await NotificationService.instance.init();
   await NotificationService.instance.requestPermission();
 
@@ -39,6 +42,46 @@ void main() async {
       child: const MyApp(),
     ),
   );
+}
+
+/// One-time migration: move feed and bookmark keys from the legacy
+/// 'settings' box into their dedicated boxes.
+Future<void> _migrateHiveBoxes() async {
+  final settingsBox = Hive.box('settings');
+  final feedsBox = Hive.box('feeds');
+  final bookmarksBox = Hive.box('bookmarks');
+
+  // Skip if migration already happened
+  if (settingsBox.get('_boxesMigrated', defaultValue: false) == true) return;
+
+  // Keys that belong in the 'feeds' box
+  const feedKeys = [
+    'subscriptions',
+    'custom_categories',
+    'cachedItemsJson',
+    'readItemIds',
+  ];
+
+  // Keys that belong in the 'bookmarks' box
+  const bookmarkKeys = ['bookmarkedItemsJson', 'bookmarkedItemIds'];
+
+  for (final key in feedKeys) {
+    final value = settingsBox.get(key);
+    if (value != null) {
+      await feedsBox.put(key, value);
+      await settingsBox.delete(key);
+    }
+  }
+
+  for (final key in bookmarkKeys) {
+    final value = settingsBox.get(key);
+    if (value != null) {
+      await bookmarksBox.put(key, value);
+      await settingsBox.delete(key);
+    }
+  }
+
+  await settingsBox.put('_boxesMigrated', true);
 }
 
 class MyApp extends StatelessWidget {

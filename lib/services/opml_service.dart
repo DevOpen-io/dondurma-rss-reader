@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:xml/xml.dart';
 import '../models/feed_subscription.dart';
 
 /// Service responsible for exporting and importing feed subscriptions
@@ -12,36 +13,52 @@ class OpmlService {
   /// Feeds are grouped by their [FeedSubscription.category] as OPML outline
   /// folders, with each feed as a child `<outline>` element.
   String generateOpml(List<FeedSubscription> subscriptions) {
-    final buffer = StringBuffer();
-    buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
-    buffer.writeln('<opml version="2.0">');
-    buffer.writeln('  <head>');
-    buffer.writeln('    <title>Dondurma Rss Reader Subscriptions</title>');
-    buffer.writeln('  </head>');
-    buffer.writeln('  <body>');
-
-    // Group subscriptions by category
-    final Map<String, List<FeedSubscription>> grouped = {};
-    for (final sub in subscriptions) {
-      grouped.putIfAbsent(sub.category, () => []).add(sub);
-    }
-
-    for (final entry in grouped.entries) {
-      final category = _escapeXml(entry.key);
-      buffer.writeln('    <outline text="$category" title="$category">');
-      for (final sub in entry.value) {
-        final name = _escapeXml(sub.name);
-        final url = _escapeXml(sub.url);
-        buffer.writeln(
-          '      <outline type="rss" text="$name" title="$name" xmlUrl="$url" htmlUrl="$url"/>',
+    final builder = XmlBuilder();
+    builder.processing('xml', 'version="1.0" encoding="UTF-8"');
+    builder.element(
+      'opml',
+      attributes: {'version': '2.0'},
+      nest: () {
+        builder.element(
+          'head',
+          nest: () {
+            builder.element('title', nest: 'Dondurma Rss Reader Subscriptions');
+          },
         );
-      }
-      buffer.writeln('    </outline>');
-    }
+        builder.element(
+          'body',
+          nest: () {
+            // Group subscriptions by category
+            final Map<String, List<FeedSubscription>> grouped = {};
+            for (final sub in subscriptions) {
+              grouped.putIfAbsent(sub.category, () => []).add(sub);
+            }
 
-    buffer.writeln('  </body>');
-    buffer.writeln('</opml>');
-    return buffer.toString();
+            for (final entry in grouped.entries) {
+              builder.element(
+                'outline',
+                attributes: {'text': entry.key, 'title': entry.key},
+                nest: () {
+                  for (final sub in entry.value) {
+                    builder.element(
+                      'outline',
+                      attributes: {
+                        'type': 'rss',
+                        'text': sub.name,
+                        'title': sub.name,
+                        'xmlUrl': sub.url,
+                        'htmlUrl': sub.url,
+                      },
+                    );
+                  }
+                },
+              );
+            }
+          },
+        );
+      },
+    );
+    return builder.buildDocument().toXmlString(pretty: true);
   }
 
   /// Parses an OPML XML [content] string and returns a list of
@@ -52,51 +69,63 @@ class OpmlService {
   List<FeedSubscription> parseOpml(String content) {
     final List<FeedSubscription> result = [];
 
-    // Use a simple regex-based parser to avoid adding an XML dependency.
-    // Match top-level <outline> elements that act as category folders.
-    final categoryRegex = RegExp(
-      r'<outline\s[^>]*text="([^"]*)"[^>]*>(.*?)</outline>',
-      dotAll: true,
-    );
-    final feedRegex = RegExp(
-      r'<outline\s[^>]*xmlUrl="([^"]*)"[^>]*(?:text|title)="([^"]*)"[^>]*/?>',
-      dotAll: true,
-    );
+    late final XmlDocument document;
+    try {
+      document = XmlDocument.parse(content);
+    } catch (_) {
+      return result;
+    }
+
+    final body = document.findAllElements('body').firstOrNull;
+    if (body == null) return result;
 
     bool foundNested = false;
 
-    for (final categoryMatch in categoryRegex.allMatches(content)) {
-      final category = _unescapeXml(categoryMatch.group(1) ?? 'Uncategorized');
-      final innerContent = categoryMatch.group(2) ?? '';
+    for (final topOutline in body.findElements('outline')) {
+      final xmlUrl = topOutline.getAttribute('xmlUrl');
 
-      // Check if this outline itself has an xmlUrl (i.e., it IS a feed, not a folder)
-      if (feedRegex.hasMatch(categoryMatch.group(0)!)) {
-        // It's a flat feed outline at the top level — handle below
+      if (xmlUrl != null && xmlUrl.isNotEmpty) {
+        // This outline IS a feed (flat structure) — collect later if no nested
         continue;
       }
 
-      foundNested = true;
-      for (final feedMatch in feedRegex.allMatches(innerContent)) {
-        final url = _unescapeXml(feedMatch.group(1) ?? '');
-        final name = _unescapeXml(feedMatch.group(2) ?? url);
-        if (url.isNotEmpty) {
-          result.add(
-            FeedSubscription(url: url, name: name, category: category),
-          );
-        }
+      // This outline is a category folder
+      final category =
+          topOutline.getAttribute('text') ??
+          topOutline.getAttribute('title') ??
+          'Uncategorized';
+
+      final childFeeds = topOutline.findElements('outline');
+      for (final feedOutline in childFeeds) {
+        final feedUrl = feedOutline.getAttribute('xmlUrl');
+        if (feedUrl == null || feedUrl.isEmpty) continue;
+
+        final feedName =
+            feedOutline.getAttribute('text') ??
+            feedOutline.getAttribute('title') ??
+            feedUrl;
+
+        result.add(
+          FeedSubscription(url: feedUrl, name: feedName, category: category),
+        );
+        foundNested = true;
       }
     }
 
     // If no nested structure was found, parse all feed outlines as flat
     if (!foundNested) {
-      for (final feedMatch in feedRegex.allMatches(content)) {
-        final url = _unescapeXml(feedMatch.group(1) ?? '');
-        final name = _unescapeXml(feedMatch.group(2) ?? url);
-        if (url.isNotEmpty) {
-          result.add(
-            FeedSubscription(url: url, name: name, category: 'Imported'),
-          );
-        }
+      for (final outline in body.findAllElements('outline')) {
+        final feedUrl = outline.getAttribute('xmlUrl');
+        if (feedUrl == null || feedUrl.isEmpty) continue;
+
+        final feedName =
+            outline.getAttribute('text') ??
+            outline.getAttribute('title') ??
+            feedUrl;
+
+        result.add(
+          FeedSubscription(url: feedUrl, name: feedName, category: 'Imported'),
+        );
       }
     }
 
@@ -157,27 +186,5 @@ class OpmlService {
     } catch (_) {
       return [];
     }
-  }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
-
-  String _escapeXml(String input) {
-    return input
-        .replaceAll('&', '&amp;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&apos;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;');
-  }
-
-  String _unescapeXml(String input) {
-    return input
-        .replaceAll('&amp;', '&')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&apos;', "'")
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>');
   }
 }

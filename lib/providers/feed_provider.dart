@@ -91,7 +91,7 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> _loadState() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
 
     final List<dynamic>? readIds = box.get('readItemIds');
     if (readIds != null) {
@@ -112,7 +112,7 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> _saveReadStates() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
     await box.put('readItemIds', _readItemIds.toList());
   }
 
@@ -357,7 +357,7 @@ class FeedProvider extends ChangeNotifier {
     // and don't wipe an existing cache.
     if (limit == 0) return;
 
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
     final itemsToCache = _items.take(limit).toList();
     _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
     notifyListeners();
@@ -369,7 +369,7 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> clearCache() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
     _cachedItemIds.clear();
     await box.delete('cachedItemsJson');
     notifyListeners();

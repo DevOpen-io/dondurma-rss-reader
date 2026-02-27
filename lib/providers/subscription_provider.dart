@@ -19,7 +19,7 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> _loadSubscriptions() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
     final String? data = box.get('subscriptions');
 
     // Load custom categories
@@ -59,7 +59,7 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> _saveSubscriptions() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
     final String data = jsonEncode(
       _subscriptions.map((s) => s.toJson()).toList(),
     );
@@ -67,7 +67,7 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> _saveCustomCategories() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('feeds');
     final String data = jsonEncode(_customCategories.toList());
     await box.put('custom_categories', data);
   }

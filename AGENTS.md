@@ -62,16 +62,11 @@ lib/
 - `assets/data/` & `assets/logo.ico` — app assets
 
 ## Local Persistence
-Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using a single box named `'settings'`:
+Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using **three dedicated boxes** for clean separation. A one-time migration in `main.dart` moves data from the legacy single-box layout into the new boxes.
 
+### `'settings'` box — App preferences
 | Key | Type | Description |
 |-----|------|-------------|
-| `subscriptions` | JSON string | Feed subscription list |
-| `custom_categories` | JSON string | Standalone empty category names |
-| `cachedItemsJson` | JSON string | Offline-cached feed items |
-| `readItemIds` | List<String> | Read article IDs |
-| `bookmarkedItemsJson` | JSON string | Full bookmarked FeedItem data |
-| `bookmarkedItemIds` | List<String> | Bookmark ID set (backward compat) |
 | `selectedTheme` | String | AppTheme enum name |
 | `offlineCacheLimit` | int | Max items to persist for offline |
 | `cacheIntervalSeconds` | int | Background sync interval |
@@ -81,11 +76,26 @@ Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using a 
 | `digestMode` | String | `instant` / `daily` / `weekly` |
 | `quietHoursStart` | int | Hour (0-23) when quiet begins |
 | `quietHoursEnd` | int | Hour (0-23) when quiet ends |
+| `_boxesMigrated` | bool | Internal migration flag |
+
+### `'feeds'` box — Subscriptions & cached articles
+| Key | Type | Description |
+|-----|------|-------------|
+| `subscriptions` | JSON string | Feed subscription list |
+| `custom_categories` | JSON string | Standalone empty category names |
+| `cachedItemsJson` | JSON string | Offline-cached feed items |
+| `readItemIds` | List<String> | Read article IDs |
+
+### `'bookmarks'` box — Saved articles
+| Key | Type | Description |
+|-----|------|-------------|
+| `bookmarkedItemsJson` | JSON string | Full bookmarked FeedItem data |
+| `bookmarkedItemIds` | List<String> | Bookmark ID set (backward compat) |
 
 ## Core Services
 - **`FeedService`** (`lib/services/feed_service.dart`): Uses the `http` package, emulating browser User-Agent headers to bypass Cloudflare 403 challenges. Attempts RSS parsing with `dart_rss` first, falls back to Atom. Custom HTML entity decoding and image extraction from `<content>`, `<description>`, `<enclosure>`, and `<media:thumbnail>` tags.
 - **`NotificationService`** (`lib/services/notification_service.dart`): Singleton wrapping `flutter_local_notifications`. Supports Android, iOS, and macOS. Exposes `isSupported` getter for platform detection. Includes quiet hours logic with midnight-wrapping support.
-- **`OpmlService`** (`lib/services/opml_service.dart`): Handles OPML export via `share_plus` and import via `file_picker`. Regex-based parser supports both nested (category folders) and flat OPML structures. Proper XML escaping/unescaping.
+- **`OpmlService`** (`lib/services/opml_service.dart`): Handles OPML export via `share_plus` and import via `file_picker`. Uses the `xml` package for proper XML generation (via `XmlBuilder`) and parsing (via `XmlDocument.parse`). Supports both nested (category folders) and flat OPML structures.
 
 ## Key Features
 - **Custom Category Management**: Add/rename/delete folders from the Folders tab. Move individual feeds between categories. Empty folders supported via custom categories.
@@ -118,7 +128,8 @@ Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using a 
 | `share_plus` | OPML export sharing |
 | `path_provider` | Temp directory for OPML export |
 | `url_launcher` | External browser fallback |
-| `intl` | Date formatting |
+| `intl` | Date formatting & RFC 822 parsing |
+| `xml` | OPML XML generation & parsing |
 | `flutter_localizations` | Material/Cupertino i18n delegates |
 
 ## Common Workflow & Gotchas
@@ -126,7 +137,6 @@ Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using a 
 - **Background Sync**: Depends on `syncBackground` boolean and `cacheIntervalSeconds`. Timer is recreated via `_manageCacheTimer()` on every proxy provider update. The first load (`_hasLoadedOnce == false`) does not trigger notifications.
 - **Missing or invalid data cache**: When altering cached structure rules (like removing values from dropdown options), always incorporate a fallback/default state in the load logic to prevent assertion crashes. See `SettingsProvider._loadSettings()` for the `cacheIntervalSeconds` fallback pattern.
 - **Category persistence**: Categories come from two sources — feed subscriptions and `_customCategories`. Both are merged in the `categories` getter.
-- **Dummy data in feed_item.dart**: `dummyTodayFeeds` and `dummyYesterdayFeeds` still exist at the bottom of `feed_item.dart`. They are not used in production flows but should be cleaned up eventually.
 - **Notification platform support**: `NotificationService.isSupported` returns `false` on desktop platforms where the plugin fails to initialize. Settings screen uses this to disable notification controls with a warning card.
-- **OPML parsing uses regex**: The `OpmlService` uses regex instead of an XML parser to avoid extra dependencies. This works for standard OPML but may fail on unusual/malformed files.
 - **Generated localization files**: `lib/l10n/app_localizations*.dart` are auto-generated from ARB files via `flutter gen-l10n`. Do not edit them manually. Configuration is in `l10n.yaml`.
+- **Hive box migration**: On first launch after the box-split update, `_migrateHiveBoxes()` in `main.dart` automatically moves keys from the old `'settings'` box to `'feeds'` and `'bookmarks'`. The `'_boxesMigrated'` flag prevents re-runs.

@@ -15,7 +15,7 @@ class BookmarkProvider extends ChangeNotifier {
   }
 
   void _loadBookmarks() {
-    final box = Hive.box('settings');
+    final box = Hive.box('bookmarks');
     final String? bookmarkedItemsData = box.get('bookmarkedItemsJson');
     if (bookmarkedItemsData != null) {
       final List<dynamic> jsonList = jsonDecode(bookmarkedItemsData);
@@ -32,7 +32,7 @@ class BookmarkProvider extends ChangeNotifier {
   }
 
   Future<void> _saveBookmarkStates() async {
-    final box = Hive.box('settings');
+    final box = Hive.box('bookmarks');
     final String data = jsonEncode(
       _savedBookmarks.map((b) => b.toJson()).toList(),
     );

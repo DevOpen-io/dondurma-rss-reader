@@ -1,6 +1,7 @@
 import 'package:http/http.dart' as http;
 import 'package:dart_rss/dart_rss.dart';
 import 'package:html/parser.dart' show parse;
+import 'package:intl/intl.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
@@ -164,12 +165,58 @@ class FeedService {
     return imageUrls;
   }
 
-  // Helper to parse dates simply
+  // Helper to parse dates from RSS/Atom feeds.
+  //
+  // Supports:
+  //  - ISO 8601 (e.g. "2026-02-27T12:00:00Z")
+  //  - RFC 822 / RFC 2822 (e.g. "Thu, 27 Feb 2026 12:00:00 GMT")
+  //  - Common variants with/without day-of-week or timezone abbreviations
   DateTime? _parseRssDate(String? dateStr) {
-    if (dateStr == null) return null;
+    if (dateStr == null || dateStr.trim().isEmpty) return null;
 
-    // By default, dart_rss doesn't return DateTime objects directly.
-    // Let's try to pass the string back or do a best-effort parse for Atom feeds
-    return DateTime.tryParse(dateStr);
+    final trimmed = dateStr.trim();
+
+    // 1. Try ISO 8601 first (Atom feeds typically use this)
+    final iso = DateTime.tryParse(trimmed);
+    if (iso != null) return iso;
+
+    // 2. Strip common timezone abbreviations and replace with offset
+    String normalized = trimmed
+        .replaceAll(RegExp(r'\s+GMT$', caseSensitive: false), ' +0000')
+        .replaceAll(RegExp(r'\s+UTC$', caseSensitive: false), ' +0000')
+        .replaceAll(RegExp(r'\s+EST$', caseSensitive: false), ' -0500')
+        .replaceAll(RegExp(r'\s+EDT$', caseSensitive: false), ' -0400')
+        .replaceAll(RegExp(r'\s+CST$', caseSensitive: false), ' -0600')
+        .replaceAll(RegExp(r'\s+CDT$', caseSensitive: false), ' -0500')
+        .replaceAll(RegExp(r'\s+MST$', caseSensitive: false), ' -0700')
+        .replaceAll(RegExp(r'\s+MDT$', caseSensitive: false), ' -0600')
+        .replaceAll(RegExp(r'\s+PST$', caseSensitive: false), ' -0800')
+        .replaceAll(RegExp(r'\s+PDT$', caseSensitive: false), ' -0700');
+
+    // 3. Try RFC 822 / RFC 2822 patterns
+    final rfc822Patterns = [
+      // "Thu, 27 Feb 2026 12:00:00 +0000"
+      DateFormat('EEE, dd MMM yyyy HH:mm:ss Z', 'en_US'),
+      // "27 Feb 2026 12:00:00 +0000"  (no day-of-week)
+      DateFormat('dd MMM yyyy HH:mm:ss Z', 'en_US'),
+      // "Thu, 27 Feb 2026 12:00:00"  (no timezone)
+      DateFormat('EEE, dd MMM yyyy HH:mm:ss', 'en_US'),
+      // "27 Feb 2026 12:00:00"
+      DateFormat('dd MMM yyyy HH:mm:ss', 'en_US'),
+      // "Thu, 27 Feb 2026" (date only)
+      DateFormat('EEE, dd MMM yyyy', 'en_US'),
+      // "27 Feb 2026"
+      DateFormat('dd MMM yyyy', 'en_US'),
+    ];
+
+    for (final format in rfc822Patterns) {
+      try {
+        return format.parse(normalized, true); // true = UTC
+      } catch (_) {
+        // Try next pattern
+      }
+    }
+
+    return null;
   }
 }
