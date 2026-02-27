@@ -46,7 +46,7 @@ class FeedService {
       }
     } catch (e) {
       debugPrint('Error fetching feed $url: $e');
-      return [];
+      throw Exception('Could not fetch or parse feed.');
     }
   }
 

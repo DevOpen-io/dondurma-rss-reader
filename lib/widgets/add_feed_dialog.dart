@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/feed_service.dart';
 
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
@@ -17,6 +18,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   final _nameController = TextEditingController();
   TextEditingController? _autoCompleteCategoryController;
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -159,50 +161,92 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
           ),
         ),
         FilledButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              final url = _urlController.text.trim();
-              final name = _nameController.text.trim();
-              String category =
-                  _autoCompleteCategoryController?.text.trim() ?? '';
-              if (category.isEmpty) {
-                category = 'Uncategorized'; // Explicitly set if empty
-              }
+          onPressed: _isLoading
+              ? null
+              : () async {
+                  if (_formKey.currentState!.validate()) {
+                    setState(() {
+                      _isLoading = true;
+                    });
 
-              // Explicitly wait or handle adding via provider
-              final subscriptionProvider = context.read<SubscriptionProvider>();
-              final feedProvider = context.read<FeedProvider>();
-              subscriptionProvider
-                  .addFeed(url, name, category)
-                  .then((success) {
-                    if (success) {
-                      feedProvider.refreshAll();
+                    final url = _urlController.text.trim();
+                    final name = _nameController.text.trim();
+                    String category =
+                        _autoCompleteCategoryController?.text.trim() ?? '';
+                    if (category.isEmpty) {
+                      category = 'Uncategorized'; // Explicitly set if empty
                     }
-                    if (context.mounted) {
-                      context.pop();
-                    }
-                  })
-                  .catchError((error) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(l10n.errorAddingFeed(error.toString())),
-                        ),
+
+                    try {
+                      // Validate feed before adding
+                      await FeedService().fetchFeed(url, category);
+
+                      if (!context.mounted) return;
+
+                      final subscriptionProvider = context
+                          .read<SubscriptionProvider>();
+                      final feedProvider = context.read<FeedProvider>();
+
+                      final success = await subscriptionProvider.addFeed(
+                        url,
+                        name,
+                        category,
                       );
+
+                      if (success) {
+                        feedProvider.refreshAll();
+                        if (context.mounted) {
+                          context.pop();
+                        }
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Feed already exists.'),
+                            ),
+                          );
+                          setState(() {
+                            _isLoading = false;
+                          });
+                        }
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              l10n.errorAddingFeed(
+                                e.toString().replaceAll('Exception: ', ''),
+                              ),
+                            ),
+                          ),
+                        );
+                        setState(() {
+                          _isLoading = false;
+                        });
+                      }
                     }
-                  });
-            }
-          },
+                  }
+                },
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
-          child: Text(
-            l10n.saveFeed,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          child: _isLoading
+              ? const SizedBox(
+                  width: 20,
+                  height: 20,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Text(
+                  l10n.saveFeed,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
         ),
       ],
     );
