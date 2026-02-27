@@ -2,7 +2,7 @@
   "@@locale": "en",
 
   "appTitle": "RSS Reader",
-  "appName": "Ice Cream Reader",
+  "appName": "Dondurma Rss Reader",
 
   "feedsTab": "Feeds",
   "foldersTab": "Folders",
@@ -139,7 +139,7 @@
 
   "about": "About",
   "version": "Version",
-  "versionDesc": "Current build of Ice Cream Reader",
+  "versionDesc": "Current build of Dondurma Rss Reader",
   "rateTheApp": "Rate the App",
   "rateTheAppDesc": "Support the development on the App Store",
 

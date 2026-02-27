@@ -12,7 +12,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get appTitle => 'RSS Okuyucu';
 
   @override
-  String get appName => 'Ice Cream Reader';
+  String get appName => 'Dondurma Rss Reader';
 
   @override
   String get feedsTab => 'Haberler';
@@ -301,7 +301,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get version => 'Sürüm';
 
   @override
-  String get versionDesc => 'Ice Cream Reader güncel derlemesi';
+  String get versionDesc => 'Dondurma Rss Reader güncel derlemesi';
 
   @override
   String get rateTheApp => 'Uygulamayı Puanla';

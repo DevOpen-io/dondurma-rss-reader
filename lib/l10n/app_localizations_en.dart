@@ -12,7 +12,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'RSS Reader';
 
   @override
-  String get appName => 'Ice Cream Reader';
+  String get appName => 'Dondurma Rss Reader';
 
   @override
   String get feedsTab => 'Feeds';
@@ -303,7 +303,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get version => 'Version';
 
   @override
-  String get versionDesc => 'Current build of Ice Cream Reader';
+  String get versionDesc => 'Current build of Dondurma Rss Reader';
 
   @override
   String get rateTheApp => 'Rate the App';

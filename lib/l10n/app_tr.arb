@@ -2,7 +2,7 @@
   "@@locale": "tr",
 
   "appTitle": "RSS Okuyucu",
-  "appName": "Ice Cream Reader",
+  "appName": "Dondurma Rss Reader",
 
   "feedsTab": "Haberler",
   "foldersTab": "Klasörler",
@@ -103,7 +103,7 @@
 
   "about": "Hakkında",
   "version": "Sürüm",
-  "versionDesc": "Ice Cream Reader güncel derlemesi",
+  "versionDesc": "Dondurma Rss Reader güncel derlemesi",
   "rateTheApp": "Uygulamayı Puanla",
   "rateTheAppDesc": "App Store'da geliştirmeyi destekleyin",
 

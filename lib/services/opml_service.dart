@@ -16,7 +16,7 @@ class OpmlService {
     buffer.writeln('<?xml version="1.0" encoding="UTF-8"?>');
     buffer.writeln('<opml version="2.0">');
     buffer.writeln('  <head>');
-    buffer.writeln('    <title>Ice Cream Reader Subscriptions</title>');
+    buffer.writeln('    <title>Dondurma Rss Reader Subscriptions</title>');
     buffer.writeln('  </head>');
     buffer.writeln('  <body>');
 
@@ -117,7 +117,7 @@ class OpmlService {
       final result = await SharePlus.instance.share(
         ShareParams(
           files: [XFile(file.path, mimeType: 'text/x-opml')],
-          subject: 'Ice Cream Reader Subscriptions',
+          subject: 'Dondurma Rss Reader Subscriptions',
         ),
       );
 

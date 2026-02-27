@@ -107,7 +107,7 @@ abstract class AppLocalizations {
   /// No description provided for @appName.
   ///
   /// In en, this message translates to:
-  /// **'Ice Cream Reader'**
+  /// **'Dondurma Rss Reader'**
   String get appName;
 
   /// No description provided for @feedsTab.
@@ -641,7 +641,7 @@ abstract class AppLocalizations {
   /// No description provided for @versionDesc.
   ///
   /// In en, this message translates to:
-  /// **'Current build of Ice Cream Reader'**
+  /// **'Current build of Dondurma Rss Reader'**
   String get versionDesc;
 
   /// No description provided for @rateTheApp.
