@@ -189,14 +189,10 @@ class FeedProvider extends ChangeNotifier {
         final feedKeywords = feedKeywordsMap[item.feedUrl] ?? [];
         if (globalKeywords.isEmpty && feedKeywords.isEmpty) return true;
 
-        final titleLower = item.title.toLowerCase();
-        final descLower = item.description.toLowerCase();
-
         bool containsKeyword(List<String> keywords) {
           for (var kw in keywords) {
             final lowerKw = kw.toLowerCase();
-            // Match with word boundaries to avoid partial matches (e.g. ad vs ready)
-            // Using a simple RegExp for whole word matches.
+            // Match with word boundaries to avoid partial matches (e.g. "ad" vs "ready").
             final RegExp regex = RegExp(
               r'\b' + RegExp.escape(lowerKw) + r'\b',
               caseSensitive: false,
@@ -204,18 +200,6 @@ class FeedProvider extends ChangeNotifier {
             if (regex.hasMatch(item.title) ||
                 regex.hasMatch(item.description)) {
               return true;
-            }
-            // Fallback: if the word contains punctuation or non-ascii, regex \b might fail in Dart.
-            // Let's also keep simple substring matching as a fallback if the user types something weird,
-            // but for simple words regex handles "10" correctly.
-            // Actually, simple .contains is safer and more predictable for most end users.
-            if (titleLower.contains(lowerKw) || descLower.contains(lowerKw)) {
-              // But let's check if it's an exact word match using a simple boolean check
-              // to avoid 'ad' matching 'ready'.
-              // We'll just use contains for now to match the user's expected substring behavior
-              bool match =
-                  titleLower.contains(lowerKw) || descLower.contains(lowerKw);
-              if (match) return true;
             }
           }
           return false;

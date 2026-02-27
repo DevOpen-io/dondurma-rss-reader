@@ -73,7 +73,7 @@ class FeedService {
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: description,
-        timeAgo: '', // Will be calculated by UI based on pubDate
+        timeAgo: '',
         siteIcon: Icons.rss_feed,
         iconColor: const Color(0xFF00A3FF),
         iconBackgroundColor: const Color(0x3300A3FF),

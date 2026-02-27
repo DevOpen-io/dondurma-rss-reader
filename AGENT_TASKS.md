@@ -20,23 +20,23 @@ This document is a persistent living record for AI coding agents to understand w
   - [x] **Per-Feed Controls**: Each feed has a notification bell toggle in the Folders screen. Feeds with notifications disabled are excluded from notification triggers via `notificationsEnabled` field on `FeedSubscription`.
   - [x] **Digest Mode**: Settings screen offers Instant / Daily Summary / Weekly Summary modes. Non-instant modes suppress real-time notifications.
   - [x] **Quiet Hours**: Settings screen provides start/end hour pickers (defaults 22:00–07:00). Notifications are suppressed during quiet hours including midnight-wrapping ranges.
+- [x] **Font & Display Customization**: Enhance readability settings beyond basic themes.
+  - [x] Allow font size adjustment (Small, Medium, Large, XL).
+  - [x] Allow typeface selection (Serif, Sans-Serif, Mono).
+  - [x] Allow line spacing adjustments in the Article View.
+- [x] **Keyword Filtering (Rule-Based)**: Simple string matching to filter content (No AI).
+  - [x] Exclude articles containing specific words (e.g., "spoiler", "ad").
+  - [x] Apply filters per feed or globally.
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
 - [ ] **Text-to-Speech (TTS)**: Integrate native OS TTS engines to allow users to listen to articles.
   - [ ] Add play/pause/speed controls in the Article View.
   - [ ] Ensure TTS stops when leaving the article screen.
-- [x] **Font & Display Customization**: Enhance readability settings beyond basic themes.
-  - [x] Allow font size adjustment (Small, Medium, Large, XL).
-  - [x] Allow typeface selection (Serif, Sans-Serif, Mono).
-  - [x] Allow line spacing adjustments in the Article View.
 - [ ] **Reading Statistics**: Track user engagement without compromising privacy.
   - [ ] Track articles read per day/week.
   - [ ] Track time spent reading.
   - [ ] Display "Most Active Feeds" in a dedicated Stats screen.
-- [x] **Keyword Filtering (Rule-Based)**: Simple string matching to filter content (No AI).
-  - [x] Exclude articles containing specific words (e.g., "spoiler", "ad").
-  - [x] Apply filters per feed or globally.
 - [ ] **Media Caching**: Enhance offline experience for images.
   - [ ] Preload and cache images from RSS feeds locally.
   - [ ] Option to disable images to save data in `SettingsProvider`.

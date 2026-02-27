@@ -13,7 +13,7 @@ class FeedItem {
   final Color iconColor;
   final Color iconBackgroundColor;
 
-  // New fields for real data
+  // Feed content fields
   final String link;
   final String? imageUrl;
   final String? content;

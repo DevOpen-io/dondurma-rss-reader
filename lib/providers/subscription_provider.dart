@@ -87,9 +87,7 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> moveFeedToCategory(String feedUrl, String newCategory) async {
     final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
     if (index != -1) {
-      _subscriptions[index] = FeedSubscription(
-        url: _subscriptions[index].url,
-        name: _subscriptions[index].name,
+      _subscriptions[index] = _subscriptions[index].copyWith(
         category: newCategory,
       );
       await _saveSubscriptions();
@@ -119,11 +117,7 @@ class SubscriptionProvider extends ChangeNotifier {
     bool changed = false;
     for (int i = 0; i < _subscriptions.length; i++) {
       if (_subscriptions[i].category == oldCategory) {
-        _subscriptions[i] = FeedSubscription(
-          url: _subscriptions[i].url,
-          name: _subscriptions[i].name,
-          category: newCategory,
-        );
+        _subscriptions[i] = _subscriptions[i].copyWith(category: newCategory);
         changed = true;
       }
     }

@@ -12,27 +12,6 @@ enum AppTheme {
   catppuccinMocha,
 }
 
-extension AppThemeX on AppTheme {
-  String get displayName {
-    switch (this) {
-      case AppTheme.system:
-        return 'System Default';
-      case AppTheme.light:
-        return 'Light (Classic)';
-      case AppTheme.dark:
-        return 'Dark (Classic)';
-      case AppTheme.catppuccinLatte:
-        return 'Latte (Light)';
-      case AppTheme.catppuccinFrappe:
-        return 'Frappé (Dark)';
-      case AppTheme.catppuccinMacchiato:
-        return 'Macchiato (Dark)';
-      case AppTheme.catppuccinMocha:
-        return 'Mocha (Dark)';
-    }
-  }
-}
-
 class AppThemeBuilder {
   static ThemeData getTheme(AppTheme theme, Brightness systemBrightness) {
     if (theme == AppTheme.system) {
@@ -45,7 +24,6 @@ class AppThemeBuilder {
 
     switch (theme) {
       case AppTheme.system:
-        return _buildLightTheme(); // Handled above, fallback
       case AppTheme.light:
         return _buildLightTheme();
       case AppTheme.dark:
