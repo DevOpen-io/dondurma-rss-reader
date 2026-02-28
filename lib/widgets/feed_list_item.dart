@@ -110,16 +110,17 @@ class _FeedListItemState extends State<FeedListItem>
       builder: (context, state, child) {
         final bool isBookmarked = state.isBookmarked;
         final bool isCached = state.isCached;
+        final bool isRead = widget.item.isRead;
 
         return Container(
-          margin: const EdgeInsets.only(bottom: 12.0),
+          margin: const EdgeInsets.only(bottom: 10.0),
           child: Stack(
             children: [
               // Swipe background indicator
               if (_dragExtent != 0)
                 _SwipeBackground(
                   isSwipingRight: isSwipingRight,
-                  isRead: widget.item.isRead,
+                  isRead: isRead,
                   isBookmarked: isBookmarked,
                   actionTriggered: _actionTriggered,
                 ),
@@ -129,47 +130,11 @@ class _FeedListItemState extends State<FeedListItem>
                 onHorizontalDragEnd: _onHorizontalDragEnd,
                 child: Transform.translate(
                   offset: Offset(_dragExtent, 0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Card(
-                      margin: EdgeInsets.zero,
-                      clipBehavior: Clip.antiAlias,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(16),
-                        onTap: () {
-                          context.read<FeedProvider>().markAsRead(
-                            widget.item.id,
-                          );
-                          context.push('/article', extra: widget.item);
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _FeedItemIcon(item: widget.item),
-                              const SizedBox(width: 16),
-                              _FeedItemContent(item: widget.item),
-                              const SizedBox(width: 8),
-                              _FeedItemActions(
-                                item: widget.item,
-                                isBookmarked: isBookmarked,
-                                isCached: isCached,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
+                  child: _ArticleCard(
+                    item: widget.item,
+                    isRead: isRead,
+                    isBookmarked: isBookmarked,
+                    isCached: isCached,
                   ),
                 ),
               ),
@@ -181,11 +146,102 @@ class _FeedListItemState extends State<FeedListItem>
   }
 }
 
-// ---------------------------------------------------------------------------
-// Extracted private sub-widgets
-// ---------------------------------------------------------------------------
+// =============================================================================
+// Core card widget
+// =============================================================================
 
-/// The background layer shown behind the card during a horizontal swipe.
+class _ArticleCard extends StatelessWidget {
+  final FeedItem item;
+  final bool isRead;
+  final bool isBookmarked;
+  final bool isCached;
+
+  const _ArticleCard({
+    required this.item,
+    required this.isRead,
+    required this.isBookmarked,
+    required this.isCached,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final surfaceColor = colorScheme.surface;
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+          BoxShadow(
+            color: colorScheme.primary.withValues(alpha: isRead ? 0 : 0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: surfaceColor,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            context.read<FeedProvider>().markAsRead(item.id);
+            context.push('/article', extra: item);
+          },
+          child: Container(
+            decoration: BoxDecoration(
+              // Subtle left border accent for unread items
+              border: isRead
+                  ? null
+                  : Border(
+                      left: BorderSide(
+                        color: colorScheme.primary.withValues(alpha: 0.6),
+                        width: 3,
+                      ),
+                    ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Feed icon
+                  _FeedItemIcon(item: item, isRead: isRead),
+                  const SizedBox(width: 12),
+
+                  // Content column
+                  Expanded(
+                    child: _FeedItemContent(item: item, isRead: isRead),
+                  ),
+
+                  // Action column (vertically aligned)
+                  const SizedBox(width: 4),
+                  _FeedItemActions(
+                    item: item,
+                    isBookmarked: isBookmarked,
+                    isCached: isCached,
+                    isRead: isRead,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Swipe background
+// =============================================================================
+
 class _SwipeBackground extends StatelessWidget {
   final bool isSwipingRight;
   final bool isRead;
@@ -229,184 +285,246 @@ class _SwipeBackground extends StatelessWidget {
   }
 }
 
-/// The feed source icon / thumbnail on the left side of the card.
+// =============================================================================
+// Feed icon
+// =============================================================================
+
 class _FeedItemIcon extends StatelessWidget {
   final FeedItem item;
+  final bool isRead;
 
-  const _FeedItemIcon({required this.item});
+  const _FeedItemIcon({required this.item, required this.isRead});
 
   @override
   Widget build(BuildContext context) {
+    final iconWidget = Center(
+      child: Icon(
+        item.siteIcon,
+        color: isRead ? item.iconColor.withValues(alpha: 0.4) : item.iconColor,
+        size: 22,
+      ),
+    );
+
     return Container(
-      width: 48,
-      height: 48,
+      width: 44,
+      height: 44,
       decoration: BoxDecoration(
-        color: item.isRead
-            ? item.iconBackgroundColor.withValues(alpha: 0.1)
+        color: isRead
+            ? item.iconBackgroundColor.withValues(alpha: 0.12)
             : item.iconBackgroundColor,
         borderRadius: BorderRadius.circular(12.0),
         border: Border.all(
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+          color: Theme.of(
+            context,
+          ).colorScheme.onSurface.withValues(alpha: 0.08),
           width: 0.5,
         ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.0),
-        child: item.imageUrl != null
+        child: item.imageUrl != null && item.imageUrl!.isNotEmpty
             ? Opacity(
-                opacity: item.isRead ? 0.6 : 1.0,
+                opacity: isRead ? 0.5 : 1.0,
                 child: CachedNetworkImage(
                   imageUrl: item.imageUrl!,
                   fit: BoxFit.cover,
+                  width: 44,
+                  height: 44,
                   memCacheWidth: 144,
-                  errorWidget: (context, url, error) => Icon(
-                    item.siteIcon,
-                    color: item.isRead
-                        ? item.iconColor.withValues(alpha: 0.5)
-                        : item.iconColor,
-                    size: 24,
-                  ),
+                  errorWidget: (context, url, error) => iconWidget,
+                  placeholder: (context, url) => iconWidget,
                 ),
               )
-            : Center(
-                child: Icon(
-                  item.siteIcon,
-                  color: item.isRead
-                      ? item.iconColor.withValues(alpha: 0.5)
-                      : item.iconColor,
-                  size: 24,
-                ),
-              ),
+            : iconWidget,
       ),
     );
   }
 }
 
-/// The text content column: site name, title, and description.
+// =============================================================================
+// Content column
+// =============================================================================
+
 class _FeedItemContent extends StatelessWidget {
   final FeedItem item;
+  final bool isRead;
 
-  const _FeedItemContent({required this.item});
+  const _FeedItemContent({required this.item, required this.isRead});
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Expanded(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Site name + date
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  item.siteName,
-                  style: TextStyle(
-                    color: item.isRead
-                        ? colorScheme.primary.withValues(alpha: 0.6)
-                        : colorScheme.primary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Site name + date row
+        Row(
+          children: [
+            // Unread dot indicator
+            if (!isRead)
+              Container(
+                width: 6,
+                height: 6,
+                margin: const EdgeInsets.only(right: 6),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary,
+                  shape: BoxShape.circle,
                 ),
               ),
-              Text(
-                item.pubDate != null
-                    ? "${item.pubDate!.month}/${item.pubDate!.day}"
-                    : item.timeAgo,
+            Expanded(
+              child: Text(
+                item.siteName,
                 style: TextStyle(
-                  color: item.isRead
-                      ? Colors.grey.withValues(alpha: 0.5)
-                      : Colors.grey,
+                  color: isRead
+                      ? colorScheme.primary.withValues(alpha: 0.5)
+                      : colorScheme.primary,
                   fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.2,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          // Title
-          Text(
-            item.title.trim(),
-            style: TextStyle(
-              color: item.isRead
-                  ? colorScheme.onSurface.withValues(alpha: 0.5)
-                  : colorScheme.onSurface,
-              fontSize: 16,
-              fontWeight: item.isRead ? FontWeight.normal : FontWeight.bold,
-              height: 1.3,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 6),
-          // Description
-          Text(
-            item.description,
-            style: TextStyle(
-              color: item.isRead
-                  ? colorScheme.onSurface.withValues(alpha: 0.4)
-                  : colorScheme.onSurface.withValues(alpha: 0.7),
-              fontSize: 14,
-              height: 1.4,
+            const SizedBox(width: 8),
+            Text(
+              _formatDate(item),
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(
+                  alpha: isRead ? 0.3 : 0.45,
+                ),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
+          ],
+        ),
+        const SizedBox(height: 5),
+
+        // Title
+        Text(
+          item.title.trim(),
+          style: TextStyle(
+            color: isRead
+                ? colorScheme.onSurface.withValues(alpha: 0.45)
+                : colorScheme.onSurface,
+            fontSize: 15,
+            fontWeight: isRead ? FontWeight.w400 : FontWeight.w700,
+            height: 1.3,
+            letterSpacing: -0.1,
           ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 4),
+
+        // Description
+        Text(
+          item.description,
+          style: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: isRead ? 0.3 : 0.55),
+            fontSize: 13,
+            height: 1.35,
+          ),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ],
+    );
+  }
+
+  String _formatDate(FeedItem item) {
+    if (item.pubDate == null) return item.timeAgo;
+    final now = DateTime.now();
+    final d = item.pubDate!;
+    final diff = now.difference(d);
+    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
+    if (diff.inHours < 24) return '${diff.inHours}h';
+    if (diff.inDays < 7) return '${diff.inDays}d';
+    return '${d.month}/${d.day}';
+  }
+}
+
+// =============================================================================
+// Actions column — vertically centered bookmark + cache icons
+// =============================================================================
+
+class _FeedItemActions extends StatelessWidget {
+  final FeedItem item;
+  final bool isBookmarked;
+  final bool isCached;
+  final bool isRead;
+
+  const _FeedItemActions({
+    required this.item,
+    required this.isBookmarked,
+    required this.isCached,
+    required this.isRead,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return SizedBox(
+      width: 28,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Bookmark button
+          _ActionIcon(
+            onTap: () {
+              context.read<BookmarkProvider>().toggleBookmark(item);
+            },
+            icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color: isBookmarked
+                ? colorScheme.primary
+                : colorScheme.onSurface.withValues(alpha: isRead ? 0.25 : 0.4),
+            size: 20,
+          ),
+
+          // Cached indicator
+          if (isCached)
+            Padding(
+              padding: const EdgeInsets.only(top: 8.0),
+              child: Icon(
+                Icons.offline_pin,
+                color: colorScheme.secondary.withValues(
+                  alpha: isRead ? 0.35 : 0.7,
+                ),
+                size: 15,
+              ),
+            ),
         ],
       ),
     );
   }
 }
 
-/// The trailing bookmark button and offline indicator.
-class _FeedItemActions extends StatelessWidget {
-  final FeedItem item;
-  final bool isBookmarked;
-  final bool isCached;
+/// A compact, touch-friendly icon button for the action column.
+class _ActionIcon extends StatelessWidget {
+  final VoidCallback onTap;
+  final IconData icon;
+  final Color color;
+  final double size;
 
-  const _FeedItemActions({
-    required this.item,
-    required this.isBookmarked,
-    required this.isCached,
+  const _ActionIcon({
+    required this.onTap,
+    required this.icon,
+    required this.color,
+    required this.size,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.start,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        IconButton(
-          onPressed: () {
-            context.read<BookmarkProvider>().toggleBookmark(item);
-          },
-          icon: Icon(
-            isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-            color: isBookmarked
-                ? colorScheme.primary
-                : Colors.grey.withValues(alpha: item.isRead ? 0.5 : 1.0),
-            size: 22,
-          ),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          alignment: Alignment.topRight,
-        ),
-        if (isCached)
-          Padding(
-            padding: const EdgeInsets.only(top: 12.0, right: 2.0),
-            child: Icon(
-              Icons.offline_pin,
-              color: colorScheme.secondary.withValues(
-                alpha: item.isRead ? 0.4 : 0.8,
-              ),
-              size: 16,
-            ),
-          ),
-      ],
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.all(4.0),
+        child: Icon(icon, color: color, size: size),
+      ),
     );
   }
 }
