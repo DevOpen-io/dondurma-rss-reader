@@ -6,16 +6,72 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
 
+/// Fetches and parses RSS and Atom feeds over HTTP.
+///
+/// Uses browser-like User-Agent headers to avoid Cloudflare 403 challenges.
+/// Attempts RSS parsing first; falls back to Atom if RSS fails.
 class FeedService {
+  // ---------------------------------------------------------------------------
+  // HTTP header constants
+  // ---------------------------------------------------------------------------
+
+  static const _userAgent =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
+      'AppleWebKit/537.36 (KHTML, like Gecko) '
+      'Chrome/122.0.0.0 Safari/537.36';
+
+  static const _acceptHeader =
+      'application/rss+xml, application/rdf+xml, '
+      'application/atom+xml, application/xml, '
+      'text/xml, text/html;q=0.9';
+
+  // ---------------------------------------------------------------------------
+  // Pre-compiled RFC 822 date format patterns (avoids re-creating per call)
+  // ---------------------------------------------------------------------------
+
+  static final List<DateFormat> _rfc822Patterns = [
+    // "Thu, 27 Feb 2026 12:00:00 +0000"
+    DateFormat('EEE, dd MMM yyyy HH:mm:ss Z', 'en_US'),
+    // "27 Feb 2026 12:00:00 +0000"  (no day-of-week)
+    DateFormat('dd MMM yyyy HH:mm:ss Z', 'en_US'),
+    // "Thu, 27 Feb 2026 12:00:00"  (no timezone)
+    DateFormat('EEE, dd MMM yyyy HH:mm:ss', 'en_US'),
+    // "27 Feb 2026 12:00:00"
+    DateFormat('dd MMM yyyy HH:mm:ss', 'en_US'),
+    // "Thu, 27 Feb 2026" (date only)
+    DateFormat('EEE, dd MMM yyyy', 'en_US'),
+    // "27 Feb 2026"
+    DateFormat('dd MMM yyyy', 'en_US'),
+  ];
+
+  // ---------------------------------------------------------------------------
+  // Timezone abbreviation → offset mapping for RFC 822 normalization
+  // ---------------------------------------------------------------------------
+
+  static final _timezoneReplacements = <RegExp, String>{
+    RegExp(r'\s+GMT$', caseSensitive: false): ' +0000',
+    RegExp(r'\s+UTC$', caseSensitive: false): ' +0000',
+    RegExp(r'\s+EST$', caseSensitive: false): ' -0500',
+    RegExp(r'\s+EDT$', caseSensitive: false): ' -0400',
+    RegExp(r'\s+CST$', caseSensitive: false): ' -0600',
+    RegExp(r'\s+CDT$', caseSensitive: false): ' -0500',
+    RegExp(r'\s+MST$', caseSensitive: false): ' -0700',
+    RegExp(r'\s+MDT$', caseSensitive: false): ' -0600',
+    RegExp(r'\s+PST$', caseSensitive: false): ' -0800',
+    RegExp(r'\s+PDT$', caseSensitive: false): ' -0700',
+  };
+
+  /// Fetches and parses the feed at [url], tagging each item with [category].
+  ///
+  /// Returns a list of [FeedItem]s. Throws if the HTTP request fails or the
+  /// response cannot be parsed as either RSS or Atom.
   Future<List<FeedItem>> fetchFeed(String url, String category) async {
     try {
       final response = await http.get(
         Uri.parse(url),
         headers: {
-          'User-Agent':
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-          'Accept':
-              'application/rss+xml, application/rdf+xml, application/atom+xml, application/xml, text/xml, text/html;q=0.9',
+          'User-Agent': _userAgent,
+          'Accept': _acceptHeader,
           'Accept-Language': 'en-US,en;q=0.9',
         },
       );
@@ -50,6 +106,7 @@ class FeedService {
     }
   }
 
+  /// Maps RSS feed items to the universal [FeedItem] model.
   List<FeedItem> _mapRssItems(RssFeed feed, String category, String sourceUrl) {
     final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
@@ -87,6 +144,7 @@ class FeedService {
     }).toList();
   }
 
+  /// Maps Atom feed entries to the universal [FeedItem] model.
   List<FeedItem> _mapAtomItems(
     AtomFeed feed,
     String category,
@@ -137,7 +195,7 @@ class FeedService {
     }).toList();
   }
 
-  // Helper to strip HTML tags for the short description
+  /// Strips HTML tags and returns plain text for the short description.
   String _parseHtmlString(String htmlString) {
     final document = parse(htmlString);
     final String parsedString =
@@ -145,32 +203,33 @@ class FeedService {
     return parsedString.replaceAll('\n', ' ').trim();
   }
 
-  // Helper to decode HTML entities like &#8216;
+  /// Decodes HTML entities (e.g. `&#8216;`) in feed titles and site names.
   String _decodeHtmlEntities(String text) {
     if (text.isEmpty) return text;
     final document = parse(text);
     return document.documentElement?.text ?? text;
   }
 
-  // Helper to extract all <img> src attributes from HTML content
+  /// Extracts all `<img>` `src` attributes from HTML content.
   List<String> _extractImages(String htmlString) {
-    List<String> imageUrls = [];
+    final List<String> imageUrls = [];
     final document = parse(htmlString);
     final images = document.getElementsByTagName('img');
-    for (var img in images) {
-      if (img.attributes.containsKey('src')) {
-        imageUrls.add(img.attributes['src']!);
+    for (final img in images) {
+      final src = img.attributes['src'];
+      if (src != null) {
+        imageUrls.add(src);
       }
     }
     return imageUrls;
   }
 
-  // Helper to parse dates from RSS/Atom feeds.
-  //
-  // Supports:
-  //  - ISO 8601 (e.g. "2026-02-27T12:00:00Z")
-  //  - RFC 822 / RFC 2822 (e.g. "Thu, 27 Feb 2026 12:00:00 GMT")
-  //  - Common variants with/without day-of-week or timezone abbreviations
+  /// Parses dates from RSS/Atom feeds.
+  ///
+  /// Supports:
+  ///  - ISO 8601 (e.g. `2026-02-27T12:00:00Z`)
+  ///  - RFC 822 / RFC 2822 (e.g. `Thu, 27 Feb 2026 12:00:00 GMT`)
+  ///  - Common variants with/without day-of-week or timezone abbreviations
   DateTime? _parseRssDate(String? dateStr) {
     if (dateStr == null || dateStr.trim().isEmpty) return null;
 
@@ -180,36 +239,14 @@ class FeedService {
     final iso = DateTime.tryParse(trimmed);
     if (iso != null) return iso;
 
-    // 2. Strip common timezone abbreviations and replace with offset
-    String normalized = trimmed
-        .replaceAll(RegExp(r'\s+GMT$', caseSensitive: false), ' +0000')
-        .replaceAll(RegExp(r'\s+UTC$', caseSensitive: false), ' +0000')
-        .replaceAll(RegExp(r'\s+EST$', caseSensitive: false), ' -0500')
-        .replaceAll(RegExp(r'\s+EDT$', caseSensitive: false), ' -0400')
-        .replaceAll(RegExp(r'\s+CST$', caseSensitive: false), ' -0600')
-        .replaceAll(RegExp(r'\s+CDT$', caseSensitive: false), ' -0500')
-        .replaceAll(RegExp(r'\s+MST$', caseSensitive: false), ' -0700')
-        .replaceAll(RegExp(r'\s+MDT$', caseSensitive: false), ' -0600')
-        .replaceAll(RegExp(r'\s+PST$', caseSensitive: false), ' -0800')
-        .replaceAll(RegExp(r'\s+PDT$', caseSensitive: false), ' -0700');
+    // 2. Replace common timezone abbreviations with numeric offsets
+    String normalized = trimmed;
+    for (final entry in _timezoneReplacements.entries) {
+      normalized = normalized.replaceAll(entry.key, entry.value);
+    }
 
-    // 3. Try RFC 822 / RFC 2822 patterns
-    final rfc822Patterns = [
-      // "Thu, 27 Feb 2026 12:00:00 +0000"
-      DateFormat('EEE, dd MMM yyyy HH:mm:ss Z', 'en_US'),
-      // "27 Feb 2026 12:00:00 +0000"  (no day-of-week)
-      DateFormat('dd MMM yyyy HH:mm:ss Z', 'en_US'),
-      // "Thu, 27 Feb 2026 12:00:00"  (no timezone)
-      DateFormat('EEE, dd MMM yyyy HH:mm:ss', 'en_US'),
-      // "27 Feb 2026 12:00:00"
-      DateFormat('dd MMM yyyy HH:mm:ss', 'en_US'),
-      // "Thu, 27 Feb 2026" (date only)
-      DateFormat('EEE, dd MMM yyyy', 'en_US'),
-      // "27 Feb 2026"
-      DateFormat('dd MMM yyyy', 'en_US'),
-    ];
-
-    for (final format in rfc822Patterns) {
+    // 3. Try RFC 822 / RFC 2822 patterns (pre-compiled static instances)
+    for (final format in _rfc822Patterns) {
       try {
         return format.parse(normalized, true); // true = UTC
       } catch (_) {

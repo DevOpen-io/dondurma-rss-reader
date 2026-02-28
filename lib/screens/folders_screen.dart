@@ -8,6 +8,10 @@ import '../providers/subscription_provider.dart';
 import '../models/feed_subscription.dart';
 import '../widgets/keyword_input_dialog.dart';
 
+/// Screen for managing feed categories (folders) and their subscriptions.
+///
+/// Supports adding/renaming/deleting categories, moving feeds between
+/// categories, editing feed details, and per-feed keyword exclusion.
 class FoldersScreen extends StatelessWidget {
   const FoldersScreen({super.key});
 

@@ -2,8 +2,17 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/feed_item.dart';
 
+/// Singleton service that wraps [FlutterLocalNotificationsPlugin].
+///
+/// Provides initialization, permission requests, and article notification
+/// delivery with support for quiet hours and digest modes.
+///
+/// Supported platforms: Android, iOS, macOS. On unsupported platforms
+/// [isSupported] returns `false` and all operations are no-ops.
 class NotificationService {
   NotificationService._();
+
+  /// The shared singleton instance.
   static final NotificationService instance = NotificationService._();
 
   final FlutterLocalNotificationsPlugin _plugin =
@@ -14,7 +23,9 @@ class NotificationService {
   /// Whether the notification plugin is available on this platform.
   bool get isSupported => _initialized;
 
-  /// Initialize the notification plugin. Call once from main().
+  /// Initializes the notification plugin. Call once from `main()`.
+  ///
+  /// Safe to call multiple times — subsequent calls are no-ops.
   Future<void> init() async {
     if (_initialized) return;
 
@@ -41,7 +52,9 @@ class NotificationService {
     }
   }
 
-  /// Request notification permissions (Android 13+ and iOS).
+  /// Requests notification permissions on Android 13+ and iOS.
+  ///
+  /// Returns `true` if permission was granted, `false` otherwise.
   Future<bool> requestPermission() async {
     if (!_initialized) return false;
 
@@ -77,12 +90,15 @@ class NotificationService {
     return true;
   }
 
-  /// Show a notification for newly discovered articles.
+  /// Shows a notification for newly discovered articles.
   ///
   /// [newItems] — articles not previously seen.
   /// [notificationsEnabled] — global master toggle.
-  /// [digestMode] — 'instant', 'daily', 'weekly'.
+  /// [digestMode] — `'instant'`, `'daily'`, or `'weekly'`.
   /// [quietHoursStart] / [quietHoursEnd] — hour (0-23).
+  ///
+  /// No-op when notifications are disabled, the list is empty, the current
+  /// time falls within quiet hours, or digest mode is not `'instant'`.
   Future<void> showNewArticlesNotification({
     required List<FeedItem> newItems,
     required bool notificationsEnabled,
@@ -131,8 +147,15 @@ class NotificationService {
     }
   }
 
-  /// Returns true if [currentHour] is inside the quiet window.
-  bool _isInQuietHours(int currentHour, int start, int end) {
+  /// Returns `true` if [currentHour] falls within the quiet window
+  /// defined by [start] and [end] (both in 0-23 hour range).
+  ///
+  /// Handles midnight-wrapping (e.g. 22:00 → 07:00).
+  @visibleForTesting
+  static bool isInQuietHoursForTest(int currentHour, int start, int end) =>
+      _isInQuietHours(currentHour, start, end);
+
+  static bool _isInQuietHours(int currentHour, int start, int end) {
     if (start == end) return false; // no quiet hours
     if (start < end) {
       // e.g. 8–17

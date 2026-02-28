@@ -6,6 +6,10 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/feed_service.dart';
 
+/// Dialog for manually adding a new RSS/Atom feed subscription.
+///
+/// Validates the URL format before attempting to fetch the feed. On success,
+/// the feed is added to [SubscriptionProvider] and a full refresh is triggered.
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
 
@@ -161,73 +165,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
           ),
         ),
         FilledButton(
-          onPressed: _isLoading
-              ? null
-              : () async {
-                  if (_formKey.currentState!.validate()) {
-                    setState(() {
-                      _isLoading = true;
-                    });
-
-                    final url = _urlController.text.trim();
-                    final name = _nameController.text.trim();
-                    String category =
-                        _autoCompleteCategoryController?.text.trim() ?? '';
-                    if (category.isEmpty) {
-                      category = 'Uncategorized'; // Explicitly set if empty
-                    }
-
-                    try {
-                      // Validate feed before adding
-                      await FeedService().fetchFeed(url, category);
-
-                      if (!context.mounted) return;
-
-                      final subscriptionProvider = context
-                          .read<SubscriptionProvider>();
-                      final feedProvider = context.read<FeedProvider>();
-
-                      final success = await subscriptionProvider.addFeed(
-                        url,
-                        name,
-                        category,
-                      );
-
-                      if (success) {
-                        feedProvider.refreshAll();
-                        if (context.mounted) {
-                          context.pop();
-                        }
-                      } else {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Feed already exists.'),
-                            ),
-                          );
-                          setState(() {
-                            _isLoading = false;
-                          });
-                        }
-                      }
-                    } catch (e) {
-                      if (context.mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              l10n.errorAddingFeed(
-                                e.toString().replaceAll('Exception: ', ''),
-                              ),
-                            ),
-                          ),
-                        );
-                        setState(() {
-                          _isLoading = false;
-                        });
-                      }
-                    }
-                  }
-                },
+          onPressed: _isLoading ? null : () => _submit(context),
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             shape: RoundedRectangleBorder(
@@ -252,11 +190,61 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     );
   }
 
+  /// Validates the form, fetches the feed to confirm it's valid, and adds
+  /// the subscription.
+  Future<void> _submit(BuildContext context) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
+
+    final l10n = AppLocalizations.of(context);
+    final url = _urlController.text.trim();
+    final name = _nameController.text.trim();
+    String category = _autoCompleteCategoryController?.text.trim() ?? '';
+    if (category.isEmpty) {
+      category = 'Uncategorized';
+    }
+
+    try {
+      // Validate feed before adding
+      await FeedService().fetchFeed(url, category);
+
+      if (!context.mounted) return;
+
+      final subscriptionProvider = context.read<SubscriptionProvider>();
+      final feedProvider = context.read<FeedProvider>();
+
+      final success = await subscriptionProvider.addFeed(url, name, category);
+
+      if (success) {
+        feedProvider.refreshAll();
+        if (context.mounted) context.pop();
+      } else {
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('Feed already exists.')));
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              l10n.errorAddingFeed(e.toString().replaceAll('Exception: ', '')),
+            ),
+          ),
+        );
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
   @override
   void dispose() {
     _urlController.dispose();
     _nameController.dispose();
-
     super.dispose();
   }
 }

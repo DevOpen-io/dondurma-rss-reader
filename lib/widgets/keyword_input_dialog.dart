@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 
+/// Reusable dialog for managing a list of keywords (e.g. content exclusion
+/// filters). Supports adding comma-separated keywords, removing individual
+/// chips, saving, and resetting.
 class KeywordInputDialog extends StatefulWidget {
   final String title;
   final List<String> initialKeywords;

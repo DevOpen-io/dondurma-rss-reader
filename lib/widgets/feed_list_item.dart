@@ -7,6 +7,10 @@ import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../providers/bookmark_provider.dart';
 
+/// A single feed article card with swipe-to-read and swipe-to-bookmark gestures.
+///
+/// Uses [Selector2] to rebuild only when the bookmark or cache state of this
+/// specific item changes — avoids full list rebuilds.
 class FeedListItem extends StatefulWidget {
   final FeedItem item;
 
@@ -91,11 +95,7 @@ class _FeedListItemState extends State<FeedListItem>
   @override
   Widget build(BuildContext context) {
     final isSwipingRight = _dragExtent > 0;
-    final isSwipingLeft = _dragExtent < 0;
 
-    // Read bookmark and cache state directly from providers so the UI updates
-    // immediately when the user swipes or taps the bookmark button — without
-    // waiting for the FeedProvider proxy rebuild cycle.
     return Selector2<
       FeedProvider,
       BookmarkProvider,
@@ -115,43 +115,15 @@ class _FeedListItemState extends State<FeedListItem>
           margin: const EdgeInsets.only(bottom: 12.0),
           child: Stack(
             children: [
-              // Background layer
+              // Swipe background indicator
               if (_dragExtent != 0)
-                Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSwipingRight
-                          ? Theme.of(
-                              context,
-                            ).colorScheme.primary.withValues(alpha: 0.1)
-                          : Theme.of(
-                              context,
-                            ).colorScheme.secondary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    alignment: isSwipingRight
-                        ? Alignment.centerLeft
-                        : Alignment.centerRight,
-                    padding: EdgeInsets.only(
-                      left: isSwipingRight ? 24.0 : 0,
-                      right: isSwipingLeft ? 24.0 : 0,
-                    ),
-                    child: Icon(
-                      isSwipingRight
-                          ? (widget.item.isRead
-                                ? Icons.mark_email_unread
-                                : Icons.mark_email_read)
-                          : (isBookmarked
-                                ? Icons.bookmark_remove
-                                : Icons.bookmark_add),
-                      color: isSwipingRight
-                          ? Theme.of(context).colorScheme.primary
-                          : Theme.of(context).colorScheme.secondary,
-                      size: 28 + (_actionTriggered ? 4.0 : 0.0),
-                    ),
-                  ),
+                _SwipeBackground(
+                  isSwipingRight: isSwipingRight,
+                  isRead: widget.item.isRead,
+                  isBookmarked: isBookmarked,
+                  actionTriggered: _actionTriggered,
                 ),
-              // Foreground layer
+              // Foreground card
               GestureDetector(
                 onHorizontalDragUpdate: _onHorizontalDragUpdate,
                 onHorizontalDragEnd: _onHorizontalDragEnd,
@@ -184,201 +156,14 @@ class _FeedListItemState extends State<FeedListItem>
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Icon Container
-                              Container(
-                                width: 48,
-                                height: 48,
-                                decoration: BoxDecoration(
-                                  color: widget.item.isRead
-                                      ? widget.item.iconBackgroundColor
-                                            .withValues(alpha: 0.1)
-                                      : widget.item.iconBackgroundColor,
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  border: Border.all(
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.1),
-                                    width: 0.5,
-                                  ),
-                                ),
-                                child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  child: widget.item.imageUrl != null
-                                      ? Opacity(
-                                          opacity: widget.item.isRead
-                                              ? 0.6
-                                              : 1.0,
-                                          child: CachedNetworkImage(
-                                            imageUrl: widget.item.imageUrl!,
-                                            fit: BoxFit.cover,
-                                            memCacheWidth: 144,
-                                            errorWidget:
-                                                (context, url, error) => Icon(
-                                                  widget.item.siteIcon,
-                                                  color: widget.item.isRead
-                                                      ? widget.item.iconColor
-                                                            .withValues(
-                                                              alpha: 0.5,
-                                                            )
-                                                      : widget.item.iconColor,
-                                                  size: 24,
-                                                ),
-                                          ),
-                                        )
-                                      : Center(
-                                          child: Icon(
-                                            widget.item.siteIcon,
-                                            color: widget.item.isRead
-                                                ? widget.item.iconColor
-                                                      .withValues(alpha: 0.5)
-                                                : widget.item.iconColor,
-                                            size: 24,
-                                          ),
-                                        ),
-                                ),
-                              ),
+                              _FeedItemIcon(item: widget.item),
                               const SizedBox(width: 16),
-                              // Content Column
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    // Row with Site Name and Time
-                                    Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            widget.item.siteName,
-                                            style: TextStyle(
-                                              color: widget.item.isRead
-                                                  ? Theme.of(context)
-                                                        .colorScheme
-                                                        .primary
-                                                        .withValues(alpha: 0.6)
-                                                  : Theme.of(
-                                                      context,
-                                                    ).colorScheme.primary,
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                          ),
-                                        ),
-                                        Text(
-                                          widget.item.pubDate != null
-                                              ? "${widget.item.pubDate!.month}/${widget.item.pubDate!.day}"
-                                              : widget.item.timeAgo,
-                                          style: TextStyle(
-                                            color: widget.item.isRead
-                                                ? Colors.grey.withValues(
-                                                    alpha: 0.5,
-                                                  )
-                                                : Colors.grey,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 6),
-                                    // Title
-                                    Text(
-                                      widget.item.title.trim(),
-                                      style: TextStyle(
-                                        color: widget.item.isRead
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withValues(alpha: 0.5)
-                                            : Theme.of(
-                                                context,
-                                              ).colorScheme.onSurface,
-                                        fontSize: 16,
-                                        fontWeight: widget.item.isRead
-                                            ? FontWeight.normal
-                                            : FontWeight.bold,
-                                        height: 1.3,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                    const SizedBox(height: 6),
-                                    // Description
-                                    Text(
-                                      widget.item.description,
-                                      style: TextStyle(
-                                        color: widget.item.isRead
-                                            ? Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withValues(alpha: 0.4)
-                                            : Theme.of(context)
-                                                  .colorScheme
-                                                  .onSurface
-                                                  .withValues(alpha: 0.7),
-                                        fontSize: 14,
-                                        height: 1.4,
-                                      ),
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ],
-                                ),
-                              ),
+                              _FeedItemContent(item: widget.item),
                               const SizedBox(width: 8),
-                              // Actions Column
-                              Column(
-                                mainAxisAlignment: MainAxisAlignment.start,
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  IconButton(
-                                    onPressed: () {
-                                      context
-                                          .read<BookmarkProvider>()
-                                          .toggleBookmark(widget.item);
-                                    },
-                                    icon: Icon(
-                                      isBookmarked
-                                          ? Icons.bookmark
-                                          : Icons.bookmark_border,
-                                      color: isBookmarked
-                                          ? Theme.of(
-                                              context,
-                                            ).colorScheme.primary
-                                          : Colors.grey.withValues(
-                                              alpha: widget.item.isRead
-                                                  ? 0.5
-                                                  : 1.0,
-                                            ),
-                                      size: 22,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    alignment: Alignment.topRight,
-                                  ),
-                                  if (isCached)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        top: 12.0,
-                                        right: 2.0,
-                                      ),
-                                      child: Icon(
-                                        Icons.offline_pin,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .secondary
-                                            .withValues(
-                                              alpha: widget.item.isRead
-                                                  ? 0.4
-                                                  : 0.8,
-                                            ),
-                                        size: 16,
-                                      ),
-                                    ),
-                                ],
+                              _FeedItemActions(
+                                item: widget.item,
+                                isBookmarked: isBookmarked,
+                                isCached: isCached,
                               ),
                             ],
                           ),
@@ -392,6 +177,236 @@ class _FeedListItemState extends State<FeedListItem>
           ),
         );
       },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Extracted private sub-widgets
+// ---------------------------------------------------------------------------
+
+/// The background layer shown behind the card during a horizontal swipe.
+class _SwipeBackground extends StatelessWidget {
+  final bool isSwipingRight;
+  final bool isRead;
+  final bool isBookmarked;
+  final bool actionTriggered;
+
+  const _SwipeBackground({
+    required this.isSwipingRight,
+    required this.isRead,
+    required this.isBookmarked,
+    required this.actionTriggered,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          color: isSwipingRight
+              ? colorScheme.primary.withValues(alpha: 0.1)
+              : colorScheme.secondary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        alignment: isSwipingRight
+            ? Alignment.centerLeft
+            : Alignment.centerRight,
+        padding: EdgeInsets.only(
+          left: isSwipingRight ? 24.0 : 0,
+          right: !isSwipingRight ? 24.0 : 0,
+        ),
+        child: Icon(
+          isSwipingRight
+              ? (isRead ? Icons.mark_email_unread : Icons.mark_email_read)
+              : (isBookmarked ? Icons.bookmark_remove : Icons.bookmark_add),
+          color: isSwipingRight ? colorScheme.primary : colorScheme.secondary,
+          size: 28 + (actionTriggered ? 4.0 : 0.0),
+        ),
+      ),
+    );
+  }
+}
+
+/// The feed source icon / thumbnail on the left side of the card.
+class _FeedItemIcon extends StatelessWidget {
+  final FeedItem item;
+
+  const _FeedItemIcon({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: item.isRead
+            ? item.iconBackgroundColor.withValues(alpha: 0.1)
+            : item.iconBackgroundColor,
+        borderRadius: BorderRadius.circular(12.0),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+          width: 0.5,
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.0),
+        child: item.imageUrl != null
+            ? Opacity(
+                opacity: item.isRead ? 0.6 : 1.0,
+                child: CachedNetworkImage(
+                  imageUrl: item.imageUrl!,
+                  fit: BoxFit.cover,
+                  memCacheWidth: 144,
+                  errorWidget: (context, url, error) => Icon(
+                    item.siteIcon,
+                    color: item.isRead
+                        ? item.iconColor.withValues(alpha: 0.5)
+                        : item.iconColor,
+                    size: 24,
+                  ),
+                ),
+              )
+            : Center(
+                child: Icon(
+                  item.siteIcon,
+                  color: item.isRead
+                      ? item.iconColor.withValues(alpha: 0.5)
+                      : item.iconColor,
+                  size: 24,
+                ),
+              ),
+      ),
+    );
+  }
+}
+
+/// The text content column: site name, title, and description.
+class _FeedItemContent extends StatelessWidget {
+  final FeedItem item;
+
+  const _FeedItemContent({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Site name + date
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  item.siteName,
+                  style: TextStyle(
+                    color: item.isRead
+                        ? colorScheme.primary.withValues(alpha: 0.6)
+                        : colorScheme.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              Text(
+                item.pubDate != null
+                    ? "${item.pubDate!.month}/${item.pubDate!.day}"
+                    : item.timeAgo,
+                style: TextStyle(
+                  color: item.isRead
+                      ? Colors.grey.withValues(alpha: 0.5)
+                      : Colors.grey,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          // Title
+          Text(
+            item.title.trim(),
+            style: TextStyle(
+              color: item.isRead
+                  ? colorScheme.onSurface.withValues(alpha: 0.5)
+                  : colorScheme.onSurface,
+              fontSize: 16,
+              fontWeight: item.isRead ? FontWeight.normal : FontWeight.bold,
+              height: 1.3,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 6),
+          // Description
+          Text(
+            item.description,
+            style: TextStyle(
+              color: item.isRead
+                  ? colorScheme.onSurface.withValues(alpha: 0.4)
+                  : colorScheme.onSurface.withValues(alpha: 0.7),
+              fontSize: 14,
+              height: 1.4,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The trailing bookmark button and offline indicator.
+class _FeedItemActions extends StatelessWidget {
+  final FeedItem item;
+  final bool isBookmarked;
+  final bool isCached;
+
+  const _FeedItemActions({
+    required this.item,
+    required this.isBookmarked,
+    required this.isCached,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        IconButton(
+          onPressed: () {
+            context.read<BookmarkProvider>().toggleBookmark(item);
+          },
+          icon: Icon(
+            isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+            color: isBookmarked
+                ? colorScheme.primary
+                : Colors.grey.withValues(alpha: item.isRead ? 0.5 : 1.0),
+            size: 22,
+          ),
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints(),
+          alignment: Alignment.topRight,
+        ),
+        if (isCached)
+          Padding(
+            padding: const EdgeInsets.only(top: 12.0, right: 2.0),
+            child: Icon(
+              Icons.offline_pin,
+              color: colorScheme.secondary.withValues(
+                alpha: item.isRead ? 0.4 : 0.8,
+              ),
+              size: 16,
+            ),
+          ),
+      ],
     );
   }
 }

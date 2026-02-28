@@ -3,6 +3,11 @@ import '../screens/home_screen.dart';
 import '../screens/article_screen.dart';
 import '../models/feed_item.dart';
 
+/// Application route configuration.
+///
+/// Routes:
+/// - `/`        → [HomeScreen] (bottom nav with Feeds / Folders / Bookmarks / Settings)
+/// - `/article` → [ArticleScreen] (expects a [FeedItem] via `state.extra`)
 final appRouter = GoRouter(
   initialLocation: '/',
   routes: [

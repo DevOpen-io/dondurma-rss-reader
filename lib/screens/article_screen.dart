@@ -8,6 +8,10 @@ import '../models/feed_item.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/in_app_browser.dart';
 
+/// Full-screen article viewer that renders HTML content via [flutter_html].
+///
+/// Respects the user's display settings (font size, typeface, line spacing)
+/// from [SettingsProvider]. Links open in the in-app browser.
 class ArticleScreen extends StatelessWidget {
   final FeedItem item;
 

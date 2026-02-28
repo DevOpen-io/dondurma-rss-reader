@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../theme/app_theme.dart';
 
+/// Manages global application settings with Hive persistence.
+///
+/// Settings include: theme, locale, offline cache, background sync, notification
+/// preferences (master toggle, digest mode, quiet hours), display/readability
+/// options (font size, typeface, line spacing), and content filtering keywords.
 class SettingsProvider extends ChangeNotifier {
   AppTheme _selectedTheme = AppTheme.system;
   int _offlineCacheLimit = 50;
@@ -23,6 +28,10 @@ class SettingsProvider extends ChangeNotifier {
   // Content Filtering
   List<String> _globalExcludedKeywords = [];
 
+  // ---------------------------------------------------------------------------
+  // Getters
+  // ---------------------------------------------------------------------------
+
   AppTheme get selectedTheme => _selectedTheme;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
@@ -40,21 +49,30 @@ class SettingsProvider extends ChangeNotifier {
 
   List<String> get globalExcludedKeywords => _globalExcludedKeywords;
 
+  // ---------------------------------------------------------------------------
+  // Hive box accessor
+  // ---------------------------------------------------------------------------
+
+  /// Lazily cached reference to the `'settings'` Hive box.
+  Box get _box => Hive.box('settings');
+
+  // ---------------------------------------------------------------------------
+  // Initialization
+  // ---------------------------------------------------------------------------
+
   SettingsProvider() {
     _loadSettings();
   }
 
   Future<void> _loadSettings() async {
-    final box = Hive.box('settings');
-
-    _offlineCacheLimit = box.get('offlineCacheLimit', defaultValue: 50);
-    final savedInterval = box.get('cacheIntervalSeconds');
+    _offlineCacheLimit = _box.get('offlineCacheLimit', defaultValue: 50);
+    final savedInterval = _box.get('cacheIntervalSeconds');
     _cacheIntervalSeconds = (savedInterval == null || savedInterval == 0)
         ? 30
         : savedInterval;
-    _syncBackground = box.get('syncBackground', defaultValue: true);
+    _syncBackground = _box.get('syncBackground', defaultValue: true);
 
-    final themeName = box.get('selectedTheme');
+    final themeName = _box.get('selectedTheme');
     if (themeName != null) {
       try {
         _selectedTheme = AppTheme.values.firstWhere((e) => e.name == themeName);
@@ -62,12 +80,12 @@ class SettingsProvider extends ChangeNotifier {
         _selectedTheme = AppTheme.system;
       }
     } else {
-      final isDark = box.get('isDarkMode', defaultValue: true);
+      final isDark = _box.get('isDarkMode', defaultValue: true);
       _selectedTheme = isDark ? AppTheme.dark : AppTheme.system;
     }
 
-    // Load locale
-    final savedLocale = box.get('locale');
+    // Locale
+    final savedLocale = _box.get('locale');
     if (savedLocale != null) {
       try {
         _locale = Locale(savedLocale);
@@ -76,20 +94,23 @@ class SettingsProvider extends ChangeNotifier {
       }
     }
 
-    // Load notification settings
-    _notificationsEnabled = box.get('notificationsEnabled', defaultValue: true);
-    _digestMode = box.get('digestMode', defaultValue: 'instant');
-    _quietHoursStart = box.get('quietHoursStart', defaultValue: 22);
-    _quietHoursEnd = box.get('quietHoursEnd', defaultValue: 7);
+    // Notification settings
+    _notificationsEnabled = _box.get(
+      'notificationsEnabled',
+      defaultValue: true,
+    );
+    _digestMode = _box.get('digestMode', defaultValue: 'instant');
+    _quietHoursStart = _box.get('quietHoursStart', defaultValue: 22);
+    _quietHoursEnd = _box.get('quietHoursEnd', defaultValue: 7);
 
-    // Load display settings
-    _fontSize = box.get('fontSize', defaultValue: 'medium');
-    _typeface = box.get('typeface', defaultValue: 'system');
-    _lineSpacing = box.get('lineSpacing', defaultValue: 1.5);
+    // Display settings
+    _fontSize = _box.get('fontSize', defaultValue: 'medium');
+    _typeface = _box.get('typeface', defaultValue: 'system');
+    _lineSpacing = _box.get('lineSpacing', defaultValue: 1.5);
 
-    // Load filtering settings
+    // Filtering settings
     _globalExcludedKeywords =
-        (box.get('globalExcludedKeywords') as List<dynamic>?)
+        (_box.get('globalExcludedKeywords') as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         [];
@@ -97,94 +118,98 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setTheme(AppTheme theme) async {
+  // ---------------------------------------------------------------------------
+  // Setters — each persists to Hive then notifies listeners
+  // ---------------------------------------------------------------------------
+
+  /// Updates the active theme and persists the choice.
+  Future<void> setTheme(AppTheme theme) async {
     _selectedTheme = theme;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('selectedTheme', theme.name);
+    await _box.put('selectedTheme', theme.name);
   }
 
+  /// Sets the maximum number of articles cached for offline reading.
   Future<void> setOfflineCacheLimit(int limit) async {
     _offlineCacheLimit = limit;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('offlineCacheLimit', limit);
+    await _box.put('offlineCacheLimit', limit);
   }
 
+  /// Sets the background auto-refresh interval in seconds.
   Future<void> setCacheIntervalSeconds(int interval) async {
     _cacheIntervalSeconds = interval;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('cacheIntervalSeconds', interval);
+    await _box.put('cacheIntervalSeconds', interval);
   }
 
+  /// Enables or disables background auto-refresh.
   Future<void> setSyncBackground(bool value) async {
     _syncBackground = value;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('syncBackground', value);
+    await _box.put('syncBackground', value);
   }
 
+  /// Updates the app locale and persists the language code.
   Future<void> setLocale(Locale newLocale) async {
     _locale = newLocale;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('locale', newLocale.languageCode);
+    await _box.put('locale', newLocale.languageCode);
   }
 
+  /// Enables or disables the global notification master toggle.
   Future<void> setNotificationsEnabled(bool value) async {
     _notificationsEnabled = value;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('notificationsEnabled', value);
+    await _box.put('notificationsEnabled', value);
   }
 
+  /// Sets the notification digest mode: `'instant'`, `'daily'`, or `'weekly'`.
   Future<void> setDigestMode(String mode) async {
     _digestMode = mode;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('digestMode', mode);
+    await _box.put('digestMode', mode);
   }
 
+  /// Sets the hour (0-23) when the quiet period begins.
   Future<void> setQuietHoursStart(int hour) async {
     _quietHoursStart = hour;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('quietHoursStart', hour);
+    await _box.put('quietHoursStart', hour);
   }
 
+  /// Sets the hour (0-23) when the quiet period ends.
   Future<void> setQuietHoursEnd(int hour) async {
     _quietHoursEnd = hour;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('quietHoursEnd', hour);
+    await _box.put('quietHoursEnd', hour);
   }
 
+  /// Sets the article body font size: `'small'`, `'medium'`, `'large'`, `'xl'`.
   Future<void> setFontSize(String size) async {
     _fontSize = size;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('fontSize', size);
+    await _box.put('fontSize', size);
   }
 
+  /// Sets the article typeface: `'system'`, `'serif'`, `'sans-serif'`, `'mono'`.
   Future<void> setTypeface(String face) async {
     _typeface = face;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('typeface', face);
+    await _box.put('typeface', face);
   }
 
+  /// Sets the article line spacing multiplier (e.g. 1.2, 1.5, 1.8).
   Future<void> setLineSpacing(double spacing) async {
     _lineSpacing = spacing;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('lineSpacing', spacing);
+    await _box.put('lineSpacing', spacing);
   }
 
+  /// Replaces the global excluded keywords list.
   Future<void> setGlobalExcludedKeywords(List<String> keywords) async {
     _globalExcludedKeywords = keywords;
     notifyListeners();
-    final box = Hive.box('settings');
-    await box.put('globalExcludedKeywords', keywords);
+    await _box.put('globalExcludedKeywords', keywords);
   }
 }

@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:html/parser.dart' show parse;
 
+/// Represents a single article/entry from an RSS or Atom feed.
+///
+/// Immutable value object that carries both display metadata (icon, colors,
+/// read/bookmark state) and content fields (link, HTML body, publication date).
+/// Serializable to/from JSON for Hive caching.
 class FeedItem {
   final String id;
   final String siteName;
@@ -78,6 +83,7 @@ class FeedItem {
     );
   }
 
+  /// Serializes this item to a JSON-compatible map for Hive persistence.
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -101,20 +107,15 @@ class FeedItem {
     };
   }
 
+  /// Deserializes a [FeedItem] from a JSON map.
+  ///
+  /// All fields are null-safe with sensible defaults so that partially saved
+  /// or legacy cache entries don't crash the app.
   factory FeedItem.fromJson(Map<String, dynamic> json) {
-    String decodeHtml(String text) {
-      if (text.isEmpty) return text;
-      try {
-        return parse(text).documentElement?.text ?? text;
-      } catch (_) {
-        return text;
-      }
-    }
-
     return FeedItem(
       id: json['id'] as String? ?? '',
-      siteName: decodeHtml(json['siteName'] as String? ?? 'Unknown'),
-      title: decodeHtml(json['title'] as String? ?? 'No Title'),
+      siteName: _decodeHtml(json['siteName'] as String? ?? 'Unknown'),
+      title: _decodeHtml(json['title'] as String? ?? 'No Title'),
       description: json['description'] as String? ?? '',
       timeAgo: json['timeAgo'] as String? ?? '',
       isBookmarked: json['isBookmarked'] as bool? ?? false,
@@ -137,5 +138,22 @@ class FeedItem {
       category: json['category'] as String? ?? 'Uncategorized',
       feedUrl: json['feedUrl'] as String? ?? '',
     );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is FeedItem && other.id == id;
+
+  @override
+  int get hashCode => id.hashCode;
+
+  /// Decodes HTML entities (e.g. `&#8216;`) in [text].
+  static String _decodeHtml(String text) {
+    if (text.isEmpty) return text;
+    try {
+      return parse(text).documentElement?.text ?? text;
+    } catch (_) {
+      return text;
+    }
   }
 }

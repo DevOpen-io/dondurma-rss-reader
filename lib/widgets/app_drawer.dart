@@ -7,6 +7,11 @@ import '../providers/subscription_provider.dart';
 import '../models/feed_subscription.dart';
 import 'explore_feeds_dialog.dart';
 
+/// Navigation drawer showing category-based feed filtering.
+///
+/// Displays all categories (derived from subscriptions), with expandable
+/// sections for individual feeds. Also provides a "Suggested Feeds" discovery
+/// action.
 class AppDrawer extends StatelessWidget {
   final VoidCallback? onFeedSelected;
 
@@ -136,6 +141,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  /// Section header label (e.g. "Categories", "Discover").
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.only(
@@ -156,6 +162,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  /// Expandable category tile with child feed items.
   Widget _buildExpandableCategoryItem({
     required IconData icon,
     required String title,
@@ -312,6 +319,7 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
+  /// Simple drawer item with icon, title, optional count badge.
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,

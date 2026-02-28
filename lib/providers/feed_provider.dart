@@ -9,6 +9,11 @@ import 'subscription_provider.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
 
+/// Core provider that manages fetching, caching, filtering, and paginated
+/// rendering of RSS/Atom feed items.
+///
+/// Connected to [SubscriptionProvider], [SettingsProvider], and
+/// [BookmarkProvider] via `ChangeNotifierProxyProvider3` in `main.dart`.
 class FeedProvider extends ChangeNotifier {
   final FeedService _feedService = FeedService();
 
@@ -20,7 +25,7 @@ class FeedProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isOffline = false;
 
-  /// How many items from [_filteredItems] are currently rendered.
+  /// How many items from the filtered list are currently rendered.
   int _itemRenderLimit = 50;
 
   /// Incremented in batches when the user scrolls near the bottom.
@@ -39,6 +44,25 @@ class FeedProvider extends ChangeNotifier {
   SettingsProvider? settingsProvider;
   BookmarkProvider? bookmarkProvider;
 
+  // ---------------------------------------------------------------------------
+  // Filtered items cache — avoids recomputing the full filter chain
+  // (including regex compilation for keyword exclusion) multiple times per
+  // build when todayItems, yesterdayItems, olderItems, and hasMoreItems all
+  // access it independently.
+  // ---------------------------------------------------------------------------
+
+  List<FeedItem>? _filteredItemsCache;
+
+  /// Invalidates the cached filtered list. Must be called before
+  /// [notifyListeners] whenever any filter input changes.
+  void _invalidateFilterCache() {
+    _filteredItemsCache = null;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Public getters
+  // ---------------------------------------------------------------------------
+
   List<FeedItem> get items => _items;
   Set<String> get cachedItemIds => _cachedItemIds;
   bool get isLoading => _isLoading;
@@ -56,10 +80,23 @@ class FeedProvider extends ChangeNotifier {
   /// Whether there are more items beyond the current render window.
   bool get hasMoreItems => _itemRenderLimit < _filteredItems.length;
 
+  // ---------------------------------------------------------------------------
+  // Hive box accessor
+  // ---------------------------------------------------------------------------
+
+  /// Lazily cached reference to the `'feeds'` Hive box.
+  Box get _box => Hive.box('feeds');
+
+  // ---------------------------------------------------------------------------
+  // Initialization & dependency updates
+  // ---------------------------------------------------------------------------
+
   FeedProvider() {
     _loadState();
   }
 
+  /// Called by the `ChangeNotifierProxyProvider3` whenever any upstream
+  /// provider changes.
   void update(
     SubscriptionProvider sub,
     SettingsProvider set,
@@ -74,6 +111,7 @@ class FeedProvider extends ChangeNotifier {
       refreshAll();
     } else {
       // Re-filter items immediately if dependencies (like keywords) changed.
+      _invalidateFilterCache();
       Future.microtask(() => notifyListeners());
     }
 
@@ -93,20 +131,23 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadState() async {
-    final box = Hive.box('feeds');
+  // ---------------------------------------------------------------------------
+  // State persistence
+  // ---------------------------------------------------------------------------
 
-    final List<dynamic>? readIds = box.get('readItemIds');
+  Future<void> _loadState() async {
+    final List<dynamic>? readIds = _box.get('readItemIds');
     if (readIds != null) {
       _readItemIds = readIds.cast<String>().toSet();
     }
 
-    final String? cachedItemsData = box.get('cachedItemsJson');
+    final String? cachedItemsData = _box.get('cachedItemsJson');
     if (cachedItemsData != null) {
       try {
         final List<dynamic> jsonList = jsonDecode(cachedItemsData);
         _items = jsonList.map((e) => FeedItem.fromJson(e)).toList();
         _cachedItemIds = _items.map((e) => e.id).toSet();
+        _invalidateFilterCache();
         notifyListeners();
       } catch (e) {
         debugPrint('Error loading cached items: $e');
@@ -115,29 +156,39 @@ class FeedProvider extends ChangeNotifier {
   }
 
   Future<void> _saveReadStates() async {
-    final box = Hive.box('feeds');
-    await box.put('readItemIds', _readItemIds.toList());
+    await _box.put('readItemIds', _readItemIds.toList());
   }
 
+  // ---------------------------------------------------------------------------
+  // Filter & selection controls
+  // ---------------------------------------------------------------------------
+
+  /// Selects a category filter (or `null` for "All News").
   void selectCategory(String? category) {
     _selectedCategory = category;
     _selectedFeedUrl = null;
     _itemRenderLimit = _pageSize;
+    _invalidateFilterCache();
     notifyListeners();
   }
 
+  /// Updates the text search query.
   void setSearchQuery(String query) {
     _searchQuery = query;
     _itemRenderLimit = _pageSize;
+    _invalidateFilterCache();
     notifyListeners();
   }
 
+  /// Toggles between showing all items and unread-only items.
   void toggleShowUnreadOnly() {
     _showUnreadOnly = !_showUnreadOnly;
     _itemRenderLimit = _pageSize;
+    _invalidateFilterCache();
     notifyListeners();
   }
 
+  /// Selects a specific feed URL for filtering.
   void selectFeed(String? feedUrl) {
     _selectedFeedUrl = feedUrl;
     _itemRenderLimit = _pageSize;
@@ -149,10 +200,21 @@ class FeedProvider extends ChangeNotifier {
         _selectedCategory = sub.category;
       } catch (_) {}
     }
+    _invalidateFilterCache();
     notifyListeners();
   }
 
+  // ---------------------------------------------------------------------------
+  // Filtering pipeline (cached)
+  // ---------------------------------------------------------------------------
+
+  /// The full list of items after applying all active filters (unread, category,
+  /// feed, search, keyword exclusion) and decorating with read/bookmark state.
+  ///
+  /// Result is cached and invalidated whenever filter inputs change.
   List<FeedItem> get _filteredItems {
+    if (_filteredItemsCache != null) return _filteredItemsCache!;
+
     Iterable<FeedItem> filtered = _items;
 
     if (_showUnreadOnly) {
@@ -175,28 +237,47 @@ class FeedProvider extends ChangeNotifier {
       );
     }
 
-    // Apply Keyword Filtering dynamically
+    // Keyword filtering — compile regex patterns once for the entire pass
     final globalKeywords = settingsProvider?.globalExcludedKeywords ?? [];
     final Map<String, List<String>> feedKeywordsMap = {};
     if (subscriptionProvider != null) {
-      for (var sub in subscriptionProvider!.subscriptions) {
-        feedKeywordsMap[sub.url] = sub.excludedKeywords;
+      for (final sub in subscriptionProvider!.subscriptions) {
+        if (sub.excludedKeywords.isNotEmpty) {
+          feedKeywordsMap[sub.url] = sub.excludedKeywords;
+        }
       }
     }
 
     if (globalKeywords.isNotEmpty || feedKeywordsMap.isNotEmpty) {
-      filtered = filtered.where((item) {
-        final feedKeywords = feedKeywordsMap[item.feedUrl] ?? [];
-        if (globalKeywords.isEmpty && feedKeywords.isEmpty) return true;
-
-        bool containsKeyword(List<String> keywords) {
-          for (var kw in keywords) {
-            final lowerKw = kw.toLowerCase();
-            // Match with word boundaries to avoid partial matches (e.g. "ad" vs "ready").
-            final RegExp regex = RegExp(
-              r'\b' + RegExp.escape(lowerKw) + r'\b',
+      // Pre-compile global keyword patterns once
+      final globalPatterns = globalKeywords
+          .map(
+            (kw) => RegExp(
+              r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
               caseSensitive: false,
-            );
+            ),
+          )
+          .toList();
+
+      // Pre-compile per-feed keyword patterns once
+      final Map<String, List<RegExp>> feedPatternsMap = {};
+      for (final entry in feedKeywordsMap.entries) {
+        feedPatternsMap[entry.key] = entry.value
+            .map(
+              (kw) => RegExp(
+                r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
+                caseSensitive: false,
+              ),
+            )
+            .toList();
+      }
+
+      filtered = filtered.where((item) {
+        final feedPatterns = feedPatternsMap[item.feedUrl];
+        if (globalPatterns.isEmpty && feedPatterns == null) return true;
+
+        bool matchesAny(List<RegExp> patterns) {
+          for (final regex in patterns) {
             if (regex.hasMatch(item.title) ||
                 regex.hasMatch(item.description)) {
               return true;
@@ -205,17 +286,24 @@ class FeedProvider extends ChangeNotifier {
           return false;
         }
 
-        return !containsKeyword(globalKeywords) &&
-            !containsKeyword(feedKeywords);
+        if (globalPatterns.isNotEmpty && matchesAny(globalPatterns)) {
+          return false;
+        }
+        if (feedPatterns != null && matchesAny(feedPatterns)) {
+          return false;
+        }
+        return true;
       });
     }
 
-    // Update dynamic properties
-    return filtered.map((item) {
-      bool isRead = _readItemIds.contains(item.id);
-      bool isBookmarked = bookmarkProvider?.isBookmarked(item.id) ?? false;
+    // Apply dynamic read/bookmark state
+    _filteredItemsCache = filtered.map((item) {
+      final isRead = _readItemIds.contains(item.id);
+      final isBookmarked = bookmarkProvider?.isBookmarked(item.id) ?? false;
       return item.copyWith(isRead: isRead, isBookmarked: isBookmarked);
     }).toList();
+
+    return _filteredItemsCache!;
   }
 
   /// The current render window — a slice of [_filteredItems] up to
@@ -273,7 +361,7 @@ class FeedProvider extends ChangeNotifier {
     _isLoadingMore = true;
     notifyListeners();
 
-    // Simulate a brief async delay so the loading indicator is visible.
+    // Brief async delay so the loading indicator is visible.
     Future.delayed(const Duration(milliseconds: 300), () {
       _itemRenderLimit += _pageSize;
       _isLoadingMore = false;
@@ -281,8 +369,41 @@ class FeedProvider extends ChangeNotifier {
     });
   }
 
+  // ---------------------------------------------------------------------------
+  // Read state
+  // ---------------------------------------------------------------------------
+
+  /// Whether the article with [id] has been read.
   bool isRead(String id) => _readItemIds.contains(id);
 
+  /// Marks an article as read (no-op if already read).
+  Future<void> markAsRead(String id) async {
+    if (!_readItemIds.contains(id)) {
+      _readItemIds.add(id);
+      _invalidateFilterCache();
+      notifyListeners();
+      await _saveReadStates();
+    }
+  }
+
+  /// Toggles the read/unread state of an article.
+  Future<void> toggleReadStatus(String id) async {
+    if (_readItemIds.contains(id)) {
+      _readItemIds.remove(id);
+    } else {
+      _readItemIds.add(id);
+    }
+    _invalidateFilterCache();
+    notifyListeners();
+    await _saveReadStates();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Refresh & sync
+  // ---------------------------------------------------------------------------
+
+  /// Fetches all subscribed feeds in parallel, merges bookmarks, sorts by date,
+  /// fires notifications for new articles, and persists the cache.
   Future<void> refreshAll() async {
     if (subscriptionProvider == null) return;
 
@@ -304,7 +425,7 @@ class FeedProvider extends ChangeNotifier {
     final oldItemIds = _items.map((e) => e.id).toSet();
 
     List<FeedItem> freshItems = [];
-    for (var items in results) {
+    for (final items in results) {
       freshItems.addAll(items);
     }
 
@@ -313,9 +434,9 @@ class FeedProvider extends ChangeNotifier {
     final bool fetchedAnything = freshItems.isNotEmpty;
 
     if (fetchedAnything) {
-      // 1) Merge bookmarks into the fresh list so they are always visible.
+      // Merge bookmarks into the fresh list so they are always visible.
       if (bookmarkProvider != null) {
-        for (var saved in bookmarkProvider!.bookmarkedItems) {
+        for (final saved in bookmarkProvider!.bookmarkedItems) {
           if (!freshItems.any((item) => item.id == saved.id)) {
             freshItems.add(saved);
           }
@@ -333,7 +454,7 @@ class FeedProvider extends ChangeNotifier {
     } else {
       // Offline: keep existing _items but still ensure bookmarks are present.
       if (bookmarkProvider != null) {
-        for (var saved in bookmarkProvider!.bookmarkedItems) {
+        for (final saved in bookmarkProvider!.bookmarkedItems) {
           if (!_items.any((item) => item.id == saved.id)) {
             _items.add(saved);
           }
@@ -344,6 +465,7 @@ class FeedProvider extends ChangeNotifier {
 
     _isOffline = !fetchedAnything;
     _isLoading = false;
+    _invalidateFilterCache();
     notifyListeners();
 
     // Fire notifications for newly discovered items (skip the initial load).
@@ -357,6 +479,10 @@ class FeedProvider extends ChangeNotifier {
       await _saveCachedItems();
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Notification diffing
+  // ---------------------------------------------------------------------------
 
   /// Computes newly discovered articles and triggers a notification.
   void _notifyNewArticles(Set<String> oldItemIds, List<FeedItem> freshItems) {
@@ -387,15 +513,17 @@ class FeedProvider extends ChangeNotifier {
     );
   }
 
+  // ---------------------------------------------------------------------------
+  // Cache persistence
+  // ---------------------------------------------------------------------------
+
   Future<void> _saveCachedItems() async {
     if (settingsProvider == null) return;
     final int limit = settingsProvider!.offlineCacheLimit;
 
-    // offlineCacheLimit == 0 means "no offline cache" — don't save anything
-    // and don't wipe an existing cache.
+    // offlineCacheLimit == 0 means "no offline cache"
     if (limit == 0) return;
 
-    final box = Hive.box('feeds');
     final itemsToCache = _items.take(limit).toList();
     _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
     notifyListeners();
@@ -403,32 +531,14 @@ class FeedProvider extends ChangeNotifier {
     final String encodedData = jsonEncode(
       itemsToCache.map((e) => e.toJson()).toList(),
     );
-    await box.put('cachedItemsJson', encodedData);
+    await _box.put('cachedItemsJson', encodedData);
   }
 
+  /// Clears all cached offline articles.
   Future<void> clearCache() async {
-    final box = Hive.box('feeds');
     _cachedItemIds.clear();
-    await box.delete('cachedItemsJson');
+    await _box.delete('cachedItemsJson');
     notifyListeners();
-  }
-
-  Future<void> markAsRead(String id) async {
-    if (!_readItemIds.contains(id)) {
-      _readItemIds.add(id);
-      notifyListeners();
-      await _saveReadStates();
-    }
-  }
-
-  Future<void> toggleReadStatus(String id) async {
-    if (_readItemIds.contains(id)) {
-      _readItemIds.remove(id);
-    } else {
-      _readItemIds.add(id);
-    }
-    notifyListeners();
-    await _saveReadStates();
   }
 
   @override

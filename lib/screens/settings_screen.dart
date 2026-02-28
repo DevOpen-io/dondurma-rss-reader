@@ -9,6 +9,9 @@ import '../services/opml_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/keyword_input_dialog.dart';
 
+/// Full settings screen with sections for Appearance, Feed Management,
+/// Notifications, Display & Readability, Content Filtering, and Data
+/// Management (OPML import/export, cache control).
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 

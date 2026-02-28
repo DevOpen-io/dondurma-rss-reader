@@ -11,6 +11,9 @@ import 'folders_screen.dart';
 import 'bookmarks_screen.dart';
 import 'settings_screen.dart';
 
+/// Main screen with bottom navigation bar hosting Feeds, Folders, Bookmarks,
+/// and Settings tabs. The Feeds tab includes a search bar, unread filter,
+/// and category/feed selection via the drawer.
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 

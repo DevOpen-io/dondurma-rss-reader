@@ -3,27 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
 
+/// Manages the user's bookmarked (saved) articles with Hive persistence.
+///
+/// Stores both full JSON representations of bookmarked [FeedItem]s and an
+/// ID set for backward compatibility with the legacy storage format.
 class BookmarkProvider extends ChangeNotifier {
   List<FeedItem> _savedBookmarks = [];
   Set<String> _bookmarkedItemIds = {};
 
+  /// The full list of bookmarked articles.
   List<FeedItem> get bookmarkedItems => _savedBookmarks;
+
+  /// The set of bookmarked article IDs (for fast lookups).
   Set<String> get bookmarkedItemIds => _bookmarkedItemIds;
+
+  /// Lazily cached reference to the `'bookmarks'` Hive box.
+  Box get _box => Hive.box('bookmarks');
 
   BookmarkProvider() {
     _loadBookmarks();
   }
 
   void _loadBookmarks() {
-    final box = Hive.box('bookmarks');
-    final String? bookmarkedItemsData = box.get('bookmarkedItemsJson');
+    final String? bookmarkedItemsData = _box.get('bookmarkedItemsJson');
     if (bookmarkedItemsData != null) {
       final List<dynamic> jsonList = jsonDecode(bookmarkedItemsData);
       _savedBookmarks = jsonList.map((e) => FeedItem.fromJson(e)).toList();
       _bookmarkedItemIds = _savedBookmarks.map((e) => e.id).toSet();
     } else {
       // Fallback for legacy ID-only bookmarks
-      final List<dynamic>? bookmarkedIds = box.get('bookmarkedItemIds');
+      final List<dynamic>? bookmarkedIds = _box.get('bookmarkedItemIds');
       if (bookmarkedIds != null) {
         _bookmarkedItemIds = bookmarkedIds.cast<String>().toSet();
       }
@@ -32,14 +41,18 @@ class BookmarkProvider extends ChangeNotifier {
   }
 
   Future<void> _saveBookmarkStates() async {
-    final box = Hive.box('bookmarks');
     final String data = jsonEncode(
       _savedBookmarks.map((b) => b.toJson()).toList(),
     );
-    await box.put('bookmarkedItemsJson', data);
-    await box.put('bookmarkedItemIds', _bookmarkedItemIds.toList());
+    await _box.put('bookmarkedItemsJson', data);
+    await _box.put('bookmarkedItemIds', _bookmarkedItemIds.toList());
   }
 
+  /// Toggles the bookmark state of [originalItem].
+  ///
+  /// If already bookmarked, removes it. Otherwise, adds it with
+  /// [isBookmarked] set to `true`. Persistence is fire-and-forget
+  /// (not awaited) to keep the UI responsive.
   void toggleBookmark(FeedItem originalItem) {
     final String id = originalItem.id;
     final bool isPresent = _bookmarkedItemIds.contains(id);
@@ -56,9 +69,11 @@ class BookmarkProvider extends ChangeNotifier {
     }
 
     notifyListeners();
+    // Fire-and-forget: persist asynchronously without blocking the UI.
     _saveBookmarkStates();
   }
 
+  /// Returns `true` if the article with [id] is bookmarked.
   bool isBookmarked(String id) {
     return _bookmarkedItemIds.contains(id);
   }

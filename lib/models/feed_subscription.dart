@@ -1,3 +1,8 @@
+/// Represents a user's subscription to an RSS/Atom feed source.
+///
+/// Immutable value object that stores the feed URL, display name, category
+/// folder, notification preference, and per-feed keyword exclusion list.
+/// Serializable to/from JSON for Hive persistence.
 class FeedSubscription {
   final String url;
   final String name;
@@ -13,6 +18,7 @@ class FeedSubscription {
     this.excludedKeywords = const [],
   });
 
+  /// Serializes this subscription to a JSON-compatible map.
   Map<String, dynamic> toJson() => {
     'url': url,
     'name': name,
@@ -21,12 +27,15 @@ class FeedSubscription {
     'excludedKeywords': excludedKeywords,
   };
 
+  /// Deserializes a [FeedSubscription] from a JSON map.
+  ///
+  /// All fields fall back to sensible defaults for backward compatibility.
   factory FeedSubscription.fromJson(Map<String, dynamic> json) =>
       FeedSubscription(
-        url: json['url'],
-        name: json['name'],
-        category: json['category'],
-        notificationsEnabled: json['notificationsEnabled'] ?? true,
+        url: json['url'] as String? ?? '',
+        name: json['name'] as String? ?? '',
+        category: json['category'] as String? ?? 'Uncategorized',
+        notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
         excludedKeywords:
             (json['excludedKeywords'] as List<dynamic>?)
                 ?.map((e) => e.toString())
@@ -49,4 +58,11 @@ class FeedSubscription {
       excludedKeywords: excludedKeywords ?? this.excludedKeywords,
     );
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || other is FeedSubscription && other.url == url;
+
+  @override
+  int get hashCode => url.hashCode;
 }

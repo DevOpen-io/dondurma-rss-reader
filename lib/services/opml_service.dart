@@ -7,8 +7,11 @@ import '../models/feed_subscription.dart';
 
 /// Service responsible for exporting and importing feed subscriptions
 /// using the OPML (Outline Processor Markup Language) format.
+///
+/// OPML is the standard interchange format for RSS feed lists. This service
+/// supports both nested (category folders) and flat OPML structures.
 class OpmlService {
-  /// Generates an OPML XML string from a list of [FeedSubscription]s.
+  /// Generates an OPML 2.0 XML string from a list of [FeedSubscription]s.
   ///
   /// Feeds are grouped by their [FeedSubscription.category] as OPML outline
   /// folders, with each feed as a child `<outline>` element.
@@ -65,7 +68,7 @@ class OpmlService {
   /// [FeedSubscription]s.
   ///
   /// Supports both flat (no category folder) and nested (category folder)
-  /// OPML structures.
+  /// OPML structures. Returns an empty list if parsing fails.
   List<FeedSubscription> parseOpml(String content) {
     final List<FeedSubscription> result = [];
 
@@ -135,7 +138,7 @@ class OpmlService {
   /// Exports [subscriptions] as an OPML file and shares it via the system
   /// share sheet.
   ///
-  /// Returns `true` on success, `false` if the share was dismissed or failed.
+  /// Returns `true` on success or dismissal, `false` if an error occurred.
   Future<bool> exportOpml(List<FeedSubscription> subscriptions) async {
     try {
       final opmlContent = generateOpml(subscriptions);

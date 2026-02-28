@@ -12,6 +12,8 @@ import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
 import 'services/notification_service.dart';
 
+/// Custom scroll behavior that uses iOS-style bouncing physics on all
+/// platforms and enables mouse/trackpad drag for desktop.
 class PremiumScrollBehavior extends MaterialScrollBehavior {
   const PremiumScrollBehavior();
 
@@ -101,6 +103,7 @@ Future<void> _migrateHiveBoxes() async {
   await settingsBox.put('_boxesMigrated', true);
 }
 
+/// Root widget that wires theme, locale, and router configuration.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 

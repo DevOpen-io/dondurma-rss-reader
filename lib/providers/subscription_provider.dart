@@ -3,27 +3,44 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_subscription.dart';
 
+/// Manages the user's RSS feed subscriptions and categories.
+///
+/// Supports add/remove/rename/move operations for both feeds and categories.
+/// Categories come from two sources — feed subscriptions and standalone
+/// custom categories — merged in the [categories] getter.
+///
+/// Persists data in the `'feeds'` Hive box under `'subscriptions'` and
+/// `'custom_categories'` keys.
 class SubscriptionProvider extends ChangeNotifier {
   List<FeedSubscription> _subscriptions = [];
   Set<String> _customCategories = {};
 
+  /// All current feed subscriptions.
   List<FeedSubscription> get subscriptions => _subscriptions;
 
+  /// The union of categories derived from subscriptions and standalone
+  /// custom (possibly empty) categories.
   Set<String> get categories {
     final fromSubs = _subscriptions.map((s) => s.category).toSet();
     return fromSubs.union(_customCategories);
   }
 
+  /// Lazily cached reference to the `'feeds'` Hive box.
+  Box get _box => Hive.box('feeds');
+
   SubscriptionProvider() {
     _loadSubscriptions();
   }
 
+  // ---------------------------------------------------------------------------
+  // Persistence helpers
+  // ---------------------------------------------------------------------------
+
   Future<void> _loadSubscriptions() async {
-    final box = Hive.box('feeds');
-    final String? data = box.get('subscriptions');
+    final String? data = _box.get('subscriptions');
 
     // Load custom categories
-    final String? catData = box.get('custom_categories');
+    final String? catData = _box.get('custom_categories');
     if (catData != null) {
       final List<dynamic> catList = jsonDecode(catData);
       _customCategories = catList.cast<String>().toSet();
@@ -59,20 +76,22 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   Future<void> _saveSubscriptions() async {
-    final box = Hive.box('feeds');
     final String data = jsonEncode(
       _subscriptions.map((s) => s.toJson()).toList(),
     );
-    await box.put('subscriptions', data);
+    await _box.put('subscriptions', data);
   }
 
   Future<void> _saveCustomCategories() async {
-    final box = Hive.box('feeds');
     final String data = jsonEncode(_customCategories.toList());
-    await box.put('custom_categories', data);
+    await _box.put('custom_categories', data);
   }
 
-  /// Adds a new empty category/folder. Returns false if it already exists.
+  // ---------------------------------------------------------------------------
+  // Category operations
+  // ---------------------------------------------------------------------------
+
+  /// Adds a new empty category/folder. Returns `false` if it already exists.
   Future<bool> addCategory(String name) async {
     if (categories.contains(name)) {
       return false;
@@ -83,36 +102,8 @@ class SubscriptionProvider extends ChangeNotifier {
     return true;
   }
 
-  /// Moves a feed to a different category.
-  Future<void> moveFeedToCategory(String feedUrl, String newCategory) async {
-    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
-    if (index != -1) {
-      _subscriptions[index] = _subscriptions[index].copyWith(
-        category: newCategory,
-      );
-      await _saveSubscriptions();
-      notifyListeners();
-    }
-  }
-
-  Future<bool> addFeed(String url, String name, String category) async {
-    if (!_subscriptions.any((s) => s.url == url)) {
-      _subscriptions.add(
-        FeedSubscription(url: url, name: name, category: category),
-      );
-      await _saveSubscriptions();
-      notifyListeners();
-      return true;
-    }
-    return false;
-  }
-
-  Future<void> removeFeed(String url) async {
-    _subscriptions.removeWhere((s) => s.url == url);
-    await _saveSubscriptions();
-    notifyListeners();
-  }
-
+  /// Renames [oldCategory] to [newCategory] across all subscriptions and
+  /// custom categories.
   Future<void> renameCategory(String oldCategory, String newCategory) async {
     bool changed = false;
     for (int i = 0; i < _subscriptions.length; i++) {
@@ -132,9 +123,10 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
+  /// Removes a category and all feeds that belong to it.
   Future<void> removeCategory(String category) async {
     bool changed = false;
-    int initialLength = _subscriptions.length;
+    final initialLength = _subscriptions.length;
     _subscriptions.removeWhere((s) => s.category == category);
     if (_subscriptions.length < initialLength) {
       await _saveSubscriptions();
@@ -149,6 +141,44 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
+  // ---------------------------------------------------------------------------
+  // Feed operations
+  // ---------------------------------------------------------------------------
+
+  /// Adds a new feed subscription. Returns `false` if a feed with the same
+  /// URL already exists.
+  Future<bool> addFeed(String url, String name, String category) async {
+    if (!_subscriptions.any((s) => s.url == url)) {
+      _subscriptions.add(
+        FeedSubscription(url: url, name: name, category: category),
+      );
+      await _saveSubscriptions();
+      notifyListeners();
+      return true;
+    }
+    return false;
+  }
+
+  /// Removes the feed with the given [url].
+  Future<void> removeFeed(String url) async {
+    _subscriptions.removeWhere((s) => s.url == url);
+    await _saveSubscriptions();
+    notifyListeners();
+  }
+
+  /// Moves a feed to a different category.
+  Future<void> moveFeedToCategory(String feedUrl, String newCategory) async {
+    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
+    if (index != -1) {
+      _subscriptions[index] = _subscriptions[index].copyWith(
+        category: newCategory,
+      );
+      await _saveSubscriptions();
+      notifyListeners();
+    }
+  }
+
+  /// Edits a subscription's URL, name, and optional excluded keywords.
   Future<void> editSubscription(
     String oldUrl,
     String newUrl,

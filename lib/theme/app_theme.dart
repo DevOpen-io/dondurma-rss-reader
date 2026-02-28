@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:catppuccin_flutter/catppuccin_flutter.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+/// Available theme options for the application.
+///
+/// [system] follows the platform brightness. The four Catppuccin flavors
+/// provide pastel-toned palettes with varying darkness levels.
 enum AppTheme {
   system,
   light,
@@ -12,18 +16,15 @@ enum AppTheme {
   catppuccinMocha,
 }
 
+/// Builds [ThemeData] instances for each [AppTheme] variant.
 class AppThemeBuilder {
+  /// Returns the [ThemeData] for the given [theme] and platform [systemBrightness].
   static ThemeData getTheme(AppTheme theme, Brightness systemBrightness) {
-    if (theme == AppTheme.system) {
-      if (systemBrightness == Brightness.dark) {
-        return _buildDarkTheme();
-      } else {
-        return _buildLightTheme();
-      }
-    }
-
     switch (theme) {
       case AppTheme.system:
+        return systemBrightness == Brightness.dark
+            ? _buildDarkTheme()
+            : _buildLightTheme();
       case AppTheme.light:
         return _buildLightTheme();
       case AppTheme.dark:
@@ -125,7 +126,7 @@ class AppThemeBuilder {
   }
 
   static ThemeData _buildCatppuccinTheme(Flavor flavor) {
-    bool isLight = flavor == catppuccin.latte;
+    final isLight = flavor == catppuccin.latte;
 
     return ThemeData(
       brightness: isLight ? Brightness.light : Brightness.dark,

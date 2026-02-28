@@ -4,6 +4,9 @@ import '../l10n/app_localizations.dart';
 import '../providers/bookmark_provider.dart';
 import '../widgets/feed_list_item.dart';
 
+/// Displays the user's saved/bookmarked articles in a scrollable list.
+///
+/// Shows an empty-state message when no articles are bookmarked.
 class BookmarksScreen extends StatelessWidget {
   const BookmarksScreen({super.key});
 

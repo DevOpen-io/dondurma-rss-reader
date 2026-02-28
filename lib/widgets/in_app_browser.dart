@@ -7,9 +7,9 @@ import '../l10n/app_localizations.dart';
 
 /// Returns `true` when the current platform supports [WebViewWidget].
 ///
-/// `webview_flutter` v4.x ships implementations for Android, iOS, and macOS.
-/// On Web, Windows, and Linux there is no native WebView – we fall back to
-/// [url_launcher] instead.
+/// `webview_flutter` v4.x ships native implementations for Android, iOS, and
+/// macOS. On Web, Windows, and Linux there is no native WebView — we fall back
+/// to [url_launcher] instead.
 bool get _webViewSupported {
   if (kIsWeb) return false;
   final platform = defaultTargetPlatform;
