@@ -56,9 +56,9 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Search History**: Improve search usability.
   - [ ] Save past search queries locally.
   - [ ] Allow clearing search history in settings.
-- [ ] **Full-Text Extraction**: Handle feeds that only provide excerpts.
-  - [ ] Implement heuristic scraping to fetch full content from the original URL if RSS body is truncated.
-  - [ ] Add toggle to enable/disable this feature per feed (to respect bandwidth).
+- [x] **Full-Text Extraction**: Handle feeds that only provide excerpts.
+  - [x] Implement heuristic scraping to fetch full content from the original URL if RSS body is truncated.
+  - [x] Add toggle to enable/disable this feature per feed (to respect bandwidth).
 
 ---
 ## 📝 Notes for Agents

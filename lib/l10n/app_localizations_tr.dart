@@ -519,4 +519,24 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get notificationsSupportedPlatforms =>
       'Desteklenen platformlar: Android, iOS';
+
+  @override
+  String get fullTextExtraction => 'Tam Metin Modu';
+
+  @override
+  String get fullTextExtractionDesc =>
+      'Orijinal web sayfasından tam içeriği getir';
+
+  @override
+  String get fullTextLoading => 'Tam makale yükleniyor…';
+
+  @override
+  String get fullTextFailed =>
+      'Tam içerik yüklenemedi. Akış özeti gösteriliyor.';
+
+  @override
+  String get fullTextToggle => 'Tam Metin';
+
+  @override
+  String get shortTextMode => 'Kısa Metin Modu';
 }

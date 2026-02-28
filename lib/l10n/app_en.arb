@@ -232,5 +232,12 @@
   },
   "feedNotifications": "Feed Notifications",
   "notificationsNotSupported": "Notifications are not supported on this platform",
-  "notificationsSupportedPlatforms": "Supported platforms: Android, iOS"
+  "notificationsSupportedPlatforms": "Supported platforms: Android, iOS",
+
+  "fullTextExtraction": "Full-Text Mode",
+  "fullTextExtractionDesc": "Fetch full content from the original webpage",
+  "fullTextLoading": "Loading full article…",
+  "fullTextFailed": "Could not load full content. Showing feed excerpt.",
+  "fullTextToggle": "Full-Text",
+  "shortTextMode": "Short Text Mode"
 }

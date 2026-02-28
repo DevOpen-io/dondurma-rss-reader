@@ -180,5 +180,12 @@
   "newArticlesNotification": "{count} yeni makale",
   "feedNotifications": "Kaynak Bildirimleri",
   "notificationsNotSupported": "Bu platformda bildirimler desteklenmiyor",
-  "notificationsSupportedPlatforms": "Desteklenen platformlar: Android, iOS"
+  "notificationsSupportedPlatforms": "Desteklenen platformlar: Android, iOS",
+
+  "fullTextExtraction": "Tam Metin Modu",
+  "fullTextExtractionDesc": "Orijinal web sayfasından tam içeriği getir",
+  "fullTextLoading": "Tam makale yükleniyor…",
+  "fullTextFailed": "Tam içerik yüklenemedi. Akış özeti gösteriliyor.",
+  "fullTextToggle": "Tam Metin",
+  "shortTextMode": "Kısa Metin Modu"
 }

@@ -1,13 +1,15 @@
 /// Represents a user's subscription to an RSS/Atom feed source.
 ///
 /// Immutable value object that stores the feed URL, display name, category
-/// folder, notification preference, and per-feed keyword exclusion list.
-/// Serializable to/from JSON for Hive persistence.
+/// folder, notification preference, full-text extraction preference, and
+/// per-feed keyword exclusion list. Serializable to/from JSON for Hive
+/// persistence.
 class FeedSubscription {
   final String url;
   final String name;
   final String category;
   final bool notificationsEnabled;
+  final bool fullTextEnabled;
   final List<String> excludedKeywords;
 
   FeedSubscription({
@@ -15,6 +17,7 @@ class FeedSubscription {
     required this.name,
     required this.category,
     this.notificationsEnabled = true,
+    this.fullTextEnabled = false,
     this.excludedKeywords = const [],
   });
 
@@ -24,6 +27,7 @@ class FeedSubscription {
     'name': name,
     'category': category,
     'notificationsEnabled': notificationsEnabled,
+    'fullTextEnabled': fullTextEnabled,
     'excludedKeywords': excludedKeywords,
   };
 
@@ -36,6 +40,7 @@ class FeedSubscription {
         name: json['name'] as String? ?? '',
         category: json['category'] as String? ?? 'Uncategorized',
         notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
+        fullTextEnabled: json['fullTextEnabled'] as bool? ?? false,
         excludedKeywords:
             (json['excludedKeywords'] as List<dynamic>?)
                 ?.map((e) => e.toString())
@@ -48,6 +53,7 @@ class FeedSubscription {
     String? name,
     String? category,
     bool? notificationsEnabled,
+    bool? fullTextEnabled,
     List<String>? excludedKeywords,
   }) {
     return FeedSubscription(
@@ -55,6 +61,7 @@ class FeedSubscription {
       name: name ?? this.name,
       category: category ?? this.category,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
+      fullTextEnabled: fullTextEnabled ?? this.fullTextEnabled,
       excludedKeywords: excludedKeywords ?? this.excludedKeywords,
     );
   }

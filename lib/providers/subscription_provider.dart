@@ -209,6 +209,18 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
+  /// Toggles full-text extraction enabled/disabled for a specific feed.
+  Future<void> toggleFullText(String feedUrl) async {
+    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
+    if (index != -1) {
+      _subscriptions[index] = _subscriptions[index].copyWith(
+        fullTextEnabled: !_subscriptions[index].fullTextEnabled,
+      );
+      await _saveSubscriptions();
+      notifyListeners();
+    }
+  }
+
   /// Imports a list of [FeedSubscription]s, skipping any whose URL already
   /// exists. Returns the number of newly added feeds.
   Future<int> importFeeds(List<FeedSubscription> feeds) async {

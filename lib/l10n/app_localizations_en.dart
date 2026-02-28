@@ -521,4 +521,24 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get notificationsSupportedPlatforms =>
       'Supported platforms: Android, iOS';
+
+  @override
+  String get fullTextExtraction => 'Full-Text Mode';
+
+  @override
+  String get fullTextExtractionDesc =>
+      'Fetch full content from the original webpage';
+
+  @override
+  String get fullTextLoading => 'Loading full article…';
+
+  @override
+  String get fullTextFailed =>
+      'Could not load full content. Showing feed excerpt.';
+
+  @override
+  String get fullTextToggle => 'Full-Text';
+
+  @override
+  String get shortTextMode => 'Short Text Mode';
 }

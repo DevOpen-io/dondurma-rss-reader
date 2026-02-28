@@ -1057,6 +1057,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Supported platforms: Android, iOS'**
   String get notificationsSupportedPlatforms;
+
+  /// No description provided for @fullTextExtraction.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-Text Mode'**
+  String get fullTextExtraction;
+
+  /// No description provided for @fullTextExtractionDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Fetch full content from the original webpage'**
+  String get fullTextExtractionDesc;
+
+  /// No description provided for @fullTextLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading full article…'**
+  String get fullTextLoading;
+
+  /// No description provided for @fullTextFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load full content. Showing feed excerpt.'**
+  String get fullTextFailed;
+
+  /// No description provided for @fullTextToggle.
+  ///
+  /// In en, this message translates to:
+  /// **'Full-Text'**
+  String get fullTextToggle;
+
+  /// No description provided for @shortTextMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Short Text Mode'**
+  String get shortTextMode;
 }
 
 class _AppLocalizationsDelegate

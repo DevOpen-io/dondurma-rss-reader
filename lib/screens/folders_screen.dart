@@ -545,6 +545,25 @@ class FoldersScreen extends StatelessWidget {
                             ),
                             IconButton(
                               icon: Icon(
+                                sub.fullTextEnabled
+                                    ? Icons.article
+                                    : Icons.article_outlined,
+                                size: 18,
+                                color: sub.fullTextEnabled
+                                    ? Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.7)
+                                    : Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.3),
+                              ),
+                              onPressed: () {
+                                context
+                                    .read<SubscriptionProvider>()
+                                    .toggleFullText(sub.url);
+                              },
+                              tooltip: l10n.fullTextToggle,
+                            ),
+                            IconButton(
+                              icon: Icon(
                                 Icons.drive_file_move_outline,
                                 size: 18,
                                 color: Theme.of(
