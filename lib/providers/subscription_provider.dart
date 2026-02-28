@@ -36,7 +36,9 @@ class SubscriptionProvider extends ChangeNotifier {
   // Persistence helpers
   // ---------------------------------------------------------------------------
 
-  Future<void> _loadSubscriptions() async {
+  /// Loads subscriptions and custom categories synchronously from Hive.
+  /// Hive box reads are in-memory, so no await needed.
+  void _loadSubscriptions() {
     final String? data = _box.get('subscriptions');
 
     // Load custom categories

@@ -64,7 +64,12 @@ class SettingsProvider extends ChangeNotifier {
     _loadSettings();
   }
 
-  Future<void> _loadSettings() async {
+  /// Loads all settings synchronously from the Hive box.
+  ///
+  /// Hive boxes are memory-mapped, so [Box.get] is a synchronous read.
+  /// Running this in the constructor ensures settings are available
+  /// immediately — no async gap where defaults are visible.
+  void _loadSettings() {
     _offlineCacheLimit = _box.get('offlineCacheLimit', defaultValue: 50);
     final savedInterval = _box.get('cacheIntervalSeconds');
     _cacheIntervalSeconds = (savedInterval == null || savedInterval == 0)

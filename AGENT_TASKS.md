@@ -27,6 +27,9 @@ This document is a persistent living record for AI coding agents to understand w
 - [x] **Keyword Filtering (Rule-Based)**: Simple string matching to filter content (No AI).
   - [x] Exclude articles containing specific words (e.g., "spoiler", "ad").
   - [x] Apply filters per feed or globally.
+- [x] **Full-Text Extraction**: Handle feeds that only provide excerpts.
+  - [x] Implement heuristic scraping to fetch full content from the original URL if RSS body is truncated.
+  - [x] Add toggle to enable/disable this feature per feed (to respect bandwidth).
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
@@ -56,9 +59,6 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Search History**: Improve search usability.
   - [ ] Save past search queries locally.
   - [ ] Allow clearing search history in settings.
-- [x] **Full-Text Extraction**: Handle feeds that only provide excerpts.
-  - [x] Implement heuristic scraping to fetch full content from the original URL if RSS body is truncated.
-  - [x] Add toggle to enable/disable this feature per feed (to respect bandwidth).
 
 ---
 ## 📝 Notes for Agents
