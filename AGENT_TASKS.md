@@ -55,10 +55,10 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Home Screen Widgets**: Provide quick access from the OS home screen.
   - [ ] Create widget showing latest unread count.
   - [ ] Create widget showing latest article titles from specific feeds.
-- [ ] **Accessibility Improvements**: Ensure app is usable by everyone.
-  - [ ] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
-  - [ ] Add High Contrast Mode option in themes.
-  - [ ] Respect system "Reduced Motion" settings to disable animations.
+- [x] **Accessibility Improvements**: Ensure app is usable by everyone.
+  - [x] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
+  - [x] Add High Contrast Mode option in themes.
+  - [x] Respect system "Reduced Motion" settings to disable animations.
 
 ---
 ## 📝 Notes for Agents

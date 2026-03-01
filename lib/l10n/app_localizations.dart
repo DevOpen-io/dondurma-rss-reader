@@ -1135,6 +1135,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Block ads and trackers in the in-app browser'**
   String get adBlockerDesc;
+
+  /// No description provided for @accessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get accessibility;
+
+  /// No description provided for @highContrastMode.
+  ///
+  /// In en, this message translates to:
+  /// **'High Contrast Mode'**
+  String get highContrastMode;
+
+  /// No description provided for @highContrastModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Increase contrast for better visibility'**
+  String get highContrastModeDesc;
+
+  /// No description provided for @themeHighContrastLight.
+  ///
+  /// In en, this message translates to:
+  /// **'High Contrast (Light)'**
+  String get themeHighContrastLight;
+
+  /// No description provided for @themeHighContrastDark.
+  ///
+  /// In en, this message translates to:
+  /// **'High Contrast (Dark)'**
+  String get themeHighContrastDark;
+
+  /// No description provided for @semanticToggleRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle read status'**
+  String get semanticToggleRead;
+
+  /// No description provided for @semanticToggleBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Toggle bookmark'**
+  String get semanticToggleBookmark;
+
+  /// No description provided for @semanticMarkAsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read'**
+  String get semanticMarkAsRead;
+
+  /// No description provided for @semanticMarkAsUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as unread'**
+  String get semanticMarkAsUnread;
+
+  /// No description provided for @semanticBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmark article'**
+  String get semanticBookmark;
+
+  /// No description provided for @semanticRemoveBookmark.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove bookmark'**
+  String get semanticRemoveBookmark;
+
+  /// No description provided for @semanticArticleRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read article'**
+  String get semanticArticleRead;
+
+  /// No description provided for @semanticArticleUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread article'**
+  String get semanticArticleUnread;
+
+  /// No description provided for @semanticOpenArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Open article: {title}'**
+  String semanticOpenArticle(String title);
+
+  /// No description provided for @semanticFilterUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter unread articles'**
+  String get semanticFilterUnread;
+
+  /// No description provided for @semanticShowAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all articles'**
+  String get semanticShowAll;
+
+  /// No description provided for @semanticOpenSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Open search'**
+  String get semanticOpenSearch;
+
+  /// No description provided for @semanticCloseSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Close search'**
+  String get semanticCloseSearch;
+
+  /// No description provided for @semanticAddFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Add new feed'**
+  String get semanticAddFeed;
+
+  /// No description provided for @semanticOfflineCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Available offline'**
+  String get semanticOfflineCached;
 }
 
 class _AppLocalizationsDelegate

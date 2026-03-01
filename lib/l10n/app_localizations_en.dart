@@ -562,4 +562,66 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get adBlockerDesc => 'Block ads and trackers in the in-app browser';
+
+  @override
+  String get accessibility => 'Accessibility';
+
+  @override
+  String get highContrastMode => 'High Contrast Mode';
+
+  @override
+  String get highContrastModeDesc => 'Increase contrast for better visibility';
+
+  @override
+  String get themeHighContrastLight => 'High Contrast (Light)';
+
+  @override
+  String get themeHighContrastDark => 'High Contrast (Dark)';
+
+  @override
+  String get semanticToggleRead => 'Toggle read status';
+
+  @override
+  String get semanticToggleBookmark => 'Toggle bookmark';
+
+  @override
+  String get semanticMarkAsRead => 'Mark as read';
+
+  @override
+  String get semanticMarkAsUnread => 'Mark as unread';
+
+  @override
+  String get semanticBookmark => 'Bookmark article';
+
+  @override
+  String get semanticRemoveBookmark => 'Remove bookmark';
+
+  @override
+  String get semanticArticleRead => 'Read article';
+
+  @override
+  String get semanticArticleUnread => 'Unread article';
+
+  @override
+  String semanticOpenArticle(String title) {
+    return 'Open article: $title';
+  }
+
+  @override
+  String get semanticFilterUnread => 'Filter unread articles';
+
+  @override
+  String get semanticShowAll => 'Show all articles';
+
+  @override
+  String get semanticOpenSearch => 'Open search';
+
+  @override
+  String get semanticCloseSearch => 'Close search';
+
+  @override
+  String get semanticAddFeed => 'Add new feed';
+
+  @override
+  String get semanticOfflineCached => 'Available offline';
 }

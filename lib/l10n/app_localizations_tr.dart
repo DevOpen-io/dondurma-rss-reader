@@ -562,4 +562,66 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get adBlockerDesc =>
       'Uygulama içi tarayıcıda reklamları ve izleyicileri engelle';
+
+  @override
+  String get accessibility => 'Erişilebilirlik';
+
+  @override
+  String get highContrastMode => 'Yüksek Kontrast Modu';
+
+  @override
+  String get highContrastModeDesc => 'Daha iyi görünürlük için kontrastı artır';
+
+  @override
+  String get themeHighContrastLight => 'Yüksek Kontrast (Açık)';
+
+  @override
+  String get themeHighContrastDark => 'Yüksek Kontrast (Koyu)';
+
+  @override
+  String get semanticToggleRead => 'Okundu durumunu değiştir';
+
+  @override
+  String get semanticToggleBookmark => 'Yer işaretini değiştir';
+
+  @override
+  String get semanticMarkAsRead => 'Okundu olarak işaretle';
+
+  @override
+  String get semanticMarkAsUnread => 'Okunmadı olarak işaretle';
+
+  @override
+  String get semanticBookmark => 'Makaleyi yer işaretine ekle';
+
+  @override
+  String get semanticRemoveBookmark => 'Yer işaretini kaldır';
+
+  @override
+  String get semanticArticleRead => 'Okunmuş makale';
+
+  @override
+  String get semanticArticleUnread => 'Okunmamış makale';
+
+  @override
+  String semanticOpenArticle(String title) {
+    return 'Makaleyi aç: $title';
+  }
+
+  @override
+  String get semanticFilterUnread => 'Okunmamış makaleleri filtrele';
+
+  @override
+  String get semanticShowAll => 'Tüm makaleleri göster';
+
+  @override
+  String get semanticOpenSearch => 'Aramayı aç';
+
+  @override
+  String get semanticCloseSearch => 'Aramayı kapat';
+
+  @override
+  String get semanticAddFeed => 'Yeni kaynak ekle';
+
+  @override
+  String get semanticOfflineCached => 'Çevrimdışı kullanılabilir';
 }

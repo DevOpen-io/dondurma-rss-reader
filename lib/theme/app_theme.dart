@@ -6,6 +6,8 @@ import 'package:google_fonts/google_fonts.dart';
 ///
 /// [system] follows the platform brightness. The four Catppuccin flavors
 /// provide pastel-toned palettes with varying darkness levels.
+/// [highContrastLight] and [highContrastDark] provide maximum contrast
+/// for users with visual impairments.
 enum AppTheme {
   system,
   light,
@@ -14,6 +16,8 @@ enum AppTheme {
   catppuccinFrappe,
   catppuccinMacchiato,
   catppuccinMocha,
+  highContrastLight,
+  highContrastDark,
 }
 
 /// Builds [ThemeData] instances for each [AppTheme] variant.
@@ -37,6 +41,10 @@ class AppThemeBuilder {
         return _buildCatppuccinTheme(catppuccin.macchiato);
       case AppTheme.catppuccinMocha:
         return _buildCatppuccinTheme(catppuccin.mocha);
+      case AppTheme.highContrastLight:
+        return _buildHighContrastLightTheme();
+      case AppTheme.highContrastDark:
+        return _buildHighContrastDarkTheme();
     }
   }
 
@@ -196,6 +204,136 @@ class AppThemeBuilder {
       floatingActionButtonTheme: FloatingActionButtonThemeData(
         backgroundColor: flavor.sapphire,
         foregroundColor: flavor.base,
+      ),
+      useMaterial3: true,
+    );
+  }
+
+  /// High contrast light theme — pure white background, pure black text,
+  /// bold borders and strong primary color for maximum readability.
+  static ThemeData _buildHighContrastLightTheme() {
+    const Color background = Colors.white;
+    const Color surface = Colors.white;
+    const Color onSurface = Colors.black;
+    const Color primary = Color(0xFF0050C8); // deep blue — WCAG AAA on white
+    const Color border = Colors.black;
+
+    return ThemeData(
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: background,
+      colorScheme: const ColorScheme.light(
+        primary: primary,
+        surface: surface,
+        secondary: primary,
+        onSurface: onSurface,
+        onPrimary: Colors.white,
+        outline: border,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: border, width: 1.5),
+        ),
+        clipBehavior: Clip.antiAlias,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surface,
+        indicatorColor: primary.withValues(alpha: 0.15),
+        labelTextStyle: WidgetStateProperty.all(
+          const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: onSurface,
+          ),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: primary);
+          }
+          return const IconThemeData(color: onSurface);
+        }),
+      ),
+      dividerTheme: const DividerThemeData(color: border, thickness: 1.0),
+      textTheme: GoogleFonts.outfitTextTheme().apply(
+        bodyColor: onSurface,
+        displayColor: onSurface,
+      ),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primary,
+        foregroundColor: Colors.white,
+      ),
+      useMaterial3: true,
+    );
+  }
+
+  /// High contrast dark theme — pure black background, pure white text,
+  /// bold borders and bright primary color for maximum readability.
+  static ThemeData _buildHighContrastDarkTheme() {
+    const Color background = Colors.black;
+    const Color surface = Color(0xFF0A0A0A);
+    const Color onSurface = Colors.white;
+    const Color primary = Color(0xFF66B2FF); // bright blue — WCAG AAA on black
+    const Color border = Colors.white;
+
+    return ThemeData(
+      brightness: Brightness.dark,
+      scaffoldBackgroundColor: background,
+      colorScheme: const ColorScheme.dark(
+        primary: primary,
+        surface: surface,
+        secondary: primary,
+        onSurface: onSurface,
+        onPrimary: Colors.black,
+        outline: border,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: background,
+        foregroundColor: onSurface,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        color: surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+          side: const BorderSide(color: border, width: 1.5),
+        ),
+        clipBehavior: Clip.antiAlias,
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: background,
+        indicatorColor: primary.withValues(alpha: 0.2),
+        labelTextStyle: WidgetStateProperty.all(
+          const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: onSurface,
+          ),
+        ),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return const IconThemeData(color: primary);
+          }
+          return const IconThemeData(color: onSurface);
+        }),
+      ),
+      dividerTheme: const DividerThemeData(color: border, thickness: 1.0),
+      textTheme: GoogleFonts.outfitTextTheme(
+        ThemeData(brightness: Brightness.dark).textTheme,
+      ).apply(bodyColor: onSurface, displayColor: onSurface),
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: primary,
+        foregroundColor: Colors.black,
       ),
       useMaterial3: true,
     );

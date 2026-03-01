@@ -248,5 +248,32 @@
   "recentSearches": "Recent Searches",
 
   "adBlocker": "Ad Blocker",
-  "adBlockerDesc": "Block ads and trackers in the in-app browser"
+  "adBlockerDesc": "Block ads and trackers in the in-app browser",
+
+  "accessibility": "Accessibility",
+  "highContrastMode": "High Contrast Mode",
+  "highContrastModeDesc": "Increase contrast for better visibility",
+  "themeHighContrastLight": "High Contrast (Light)",
+  "themeHighContrastDark": "High Contrast (Dark)",
+
+  "semanticToggleRead": "Toggle read status",
+  "semanticToggleBookmark": "Toggle bookmark",
+  "semanticMarkAsRead": "Mark as read",
+  "semanticMarkAsUnread": "Mark as unread",
+  "semanticBookmark": "Bookmark article",
+  "semanticRemoveBookmark": "Remove bookmark",
+  "semanticArticleRead": "Read article",
+  "semanticArticleUnread": "Unread article",
+  "semanticOpenArticle": "Open article: {title}",
+  "@semanticOpenArticle": {
+    "placeholders": {
+      "title": { "type": "String" }
+    }
+  },
+  "semanticFilterUnread": "Filter unread articles",
+  "semanticShowAll": "Show all articles",
+  "semanticOpenSearch": "Open search",
+  "semanticCloseSearch": "Close search",
+  "semanticAddFeed": "Add new feed",
+  "semanticOfflineCached": "Available offline"
 }

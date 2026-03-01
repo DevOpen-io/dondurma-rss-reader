@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
+import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../providers/bookmark_provider.dart';
@@ -111,34 +112,40 @@ class _FeedListItemState extends State<FeedListItem>
         final bool isBookmarked = state.isBookmarked;
         final bool isCached = state.isCached;
         final bool isRead = widget.item.isRead;
+        final l10n = AppLocalizations.of(context);
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 10.0),
-          child: Stack(
-            children: [
-              // Swipe background indicator
-              if (_dragExtent != 0)
-                _SwipeBackground(
-                  isSwipingRight: isSwipingRight,
-                  isRead: isRead,
-                  isBookmarked: isBookmarked,
-                  actionTriggered: _actionTriggered,
-                ),
-              // Foreground card
-              GestureDetector(
-                onHorizontalDragUpdate: _onHorizontalDragUpdate,
-                onHorizontalDragEnd: _onHorizontalDragEnd,
-                child: Transform.translate(
-                  offset: Offset(_dragExtent, 0),
-                  child: _ArticleCard(
-                    item: widget.item,
+        return Semantics(
+          label: l10n.semanticOpenArticle(widget.item.title),
+          hint: isRead ? l10n.semanticArticleRead : l10n.semanticArticleUnread,
+          button: false,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 10.0),
+            child: Stack(
+              children: [
+                // Swipe background indicator
+                if (_dragExtent != 0)
+                  _SwipeBackground(
+                    isSwipingRight: isSwipingRight,
                     isRead: isRead,
                     isBookmarked: isBookmarked,
-                    isCached: isCached,
+                    actionTriggered: _actionTriggered,
+                  ),
+                // Foreground card
+                GestureDetector(
+                  onHorizontalDragUpdate: _onHorizontalDragUpdate,
+                  onHorizontalDragEnd: _onHorizontalDragEnd,
+                  child: Transform.translate(
+                    offset: Offset(_dragExtent, 0),
+                    child: _ArticleCard(
+                      item: widget.item,
+                      isRead: isRead,
+                      isBookmarked: isBookmarked,
+                      isCached: isCached,
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -482,18 +489,24 @@ class _FeedItemActions extends StatelessWidget {
                 ? colorScheme.primary
                 : colorScheme.onSurface.withValues(alpha: isRead ? 0.25 : 0.4),
             size: 20,
+            semanticLabel: isBookmarked
+                ? AppLocalizations.of(context).semanticRemoveBookmark
+                : AppLocalizations.of(context).semanticBookmark,
           ),
 
           // Cached indicator
           if (isCached)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
-              child: Icon(
-                Icons.offline_pin,
-                color: colorScheme.secondary.withValues(
-                  alpha: isRead ? 0.35 : 0.7,
+              child: Semantics(
+                label: AppLocalizations.of(context).semanticOfflineCached,
+                child: Icon(
+                  Icons.offline_pin,
+                  color: colorScheme.secondary.withValues(
+                    alpha: isRead ? 0.35 : 0.7,
+                  ),
+                  size: 15,
                 ),
-                size: 15,
               ),
             ),
         ],
@@ -508,22 +521,28 @@ class _ActionIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
   final double size;
+  final String? semanticLabel;
 
   const _ActionIcon({
     required this.onTap,
     required this.icon,
     required this.color,
     required this.size,
+    this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.all(4.0),
-        child: Icon(icon, color: color, size: size),
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.all(4.0),
+          child: Icon(icon, color: color, size: size),
+        ),
       ),
     );
   }

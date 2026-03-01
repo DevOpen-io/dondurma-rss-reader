@@ -196,5 +196,27 @@
   "recentSearches": "Son Aramalar",
 
   "adBlocker": "Reklam Engelleyici",
-  "adBlockerDesc": "Uygulama içi tarayıcıda reklamları ve izleyicileri engelle"
+  "adBlockerDesc": "Uygulama içi tarayıcıda reklamları ve izleyicileri engelle",
+
+  "accessibility": "Erişilebilirlik",
+  "highContrastMode": "Yüksek Kontrast Modu",
+  "highContrastModeDesc": "Daha iyi görünürlük için kontrastı artır",
+  "themeHighContrastLight": "Yüksek Kontrast (Açık)",
+  "themeHighContrastDark": "Yüksek Kontrast (Koyu)",
+
+  "semanticToggleRead": "Okundu durumunu değiştir",
+  "semanticToggleBookmark": "Yer işaretini değiştir",
+  "semanticMarkAsRead": "Okundu olarak işaretle",
+  "semanticMarkAsUnread": "Okunmadı olarak işaretle",
+  "semanticBookmark": "Makaleyi yer işaretine ekle",
+  "semanticRemoveBookmark": "Yer işaretini kaldır",
+  "semanticArticleRead": "Okunmuş makale",
+  "semanticArticleUnread": "Okunmamış makale",
+  "semanticOpenArticle": "Makaleyi aç: {title}",
+  "semanticFilterUnread": "Okunmamış makaleleri filtrele",
+  "semanticShowAll": "Tüm makaleleri göster",
+  "semanticOpenSearch": "Aramayı aç",
+  "semanticCloseSearch": "Aramayı kapat",
+  "semanticAddFeed": "Yeni kaynak ekle",
+  "semanticOfflineCached": "Çevrimdışı kullanılabilir"
 }

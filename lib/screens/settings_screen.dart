@@ -33,6 +33,10 @@ class SettingsScreen extends StatelessWidget {
         return l10n.themeMacchiato;
       case AppTheme.catppuccinMocha:
         return l10n.themeMocha;
+      case AppTheme.highContrastLight:
+        return l10n.themeHighContrastLight;
+      case AppTheme.highContrastDark:
+        return l10n.themeHighContrastDark;
     }
   }
 
@@ -593,6 +597,48 @@ class SettingsScreen extends StatelessWidget {
               );
             }
           },
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
+        _buildSectionHeader(context, l10n.accessibility),
+        ListTile(
+          leading: const Icon(Icons.contrast),
+          title: Text(l10n.highContrastMode),
+          subtitle: Text(l10n.highContrastModeDesc),
+          trailing: Switch(
+            value:
+                context.watch<SettingsProvider>().selectedTheme ==
+                    AppTheme.highContrastLight ||
+                context.watch<SettingsProvider>().selectedTheme ==
+                    AppTheme.highContrastDark,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+            onChanged: (val) {
+              final currentTheme = context
+                  .read<SettingsProvider>()
+                  .selectedTheme;
+              if (val) {
+                // Switch to high contrast variant matching current brightness
+                final isDark =
+                    currentTheme == AppTheme.dark ||
+                    currentTheme == AppTheme.catppuccinFrappe ||
+                    currentTheme == AppTheme.catppuccinMacchiato ||
+                    currentTheme == AppTheme.catppuccinMocha ||
+                    currentTheme == AppTheme.highContrastDark;
+                context.read<SettingsProvider>().setTheme(
+                  isDark
+                      ? AppTheme.highContrastDark
+                      : AppTheme.highContrastLight,
+                );
+              } else {
+                // Revert to standard light/dark
+                final isDark = currentTheme == AppTheme.highContrastDark;
+                context.read<SettingsProvider>().setTheme(
+                  isDark ? AppTheme.dark : AppTheme.light,
+                );
+              }
+            },
+          ),
         ),
         Divider(
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),

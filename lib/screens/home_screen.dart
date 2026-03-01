@@ -301,6 +301,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
+                tooltip: provider.showUnreadOnly
+                    ? l10n.semanticShowAll
+                    : l10n.semanticFilterUnread,
                 onPressed: () {
                   provider.toggleShowUnreadOnly();
                 },
@@ -308,6 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
             if (_isSearching)
               IconButton(
                 icon: const Icon(Icons.close),
+                tooltip: l10n.semanticCloseSearch,
                 onPressed: () {
                   final query = _searchController.text.trim();
                   if (query.isNotEmpty) {
@@ -323,6 +327,7 @@ class _HomeScreenState extends State<HomeScreen> {
             else
               IconButton(
                 icon: const Icon(Icons.search),
+                tooltip: l10n.semanticOpenSearch,
                 onPressed: () {
                   setState(() {
                     _isSearching = true;
@@ -376,6 +381,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _showAddFeedDialog,
               backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
+              tooltip: l10n.semanticAddFeed,
               child: const Icon(Icons.add, size: 28),
             )
           : null,
