@@ -510,6 +510,19 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
         ListTile(
+          leading: const Icon(Icons.manage_search),
+          title: Text(l10n.clearSearchHistory),
+          subtitle: Text(l10n.clearSearchHistoryDesc),
+          onTap: () async {
+            await context.read<SettingsProvider>().clearSearchHistory();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(l10n.searchHistoryCleared)),
+              );
+            }
+          },
+        ),
+        ListTile(
           leading: const Icon(Icons.file_download_outlined),
           title: Text(l10n.exportSubscriptions),
           subtitle: Text(l10n.exportSubscriptionsDesc),

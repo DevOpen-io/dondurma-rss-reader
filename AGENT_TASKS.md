@@ -56,9 +56,9 @@ This document is a persistent living record for AI coding agents to understand w
   - [ ] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
   - [ ] Add High Contrast Mode option in themes.
   - [ ] Respect system "Reduced Motion" settings to disable animations.
-- [ ] **Search History**: Improve search usability.
-  - [ ] Save past search queries locally.
-  - [ ] Allow clearing search history in settings.
+- [x] **Search History**: Improve search usability.
+  - [x] Save past search queries locally.
+  - [x] Allow clearing search history in settings.
 
 ---
 ## 📝 Notes for Agents

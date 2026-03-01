@@ -541,4 +541,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get shortTextMode => 'Short Text Mode';
+
+  @override
+  String get searchHistory => 'Search History';
+
+  @override
+  String get clearSearchHistory => 'Clear Search History';
+
+  @override
+  String get clearSearchHistoryDesc => 'Remove all saved search queries';
+
+  @override
+  String get searchHistoryCleared => 'Search history cleared.';
+
+  @override
+  String get recentSearches => 'Recent Searches';
 }

@@ -1093,6 +1093,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Short Text Mode'**
   String get shortTextMode;
+
+  /// No description provided for @searchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Search History'**
+  String get searchHistory;
+
+  /// No description provided for @clearSearchHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear Search History'**
+  String get clearSearchHistory;
+
+  /// No description provided for @clearSearchHistoryDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove all saved search queries'**
+  String get clearSearchHistoryDesc;
+
+  /// No description provided for @searchHistoryCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Search history cleared.'**
+  String get searchHistoryCleared;
+
+  /// No description provided for @recentSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Searches'**
+  String get recentSearches;
 }
 
 class _AppLocalizationsDelegate

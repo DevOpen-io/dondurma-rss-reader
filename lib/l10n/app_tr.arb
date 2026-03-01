@@ -187,5 +187,11 @@
   "fullTextLoading": "Tam makale yükleniyor…",
   "fullTextFailed": "Tam içerik yüklenemedi. Akış özeti gösteriliyor.",
   "fullTextToggle": "Tam Metin",
-  "shortTextMode": "Kısa Metin Modu"
+  "shortTextMode": "Kısa Metin Modu",
+
+  "searchHistory": "Arama Geçmişi",
+  "clearSearchHistory": "Arama Geçmişini Temizle",
+  "clearSearchHistoryDesc": "Kaydedilen tüm arama sorgularını kaldır",
+  "searchHistoryCleared": "Arama geçmişi temizlendi.",
+  "recentSearches": "Son Aramalar"
 }

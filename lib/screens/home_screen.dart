@@ -4,6 +4,7 @@ import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/add_feed_dialog.dart';
@@ -274,6 +275,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   onChanged: (value) {
                     provider.setSearchQuery(value);
                   },
+                  onSubmitted: (value) {
+                    if (value.trim().isNotEmpty) {
+                      context.read<SettingsProvider>().addSearchQuery(value);
+                    }
+                  },
                 )
               : Text(
                   appBarTitle,
@@ -303,6 +309,10 @@ class _HomeScreenState extends State<HomeScreen> {
               IconButton(
                 icon: const Icon(Icons.close),
                 onPressed: () {
+                  final query = _searchController.text.trim();
+                  if (query.isNotEmpty) {
+                    context.read<SettingsProvider>().addSearchQuery(query);
+                  }
                   setState(() {
                     _isSearching = false;
                     _searchController.clear();
@@ -331,12 +341,30 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: _selectedIndex == 0
-          ? _buildHomeBody(
-              context,
-              provider,
-              todayItems,
-              yesterdayItems,
-              olderItems,
+          ? Column(
+              children: [
+                // ── Search history suggestions ────────────────────────────
+                if (_isSearching)
+                  _SearchHistoryPanel(
+                    searchController: _searchController,
+                    onQuerySelected: (query) {
+                      _searchController.text = query;
+                      _searchController.selection = TextSelection.fromPosition(
+                        TextPosition(offset: query.length),
+                      );
+                      provider.setSearchQuery(query);
+                    },
+                  ),
+                Expanded(
+                  child: _buildHomeBody(
+                    context,
+                    provider,
+                    todayItems,
+                    yesterdayItems,
+                    olderItems,
+                  ),
+                ),
+              ],
             )
           : _selectedIndex == 1
           ? const FoldersScreen()
@@ -421,6 +449,128 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// Panel that shows recent search queries as tappable suggestions.
+///
+/// Displayed below the AppBar when the search field is active. Filters
+/// suggestions based on the current text in [searchController]. Each
+/// suggestion can be tapped to fill the search or dismissed with ×.
+class _SearchHistoryPanel extends StatelessWidget {
+  const _SearchHistoryPanel({
+    required this.searchController,
+    required this.onQuerySelected,
+  });
+
+  final TextEditingController searchController;
+  final ValueChanged<String> onQuerySelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final settingsProvider = context.watch<SettingsProvider>();
+    final history = settingsProvider.searchHistory;
+
+    if (history.isEmpty) return const SizedBox.shrink();
+
+    // Filter suggestions based on the current text
+    return ListenableBuilder(
+      listenable: searchController,
+      builder: (context, _) {
+        final currentText = searchController.text.toLowerCase().trim();
+        final filtered = currentText.isEmpty
+            ? history
+            : history
+                  .where(
+                    (q) =>
+                        q.toLowerCase().contains(currentText) &&
+                        q.toLowerCase() != currentText,
+                  )
+                  .toList();
+
+        if (filtered.isEmpty) return const SizedBox.shrink();
+
+        return Material(
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Text(
+                  l10n.recentSearches,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.0,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
+              ...filtered.map(
+                (query) => InkWell(
+                  onTap: () => onQuerySelected(query),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.history,
+                          size: 18,
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.4),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            query,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            context.read<SettingsProvider>().removeSearchQuery(
+                              query,
+                            );
+                          },
+                          child: Icon(
+                            Icons.close,
+                            size: 16,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Divider(
+                height: 1,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.1),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

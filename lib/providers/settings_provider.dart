@@ -28,6 +28,9 @@ class SettingsProvider extends ChangeNotifier {
   // Content Filtering
   List<String> _globalExcludedKeywords = [];
 
+  // Search History
+  List<String> _searchHistory = [];
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -48,6 +51,8 @@ class SettingsProvider extends ChangeNotifier {
   double get lineSpacing => _lineSpacing;
 
   List<String> get globalExcludedKeywords => _globalExcludedKeywords;
+
+  List<String> get searchHistory => _searchHistory;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -116,6 +121,13 @@ class SettingsProvider extends ChangeNotifier {
     // Filtering settings
     _globalExcludedKeywords =
         (_box.get('globalExcludedKeywords') as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+
+    // Search history
+    _searchHistory =
+        (_box.get('searchHistory') as List<dynamic>?)
             ?.map((e) => e.toString())
             .toList() ??
         [];
@@ -216,5 +228,35 @@ class SettingsProvider extends ChangeNotifier {
     _globalExcludedKeywords = keywords;
     notifyListeners();
     await _box.put('globalExcludedKeywords', keywords);
+  }
+
+  /// Adds a search query to the history.
+  ///
+  /// Trims whitespace, ignores empty strings, removes duplicates, and
+  /// caps the list at 10 entries (most-recent-first).
+  Future<void> addSearchQuery(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return;
+    _searchHistory.remove(trimmed);
+    _searchHistory.insert(0, trimmed);
+    if (_searchHistory.length > 10) {
+      _searchHistory = _searchHistory.sublist(0, 10);
+    }
+    notifyListeners();
+    await _box.put('searchHistory', _searchHistory);
+  }
+
+  /// Removes a single query from the search history.
+  Future<void> removeSearchQuery(String query) async {
+    _searchHistory.remove(query);
+    notifyListeners();
+    await _box.put('searchHistory', _searchHistory);
+  }
+
+  /// Clears the entire search history.
+  Future<void> clearSearchHistory() async {
+    _searchHistory = [];
+    notifyListeners();
+    await _box.put('searchHistory', <String>[]);
   }
 }

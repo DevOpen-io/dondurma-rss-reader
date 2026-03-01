@@ -539,4 +539,20 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get shortTextMode => 'Kısa Metin Modu';
+
+  @override
+  String get searchHistory => 'Arama Geçmişi';
+
+  @override
+  String get clearSearchHistory => 'Arama Geçmişini Temizle';
+
+  @override
+  String get clearSearchHistoryDesc =>
+      'Kaydedilen tüm arama sorgularını kaldır';
+
+  @override
+  String get searchHistoryCleared => 'Arama geçmişi temizlendi.';
+
+  @override
+  String get recentSearches => 'Son Aramalar';
 }

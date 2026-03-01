@@ -239,5 +239,11 @@
   "fullTextLoading": "Loading full article…",
   "fullTextFailed": "Could not load full content. Showing feed excerpt.",
   "fullTextToggle": "Full-Text",
-  "shortTextMode": "Short Text Mode"
+  "shortTextMode": "Short Text Mode",
+
+  "searchHistory": "Search History",
+  "clearSearchHistory": "Clear Search History",
+  "clearSearchHistoryDesc": "Remove all saved search queries",
+  "searchHistoryCleared": "Search history cleared.",
+  "recentSearches": "Recent Searches"
 }
