@@ -496,105 +496,118 @@ class FoldersScreen extends StatelessWidget {
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.1),
                       ),
-                      ListTile(
-                        contentPadding: const EdgeInsets.only(
+                      Padding(
+                        padding: const EdgeInsets.only(
                           left: 48.0,
                           right: 16.0,
+                          top: 12.0,
+                          bottom: 8.0,
                         ),
-                        title: Text(
-                          sub.name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        subtitle: Text(
-                          sub.url,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            IconButton(
-                              icon: Icon(
-                                sub.notificationsEnabled
-                                    ? Icons.notifications_active_outlined
-                                    : Icons.notifications_off_outlined,
-                                size: 18,
-                                color: sub.notificationsEnabled
-                                    ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha: 0.7)
-                                    : Theme.of(context).colorScheme.onSurface
-                                          .withValues(alpha: 0.3),
+                            Text(
+                              sub.name,
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
                               ),
-                              onPressed: () {
-                                context
-                                    .read<SubscriptionProvider>()
-                                    .toggleFeedNotifications(sub.url);
-                              },
-                              tooltip: l10n.feedNotifications,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            IconButton(
-                              icon: Icon(
-                                sub.fullTextEnabled
-                                    ? Icons.article
-                                    : Icons.article_outlined,
-                                size: 18,
-                                color: sub.fullTextEnabled
-                                    ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha: 0.7)
-                                    : Theme.of(context).colorScheme.onSurface
-                                          .withValues(alpha: 0.3),
-                              ),
-                              onPressed: () {
-                                context
-                                    .read<SubscriptionProvider>()
-                                    .toggleFullText(sub.url);
-                              },
-                              tooltip: l10n.fullTextToggle,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.drive_file_move_outline,
-                                size: 18,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.7),
-                              ),
-                              onPressed: () =>
-                                  _showMoveFeedDialog(context, sub),
-                              tooltip: l10n.moveToFolder,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.edit_outlined,
-                                size: 18,
+                            const SizedBox(height: 4),
+                            Text(
+                              sub.url,
+                              style: TextStyle(
+                                fontSize: 12,
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurface.withValues(alpha: 0.5),
                               ),
-                              onPressed: () =>
-                                  _showEditSubscriptionDialog(context, sub),
-                              tooltip: l10n.editFeed,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete_outline,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              onPressed: () =>
-                                  _showDeleteConfirmation(context, sub),
-                              tooltip: l10n.deleteFeed,
+                            const SizedBox(height: 8),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                IconButton(
+                                  icon: Icon(
+                                    sub.notificationsEnabled
+                                        ? Icons.notifications_active_outlined
+                                        : Icons.notifications_off_outlined,
+                                    size: 18,
+                                    color: sub.notificationsEnabled
+                                        ? Theme.of(context).colorScheme.primary
+                                              .withValues(alpha: 0.7)
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.3),
+                                  ),
+                                  onPressed: () {
+                                    context
+                                        .read<SubscriptionProvider>()
+                                        .toggleFeedNotifications(sub.url);
+                                  },
+                                  tooltip: l10n.feedNotifications,
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    sub.fullTextEnabled
+                                        ? Icons.article
+                                        : Icons.article_outlined,
+                                    size: 18,
+                                    color: sub.fullTextEnabled
+                                        ? Theme.of(context).colorScheme.primary
+                                              .withValues(alpha: 0.7)
+                                        : Theme.of(context)
+                                              .colorScheme
+                                              .onSurface
+                                              .withValues(alpha: 0.3),
+                                  ),
+                                  onPressed: () {
+                                    context
+                                        .read<SubscriptionProvider>()
+                                        .toggleFullText(sub.url);
+                                  },
+                                  tooltip: l10n.fullTextToggle,
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.drive_file_move_outline,
+                                    size: 18,
+                                    color: Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                  onPressed: () =>
+                                      _showMoveFeedDialog(context, sub),
+                                  tooltip: l10n.moveToFolder,
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.edit_outlined,
+                                    size: 18,
+                                    color: Theme.of(context)
+                                        .colorScheme
+                                        .onSurface
+                                        .withValues(alpha: 0.5),
+                                  ),
+                                  onPressed: () =>
+                                      _showEditSubscriptionDialog(context, sub),
+                                  tooltip: l10n.editFeed,
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.delete_outline,
+                                    size: 18,
+                                    color: Theme.of(context).colorScheme.error,
+                                  ),
+                                  onPressed: () =>
+                                      _showDeleteConfirmation(context, sub),
+                                  tooltip: l10n.deleteFeed,
+                                ),
+                              ],
                             ),
                           ],
                         ),
