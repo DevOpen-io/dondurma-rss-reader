@@ -120,11 +120,7 @@ class FeedItem {
       timeAgo: json['timeAgo'] as String? ?? '',
       isBookmarked: json['isBookmarked'] as bool? ?? false,
       isRead: json['isRead'] as bool? ?? false,
-      siteIcon: IconData(
-        json['siteIconCodePoint'] as int? ?? Icons.rss_feed.codePoint,
-        fontFamily: json['siteIconFontFamily'] as String? ?? 'MaterialIcons',
-        fontPackage: json['siteIconFontPackage'] as String?,
-      ),
+      siteIcon: _decodeIconData(json['siteIconCodePoint'] as int?),
       iconColor: Color(json['iconColor'] as int? ?? 0xFF12A8FF),
       iconBackgroundColor: Color(
         json['iconBackgroundColor'] as int? ?? 0xFF12A8FF,
@@ -155,5 +151,13 @@ class FeedItem {
     } catch (_) {
       return text;
     }
+  }
+
+  /// Maps a saved codepoint back to a `const IconData`.
+  /// This prevents tree-shaking errors in release builds.
+  static IconData _decodeIconData(int? codePoint) {
+    if (codePoint == Icons.rss_feed.codePoint) return Icons.rss_feed;
+    // Fallback icon
+    return Icons.rss_feed;
   }
 }
