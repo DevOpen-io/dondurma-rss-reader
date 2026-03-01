@@ -111,6 +111,21 @@ class SettingsScreen extends StatelessWidget {
         Divider(
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
         ),
+        ListTile(
+          leading: const Icon(Icons.shield_outlined),
+          title: Text(l10n.adBlocker),
+          subtitle: Text(l10n.adBlockerDesc),
+          trailing: Switch(
+            value: context.watch<SettingsProvider>().adBlockEnabled,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+            onChanged: (val) {
+              context.read<SettingsProvider>().setAdBlockEnabled(val);
+            },
+          ),
+        ),
+        Divider(
+          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
+        ),
         _buildSectionHeader(context, l10n.displayAndReadability),
         ListTile(
           leading: const Icon(Icons.format_size),

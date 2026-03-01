@@ -245,5 +245,8 @@
   "clearSearchHistory": "Clear Search History",
   "clearSearchHistoryDesc": "Remove all saved search queries",
   "searchHistoryCleared": "Search history cleared.",
-  "recentSearches": "Recent Searches"
+  "recentSearches": "Recent Searches",
+
+  "adBlocker": "Ad Blocker",
+  "adBlockerDesc": "Block ads and trackers in the in-app browser"
 }

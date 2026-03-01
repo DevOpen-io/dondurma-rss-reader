@@ -193,5 +193,8 @@
   "clearSearchHistory": "Arama Geçmişini Temizle",
   "clearSearchHistoryDesc": "Kaydedilen tüm arama sorgularını kaldır",
   "searchHistoryCleared": "Arama geçmişi temizlendi.",
-  "recentSearches": "Son Aramalar"
+  "recentSearches": "Son Aramalar",
+
+  "adBlocker": "Reklam Engelleyici",
+  "adBlockerDesc": "Uygulama içi tarayıcıda reklamları ve izleyicileri engelle"
 }

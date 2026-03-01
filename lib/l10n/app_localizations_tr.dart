@@ -555,4 +555,11 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get recentSearches => 'Son Aramalar';
+
+  @override
+  String get adBlocker => 'Reklam Engelleyici';
+
+  @override
+  String get adBlockerDesc =>
+      'Uygulama içi tarayıcıda reklamları ve izleyicileri engelle';
 }

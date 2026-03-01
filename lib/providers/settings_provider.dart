@@ -31,6 +31,9 @@ class SettingsProvider extends ChangeNotifier {
   // Search History
   List<String> _searchHistory = [];
 
+  // Ad Blocker
+  bool _adBlockEnabled = true;
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -53,6 +56,8 @@ class SettingsProvider extends ChangeNotifier {
   List<String> get globalExcludedKeywords => _globalExcludedKeywords;
 
   List<String> get searchHistory => _searchHistory;
+
+  bool get adBlockEnabled => _adBlockEnabled;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -131,6 +136,9 @@ class SettingsProvider extends ChangeNotifier {
             ?.map((e) => e.toString())
             .toList() ??
         [];
+
+    // Ad Blocker
+    _adBlockEnabled = _box.get('adBlockEnabled', defaultValue: true);
 
     notifyListeners();
   }
@@ -228,6 +236,13 @@ class SettingsProvider extends ChangeNotifier {
     _globalExcludedKeywords = keywords;
     notifyListeners();
     await _box.put('globalExcludedKeywords', keywords);
+  }
+
+  /// Enables or disables the built-in ad blocker for the in-app browser.
+  Future<void> setAdBlockEnabled(bool value) async {
+    _adBlockEnabled = value;
+    notifyListeners();
+    await _box.put('adBlockEnabled', value);
   }
 
   /// Adds a search query to the history.

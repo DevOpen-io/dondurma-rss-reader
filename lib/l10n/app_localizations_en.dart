@@ -556,4 +556,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get recentSearches => 'Recent Searches';
+
+  @override
+  String get adBlocker => 'Ad Blocker';
+
+  @override
+  String get adBlockerDesc => 'Block ads and trackers in the in-app browser';
 }

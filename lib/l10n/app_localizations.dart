@@ -1123,6 +1123,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recent Searches'**
   String get recentSearches;
+
+  /// No description provided for @adBlocker.
+  ///
+  /// In en, this message translates to:
+  /// **'Ad Blocker'**
+  String get adBlocker;
+
+  /// No description provided for @adBlockerDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Block ads and trackers in the in-app browser'**
+  String get adBlockerDesc;
 }
 
 class _AppLocalizationsDelegate

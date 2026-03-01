@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../l10n/app_localizations.dart';
+import '../services/ad_block_service.dart';
 
 /// Returns `true` when the current platform supports [WebViewWidget].
 ///
@@ -26,6 +27,7 @@ bool get _webViewSupported {
 /// - Back / Forward / Refresh navigation controls in the bottom bar
 /// - "Open in External Browser" action in the AppBar
 /// - "Close" button to pop back to the article screen
+/// - Built-in ad blocker (domain blocking + element hiding)
 ///
 /// Usage:
 /// ```dart
@@ -39,7 +41,15 @@ class InAppBrowser extends StatefulWidget {
   final String url;
   final String? title;
 
-  const InAppBrowser({super.key, required this.url, this.title});
+  /// Whether the built-in ad blocker is active.
+  final bool adBlockEnabled;
+
+  const InAppBrowser({
+    super.key,
+    required this.url,
+    this.title,
+    this.adBlockEnabled = true,
+  });
 
   @override
   State<InAppBrowser> createState() => _InAppBrowserState();
@@ -65,6 +75,14 @@ class _InAppBrowserState extends State<InAppBrowser> {
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
+          onNavigationRequest: widget.adBlockEnabled
+              ? (NavigationRequest request) {
+                  if (AdBlockService.shouldBlockUrl(request.url)) {
+                    return NavigationDecision.prevent;
+                  }
+                  return NavigationDecision.navigate;
+                }
+              : null,
           onPageStarted: (url) {
             if (!mounted) return;
             setState(() {
@@ -90,6 +108,15 @@ class _InAppBrowserState extends State<InAppBrowser> {
               }
             });
             _refreshNavState();
+
+            // Inject ad-block script after page load
+            if (widget.adBlockEnabled) {
+              try {
+                await _controller.runJavaScript(AdBlockService.adBlockScript);
+              } catch (_) {
+                // Ignore errors from sandboxed frames
+              }
+            }
           },
           onWebResourceError: (error) {
             if (!mounted) return;
@@ -217,11 +244,16 @@ Future<void> openInAppBrowser(
   BuildContext context,
   String url, {
   String? title,
+  bool adBlockEnabled = true,
 }) async {
   if (_webViewSupported) {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => InAppBrowser(url: url, title: title),
+        builder: (_) => InAppBrowser(
+          url: url,
+          title: title,
+          adBlockEnabled: adBlockEnabled,
+        ),
         fullscreenDialog: true,
       ),
     );

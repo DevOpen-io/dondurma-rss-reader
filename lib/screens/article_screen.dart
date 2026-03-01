@@ -136,7 +136,8 @@ class _ArticleScreenState extends State<ArticleScreen> {
       return;
     }
 
-    openInAppBrowser(context, cleanUrl, title: title);
+    final adBlock = context.read<SettingsProvider>().adBlockEnabled;
+    openInAppBrowser(context, cleanUrl, title: title, adBlockEnabled: adBlock);
   }
 
   // ---------------------------------------------------------------------------
