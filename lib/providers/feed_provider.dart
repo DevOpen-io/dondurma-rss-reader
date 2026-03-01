@@ -504,12 +504,16 @@ class FeedProvider extends ChangeNotifier {
 
     if (newItems.isEmpty) return;
 
+    // Pass the latest article as JSON payload for notification tap navigation.
+    final latestJson = jsonEncode(newItems.first.toJson());
+
     NotificationService.instance.showNewArticlesNotification(
       newItems: newItems,
       notificationsEnabled: settingsProvider!.notificationsEnabled,
       digestMode: settingsProvider!.digestMode,
       quietHoursStart: settingsProvider!.quietHoursStart,
       quietHoursEnd: settingsProvider!.quietHoursEnd,
+      latestItemJson: latestJson,
     );
   }
 

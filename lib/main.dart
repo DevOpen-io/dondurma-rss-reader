@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -11,6 +13,7 @@ import 'theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
 import 'services/notification_service.dart';
+import 'models/feed_item.dart';
 
 /// Custom scroll behavior that uses iOS-style bouncing physics on all
 /// platforms and enables mouse/trackpad drag for desktop.
@@ -39,6 +42,17 @@ void main() async {
   await _migrateHiveBoxes();
   await NotificationService.instance.init();
   await NotificationService.instance.requestPermission();
+
+  // Listen for notification taps and navigate to the article screen.
+  NotificationService.instance.onArticleTapped.listen((payload) {
+    try {
+      final json = jsonDecode(payload) as Map<String, dynamic>;
+      final item = FeedItem.fromJson(json);
+      appRouter.push('/article', extra: item);
+    } catch (e) {
+      debugPrint('Failed to navigate from notification tap: $e');
+    }
+  });
 
   runApp(
     MultiProvider(

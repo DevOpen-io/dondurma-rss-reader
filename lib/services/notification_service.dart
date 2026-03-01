@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/feed_item.dart';
@@ -17,6 +19,14 @@ class NotificationService {
 
   final FlutterLocalNotificationsPlugin _plugin =
       FlutterLocalNotificationsPlugin();
+
+  /// Emits the notification payload (article JSON) when the user taps a
+  /// notification. Listened to in `main.dart` for navigation.
+  final StreamController<String> _tapController =
+      StreamController<String>.broadcast();
+
+  /// Stream of article JSON payloads from tapped notifications.
+  Stream<String> get onArticleTapped => _tapController.stream;
 
   bool _initialized = false;
 
@@ -43,8 +53,20 @@ class NotificationService {
       macOS: darwinSettings,
     );
     try {
-      await _plugin.initialize(settings: initSettings);
+      await _plugin.initialize(
+        settings: initSettings,
+        onDidReceiveNotificationResponse: _onNotificationTapped,
+      );
       _initialized = true;
+
+      // Handle the case where the app was launched by tapping a notification
+      // while it was terminated.
+      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      if (launchDetails != null &&
+          launchDetails.didNotificationLaunchApp &&
+          launchDetails.notificationResponse?.payload != null) {
+        _onNotificationTapped(launchDetails.notificationResponse!);
+      }
     } catch (e) {
       debugPrint(
         'NotificationService: init failed (platform unsupported?): $e',
@@ -99,12 +121,21 @@ class NotificationService {
   ///
   /// No-op when notifications are disabled, the list is empty, the current
   /// time falls within quiet hours, or digest mode is not `'instant'`.
+  /// Handles the user tapping on a notification.
+  void _onNotificationTapped(NotificationResponse response) {
+    final payload = response.payload;
+    if (payload != null && payload.isNotEmpty) {
+      _tapController.add(payload);
+    }
+  }
+
   Future<void> showNewArticlesNotification({
     required List<FeedItem> newItems,
     required bool notificationsEnabled,
     required String digestMode,
     required int quietHoursStart,
     required int quietHoursEnd,
+    String? latestItemJson,
   }) async {
     if (!notificationsEnabled) return;
     if (newItems.isEmpty) return;
@@ -141,6 +172,7 @@ class NotificationService {
         title: title,
         body: body,
         notificationDetails: details,
+        payload: latestItemJson,
       );
     } catch (e) {
       debugPrint('NotificationService: failed to show notification: $e');
