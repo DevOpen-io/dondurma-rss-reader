@@ -68,6 +68,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
 
 dependency_overrides:
   intl: ^0.20.2
@@ -115,3 +116,20 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+flutter_launcher_icons:
+  image_path: "assets/Logo.png"
+  android: true
+  ios: true
+  remove_alpha_ios: true
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true
+  linux:
+    generate: true
+  web:
+    generate: true
+    background_color: "#ffffff"
+    theme_color: "#ffffff"
