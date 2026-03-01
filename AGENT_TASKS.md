@@ -30,6 +30,9 @@ This document is a persistent living record for AI coding agents to understand w
 - [x] **Full-Text Extraction**: Handle feeds that only provide excerpts.
   - [x] Implement heuristic scraping to fetch full content from the original URL if RSS body is truncated.
   - [x] Add toggle to enable/disable this feature per feed (to respect bandwidth).
+- [x] **Search History**: Improve search usability.
+  - [x] Save past search queries locally.
+  - [x] Allow clearing search history in settings.
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
@@ -56,9 +59,6 @@ This document is a persistent living record for AI coding agents to understand w
   - [ ] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
   - [ ] Add High Contrast Mode option in themes.
   - [ ] Respect system "Reduced Motion" settings to disable animations.
-- [x] **Search History**: Improve search usability.
-  - [x] Save past search queries locally.
-  - [x] Allow clearing search history in settings.
 
 ---
 ## 📝 Notes for Agents

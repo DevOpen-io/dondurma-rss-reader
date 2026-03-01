@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:adblocker_webview/adblocker_webview.dart';
 import '../l10n/app_localizations.dart';
-import '../services/ad_block_service.dart';
 
-/// Returns `true` when the current platform supports [WebViewWidget].
+/// Returns `true` when the current platform supports WebView.
 ///
 /// `webview_flutter` v4.x ships native implementations for Android, iOS, and
 /// macOS. On Web, Windows, and Linux there is no native WebView — we fall back
@@ -19,7 +19,7 @@ bool get _webViewSupported {
       platform == TargetPlatform.macOS;
 }
 
-/// A full-screen in-app browser page built on [WebView].
+/// A full-screen in-app browser page built on WebView.
 ///
 /// Features:
 /// - Linear progress indicator while the page is loading
@@ -27,16 +27,11 @@ bool get _webViewSupported {
 /// - Back / Forward / Refresh navigation controls in the bottom bar
 /// - "Open in External Browser" action in the AppBar
 /// - "Close" button to pop back to the article screen
-/// - Built-in ad blocker (domain blocking + element hiding)
+/// - Ad blocking via `adblocker_webview` package when enabled
 ///
-/// Usage:
-/// ```dart
-/// Navigator.of(context).push(
-///   MaterialPageRoute(
-///     builder: (_) => InAppBrowser(url: 'https://example.com/article'),
-///   ),
-/// );
-/// ```
+/// When [adBlockEnabled] is `true`, the browser uses [AdBlockerWebview] which
+/// leverages EasyList and AdGuard filter lists for comprehensive ad blocking.
+/// When `false`, the standard [WebViewWidget] is used without any blocking.
 class InAppBrowser extends StatefulWidget {
   final String url;
   final String? title;
@@ -56,7 +51,12 @@ class InAppBrowser extends StatefulWidget {
 }
 
 class _InAppBrowserState extends State<InAppBrowser> {
-  late final WebViewController _controller;
+  /// Standard WebView controller — used only when ad blocking is disabled.
+  WebViewController? _standardController;
+
+  /// Ad blocker controller — used only when ad blocking is enabled.
+  AdBlockerWebviewController get _adBlockController =>
+      AdBlockerWebviewController.instance;
 
   String _pageTitle = '';
   double _loadingProgress = 0.0;
@@ -71,25 +71,25 @@ class _InAppBrowserState extends State<InAppBrowser> {
     // Derive a sensible initial title from the URL host
     _pageTitle = widget.title ?? (Uri.tryParse(widget.url)?.host ?? widget.url);
 
-    _controller = WebViewController()
+    // Only create the standard controller when ad blocking is disabled
+    if (!widget.adBlockEnabled) {
+      _initStandardController();
+    }
+  }
+
+  /// Initializes the standard [WebViewController] for non-adblock mode.
+  void _initStandardController() {
+    _standardController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setNavigationDelegate(
         NavigationDelegate(
-          onNavigationRequest: widget.adBlockEnabled
-              ? (NavigationRequest request) {
-                  if (AdBlockService.shouldBlockUrl(request.url)) {
-                    return NavigationDecision.prevent;
-                  }
-                  return NavigationDecision.navigate;
-                }
-              : null,
           onPageStarted: (url) {
             if (!mounted) return;
             setState(() {
               _isLoading = true;
               _loadingProgress = 0.0;
             });
-            _refreshNavState();
+            _refreshStandardNavState();
           },
           onProgress: (progress) {
             if (!mounted) return;
@@ -98,7 +98,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
             });
           },
           onPageFinished: (url) async {
-            final title = await _controller.getTitle();
+            final title = await _standardController?.getTitle();
             if (!mounted) return;
             setState(() {
               _isLoading = false;
@@ -107,16 +107,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
                 _pageTitle = title;
               }
             });
-            _refreshNavState();
-
-            // Inject ad-block script after page load
-            if (widget.adBlockEnabled) {
-              try {
-                await _controller.runJavaScript(AdBlockService.adBlockScript);
-              } catch (_) {
-                // Ignore errors from sandboxed frames
-              }
-            }
+            _refreshStandardNavState();
           },
           onWebResourceError: (error) {
             if (!mounted) return;
@@ -129,9 +120,12 @@ class _InAppBrowserState extends State<InAppBrowser> {
       ..loadRequest(Uri.parse(widget.url));
   }
 
-  Future<void> _refreshNavState() async {
-    final back = await _controller.canGoBack();
-    final forward = await _controller.canGoForward();
+  /// Refreshes back/forward navigation state for the standard controller.
+  Future<void> _refreshStandardNavState() async {
+    final ctrl = _standardController;
+    if (ctrl == null) return;
+    final back = await ctrl.canGoBack();
+    final forward = await ctrl.canGoForward();
     if (mounted) {
       setState(() {
         _canGoBack = back;
@@ -140,11 +134,107 @@ class _InAppBrowserState extends State<InAppBrowser> {
     }
   }
 
+  /// Refreshes back/forward navigation state for the ad blocker controller.
+  Future<void> _refreshAdBlockNavState() async {
+    final back = await _adBlockController.canGoBack();
+    final forward = await _adBlockController.canGoForward();
+    if (mounted) {
+      setState(() {
+        _canGoBack = back;
+        _canGoForward = forward;
+      });
+    }
+  }
+
+  /// Opens the current URL in the system's default external browser.
   Future<void> _openExternal() async {
-    final currentUrl = await _controller.currentUrl() ?? widget.url;
+    String? currentUrl;
+    if (widget.adBlockEnabled) {
+      // For AdBlockerWebview, fall back to the initial URL
+      currentUrl = widget.url;
+    } else {
+      currentUrl = await _standardController?.currentUrl() ?? widget.url;
+    }
     final uri = Uri.tryParse(currentUrl);
     if (uri != null) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  /// Handles navigation actions (back, forward, refresh) based on adblock mode.
+  Future<void> _goBack() async {
+    if (widget.adBlockEnabled) {
+      _adBlockController.goBack();
+      _refreshAdBlockNavState();
+    } else {
+      await _standardController?.goBack();
+      _refreshStandardNavState();
+    }
+  }
+
+  Future<void> _goForward() async {
+    if (widget.adBlockEnabled) {
+      _adBlockController.goForward();
+      _refreshAdBlockNavState();
+    } else {
+      await _standardController?.goForward();
+      _refreshStandardNavState();
+    }
+  }
+
+  void _reload() {
+    if (widget.adBlockEnabled) {
+      _adBlockController.reload();
+    } else {
+      _standardController?.reload();
+    }
+  }
+
+  /// Builds the body widget — either [AdBlockerWebview] or [WebViewWidget].
+  Widget _buildBody() {
+    if (widget.adBlockEnabled) {
+      return AdBlockerWebview(
+        url: Uri.parse(widget.url),
+        shouldBlockAds: true,
+        adBlockerWebviewController: _adBlockController,
+        onLoadStart: (url) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = true;
+            _loadingProgress = 0.0;
+          });
+          _refreshAdBlockNavState();
+        },
+        onProgress: (progress) {
+          if (!mounted) return;
+          setState(() {
+            _loadingProgress = progress / 100.0;
+          });
+        },
+        onLoadFinished: (url) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+            _loadingProgress = 1.0;
+            // Update title from URL host if available
+            if (url != null) {
+              final uri = Uri.tryParse(url);
+              if (uri != null && uri.host.isNotEmpty) {
+                _pageTitle = uri.host;
+              }
+            }
+          });
+          _refreshAdBlockNavState();
+        },
+        onLoadError: (url, code) {
+          if (!mounted) return;
+          setState(() {
+            _isLoading = false;
+          });
+        },
+      );
+    } else {
+      return WebViewWidget(controller: _standardController!);
     }
   }
 
@@ -187,7 +277,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
           ),
         ),
       ),
-      body: WebViewWidget(controller: _controller),
+      body: _buildBody(),
       bottomNavigationBar: BottomAppBar(
         height: 52,
         padding: EdgeInsets.zero,
@@ -200,8 +290,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
               tooltip: l10n.back,
               onPressed: _canGoBack
                   ? () async {
-                      await _controller.goBack();
-                      _refreshNavState();
+                      await _goBack();
                     }
                   : null,
             ),
@@ -211,8 +300,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
               tooltip: l10n.forward,
               onPressed: _canGoForward
                   ? () async {
-                      await _controller.goForward();
-                      _refreshNavState();
+                      await _goForward();
                     }
                   : null,
             ),
@@ -220,7 +308,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
             IconButton(
               icon: const Icon(Icons.refresh, size: 22),
               tooltip: l10n.refresh,
-              onPressed: () => _controller.reload(),
+              onPressed: _reload,
             ),
             // Share / Open external
             IconButton(

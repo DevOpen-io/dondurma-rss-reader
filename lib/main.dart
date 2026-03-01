@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:adblocker_webview/adblocker_webview.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
@@ -42,6 +43,11 @@ void main() async {
   await _migrateHiveBoxes();
   await NotificationService.instance.init();
   await NotificationService.instance.requestPermission();
+
+  // Initialize the ad blocker controller with EasyList + AdGuard filters.
+  await AdBlockerWebviewController.instance.initialize(
+    FilterConfig(filterTypes: [FilterType.easyList, FilterType.adGuard]),
+  );
 
   // Listen for notification taps and navigate to the article screen.
   NotificationService.instance.onArticleTapped.listen((payload) {

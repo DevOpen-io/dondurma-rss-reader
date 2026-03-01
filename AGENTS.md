@@ -99,7 +99,7 @@ Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using **
 
 ## Key Features
 - **Custom Category Management**: Add/rename/delete folders from the Folders tab. Move individual feeds between categories. Empty folders supported via custom categories.
-- **In-App Browser**: Full-screen WebView (Android/iOS/macOS) with progress indicator, back/forward/refresh/share controls, and external browser fallback for unsupported platforms.
+- **In-App Browser**: Full-screen WebView (Android/iOS/macOS) with progress indicator, back/forward/refresh/share controls, external browser fallback for unsupported platforms, and built-in general purpose ad/tracker blocking via `adblocker_webview` (toggled in Settings).
 - **Pagination / Infinite Scroll**: Date-based sections (Today/Yesterday/Older) with automatic scroll-based loading (`_pageSize = 50`). Render limit resets on filter changes.
 - **OPML Export/Import**: Backup/restore feed subscriptions via system share sheet and file picker.
 - **Internationalization**: English and Turkish with locale persistence. All UI strings use `AppLocalizations`.
@@ -123,6 +123,7 @@ Data persistence is handled by **Hive** (`hive_ce` / `hive_ce_flutter`) using **
 | `google_fonts` | Outfit typeface |
 | `go_router` | Declarative routing |
 | `webview_flutter` | In-app browser |
+| `adblocker_webview` | In-app browser ad blocking |
 | `flutter_local_notifications` | OS-level notifications |
 | `file_picker` | OPML import file selection |
 | `share_plus` | OPML export sharing |
