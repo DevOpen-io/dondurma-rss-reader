@@ -127,6 +127,18 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
         ),
+        ListTile(
+          leading: const Icon(Icons.dark_mode_outlined),
+          title: Text(l10n.webviewDarkMode),
+          subtitle: Text(l10n.webviewDarkModeDesc),
+          trailing: Switch(
+            value: context.watch<SettingsProvider>().webviewDarkModeEnabled,
+            activeThumbColor: Theme.of(context).colorScheme.primary,
+            onChanged: (val) {
+              context.read<SettingsProvider>().setWebviewDarkModeEnabled(val);
+            },
+          ),
+        ),
         Divider(
           color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.1),
         ),

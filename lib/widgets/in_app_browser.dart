@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart'
     show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:adblocker_webview/adblocker_webview.dart';
+import 'package:provider/provider.dart';
+import '../providers/settings_provider.dart';
 import '../l10n/app_localizations.dart';
 
 /// Returns `true` when the current platform supports WebView.
@@ -108,6 +111,12 @@ class _InAppBrowserState extends State<InAppBrowser> {
               }
             });
             _refreshStandardNavState();
+            if (context.mounted) {
+              final isDark = context
+                  .read<SettingsProvider>()
+                  .webviewDarkModeEnabled;
+              _applyDarkMode(isDark);
+            }
           },
           onWebResourceError: (error) {
             if (!mounted) return;
@@ -225,6 +234,12 @@ class _InAppBrowserState extends State<InAppBrowser> {
             }
           });
           _refreshAdBlockNavState();
+          if (context.mounted) {
+            final isDark = context
+                .read<SettingsProvider>()
+                .webviewDarkModeEnabled;
+            _applyDarkMode(isDark);
+          }
         },
         onLoadError: (url, code) {
           if (!mounted) return;
@@ -241,6 +256,8 @@ class _InAppBrowserState extends State<InAppBrowser> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final isDarkMode = context.watch<SettingsProvider>().webviewDarkModeEnabled;
+
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
@@ -310,6 +327,23 @@ class _InAppBrowserState extends State<InAppBrowser> {
               tooltip: l10n.refresh,
               onPressed: _reload,
             ),
+            // Dark Mode toggle
+            IconButton(
+              icon: Icon(
+                isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                size: 22,
+              ),
+              tooltip: isDarkMode
+                  ? l10n.themeLightClassic
+                  : l10n.themeDarkClassic,
+              onPressed: () {
+                final newValue = !isDarkMode;
+                context.read<SettingsProvider>().setWebviewDarkModeEnabled(
+                  newValue,
+                );
+                _applyDarkMode(newValue);
+              },
+            ),
             // Share / Open external
             IconButton(
               icon: const Icon(Icons.ios_share, size: 22),
@@ -320,6 +354,71 @@ class _InAppBrowserState extends State<InAppBrowser> {
         ),
       ),
     );
+  }
+
+  /// Injects JavaScript to enable or disable DarkReader.
+  Future<void> _applyDarkMode(bool enable) async {
+    const String darkReaderCheck = 'typeof DarkReader !== "undefined"';
+
+    try {
+      // Execute the script on the appropriate controller
+      Future<void> run(String js) async {
+        if (widget.adBlockEnabled) {
+          await _adBlockController.runScript(js);
+        } else {
+          await _standardController?.runJavaScript(js);
+        }
+      }
+
+      Future<bool> isDarkReaderLoaded() async {
+        try {
+          if (widget.adBlockEnabled) {
+            // runScript returning value is not guaranteed, but let's try
+            // AdBlockerWebviewController.runScript returns Future<void>
+            // We cannot evaluate. We will just inject it anyway if not enabled?
+            // Actually, we can just inject and enable. DarkReader is safe to evaluate multiple times if we just inject the JS file.
+            return false;
+          } else {
+            final result = await _standardController
+                ?.runJavaScriptReturningResult(darkReaderCheck);
+            return result == true || result == 'true';
+          }
+        } catch (_) {
+          return false;
+        }
+      }
+
+      if (enable) {
+        // Load DarkReader if it's not already in the page
+        final loaded = await isDarkReaderLoaded();
+        if (!loaded) {
+          if (!mounted) return;
+          final darkReaderJs = await rootBundle.loadString(
+            'assets/js/darkreader.min.js',
+          );
+          await run(darkReaderJs);
+        }
+
+        // Enable DarkReader
+        await run('''
+          DarkReader.enable({
+            brightness: 100,
+            contrast: 100,
+            sepia: 0
+          });
+        ''');
+      } else {
+        // Disable DarkReader
+        await run('''
+          if (typeof DarkReader !== "undefined") {
+            DarkReader.disable();
+          }
+        ''');
+      }
+    } catch (e) {
+      // Ignore if controller is not ready
+      debugPrint('Error applying dark mode: $e');
+    }
   }
 }
 

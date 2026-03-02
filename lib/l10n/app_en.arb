@@ -250,6 +250,9 @@
   "adBlocker": "Ad Blocker",
   "adBlockerDesc": "Block ads and trackers in the in-app browser",
 
+  "webviewDarkMode": "In-App Browser Dark Mode",
+  "webviewDarkModeDesc": "Apply dark mode to articles viewed inside the app",
+
   "accessibility": "Accessibility",
   "highContrastMode": "High Contrast Mode",
   "highContrastModeDesc": "Increase contrast for better visibility",

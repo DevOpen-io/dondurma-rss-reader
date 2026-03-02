@@ -1136,6 +1136,18 @@ abstract class AppLocalizations {
   /// **'Block ads and trackers in the in-app browser'**
   String get adBlockerDesc;
 
+  /// No description provided for @webviewDarkMode.
+  ///
+  /// In en, this message translates to:
+  /// **'In-App Browser Dark Mode'**
+  String get webviewDarkMode;
+
+  /// No description provided for @webviewDarkModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply dark mode to articles viewed inside the app'**
+  String get webviewDarkModeDesc;
+
   /// No description provided for @accessibility.
   ///
   /// In en, this message translates to:

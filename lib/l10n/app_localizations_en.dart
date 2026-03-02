@@ -564,6 +564,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get adBlockerDesc => 'Block ads and trackers in the in-app browser';
 
   @override
+  String get webviewDarkMode => 'In-App Browser Dark Mode';
+
+  @override
+  String get webviewDarkModeDesc =>
+      'Apply dark mode to articles viewed inside the app';
+
+  @override
   String get accessibility => 'Accessibility';
 
   @override

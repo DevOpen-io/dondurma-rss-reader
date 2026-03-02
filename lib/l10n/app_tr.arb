@@ -198,6 +198,9 @@
   "adBlocker": "Reklam Engelleyici",
   "adBlockerDesc": "Uygulama içi tarayıcıda reklamları ve izleyicileri engelle",
 
+  "webviewDarkMode": "Uygulama İçi Tarayıcı Karanlık Modu",
+  "webviewDarkModeDesc": "Uygulama içindeki makalelerde karanlık modu uygula",
+
   "accessibility": "Erişilebilirlik",
   "highContrastMode": "Yüksek Kontrast Modu",
   "highContrastModeDesc": "Daha iyi görünürlük için kontrastı artır",

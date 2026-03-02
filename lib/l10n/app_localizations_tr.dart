@@ -564,6 +564,13 @@ class AppLocalizationsTr extends AppLocalizations {
       'Uygulama içi tarayıcıda reklamları ve izleyicileri engelle';
 
   @override
+  String get webviewDarkMode => 'Uygulama İçi Tarayıcı Karanlık Modu';
+
+  @override
+  String get webviewDarkModeDesc =>
+      'Uygulama içindeki makalelerde karanlık modu uygula';
+
+  @override
   String get accessibility => 'Erişilebilirlik';
 
   @override

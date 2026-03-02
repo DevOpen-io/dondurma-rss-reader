@@ -34,6 +34,9 @@ class SettingsProvider extends ChangeNotifier {
   // Ad Blocker
   bool _adBlockEnabled = true;
 
+  // Webview Dark Mode
+  bool _webviewDarkModeEnabled = false;
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -58,6 +61,8 @@ class SettingsProvider extends ChangeNotifier {
   List<String> get searchHistory => _searchHistory;
 
   bool get adBlockEnabled => _adBlockEnabled;
+
+  bool get webviewDarkModeEnabled => _webviewDarkModeEnabled;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -139,6 +144,12 @@ class SettingsProvider extends ChangeNotifier {
 
     // Ad Blocker
     _adBlockEnabled = _box.get('adBlockEnabled', defaultValue: true);
+
+    // Webview Dark Mode
+    _webviewDarkModeEnabled = _box.get(
+      'webviewDarkModeEnabled',
+      defaultValue: false,
+    );
 
     notifyListeners();
   }
@@ -243,6 +254,13 @@ class SettingsProvider extends ChangeNotifier {
     _adBlockEnabled = value;
     notifyListeners();
     await _box.put('adBlockEnabled', value);
+  }
+
+  /// Enables or disables dark mode for the in-app browser.
+  Future<void> setWebviewDarkModeEnabled(bool value) async {
+    _webviewDarkModeEnabled = value;
+    notifyListeners();
+    await _box.put('webviewDarkModeEnabled', value);
   }
 
   /// Adds a search query to the history.
