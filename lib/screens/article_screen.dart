@@ -528,29 +528,15 @@ class _ArticlePageState extends State<_ArticlePage> {
                   leading: _CircleBackButton(
                     onPressed: () => Navigator.pop(context),
                   ),
-                  title: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          widget.item.siteName,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      // Article position indicator
-                      if (widget.totalCount > 1)
-                        Container(
+                  title: widget.totalCount > 1
+                      ? Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
+                            horizontal: 12,
+                            vertical: 5,
                           ),
                           decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.6),
-                            borderRadius: BorderRadius.circular(12),
+                            color: colorScheme.surface.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             l10n.articlePosition(
@@ -558,47 +544,42 @@ class _ArticlePageState extends State<_ArticlePage> {
                               widget.totalCount,
                             ),
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.w600,
                               color: colorScheme.onSurface.withValues(
-                                alpha: 0.6,
+                                alpha: 0.7,
                               ),
                             ),
                           ),
-                        ),
-                    ],
-                  ),
+                        )
+                      : null,
+                  centerTitle: true,
                   actions: [
+                    // Full-text toggle (icon only)
                     if (widget.item.link.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10),
-                        child: _AppBarChip(
-                          icon: _fullTextActive
-                              ? Icons.auto_stories_rounded
-                              : Icons.short_text_rounded,
-                          label: _fullTextActive
-                              ? l10n.fullTextExtraction
-                              : l10n.shortTextMode,
-                          isActive: _fullTextActive,
-                          onTap: _isLoadingFullText ? null : _toggleFullText,
-                        ),
+                      _CircleActionButton(
+                        icon: _fullTextActive
+                            ? Icons.auto_stories_rounded
+                            : Icons.short_text_rounded,
+                        isActive: _fullTextActive,
+                        onPressed: _isLoadingFullText ? null : _toggleFullText,
+                        tooltip: _fullTextActive
+                            ? l10n.fullTextExtraction
+                            : l10n.shortTextMode,
                       ),
-                    const SizedBox(width: 6),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 10),
-                      child: _AppBarChip(
-                        icon: Icons.launch_rounded,
-                        label: l10n.openInBrowser,
-                        onTap: widget.item.link.isNotEmpty
-                            ? () => _openUrl(
-                                context,
-                                widget.item.link,
-                                title: widget.item.title,
-                              )
-                            : null,
-                      ),
+                    // Open in browser (icon only)
+                    _CircleActionButton(
+                      icon: Icons.launch_rounded,
+                      onPressed: widget.item.link.isNotEmpty
+                          ? () => _openUrl(
+                              context,
+                              widget.item.link,
+                              title: widget.item.title,
+                            )
+                          : null,
+                      tooltip: l10n.openInBrowser,
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 4),
                   ],
                   flexibleSpace: hasHero
                       ? FlexibleSpaceBar(
@@ -1100,52 +1081,45 @@ class _ModeBadge extends StatelessWidget {
   }
 }
 
-/// Labeled chip-style action button for the app bar.
-class _AppBarChip extends StatelessWidget {
+/// Circular translucent action button for the SliverAppBar.
+///
+/// Matches the visual style of [_CircleBackButton] for consistency.
+/// Shows a tooltip on long-press so the icon meaning is discoverable.
+class _CircleActionButton extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
+  final VoidCallback? onPressed;
+  final String? tooltip;
   final bool isActive;
 
-  const _AppBarChip({
+  const _CircleActionButton({
     required this.icon,
-    required this.label,
-    this.onTap,
+    this.onPressed,
+    this.tooltip,
     this.isActive = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final color = isActive
-        ? theme.colorScheme.primary
-        : theme.colorScheme.onSurface;
+    final colorScheme = Theme.of(context).colorScheme;
+    final color = isActive ? colorScheme.primary : colorScheme.onSurface;
 
-    return Material(
-      color: isActive
-          ? theme.colorScheme.primary.withValues(alpha: 0.15)
-          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-      borderRadius: BorderRadius.circular(20),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(icon, size: 15, color: color.withValues(alpha: 0.8)),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
-                  color: color.withValues(alpha: 0.8),
-                ),
-              ),
-            ],
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Tooltip(
+        message: tooltip ?? '',
+        child: Material(
+          color: isActive
+              ? colorScheme.primary.withValues(alpha: 0.2)
+              : colorScheme.surface.withValues(alpha: 0.7),
+          shape: const CircleBorder(),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
+            child: SizedBox(
+              width: 36,
+              height: 36,
+              child: Icon(icon, size: 18, color: color),
+            ),
           ),
         ),
       ),
