@@ -381,6 +381,9 @@ class _ArticleScreenState extends State<ArticleScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
     final String dateStr = widget.item.pubDate != null
         ? DateFormat(
             'MMM d, yyyy  h:mm a',
@@ -418,162 +421,233 @@ class _ArticleScreenState extends State<ArticleScreen> {
       case 'system':
       default:
         fontFamily = null;
-        break; // Uses Outfit / AppTheme default
+        break;
     }
 
     // Decide which content to render, then pre-process
     final rawContent =
         _fullTextContent ?? widget.item.content ?? widget.item.description;
     final String displayContent = _preprocessHtml(rawContent);
+    final hasHero =
+        widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.item.siteName, style: const TextStyle(fontSize: 16)),
-        actions: [
-          // Full-text toggle button
-          if (widget.item.link.isNotEmpty)
-            IconButton(
-              icon: Icon(
-                _fullTextActive ? Icons.article : Icons.article_outlined,
-              ),
-              onPressed: _isLoadingFullText ? null : _toggleFullText,
-              tooltip: l10n.fullTextToggle,
+      backgroundColor: colorScheme.surface,
+      body: CustomScrollView(
+        slivers: [
+          // ── Collapsing AppBar with hero image ──────────────────────
+          SliverAppBar(
+            expandedHeight: hasHero ? 280 : 0,
+            pinned: true,
+            stretch: true,
+            leading: _CircleBackButton(onPressed: () => Navigator.pop(context)),
+            title: Text(
+              widget.item.siteName,
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
-          IconButton(
-            icon: const Icon(Icons.open_in_browser),
-            onPressed: () {
-              if (widget.item.link.isNotEmpty) {
-                _openUrl(context, widget.item.link, title: widget.item.title);
-              }
-            },
-            tooltip: l10n.openInBrowser,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Hero cover image
-            if (widget.item.imageUrl != null &&
-                widget.item.imageUrl!.isNotEmpty) ...[
-              CachedNetworkImage(
-                imageUrl: widget.item.imageUrl!,
-                width: double.infinity,
-                height: 250,
-                fit: BoxFit.cover,
-                memCacheWidth: 800,
-                errorWidget: (context, url, error) {
-                  return const SizedBox.shrink();
+            actions: [
+              if (widget.item.link.isNotEmpty)
+                IconButton(
+                  icon: Icon(
+                    _fullTextActive ? Icons.article : Icons.article_outlined,
+                    size: 22,
+                  ),
+                  onPressed: _isLoadingFullText ? null : _toggleFullText,
+                  tooltip: l10n.fullTextToggle,
+                ),
+              IconButton(
+                icon: const Icon(Icons.open_in_browser_rounded, size: 22),
+                onPressed: () {
+                  if (widget.item.link.isNotEmpty) {
+                    _openUrl(
+                      context,
+                      widget.item.link,
+                      title: widget.item.title,
+                    );
+                  }
                 },
+                tooltip: l10n.openInBrowser,
               ),
+              const SizedBox(width: 4),
             ],
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 24.0,
-              ),
+            flexibleSpace: hasHero
+                ? FlexibleSpaceBar(
+                    stretchModes: const [StretchMode.zoomBackground],
+                    background: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        CachedNetworkImage(
+                          imageUrl: widget.item.imageUrl!,
+                          fit: BoxFit.cover,
+                          memCacheWidth: 900,
+                          errorWidget: (_, __, ___) => Container(
+                            color: colorScheme.surfaceContainerHighest,
+                          ),
+                        ),
+                        // Bottom gradient for readability
+                        DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [
+                                Colors.transparent,
+                                colorScheme.surface.withValues(alpha: 0.6),
+                                colorScheme.surface,
+                              ],
+                              stops: const [0.3, 0.75, 1.0],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                : null,
+          ),
+
+          // ── Article content ────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    widget.item.category.toUpperCase(),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      letterSpacing: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    widget.item.title,
-                    style: TextStyle(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w800,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      height: 1.25,
-                    ),
-                  ),
-                  if (dateStr.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      dateStr,
-                      style: TextStyle(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 24),
+                  SizedBox(height: hasHero ? 4 : 20),
 
-                  // Mode indicator badge (always visible)
-                  if (!_isLoadingFullText) ...[
-                    Builder(
-                      builder: (context) {
-                        final isFullText =
-                            _fullTextActive && _fullTextContent != null;
-                        final badgeColor = isFullText
-                            ? Theme.of(context).colorScheme.primary
-                            : Theme.of(context).colorScheme.secondary;
-                        final badgeLabel = isFullText
-                            ? l10n.fullTextExtraction
-                            : l10n.shortTextMode;
-                        final badgeIcon = isFullText
-                            ? Icons.article
-                            : Icons.short_text;
-
-                        return Container(
+                  // Category + Date row
+                  Row(
+                    children: [
+                      if (widget.item.category.isNotEmpty)
+                        Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 10,
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: badgeColor.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(
-                              color: badgeColor.withValues(alpha: 0.3),
+                            color: colorScheme.primary.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            widget.item.category.toUpperCase(),
+                            style: TextStyle(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 11,
+                              letterSpacing: 0.8,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(badgeIcon, size: 14, color: badgeColor),
-                              const SizedBox(width: 6),
-                              Text(
-                                badgeLabel,
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: badgeColor,
-                                ),
+                        ),
+                      if (widget.item.category.isNotEmpty && dateStr.isNotEmpty)
+                        const SizedBox(width: 10),
+                      if (dateStr.isNotEmpty)
+                        Expanded(
+                          child: Text(
+                            dateStr,
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.45,
                               ),
-                            ],
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        );
-                      },
+                        ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Title
+                  Text(
+                    widget.item.title,
+                    style: TextStyle(
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      color: colorScheme.onSurface,
+                      height: 1.25,
+                      letterSpacing: -0.3,
                     ),
-                    const SizedBox(height: 24),
-                  ],
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Source info bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: colorScheme.surfaceContainerHighest.withValues(
+                        alpha: 0.4,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: colorScheme.outlineVariant.withValues(
+                          alpha: 0.15,
+                        ),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.rss_feed_rounded,
+                          size: 16,
+                          color: colorScheme.primary.withValues(alpha: 0.7),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            widget.item.siteName,
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Mode badge
+                        if (!_isLoadingFullText) ...[
+                          _ModeBadge(
+                            isFullText:
+                                _fullTextActive && _fullTextContent != null,
+                            fullTextLabel: l10n.fullTextExtraction,
+                            shortTextLabel: l10n.shortTextMode,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
 
                   // Full-text loading indicator
                   if (_isLoadingFullText) ...[
                     Center(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 32.0),
+                        padding: const EdgeInsets.symmetric(vertical: 40),
                         child: Column(
                           children: [
-                            const CircularProgressIndicator(),
-                            const SizedBox(height: 16),
+                            SizedBox(
+                              width: 28,
+                              height: 28,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: colorScheme.primary,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
                             Text(
                               l10n.fullTextLoading,
                               style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.6),
-                                fontSize: 14,
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
+                                fontSize: 13,
                               ),
                             ),
                           ],
@@ -585,7 +659,6 @@ class _ArticleScreenState extends State<ArticleScreen> {
                     Html(
                       data: displayContent,
                       extensions: [
-                        // Carousel for grouped consecutive images
                         TagExtension(
                           tagsToExtend: {"img-carousel"},
                           builder: (extensionContext) {
@@ -599,7 +672,6 @@ class _ArticleScreenState extends State<ArticleScreen> {
                             return _ImageCarousel(imageUrls: urls);
                           },
                         ),
-                        // Single images
                         TagExtension(
                           tagsToExtend: {"img"},
                           builder: (extensionContext) {
@@ -607,16 +679,14 @@ class _ArticleScreenState extends State<ArticleScreen> {
                                 extensionContext.attributes['src'];
                             if (src == null) return const SizedBox.shrink();
                             return Padding(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 12.0,
-                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
                               child: ClipRRect(
-                                borderRadius: BorderRadius.circular(8),
+                                borderRadius: BorderRadius.circular(10),
                                 child: CachedNetworkImage(
                                   imageUrl: src,
                                   memCacheWidth: 800,
                                   fit: BoxFit.contain,
-                                  errorWidget: (context, url, error) =>
+                                  errorWidget: (_, __, ___) =>
                                       const SizedBox.shrink(),
                                 ),
                               ),
@@ -628,15 +698,13 @@ class _ArticleScreenState extends State<ArticleScreen> {
                         "body": Style(
                           fontSize: FontSize(baseFontSize),
                           fontFamily: fontFamily,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.85),
+                          color: colorScheme.onSurface.withValues(alpha: 0.85),
                           lineHeight: LineHeight(settings.lineSpacing),
                           margin: Margins.zero,
                           padding: HtmlPaddings.zero,
                         ),
                         "a": Style(
-                          color: Theme.of(context).colorScheme.primary,
+                          color: colorScheme.primary,
                           textDecoration: TextDecoration.none,
                         ),
                         "img": Style(
@@ -650,24 +718,12 @@ class _ArticleScreenState extends State<ArticleScreen> {
                         "p": Style(margin: Margins.only(bottom: 12)),
                         "br": Style(margin: Margins.zero),
                         "hr": Style(margin: Margins.only(top: 16, bottom: 16)),
-                        "h1": Style(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        "h2": Style(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        "h3": Style(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        "h4": Style(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        "h5": Style(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                        "h6": Style(
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
+                        "h1": Style(color: colorScheme.onSurface),
+                        "h2": Style(color: colorScheme.onSurface),
+                        "h3": Style(color: colorScheme.onSurface),
+                        "h4": Style(color: colorScheme.onSurface),
+                        "h5": Style(color: colorScheme.onSurface),
+                        "h6": Style(color: colorScheme.onSurface),
                       },
                       onLinkTap: (url, attributes, element) {
                         if (url != null && url.isNotEmpty) {
@@ -677,40 +733,153 @@ class _ArticleScreenState extends State<ArticleScreen> {
                     ),
                   ],
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
 
-                  // "Read on Original Webpage" button — opens in-app browser
-                  Center(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        if (widget.item.link.isNotEmpty) {
-                          _openUrl(
-                            context,
-                            widget.item.link,
-                            title: widget.item.title,
-                          );
-                        }
-                      },
-                      icon: const Icon(Icons.public),
-                      label: Text(l10n.readOnOriginalWebpage),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(
-                          context,
-                        ).colorScheme.onPrimary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 12,
+                  // Bottom action row — "Open Original" button
+                  if (widget.item.link.isNotEmpty) ...[
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: colorScheme.surfaceContainerHighest.withValues(
+                          alpha: 0.35,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: colorScheme.outlineVariant.withValues(
+                            alpha: 0.15,
+                          ),
                         ),
                       ),
+                      child: Column(
+                        children: [
+                          Text(
+                            l10n.readOnOriginalWebpage,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          SizedBox(
+                            width: double.infinity,
+                            child: FilledButton.icon(
+                              onPressed: () => _openUrl(
+                                context,
+                                widget.item.link,
+                                title: widget.item.title,
+                              ),
+                              icon: const Icon(Icons.public_rounded, size: 18),
+                              label: Text(
+                                Uri.tryParse(widget.item.link)?.host ??
+                                    l10n.openInBrowser,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              style: FilledButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 32),
+                  ],
+
+                  const SizedBox(height: 40),
                 ],
               ),
             ),
-          ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Small internal widgets used by ArticleScreen
+// =============================================================================
+
+/// Circular translucent back button for the SliverAppBar.
+class _CircleBackButton extends StatelessWidget {
+  final VoidCallback onPressed;
+  const _CircleBackButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(8),
+      child: Material(
+        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onPressed,
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(
+              Icons.arrow_back_rounded,
+              size: 20,
+              color: Theme.of(context).colorScheme.onSurface,
+            ),
+          ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact full-text / short-text mode badge.
+class _ModeBadge extends StatelessWidget {
+  final bool isFullText;
+  final String fullTextLabel;
+  final String shortTextLabel;
+
+  const _ModeBadge({
+    required this.isFullText,
+    required this.fullTextLabel,
+    required this.shortTextLabel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = isFullText
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.secondary;
+    final label = isFullText ? fullTextLabel : shortTextLabel;
+    final icon = isFullText ? Icons.article_rounded : Icons.short_text_rounded;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10.5,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }
