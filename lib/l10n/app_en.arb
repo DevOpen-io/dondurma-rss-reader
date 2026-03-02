@@ -249,6 +249,13 @@
   "searchHistoryCleared": "Search history cleared.",
   "recentSearches": "Recent Searches",
 
+  "browserMode": "Browser Mode",
+  "browserModeDesc": "Choose how links open",
+  "browserBuiltin": "Built-in Browser",
+  "browserExternal": "External Browser",
+  "browserSystem": "System In-App Browser",
+  "browserSystemMobileOnly": "System In-App Browser is only available on mobile devices (Android & iOS)",
+
   "adBlocker": "Ad Blocker",
   "adBlockerDesc": "Block ads and trackers in the in-app browser",
 

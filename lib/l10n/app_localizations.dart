@@ -1136,6 +1136,42 @@ abstract class AppLocalizations {
   /// **'Recent Searches'**
   String get recentSearches;
 
+  /// No description provided for @browserMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Browser Mode'**
+  String get browserMode;
+
+  /// No description provided for @browserModeDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose how links open'**
+  String get browserModeDesc;
+
+  /// No description provided for @browserBuiltin.
+  ///
+  /// In en, this message translates to:
+  /// **'Built-in Browser'**
+  String get browserBuiltin;
+
+  /// No description provided for @browserExternal.
+  ///
+  /// In en, this message translates to:
+  /// **'External Browser'**
+  String get browserExternal;
+
+  /// No description provided for @browserSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System In-App Browser'**
+  String get browserSystem;
+
+  /// No description provided for @browserSystemMobileOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'System In-App Browser is only available on mobile devices (Android & iOS)'**
+  String get browserSystemMobileOnly;
+
   /// No description provided for @adBlocker.
   ///
   /// In en, this message translates to:

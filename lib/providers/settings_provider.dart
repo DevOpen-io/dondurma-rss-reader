@@ -37,6 +37,9 @@ class SettingsProvider extends ChangeNotifier {
   // Webview Dark Mode
   bool _webviewDarkModeEnabled = false;
 
+  // Browser Mode: 'builtin', 'external', 'system'
+  String _browserMode = 'builtin';
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -63,6 +66,8 @@ class SettingsProvider extends ChangeNotifier {
   bool get adBlockEnabled => _adBlockEnabled;
 
   bool get webviewDarkModeEnabled => _webviewDarkModeEnabled;
+
+  String get browserMode => _browserMode;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -150,6 +155,9 @@ class SettingsProvider extends ChangeNotifier {
       'webviewDarkModeEnabled',
       defaultValue: false,
     );
+
+    // Browser Mode
+    _browserMode = _box.get('browserMode', defaultValue: 'builtin');
 
     notifyListeners();
   }
@@ -261,6 +269,13 @@ class SettingsProvider extends ChangeNotifier {
     _webviewDarkModeEnabled = value;
     notifyListeners();
     await _box.put('webviewDarkModeEnabled', value);
+  }
+
+  /// Sets the browser mode: `'builtin'`, `'external'`, or `'system'`.
+  Future<void> setBrowserMode(String mode) async {
+    _browserMode = mode;
+    notifyListeners();
+    await _box.put('browserMode', mode);
   }
 
   /// Adds a search query to the history.

@@ -197,6 +197,13 @@
   "searchHistoryCleared": "Arama geçmişi temizlendi.",
   "recentSearches": "Son Aramalar",
 
+  "browserMode": "Tarayıcı Modu",
+  "browserModeDesc": "Bağlantıların nasıl açılacağını seçin",
+  "browserBuiltin": "Dahili Tarayıcı",
+  "browserExternal": "Harici Tarayıcı",
+  "browserSystem": "Sistem Uygulama İçi Tarayıcı",
+  "browserSystemMobileOnly": "Sistem uygulama içi tarayıcı yalnızca mobil cihazlarda (Android ve iOS) kullanılabilir",
+
   "adBlocker": "Reklam Engelleyici",
   "adBlockerDesc": "Uygulama içi tarayıcıda reklamları ve izleyicileri engelle",
 

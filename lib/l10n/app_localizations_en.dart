@@ -565,6 +565,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentSearches => 'Recent Searches';
 
   @override
+  String get browserMode => 'Browser Mode';
+
+  @override
+  String get browserModeDesc => 'Choose how links open';
+
+  @override
+  String get browserBuiltin => 'Built-in Browser';
+
+  @override
+  String get browserExternal => 'External Browser';
+
+  @override
+  String get browserSystem => 'System In-App Browser';
+
+  @override
+  String get browserSystemMobileOnly =>
+      'System In-App Browser is only available on mobile devices (Android & iOS)';
+
+  @override
   String get adBlocker => 'Ad Blocker';
 
   @override

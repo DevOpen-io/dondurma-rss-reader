@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart'
+    show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
@@ -69,26 +71,136 @@ class SettingsScreen extends StatelessWidget {
 
         // ── Browser ─────────────────────────────────────────────────────
         _SectionTitle(title: l10n.openInBrowser, icon: Icons.public_outlined),
-        _SettingsCard(
-          children: [
-            _SwitchTile(
-              icon: Icons.shield_outlined,
-              title: l10n.adBlocker,
-              subtitle: l10n.adBlockerDesc,
-              value: settings.adBlockEnabled,
-              onChanged: (v) =>
-                  context.read<SettingsProvider>().setAdBlockEnabled(v),
-            ),
-            const _TileDivider(),
-            _SwitchTile(
-              icon: Icons.dark_mode_outlined,
-              title: l10n.webviewDarkMode,
-              subtitle: l10n.webviewDarkModeDesc,
-              value: settings.webviewDarkModeEnabled,
-              onChanged: (v) =>
-                  context.read<SettingsProvider>().setWebviewDarkModeEnabled(v),
-            ),
-          ],
+        Builder(
+          builder: (context) {
+            final isMobile =
+                !kIsWeb &&
+                (defaultTargetPlatform == TargetPlatform.android ||
+                    defaultTargetPlatform == TargetPlatform.iOS);
+
+            // If user had 'system' selected but is now on desktop, show
+            // 'builtin' in the dropdown to avoid a missing-value error.
+            final effectiveMode =
+                (!isMobile && settings.browserMode == 'system')
+                ? 'builtin'
+                : settings.browserMode;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _SettingsCard(
+                  children: [
+                    _DropdownTile<String>(
+                      icon: Icons.open_in_browser_rounded,
+                      title: l10n.browserMode,
+                      subtitle: l10n.browserModeDesc,
+                      value: effectiveMode,
+                      items: [
+                        DropdownMenuItem(
+                          value: 'builtin',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(l10n.browserBuiltin),
+                          ),
+                        ),
+                        DropdownMenuItem(
+                          value: 'external',
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            child: Text(l10n.browserExternal),
+                          ),
+                        ),
+                        if (isMobile)
+                          DropdownMenuItem(
+                            value: 'system',
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Text(l10n.browserSystem),
+                            ),
+                          ),
+                      ],
+                      onChanged: (v) =>
+                          context.read<SettingsProvider>().setBrowserMode(v!),
+                    ),
+                    const _TileDivider(),
+                    // Ad-block & dark mode only apply to the built-in WebView
+                    Opacity(
+                      opacity: effectiveMode == 'builtin' ? 1.0 : 0.4,
+                      child: IgnorePointer(
+                        ignoring: effectiveMode != 'builtin',
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _SwitchTile(
+                              icon: Icons.shield_outlined,
+                              title: l10n.adBlocker,
+                              subtitle: l10n.adBlockerDesc,
+                              value: settings.adBlockEnabled,
+                              onChanged: (v) => context
+                                  .read<SettingsProvider>()
+                                  .setAdBlockEnabled(v),
+                            ),
+                            const _TileDivider(),
+                            _SwitchTile(
+                              icon: Icons.dark_mode_outlined,
+                              title: l10n.webviewDarkMode,
+                              subtitle: l10n.webviewDarkModeDesc,
+                              value: settings.webviewDarkModeEnabled,
+                              onChanged: (v) => context
+                                  .read<SettingsProvider>()
+                                  .setWebviewDarkModeEnabled(v),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                // Info banner — shown only on non-mobile platforms
+                if (!isMobile)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.35,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.15,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              l10n.browserSystemMobileOnly,
+                              style: TextStyle(
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.7,
+                                ),
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            );
+          },
         ),
 
         // ── Display & Readability ───────────────────────────────────────

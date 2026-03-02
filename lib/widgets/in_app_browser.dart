@@ -422,33 +422,57 @@ class _InAppBrowserState extends State<InAppBrowser> {
   }
 }
 
-/// Convenience function to push [InAppBrowser] as a full-screen route.
+/// Convenience function to open a URL based on the user's chosen browser mode.
 ///
-/// On platforms where `webview_flutter` is not available (Windows, Linux, Web)
-/// the URL is opened in the system's default external browser via
-/// [url_launcher] instead.
+/// - `'builtin'` — pushes the custom [InAppBrowser] WebView (with ad-block
+///   and dark mode support). Falls back to external browser on unsupported
+///   platforms.
+/// - `'external'` — opens in the system's default browser via [url_launcher].
+/// - `'system'` — opens in the system's in-app browser overlay
+///   (SFSafariViewController on iOS/macOS, Chrome Custom Tabs on Android)
+///   via [url_launcher] with [LaunchMode.inAppBrowserView]. Falls back to
+///   external browser if the platform doesn't support it.
 Future<void> openInAppBrowser(
   BuildContext context,
   String url, {
   String? title,
   bool adBlockEnabled = true,
+  String browserMode = 'builtin',
 }) async {
-  if (_webViewSupported) {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => InAppBrowser(
-          url: url,
-          title: title,
-          adBlockEnabled: adBlockEnabled,
-        ),
-        fullscreenDialog: true,
-      ),
-    );
-  } else {
-    // Fallback: open in the system's external browser
-    final uri = Uri.tryParse(url);
-    if (uri != null) {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+
+  switch (browserMode) {
+    case 'external':
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    }
+      break;
+
+    case 'system':
+      // Use the platform's native in-app browser (SFSafariViewController /
+      // Chrome Custom Tabs). Falls back to external if unsupported.
+      final launched = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+      if (!launched) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      break;
+
+    case 'builtin':
+    default:
+      if (_webViewSupported) {
+        await Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => InAppBrowser(
+              url: url,
+              title: title,
+              adBlockEnabled: adBlockEnabled,
+            ),
+            fullscreenDialog: true,
+          ),
+        );
+      } else {
+        // Fallback: open in the system's external browser
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+      break;
   }
 }

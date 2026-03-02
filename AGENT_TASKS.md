@@ -33,6 +33,10 @@ This document is a persistent living record for AI coding agents to understand w
 - [x] **Search History**: Improve search usability.
   - [x] Save past search queries locally.
   - [x] Allow clearing search history in settings.
+- [x] **Accessibility Improvements**: Ensure app is usable by everyone.
+  - [x] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
+  - [x] Add High Contrast Mode option in themes.
+  - [x] Respect system "Reduced Motion" settings to disable animations.
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
@@ -55,10 +59,7 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Home Screen Widgets**: Provide quick access from the OS home screen.
   - [ ] Create widget showing latest unread count.
   - [ ] Create widget showing latest article titles from specific feeds.
-- [x] **Accessibility Improvements**: Ensure app is usable by everyone.
-  - [x] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
-  - [x] Add High Contrast Mode option in themes.
-  - [x] Respect system "Reduced Motion" settings to disable animations.
+
 
 ---
 ## 📝 Notes for Agents

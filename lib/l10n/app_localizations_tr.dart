@@ -564,6 +564,25 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recentSearches => 'Son Aramalar';
 
   @override
+  String get browserMode => 'Tarayıcı Modu';
+
+  @override
+  String get browserModeDesc => 'Bağlantıların nasıl açılacağını seçin';
+
+  @override
+  String get browserBuiltin => 'Dahili Tarayıcı';
+
+  @override
+  String get browserExternal => 'Harici Tarayıcı';
+
+  @override
+  String get browserSystem => 'Sistem Uygulama İçi Tarayıcı';
+
+  @override
+  String get browserSystemMobileOnly =>
+      'Sistem uygulama içi tarayıcı yalnızca mobil cihazlarda (Android ve iOS) kullanılabilir';
+
+  @override
   String get adBlocker => 'Reklam Engelleyici';
 
   @override
