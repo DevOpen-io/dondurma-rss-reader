@@ -112,10 +112,30 @@ class _ArticlePageState extends State<_ArticlePage> {
   /// Reading progress (0.0 to 1.0).
   final ValueNotifier<double> _readingProgress = ValueNotifier(0.0);
 
+  // ---------------------------------------------------------------------------
+  // Cached content — avoids re-running expensive HTML preprocessing and
+  // reading-time estimation on every build.
+  // ---------------------------------------------------------------------------
+
+  /// Whether the heavy Html widget is ready to render. Set to `true`
+  /// after the first frame so the route transition animation is not blocked.
+  bool _contentReady = false;
+
+  /// Cached result of [_preprocessHtml] for the current content source.
+  String? _cachedDisplayContent;
+
+  /// Cached reading-time estimate for the current content source.
+  int? _cachedReadingMinutes;
+
   @override
   void initState() {
     super.initState();
+    // Defer heavy content rendering by one frame so the slide-in
+    // transition plays smoothly.
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        setState(() => _contentReady = true);
+      }
       _checkAutoFullText();
     });
   }
@@ -156,6 +176,9 @@ class _ArticlePageState extends State<_ArticlePage> {
 
     setState(() {
       _isLoadingFullText = false;
+      // Invalidate cached content so it's recomputed with the new source.
+      _cachedDisplayContent = null;
+      _cachedReadingMinutes = null;
       if (result != null && result.isNotEmpty) {
         _fullTextContent = result;
         _fullTextFailed = false;
@@ -180,6 +203,9 @@ class _ArticlePageState extends State<_ArticlePage> {
       _isLoadingFullText = false;
       _fullTextContent = null;
       _fullTextFailed = false;
+      // Invalidate cached content so it's recomputed with the original source.
+      _cachedDisplayContent = null;
+      _cachedReadingMinutes = null;
     });
   }
 
@@ -498,15 +524,17 @@ class _ArticlePageState extends State<_ArticlePage> {
         break;
     }
 
-    // Decide which content to render, then pre-process
+    // Decide which content to render, then pre-process (cached)
     final rawContent =
         _fullTextContent ?? widget.item.content ?? widget.item.description;
-    final String displayContent = _preprocessHtml(rawContent);
+    _cachedDisplayContent ??= _preprocessHtml(rawContent);
+    _cachedReadingMinutes ??= _estimateReadingMinutes(rawContent);
+    final String displayContent = _cachedDisplayContent!;
     final hasHero =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
 
     // Estimated reading time
-    final readingMinutes = _estimateReadingMinutes(rawContent);
+    final readingMinutes = _cachedReadingMinutes!;
     final readTimeText = readingMinutes <= 0
         ? l10n.lessThanOneMinRead
         : l10n.estimatedReadTime(readingMinutes);
@@ -768,7 +796,25 @@ class _ArticlePageState extends State<_ArticlePage> {
                         const SizedBox(height: 24),
 
                         // Full-text loading indicator
-                        if (_isLoadingFullText) ...[
+                        if (!_contentReady) ...[
+                          // Lightweight placeholder while the transition
+                          // animation plays — avoids blocking the first frame.
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 32),
+                            child: Center(
+                              child: SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ] else if (_isLoadingFullText) ...[
                           Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 40),

@@ -22,11 +22,31 @@ final appRouter = GoRouter(
     GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
     GoRoute(
       path: '/article',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final extra = state.extra as Map<String, dynamic>;
         final items = extra['items'] as List<FeedItem>;
         final initialIndex = extra['initialIndex'] as int;
-        return ArticleScreen(items: items, initialIndex: initialIndex);
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: ArticleScreen(items: items, initialIndex: initialIndex),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return SlideTransition(
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(
+                      parent: animation,
+                      curve: Curves.easeOutCubic,
+                    ),
+                  ),
+              child: child,
+            );
+          },
+          transitionDuration: const Duration(milliseconds: 350),
+          reverseTransitionDuration: const Duration(milliseconds: 300),
+        );
       },
     ),
     GoRoute(path: '/debug', builder: (context, state) => const DebugScreen()),

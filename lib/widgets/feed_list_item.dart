@@ -199,8 +199,8 @@ class _ArticleCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-            context.read<FeedProvider>().markAsRead(item.id);
-            final allItems = context.read<FeedProvider>().filteredItems;
+            final feedProvider = context.read<FeedProvider>();
+            final allItems = feedProvider.filteredItems;
             final index = allItems.indexWhere((i) => i.id == item.id);
             context.push(
               '/article',
@@ -209,6 +209,9 @@ class _ArticleCard extends StatelessWidget {
                 'initialIndex': index >= 0 ? index : 0,
               },
             );
+            // Mark as read AFTER pushing the route so the feed list
+            // rebuild doesn't block the navigation transition.
+            feedProvider.markAsRead(item.id);
           },
           child: Container(
             decoration: BoxDecoration(
