@@ -37,6 +37,10 @@ This document is a persistent living record for AI coding agents to understand w
   - [x] Ensure all buttons have semantic labels for Screen Readers (VoiceOver/TalkBack).
   - [x] Add High Contrast Mode option in themes.
   - [x] Respect system "Reduced Motion" settings to disable animations.
+- [x] **Developer Utilities**: Improve maintainability.
+  - [x] Hidden debug screen (long press app version).
+  - [x] Display Hive box sizes and background sync status.
+  - [x] Show last sync duration metrics.
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
@@ -106,11 +110,6 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Privacy & Transparency Enhancements**: Improve user trust.
   - [ ] Sync log screen showing last sync time and errors per feed.
   - [ ] Display local storage usage and cached article count.
-
-- [x] **Developer Utilities**: Improve maintainability.
-  - [x] Hidden debug screen (long press app version).
-  - [x] Display Hive box sizes and background sync status.
-  - [x] Show last sync duration metrics.
 
 
 ---
