@@ -39,6 +39,22 @@ class FeedProvider extends ChangeNotifier {
   /// notifications on initial startup.
   bool _hasLoadedOnce = false;
 
+  // ---------------------------------------------------------------------------
+  // Sync metrics (for the debug screen)
+  // ---------------------------------------------------------------------------
+
+  /// Timestamp of the last successful sync completion.
+  DateTime? _lastSyncTime;
+  DateTime? get lastSyncTime => _lastSyncTime;
+
+  /// How long the last sync took.
+  Duration? _lastSyncDuration;
+  Duration? get lastSyncDuration => _lastSyncDuration;
+
+  /// Whether a sync is currently in progress.
+  bool _isSyncing = false;
+  bool get isSyncing => _isSyncing;
+
   // Dependencies that need to be updated via ProxyProvider
   SubscriptionProvider? subscriptionProvider;
   SettingsProvider? settingsProvider;
@@ -435,8 +451,11 @@ class FeedProvider extends ChangeNotifier {
   Future<void> refreshAll() async {
     if (subscriptionProvider == null) return;
 
+    _isSyncing = true;
     _isLoading = true;
     notifyListeners();
+
+    final stopwatch = Stopwatch()..start();
 
     final futures = subscriptionProvider!.subscriptions.map((sub) async {
       try {
@@ -506,6 +525,11 @@ class FeedProvider extends ChangeNotifier {
     if (fetchedAnything) {
       await _saveCachedItems();
     }
+
+    stopwatch.stop();
+    _lastSyncDuration = stopwatch.elapsed;
+    _lastSyncTime = DateTime.now();
+    _isSyncing = false;
   }
 
   // ---------------------------------------------------------------------------

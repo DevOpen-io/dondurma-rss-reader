@@ -287,5 +287,25 @@
   "semanticOpenSearch": "Open search",
   "semanticCloseSearch": "Close search",
   "semanticAddFeed": "Add new feed",
-  "semanticOfflineCached": "Available offline"
+  "semanticOfflineCached": "Available offline",
+
+  "debugScreen": "Debug Console",
+  "debugScreenDesc": "Internal diagnostics and storage metrics",
+  "syncStatus": "Sync Status",
+  "syncActive": "Active",
+  "syncInactive": "Inactive",
+  "syncInProgress": "Syncing…",
+  "lastSyncTime": "Last Sync",
+  "lastSyncDuration": "Sync Duration",
+  "noSyncYet": "No sync yet",
+  "hiveStorage": "Hive Storage",
+  "settingsBoxSize": "Settings Box",
+  "feedsBoxSize": "Feeds Box",
+  "bookmarksBoxSize": "Bookmarks Box",
+  "dataSummary": "Data Summary",
+  "totalArticlesCached": "Cached Articles",
+  "readArticles": "Read Articles",
+  "bookmarkedArticles": "Bookmarked Articles",
+  "subscribedFeeds": "Subscribed Feeds",
+  "backgroundSync": "Background Sync"
 }

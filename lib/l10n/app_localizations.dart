@@ -1315,6 +1315,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Available offline'**
   String get semanticOfflineCached;
+
+  /// No description provided for @debugScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Debug Console'**
+  String get debugScreen;
+
+  /// No description provided for @debugScreenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal diagnostics and storage metrics'**
+  String get debugScreenDesc;
+
+  /// No description provided for @syncStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Status'**
+  String get syncStatus;
+
+  /// No description provided for @syncActive.
+  ///
+  /// In en, this message translates to:
+  /// **'Active'**
+  String get syncActive;
+
+  /// No description provided for @syncInactive.
+  ///
+  /// In en, this message translates to:
+  /// **'Inactive'**
+  String get syncInactive;
+
+  /// No description provided for @syncInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncInProgress;
+
+  /// No description provided for @lastSyncTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Sync'**
+  String get lastSyncTime;
+
+  /// No description provided for @lastSyncDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync Duration'**
+  String get lastSyncDuration;
+
+  /// No description provided for @noSyncYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No sync yet'**
+  String get noSyncYet;
+
+  /// No description provided for @hiveStorage.
+  ///
+  /// In en, this message translates to:
+  /// **'Hive Storage'**
+  String get hiveStorage;
+
+  /// No description provided for @settingsBoxSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings Box'**
+  String get settingsBoxSize;
+
+  /// No description provided for @feedsBoxSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeds Box'**
+  String get feedsBoxSize;
+
+  /// No description provided for @bookmarksBoxSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarks Box'**
+  String get bookmarksBoxSize;
+
+  /// No description provided for @dataSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Data Summary'**
+  String get dataSummary;
+
+  /// No description provided for @totalArticlesCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached Articles'**
+  String get totalArticlesCached;
+
+  /// No description provided for @readArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Read Articles'**
+  String get readArticles;
+
+  /// No description provided for @bookmarkedArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Bookmarked Articles'**
+  String get bookmarkedArticles;
+
+  /// No description provided for @subscribedFeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribed Feeds'**
+  String get subscribedFeeds;
+
+  /// No description provided for @backgroundSync.
+  ///
+  /// In en, this message translates to:
+  /// **'Background Sync'**
+  String get backgroundSync;
 }
 
 class _AppLocalizationsDelegate

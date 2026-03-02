@@ -657,4 +657,61 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get semanticOfflineCached => 'Available offline';
+
+  @override
+  String get debugScreen => 'Debug Console';
+
+  @override
+  String get debugScreenDesc => 'Internal diagnostics and storage metrics';
+
+  @override
+  String get syncStatus => 'Sync Status';
+
+  @override
+  String get syncActive => 'Active';
+
+  @override
+  String get syncInactive => 'Inactive';
+
+  @override
+  String get syncInProgress => 'Syncing…';
+
+  @override
+  String get lastSyncTime => 'Last Sync';
+
+  @override
+  String get lastSyncDuration => 'Sync Duration';
+
+  @override
+  String get noSyncYet => 'No sync yet';
+
+  @override
+  String get hiveStorage => 'Hive Storage';
+
+  @override
+  String get settingsBoxSize => 'Settings Box';
+
+  @override
+  String get feedsBoxSize => 'Feeds Box';
+
+  @override
+  String get bookmarksBoxSize => 'Bookmarks Box';
+
+  @override
+  String get dataSummary => 'Data Summary';
+
+  @override
+  String get totalArticlesCached => 'Cached Articles';
+
+  @override
+  String get readArticles => 'Read Articles';
+
+  @override
+  String get bookmarkedArticles => 'Bookmarked Articles';
+
+  @override
+  String get subscribedFeeds => 'Subscribed Feeds';
+
+  @override
+  String get backgroundSync => 'Background Sync';
 }

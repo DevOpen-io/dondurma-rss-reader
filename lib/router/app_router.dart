@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../screens/home_screen.dart';
 import '../screens/article_screen.dart';
+import '../screens/debug_screen.dart';
 import '../models/feed_item.dart';
 
 /// Navigator key used for programmatic navigation from outside the widget tree
@@ -13,6 +14,7 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 /// Routes:
 /// - `/`        → [HomeScreen] (bottom nav with Feeds / Folders / Bookmarks / Settings)
 /// - `/article` → [ArticleScreen] (expects a [FeedItem] via `state.extra`)
+/// - `/debug`   → [DebugScreen] (hidden developer utilities)
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: '/',
@@ -25,5 +27,6 @@ final appRouter = GoRouter(
         return ArticleScreen(item: item);
       },
     ),
+    GoRoute(path: '/debug', builder: (context, state) => const DebugScreen()),
   ],
 );

@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart'
     show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
@@ -569,15 +570,18 @@ class SettingsScreen extends StatelessWidget {
         _SectionTitle(title: l10n.about, icon: Icons.info_outline_rounded),
         _SettingsCard(
           children: [
-            _ActionTile(
-              icon: Icons.info_outline_rounded,
-              title: l10n.version,
-              subtitle: l10n.versionDesc,
-              trailing: Text(
-                '1.0.0',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                  fontSize: 14,
+            GestureDetector(
+              onLongPress: () => context.push('/debug'),
+              child: _ActionTile(
+                icon: Icons.info_outline_rounded,
+                title: l10n.version,
+                subtitle: l10n.versionDesc,
+                trailing: Text(
+                  '1.0.0',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    fontSize: 14,
+                  ),
                 ),
               ),
             ),

@@ -657,4 +657,61 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semanticOfflineCached => 'Çevrimdışı kullanılabilir';
+
+  @override
+  String get debugScreen => 'Hata Ayıklama Konsolu';
+
+  @override
+  String get debugScreenDesc => 'Dahili tanılama ve depolama metrikleri';
+
+  @override
+  String get syncStatus => 'Senkronizasyon Durumu';
+
+  @override
+  String get syncActive => 'Aktif';
+
+  @override
+  String get syncInactive => 'Pasif';
+
+  @override
+  String get syncInProgress => 'Senkronize ediliyor…';
+
+  @override
+  String get lastSyncTime => 'Son Senkronizasyon';
+
+  @override
+  String get lastSyncDuration => 'Senkronizasyon Süresi';
+
+  @override
+  String get noSyncYet => 'Henüz senkronize edilmedi';
+
+  @override
+  String get hiveStorage => 'Hive Depolama';
+
+  @override
+  String get settingsBoxSize => 'Ayarlar Kutusu';
+
+  @override
+  String get feedsBoxSize => 'Haberler Kutusu';
+
+  @override
+  String get bookmarksBoxSize => 'Yer İşaretleri Kutusu';
+
+  @override
+  String get dataSummary => 'Veri Özeti';
+
+  @override
+  String get totalArticlesCached => 'Önbellekteki Makaleler';
+
+  @override
+  String get readArticles => 'Okunan Makaleler';
+
+  @override
+  String get bookmarkedArticles => 'Yer İşaretli Makaleler';
+
+  @override
+  String get subscribedFeeds => 'Abone Olunan Kaynaklar';
+
+  @override
+  String get backgroundSync => 'Arka Plan Senkronizasyonu';
 }

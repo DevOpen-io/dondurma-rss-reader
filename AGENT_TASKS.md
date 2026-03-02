@@ -59,6 +59,58 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Home Screen Widgets**: Provide quick access from the OS home screen.
   - [ ] Create widget showing latest unread count.
   - [ ] Create widget showing latest article titles from specific feeds.
+- [ ] **Reading Experience Improvements**: Improve comfort and flow while consuming content.
+  - [ ] Swipe left/right to navigate between articles.
+  - [ ] Add reading progress indicator in Article View.
+  - [ ] Show estimated reading time under article title.
+
+- [ ] **Feed Organization Enhancements**: Improve subscription management.
+  - [ ] Pin favorite feeds to top of folder.
+  - [ ] Manual drag-and-drop feed reordering.
+  - [ ] Bulk feed actions (delete, move, toggle notifications).
+  - [ ] Per-folder notification toggle.
+  - [ ] Feed health indicator based on last sync result.
+
+- [ ] **Performance & Data Controls**: Improve efficiency and offline behavior.
+  - [ ] Smart cache cleanup with configurable retention period.
+  - [ ] Manual "Clear Cache" button (without removing subscriptions).
+  - [ ] Low Data Mode (disable images, reduce sync frequency, disable full-text extraction).
+  - [ ] Tap-to-zoom image viewer in Article View.
+
+- [ ] **Notification Improvements**: Expand interaction capabilities.
+  - [ ] Add action buttons (Mark as Read / Open) to notifications.
+  - [ ] App icon unread badge count (where supported).
+  - [ ] Optional per-feed custom notification sounds.
+
+- [ ] **Search & Discovery Enhancements**: Improve content filtering.
+  - [ ] Advanced search filters (date range, specific feed, unread only, bookmarked only).
+  - [ ] Saved searches with quick-access chips.
+  - [ ] Highlight matched search terms inside articles.
+
+- [ ] **Reading Management Enhancements**: Better control over saved content.
+  - [ ] Reading Queue separate from bookmarks.
+  - [ ] Archive system for read items.
+  - [ ] Export bookmarks as JSON / Markdown / HTML.
+
+- [ ] **UI Customization & Visual Improvements**: Improve perceived polish.
+  - [ ] Compact mode for denser feed list layout.
+  - [ ] Toggle to show/hide thumbnails in feed list.
+  - [ ] Accent color customization.
+  - [ ] Skeleton loaders instead of spinners (respect Reduced Motion).
+
+- [ ] **Navigation Improvements**: Reduce friction in daily use.
+  - [ ] Bottom navigation tab reordering.
+  - [ ] Quick jump-to-top floating button.
+  - [ ] Double-tap Home tab to refresh feeds.
+
+- [ ] **Privacy & Transparency Enhancements**: Improve user trust.
+  - [ ] Sync log screen showing last sync time and errors per feed.
+  - [ ] Display local storage usage and cached article count.
+
+- [x] **Developer Utilities**: Improve maintainability.
+  - [x] Hidden debug screen (long press app version).
+  - [x] Display Hive box sizes and background sync status.
+  - [x] Show last sync duration metrics.
 
 
 ---

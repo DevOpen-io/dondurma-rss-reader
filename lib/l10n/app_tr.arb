@@ -230,5 +230,25 @@
   "semanticOpenSearch": "Aramayı aç",
   "semanticCloseSearch": "Aramayı kapat",
   "semanticAddFeed": "Yeni kaynak ekle",
-  "semanticOfflineCached": "Çevrimdışı kullanılabilir"
+  "semanticOfflineCached": "Çevrimdışı kullanılabilir",
+
+  "debugScreen": "Hata Ayıklama Konsolu",
+  "debugScreenDesc": "Dahili tanılama ve depolama metrikleri",
+  "syncStatus": "Senkronizasyon Durumu",
+  "syncActive": "Aktif",
+  "syncInactive": "Pasif",
+  "syncInProgress": "Senkronize ediliyor…",
+  "lastSyncTime": "Son Senkronizasyon",
+  "lastSyncDuration": "Senkronizasyon Süresi",
+  "noSyncYet": "Henüz senkronize edilmedi",
+  "hiveStorage": "Hive Depolama",
+  "settingsBoxSize": "Ayarlar Kutusu",
+  "feedsBoxSize": "Haberler Kutusu",
+  "bookmarksBoxSize": "Yer İşaretleri Kutusu",
+  "dataSummary": "Veri Özeti",
+  "totalArticlesCached": "Önbellekteki Makaleler",
+  "readArticles": "Okunan Makaleler",
+  "bookmarkedArticles": "Yer İşaretli Makaleler",
+  "subscribedFeeds": "Abone Olunan Kaynaklar",
+  "backgroundSync": "Arka Plan Senkronizasyonu"
 }
