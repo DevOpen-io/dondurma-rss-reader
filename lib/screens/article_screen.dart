@@ -447,28 +447,35 @@ class _ArticleScreenState extends State<ArticleScreen> {
             ),
             actions: [
               if (widget.item.link.isNotEmpty)
-                IconButton(
-                  icon: Icon(
-                    _fullTextActive ? Icons.article : Icons.article_outlined,
-                    size: 22,
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: _AppBarChip(
+                    icon: _fullTextActive
+                        ? Icons.auto_stories_rounded
+                        : Icons.short_text_rounded,
+                    label: _fullTextActive
+                        ? l10n.fullTextExtraction
+                        : l10n.shortTextMode,
+                    isActive: _fullTextActive,
+                    onTap: _isLoadingFullText ? null : _toggleFullText,
                   ),
-                  onPressed: _isLoadingFullText ? null : _toggleFullText,
-                  tooltip: l10n.fullTextToggle,
                 ),
-              IconButton(
-                icon: const Icon(Icons.open_in_browser_rounded, size: 22),
-                onPressed: () {
-                  if (widget.item.link.isNotEmpty) {
-                    _openUrl(
-                      context,
-                      widget.item.link,
-                      title: widget.item.title,
-                    );
-                  }
-                },
-                tooltip: l10n.openInBrowser,
+              const SizedBox(width: 6),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                child: _AppBarChip(
+                  icon: Icons.launch_rounded,
+                  label: l10n.openInBrowser,
+                  onTap: widget.item.link.isNotEmpty
+                      ? () => _openUrl(
+                          context,
+                          widget.item.link,
+                          title: widget.item.title,
+                        )
+                      : null,
+                ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: 10),
             ],
             flexibleSpace: hasHero
                 ? FlexibleSpaceBar(
@@ -880,6 +887,62 @@ class _ModeBadge extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Labeled chip-style action button for the app bar.
+///
+/// Shows an icon + text label inside a tinted pill so that
+/// the purpose of the button is immediately obvious.
+class _AppBarChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final bool isActive;
+
+  const _AppBarChip({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.isActive = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = isActive
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface;
+
+    return Material(
+      color: isActive
+          ? theme.colorScheme.primary.withValues(alpha: 0.15)
+          : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      borderRadius: BorderRadius.circular(20),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 15, color: color.withValues(alpha: 0.8)),
+              const SizedBox(width: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600,
+                  color: color.withValues(alpha: 0.8),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
