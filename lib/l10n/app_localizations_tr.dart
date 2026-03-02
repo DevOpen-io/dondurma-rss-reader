@@ -154,6 +154,9 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get feedAlreadyExists => 'Bu kaynak zaten mevcut.';
+
+  @override
   String get categories => 'KATEGORİLER';
 
   @override
@@ -196,6 +199,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get suggestedFeedsWarning =>
       'Uyarı: Bazı RSS kaynakları bozulmuş veya artık çalışmıyor olabilir.';
+
+  @override
+  String get errorLoadingSuggestedFeeds =>
+      'Önerilen kaynaklar yüklenemedi. Lütfen daha sonra tekrar deneyin.';
 
   @override
   String get general => 'Genel';

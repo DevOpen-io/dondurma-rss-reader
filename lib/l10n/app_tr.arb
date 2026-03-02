@@ -53,6 +53,7 @@
   "pleaseEnterName": "Lütfen bir ad girin",
   "saveFeed": "Kaynağı Kaydet",
   "errorAddingFeed": "Kaynak ekleme hatası: {error}",
+  "feedAlreadyExists": "Bu kaynak zaten mevcut.",
 
   "categories": "KATEGORİLER",
   "allNews": "Tüm Haberler",
@@ -68,6 +69,7 @@
   "addSource": "Kaynak Ekle",
   "addedSubscription": "{name} aboneliğinize eklendi!",
   "suggestedFeedsWarning": "Uyarı: Bazı RSS kaynakları bozulmuş veya artık çalışmıyor olabilir.",
+  "errorLoadingSuggestedFeeds": "Önerilen kaynaklar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
 
   "general": "Genel",
   "theme": "Tema",

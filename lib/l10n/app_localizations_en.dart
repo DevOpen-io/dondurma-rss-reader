@@ -153,6 +153,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get feedAlreadyExists => 'Feed already exists.';
+
+  @override
   String get categories => 'CATEGORIES';
 
   @override
@@ -195,6 +198,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get suggestedFeedsWarning =>
       'Warning: Some RSS sources may be broken or no longer work.';
+
+  @override
+  String get errorLoadingSuggestedFeeds =>
+      'Could not load suggested feeds. Please try again later.';
 
   @override
   String get general => 'General';

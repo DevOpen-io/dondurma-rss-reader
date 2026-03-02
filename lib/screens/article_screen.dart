@@ -487,7 +487,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
                           imageUrl: widget.item.imageUrl!,
                           fit: BoxFit.cover,
                           memCacheWidth: 900,
-                          errorWidget: (_, __, ___) => Container(
+                          errorWidget: (_, _, _) => Container(
                             color: colorScheme.surfaceContainerHighest,
                           ),
                         ),
@@ -693,7 +693,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
                                   imageUrl: src,
                                   memCacheWidth: 800,
                                   fit: BoxFit.contain,
-                                  errorWidget: (_, __, ___) =>
+                                  errorWidget: (_, _, _) =>
                                       const SizedBox.shrink(),
                                 ),
                               ),

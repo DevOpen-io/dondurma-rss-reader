@@ -57,6 +57,7 @@ class FeedProvider extends ChangeNotifier {
   /// [notifyListeners] whenever any filter input changes.
   void _invalidateFilterCache() {
     _filteredItemsCache = null;
+    _dateGroupsCache = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -120,6 +121,7 @@ class FeedProvider extends ChangeNotifier {
 
   void _manageCacheTimer() {
     _cacheTimer?.cancel();
+    _cacheTimer = null;
     if (settingsProvider == null) return;
     final interval = settingsProvider!.cacheIntervalSeconds;
     final syncEnabled = settingsProvider!.syncBackground;
@@ -315,38 +317,62 @@ class FeedProvider extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
-  // Date-based section getters
+  // Date-based section getters (single-pass grouping)
   // ---------------------------------------------------------------------------
 
-  static bool _isToday(DateTime? date) {
-    if (date == null) return false;
-    final now = DateTime.now();
-    return date.year == now.year &&
-        date.month == now.month &&
-        date.day == now.day;
-  }
+  /// Cached date-group result to avoid re-computing on every getter call.
+  _DateGroups? _dateGroupsCache;
+  int _dateGroupsCacheHash = -1;
 
-  static bool _isYesterday(DateTime? date) {
-    if (date == null) return false;
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    return date.year == yesterday.year &&
-        date.month == yesterday.month &&
-        date.day == yesterday.day;
+  /// Returns the single-pass date-grouped result for the current visible items.
+  _DateGroups get _dateGroups {
+    final visible = _visibleItems;
+    final hash = Object.hash(
+      visible.length,
+      _filteredItemsCache?.length,
+      _itemRenderLimit,
+    );
+    if (_dateGroupsCache != null && _dateGroupsCacheHash == hash) {
+      return _dateGroupsCache!;
+    }
+
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    final today = <FeedItem>[];
+    final yester = <FeedItem>[];
+    final older = <FeedItem>[];
+
+    for (final item in visible) {
+      final d = item.pubDate;
+      if (d != null &&
+          d.year == now.year &&
+          d.month == now.month &&
+          d.day == now.day) {
+        today.add(item);
+      } else if (d != null &&
+          d.year == yesterday.year &&
+          d.month == yesterday.month &&
+          d.day == yesterday.day) {
+        yester.add(item);
+      } else {
+        older.add(item);
+      }
+    }
+
+    _dateGroupsCache = _DateGroups(today, yester, older);
+    _dateGroupsCacheHash = hash;
+    return _dateGroupsCache!;
   }
 
   /// Items published today, within the current render window.
-  List<FeedItem> get todayItems =>
-      _visibleItems.where((i) => _isToday(i.pubDate)).toList();
+  List<FeedItem> get todayItems => _dateGroups.today;
 
   /// Items published yesterday, within the current render window.
-  List<FeedItem> get yesterdayItems =>
-      _visibleItems.where((i) => _isYesterday(i.pubDate)).toList();
+  List<FeedItem> get yesterdayItems => _dateGroups.yesterday;
 
   /// Items older than yesterday (or with no date), within the current render
   /// window.
-  List<FeedItem> get olderItems => _visibleItems
-      .where((i) => !_isToday(i.pubDate) && !_isYesterday(i.pubDate))
-      .toList();
+  List<FeedItem> get olderItems => _dateGroups.older;
 
   // ---------------------------------------------------------------------------
   // Pagination
@@ -359,12 +385,14 @@ class FeedProvider extends ChangeNotifier {
     if (!hasMoreItems) return;
 
     _isLoadingMore = true;
+    _dateGroupsCache = null;
     notifyListeners();
 
-    // Brief async delay so the loading indicator is visible.
-    Future.delayed(const Duration(milliseconds: 300), () {
+    // Single-frame delay so the spinner is visible without blocking scroll.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _itemRenderLimit += _pageSize;
       _isLoadingMore = false;
+      _dateGroupsCache = null;
       notifyListeners();
     });
   }
@@ -530,7 +558,9 @@ class FeedProvider extends ChangeNotifier {
 
     final itemsToCache = _items.take(limit).toList();
     _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
-    notifyListeners();
+    // No notifyListeners() here — cachedItemIds is only used for badge display
+    // and the next normal rebuild will pick it up, avoiding an unnecessary
+    // full widget tree rebuild during a background write.
 
     final String encodedData = jsonEncode(
       itemsToCache.map((e) => e.toJson()).toList(),
@@ -550,4 +580,13 @@ class FeedProvider extends ChangeNotifier {
     _cacheTimer?.cancel();
     super.dispose();
   }
+}
+
+/// Simple tuple holding the three date-based groups computed in a single pass.
+class _DateGroups {
+  final List<FeedItem> today;
+  final List<FeedItem> yesterday;
+  final List<FeedItem> older;
+
+  const _DateGroups(this.today, this.yesterday, this.older);
 }

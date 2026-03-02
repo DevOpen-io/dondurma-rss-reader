@@ -22,6 +22,7 @@ class ExploreFeedsDialog extends StatefulWidget {
 class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
   List<Map<String, String>> _popularFeeds = [];
   bool _isLoading = true;
+  bool _hasError = false;
   String? _selectedCategory;
 
   @override
@@ -59,6 +60,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
       debugPrint('Error loading suggested feeds: $e');
       setState(() {
         _isLoading = false;
+        _hasError = true;
       });
     }
   }
@@ -113,12 +115,39 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                 ).colorScheme.onSurface.withValues(alpha: 0.1),
               ),
             ],
-            // Feed list
             Flexible(
               child: _isLoading
                   ? const Padding(
                       padding: EdgeInsets.all(32.0),
                       child: Center(child: CircularProgressIndicator()),
+                    )
+                  : _hasError
+                  ? Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.cloud_off_rounded,
+                              size: 48,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.3),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              l10n.errorLoadingSuggestedFeeds,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     )
                   : Builder(
                       builder: (context) {

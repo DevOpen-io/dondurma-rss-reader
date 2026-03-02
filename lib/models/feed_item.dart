@@ -154,10 +154,7 @@ class FeedItem {
   }
 
   /// Maps a saved codepoint back to a `const IconData`.
-  /// This prevents tree-shaking errors in release builds.
-  static IconData _decodeIconData(int? codePoint) {
-    if (codePoint == Icons.rss_feed.codePoint) return Icons.rss_feed;
-    // Fallback icon
-    return Icons.rss_feed;
-  }
+  /// Currently always returns `Icons.rss_feed`. Extend this mapping
+  /// when additional icon types are persisted.
+  static IconData _decodeIconData(int? codePoint) => Icons.rss_feed;
 }

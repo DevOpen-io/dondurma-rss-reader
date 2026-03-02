@@ -223,7 +223,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(const SnackBar(content: Text('Feed already exists.')));
+          ).showSnackBar(SnackBar(content: Text(l10n.feedAlreadyExists)));
           setState(() => _isLoading = false);
         }
       }

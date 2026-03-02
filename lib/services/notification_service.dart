@@ -197,4 +197,9 @@ class NotificationService {
       return currentHour >= start || currentHour < end;
     }
   }
+
+  /// Releases the stream controller. Called during app teardown.
+  void dispose() {
+    _tapController.close();
+  }
 }

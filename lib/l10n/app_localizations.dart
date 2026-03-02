@@ -368,6 +368,12 @@ abstract class AppLocalizations {
   /// **'Error adding feed: {error}'**
   String errorAddingFeed(String error);
 
+  /// No description provided for @feedAlreadyExists.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed already exists.'**
+  String get feedAlreadyExists;
+
   /// No description provided for @categories.
   ///
   /// In en, this message translates to:
@@ -445,6 +451,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Warning: Some RSS sources may be broken or no longer work.'**
   String get suggestedFeedsWarning;
+
+  /// No description provided for @errorLoadingSuggestedFeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load suggested feeds. Please try again later.'**
+  String get errorLoadingSuggestedFeeds;
 
   /// No description provided for @general.
   ///

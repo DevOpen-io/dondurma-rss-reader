@@ -74,6 +74,7 @@
       "error": { "type": "String" }
     }
   },
+  "feedAlreadyExists": "Feed already exists.",
 
   "categories": "CATEGORIES",
   "allNews": "All News",
@@ -99,6 +100,7 @@
     }
   },
   "suggestedFeedsWarning": "Warning: Some RSS sources may be broken or no longer work.",
+  "errorLoadingSuggestedFeeds": "Could not load suggested feeds. Please try again later.",
 
   "general": "General",
   "theme": "Theme",

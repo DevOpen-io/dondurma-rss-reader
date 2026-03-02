@@ -702,7 +702,7 @@ class _SwitchTile extends StatelessWidget {
       trailing: Switch.adaptive(
         value: value,
         onChanged: onChanged,
-        activeColor: theme.colorScheme.primary,
+        activeTrackColor: theme.colorScheme.primary,
       ),
     );
   }

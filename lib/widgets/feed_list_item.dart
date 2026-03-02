@@ -24,23 +24,24 @@ class FeedListItem extends StatefulWidget {
 class _FeedListItemState extends State<FeedListItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _animation;
+  Animation<double>? _snapBackAnimation;
   double _dragExtent = 0.0;
   bool _actionTriggered = false;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    );
-    _animation = Tween<double>(begin: 0, end: 0).animate(_controller)
-      ..addListener(() {
-        setState(() {
-          _dragExtent = _animation.value;
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 250),
+        )..addListener(() {
+          if (_snapBackAnimation != null) {
+            setState(() {
+              _dragExtent = _snapBackAnimation!.value;
+            });
+          }
         });
-      });
   }
 
   @override
@@ -86,7 +87,7 @@ class _FeedListItemState extends State<FeedListItem>
 
     _actionTriggered = false;
 
-    _animation = Tween<double>(
+    _snapBackAnimation = Tween<double>(
       begin: _dragExtent,
       end: 0.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
