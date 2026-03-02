@@ -1429,6 +1429,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Background Sync'**
   String get backgroundSync;
+
+  /// No description provided for @estimatedReadTime.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min read'**
+  String estimatedReadTime(int minutes);
+
+  /// No description provided for @lessThanOneMinRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Less than 1 min read'**
+  String get lessThanOneMinRead;
+
+  /// No description provided for @articlePosition.
+  ///
+  /// In en, this message translates to:
+  /// **'{current} of {total}'**
+  String articlePosition(int current, int total);
+
+  /// No description provided for @semanticNextArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next article'**
+  String get semanticNextArticle;
+
+  /// No description provided for @semanticPreviousArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous article'**
+  String get semanticPreviousArticle;
+
+  /// No description provided for @semanticReadingProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading progress'**
+  String get semanticReadingProgress;
 }
 
 class _AppLocalizationsDelegate

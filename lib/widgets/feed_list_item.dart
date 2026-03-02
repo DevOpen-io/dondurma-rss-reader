@@ -200,7 +200,15 @@ class _ArticleCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           onTap: () {
             context.read<FeedProvider>().markAsRead(item.id);
-            context.push('/article', extra: item);
+            final allItems = context.read<FeedProvider>().filteredItems;
+            final index = allItems.indexWhere((i) => i.id == item.id);
+            context.push(
+              '/article',
+              extra: {
+                'items': allItems,
+                'initialIndex': index >= 0 ? index : 0,
+              },
+            );
           },
           child: Container(
             decoration: BoxDecoration(

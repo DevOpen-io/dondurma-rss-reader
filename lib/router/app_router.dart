@@ -23,8 +23,10 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/article',
       builder: (context, state) {
-        final item = state.extra as FeedItem;
-        return ArticleScreen(item: item);
+        final extra = state.extra as Map<String, dynamic>;
+        final items = extra['items'] as List<FeedItem>;
+        final initialIndex = extra['initialIndex'] as int;
+        return ArticleScreen(items: items, initialIndex: initialIndex);
       },
     ),
     GoRoute(path: '/debug', builder: (context, state) => const DebugScreen()),

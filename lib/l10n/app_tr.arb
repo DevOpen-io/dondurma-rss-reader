@@ -250,5 +250,12 @@
   "readArticles": "Okunan Makaleler",
   "bookmarkedArticles": "Yer İşaretli Makaleler",
   "subscribedFeeds": "Abone Olunan Kaynaklar",
-  "backgroundSync": "Arka Plan Senkronizasyonu"
+  "backgroundSync": "Arka Plan Senkronizasyonu",
+
+  "estimatedReadTime": "{minutes} dk okuma",
+  "lessThanOneMinRead": "1 dk'dan kısa okuma",
+  "articlePosition": "{current} / {total}",
+  "semanticNextArticle": "Sonraki makale",
+  "semanticPreviousArticle": "Önceki makale",
+  "semanticReadingProgress": "Okuma ilerlemesi"
 }

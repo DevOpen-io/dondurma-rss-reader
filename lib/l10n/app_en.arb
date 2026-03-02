@@ -307,5 +307,23 @@
   "readArticles": "Read Articles",
   "bookmarkedArticles": "Bookmarked Articles",
   "subscribedFeeds": "Subscribed Feeds",
-  "backgroundSync": "Background Sync"
+  "backgroundSync": "Background Sync",
+
+  "estimatedReadTime": "{minutes} min read",
+  "@estimatedReadTime": {
+    "placeholders": {
+      "minutes": { "type": "int" }
+    }
+  },
+  "lessThanOneMinRead": "Less than 1 min read",
+  "articlePosition": "{current} of {total}",
+  "@articlePosition": {
+    "placeholders": {
+      "current": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "semanticNextArticle": "Next article",
+  "semanticPreviousArticle": "Previous article",
+  "semanticReadingProgress": "Reading progress"
 }

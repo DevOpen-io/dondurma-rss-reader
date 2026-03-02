@@ -41,6 +41,10 @@ This document is a persistent living record for AI coding agents to understand w
   - [x] Hidden debug screen (long press app version).
   - [x] Display Hive box sizes and background sync status.
   - [x] Show last sync duration metrics.
+- [x] **Reading Experience Improvements**: Improve comfort and flow while consuming content.
+  - [x] Swipe left/right to navigate between articles.
+  - [x] Add reading progress indicator in Article View.
+  - [x] Show estimated reading time under article title.
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
@@ -63,10 +67,6 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **Home Screen Widgets**: Provide quick access from the OS home screen.
   - [ ] Create widget showing latest unread count.
   - [ ] Create widget showing latest article titles from specific feeds.
-- [ ] **Reading Experience Improvements**: Improve comfort and flow while consuming content.
-  - [ ] Swipe left/right to navigate between articles.
-  - [ ] Add reading progress indicator in Article View.
-  - [ ] Show estimated reading time under article title.
 
 - [ ] **Feed Organization Enhancements**: Improve subscription management.
   - [ ] Pin favorite feeds to top of folder.

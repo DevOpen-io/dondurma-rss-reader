@@ -97,6 +97,10 @@ class FeedProvider extends ChangeNotifier {
   /// Whether there are more items beyond the current render window.
   bool get hasMoreItems => _itemRenderLimit < _filteredItems.length;
 
+  /// The full filtered article list (with read/bookmark states applied).
+  /// Used by the article screen for swipe navigation between articles.
+  List<FeedItem> get filteredItems => _filteredItems;
+
   // ---------------------------------------------------------------------------
   // Hive box accessor
   // ---------------------------------------------------------------------------

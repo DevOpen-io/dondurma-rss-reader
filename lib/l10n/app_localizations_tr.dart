@@ -714,4 +714,26 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get backgroundSync => 'Arka Plan Senkronizasyonu';
+
+  @override
+  String estimatedReadTime(int minutes) {
+    return '$minutes dk okuma';
+  }
+
+  @override
+  String get lessThanOneMinRead => '1 dk\'dan kısa okuma';
+
+  @override
+  String articlePosition(int current, int total) {
+    return '$current / $total';
+  }
+
+  @override
+  String get semanticNextArticle => 'Sonraki makale';
+
+  @override
+  String get semanticPreviousArticle => 'Önceki makale';
+
+  @override
+  String get semanticReadingProgress => 'Okuma ilerlemesi';
 }

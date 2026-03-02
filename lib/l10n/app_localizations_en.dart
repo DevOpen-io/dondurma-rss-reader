@@ -714,4 +714,26 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get backgroundSync => 'Background Sync';
+
+  @override
+  String estimatedReadTime(int minutes) {
+    return '$minutes min read';
+  }
+
+  @override
+  String get lessThanOneMinRead => 'Less than 1 min read';
+
+  @override
+  String articlePosition(int current, int total) {
+    return '$current of $total';
+  }
+
+  @override
+  String get semanticNextArticle => 'Next article';
+
+  @override
+  String get semanticPreviousArticle => 'Previous article';
+
+  @override
+  String get semanticReadingProgress => 'Reading progress';
 }
