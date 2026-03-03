@@ -448,54 +448,59 @@ class _ArticlePageState extends State<_ArticlePage> {
                         const SizedBox(height: 16),
 
                         // Source info bar
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: colorScheme.outlineVariant.withValues(
-                                alpha: 0.15,
+                        GestureDetector(
+                          onTap: provider.isLoadingFullText
+                              ? null
+                              : provider.toggleFullText,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest
+                                  .withValues(alpha: 0.4),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: colorScheme.outlineVariant.withValues(
+                                  alpha: 0.15,
+                                ),
                               ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.rss_feed_rounded,
-                                size: 16,
-                                color: colorScheme.primary.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  widget.item.siteName,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.7,
-                                    ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.rss_feed_rounded,
+                                  size: 16,
+                                  color: colorScheme.primary.withValues(
+                                    alpha: 0.7,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
-                              ),
-                              if (!provider.isLoadingFullText) ...[
-                                _ModeBadge(
-                                  isFullText:
-                                      provider.fullTextActive &&
-                                      provider.fullTextContent != null,
-                                  fullTextLabel: l10n.fullTextExtraction,
-                                  shortTextLabel: l10n.shortTextMode,
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    widget.item.siteName,
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600,
+                                      color: colorScheme.onSurface.withValues(
+                                        alpha: 0.7,
+                                      ),
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
                                 ),
+                                if (!provider.isLoadingFullText) ...[
+                                  _ModeBadge(
+                                    isFullText:
+                                        provider.fullTextActive &&
+                                        provider.fullTextContent != null,
+                                    fullTextLabel: l10n.fullTextExtraction,
+                                    shortTextLabel: l10n.shortTextMode,
+                                  ),
+                                ],
                               ],
-                            ],
+                            ),
                           ),
                         ),
 
