@@ -183,12 +183,28 @@ class ArticlePageProvider extends ChangeNotifier {
     final body = doc.body;
     if (body == null) return htmlContent;
 
+    _stripInlineStyles(body);
     _removeAdContent(body);
     _removeEmptyElements(body);
     _deduplicateImages(body);
     _groupConsecutiveImages(body);
 
     return body.innerHtml;
+  }
+
+  // ----------- Inline style stripping -----------
+
+  /// Removes inline `style`, `color`, `bgcolor`, `face`, and `size` attributes
+  /// from every element so that the app's theme and user font settings are
+  /// always respected, regardless of what the RSS source embeds.
+  void _stripInlineStyles(html_dom.Element parent) {
+    for (final el in parent.querySelectorAll('*')) {
+      el.attributes.remove('style');
+      el.attributes.remove('color');
+      el.attributes.remove('bgcolor');
+      el.attributes.remove('face');
+      el.attributes.remove('size');
+    }
   }
 
   // ----------- Ad / Promo removal -----------
