@@ -3,21 +3,20 @@ import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:html/parser.dart' as html_parser;
-import 'package:html/dom.dart' as html_dom;
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
+import '../providers/article_page_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../services/full_text_extraction_service.dart';
 import '../widgets/in_app_browser.dart';
 
 /// Full-screen article viewer with swipe navigation between articles.
 ///
 /// Wraps individual article pages in a [PageView] so users can swipe
 /// left/right to navigate between articles. Each page independently
-/// manages its own scroll state, full-text extraction, and reading progress.
+/// manages its own scroll state, full-text extraction, and reading progress
+/// via a scoped [ArticlePageProvider].
 class ArticleScreen extends StatefulWidget {
   final List<FeedItem> items;
   final int initialIndex;
@@ -60,11 +59,14 @@ class _ArticleScreenState extends State<ArticleScreen> {
         context.read<FeedProvider>().markAsRead(widget.items[index].id);
       },
       itemBuilder: (context, index) {
-        return _ArticlePage(
-          item: widget.items[index],
-          currentIndex: index,
-          totalCount: widget.items.length,
-          isActive: index == _currentIndex,
+        return ChangeNotifierProvider(
+          create: (_) => ArticlePageProvider(item: widget.items[index]),
+          child: _ArticlePage(
+            item: widget.items[index],
+            currentIndex: index,
+            totalCount: widget.items.length,
+            isActive: index == _currentIndex,
+          ),
         );
       },
     );
@@ -73,7 +75,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
 // =============================================================================
 // Individual article page — self-contained with its own scroll, full-text,
-// reading progress, and estimated reading time.
+// reading progress, and estimated reading time via ArticlePageProvider.
 // =============================================================================
 
 class _ArticlePage extends StatefulWidget {
@@ -94,39 +96,6 @@ class _ArticlePage extends StatefulWidget {
 }
 
 class _ArticlePageState extends State<_ArticlePage> {
-  final FullTextExtractionService _extractionService =
-      FullTextExtractionService();
-
-  /// Whether full-text mode is active (either via per-feed default or manual).
-  bool _fullTextActive = false;
-
-  /// Whether a full-text fetch is currently in progress.
-  bool _isLoadingFullText = false;
-
-  /// The extracted full-text HTML, if successfully fetched.
-  String? _fullTextContent;
-
-  /// Whether the extraction was attempted and failed.
-  bool _fullTextFailed = false;
-
-  /// Reading progress (0.0 to 1.0).
-  final ValueNotifier<double> _readingProgress = ValueNotifier(0.0);
-
-  // ---------------------------------------------------------------------------
-  // Cached content — avoids re-running expensive HTML preprocessing and
-  // reading-time estimation on every build.
-  // ---------------------------------------------------------------------------
-
-  /// Whether the heavy Html widget is ready to render. Set to `true`
-  /// after the first frame so the route transition animation is not blocked.
-  bool _contentReady = false;
-
-  /// Cached result of [_preprocessHtml] for the current content source.
-  String? _cachedDisplayContent;
-
-  /// Cached reading-time estimate for the current content source.
-  int? _cachedReadingMinutes;
-
   @override
   void initState() {
     super.initState();
@@ -134,86 +103,34 @@ class _ArticlePageState extends State<_ArticlePage> {
     // transition plays smoothly.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        setState(() => _contentReady = true);
+        final provider = context.read<ArticlePageProvider>();
+        provider.setContentReady();
+        // Listen for full-text failure to show a snackbar.
+        provider.addListener(_onProviderChanged);
+        provider.checkAutoFullText(context.read<SubscriptionProvider>());
       }
-      _checkAutoFullText();
     });
   }
 
   @override
   void dispose() {
-    _readingProgress.dispose();
+    // Remove listener safely — provider may already be disposed if the
+    // ChangeNotifierProvider was unmounted first.
+    try {
+      context.read<ArticlePageProvider>().removeListener(_onProviderChanged);
+    } catch (_) {
+      // Provider already disposed — nothing to clean up.
+    }
     super.dispose();
   }
 
-  // ---------------------------------------------------------------------------
-  // Full-text extraction
-  // ---------------------------------------------------------------------------
-
-  void _checkAutoFullText() {
-    final subProvider = context.read<SubscriptionProvider>();
-    final sub = subProvider.subscriptions.where(
-      (s) => s.url == widget.item.feedUrl,
-    );
-    if (sub.isNotEmpty && sub.first.fullTextEnabled) {
-      _activateFullText();
-    }
-  }
-
-  Future<void> _activateFullText() async {
-    if (widget.item.link.isEmpty) return;
-
-    setState(() {
-      _fullTextActive = true;
-      _isLoadingFullText = true;
-      _fullTextFailed = false;
-      _fullTextContent = null;
-    });
-
-    final result = await _extractionService.extractFullText(widget.item.link);
-
-    if (!mounted) return;
-
-    setState(() {
-      _isLoadingFullText = false;
-      // Invalidate cached content so it's recomputed with the new source.
-      _cachedDisplayContent = null;
-      _cachedReadingMinutes = null;
-      if (result != null && result.isNotEmpty) {
-        _fullTextContent = result;
-        _fullTextFailed = false;
-      } else {
-        _fullTextFailed = true;
-        _fullTextActive = false;
-        _fullTextContent = null;
-      }
-    });
-
-    if (_fullTextFailed && mounted) {
+  void _onProviderChanged() {
+    final provider = context.read<ArticlePageProvider>();
+    if (provider.fullTextFailed && mounted) {
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.fullTextFailed)));
-    }
-  }
-
-  void _deactivateFullText() {
-    setState(() {
-      _fullTextActive = false;
-      _isLoadingFullText = false;
-      _fullTextContent = null;
-      _fullTextFailed = false;
-      // Invalidate cached content so it's recomputed with the original source.
-      _cachedDisplayContent = null;
-      _cachedReadingMinutes = null;
-    });
-  }
-
-  void _toggleFullText() {
-    if (_fullTextActive) {
-      _deactivateFullText();
-    } else {
-      _activateFullText();
     }
   }
 
@@ -249,231 +166,6 @@ class _ArticlePageState extends State<_ArticlePage> {
   }
 
   // ---------------------------------------------------------------------------
-  // Estimated reading time
-  // ---------------------------------------------------------------------------
-
-  /// Strips HTML tags and counts words to estimate reading time.
-  int _estimateReadingMinutes(String htmlContent) {
-    final doc = html_parser.parse(htmlContent);
-    final text = doc.body?.text ?? '';
-    final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
-    // Average reading speed: ~200 words/minute
-    return (words / 200).ceil();
-  }
-
-  // ---------------------------------------------------------------------------
-  // HTML pre-processing
-  // ---------------------------------------------------------------------------
-
-  String _preprocessHtml(String htmlContent) {
-    final doc = html_parser.parse(htmlContent);
-    final body = doc.body;
-    if (body == null) return htmlContent;
-
-    _removeAdContent(body);
-    _removeEmptyElements(body);
-    _deduplicateImages(body);
-    _groupConsecutiveImages(body);
-
-    return body.innerHtml;
-  }
-
-  // ----------- Ad / Promo removal -----------
-
-  static final _adTextPattern = RegExp(
-    r'(advertiser\s*content|native\s*ad|sponsored\s*content|'
-    r'advertisement|promoted\s*content|follow\s*topics\s*and\s*authors|'
-    r'read\s*our\s*recent\s*profile)',
-    caseSensitive: false,
-  );
-
-  static final _adClassPattern = RegExp(
-    r'(ad-|advert|sponsor|promo|native-ad|outbrain|taboola|'
-    r'related-stories|rec-rail|story-rail|commerce|affiliate)',
-    caseSensitive: false,
-  );
-
-  void _removeAdContent(html_dom.Element parent) {
-    for (final el in parent.querySelectorAll('*').toList()) {
-      final cls = el.attributes['class'] ?? '';
-      final id = el.attributes['id'] ?? '';
-      if (_adClassPattern.hasMatch(cls) || _adClassPattern.hasMatch(id)) {
-        el.remove();
-        continue;
-      }
-
-      final tag = el.localName ?? '';
-      if ({
-        'div',
-        'section',
-        'aside',
-        'p',
-        'span',
-        'h2',
-        'h3',
-        'h4',
-      }.contains(tag)) {
-        final text = el.text.trim();
-        if (text.length < 200 && _adTextPattern.hasMatch(text)) {
-          el.remove();
-        }
-      }
-    }
-  }
-
-  // ----------- Empty element removal -----------
-
-  void _removeEmptyElements(html_dom.Element parent) {
-    const emptyTags = {'div', 'p', 'section', 'span', 'figure', 'figcaption'};
-    for (final child in parent.children.toList()) {
-      _removeEmptyElements(child);
-
-      if (emptyTags.contains(child.localName) &&
-          child.text.trim().isEmpty &&
-          child.children.isEmpty &&
-          child.getElementsByTagName('img').isEmpty) {
-        child.remove();
-        continue;
-      }
-
-      if (child.localName == 'li' &&
-          child.text.trim().isEmpty &&
-          child.getElementsByTagName('img').isEmpty) {
-        child.remove();
-        continue;
-      }
-    }
-
-    for (final child in parent.children.toList()) {
-      if ((child.localName == 'ul' || child.localName == 'ol') &&
-          child.children.isEmpty) {
-        child.remove();
-      }
-    }
-  }
-
-  // ----------- Image deduplication -----------
-
-  void _deduplicateImages(html_dom.Element parent) {
-    final heroUrl = widget.item.imageUrl ?? '';
-    final seen = <String>{};
-    if (heroUrl.isNotEmpty) {
-      seen.add(_normalizeImageUrl(heroUrl));
-    }
-
-    for (final img in parent.getElementsByTagName('img').toList()) {
-      final src = img.attributes['src'] ?? '';
-      if (src.isEmpty) {
-        img.remove();
-        continue;
-      }
-      final norm = _normalizeImageUrl(src);
-      if (seen.contains(norm)) {
-        _removeImageAndWrapper(img);
-      } else {
-        seen.add(norm);
-      }
-    }
-  }
-
-  String _normalizeImageUrl(String url) {
-    var u = url.split('?').first;
-    u = u.replaceFirst(RegExp(r'^https?://'), '');
-    u = u.replaceAll(RegExp(r'-\d+x\d+(?=\.\w+$)'), '');
-    return u.toLowerCase();
-  }
-
-  void _removeImageAndWrapper(html_dom.Element img) {
-    final parent = img.parent;
-    if (parent != null &&
-        {'figure', 'picture', 'a'}.contains(parent.localName) &&
-        parent.getElementsByTagName('img').length <= 1) {
-      parent.remove();
-    } else {
-      img.remove();
-    }
-  }
-
-  // ----------- Consecutive-image carousel grouping -----------
-
-  void _groupConsecutiveImages(html_dom.Element parent) {
-    for (final child in parent.children.toList()) {
-      _groupConsecutiveImages(child);
-    }
-
-    final children = parent.nodes.toList();
-    final runs = <List<html_dom.Node>>[];
-    List<html_dom.Node> currentRun = [];
-
-    for (final node in children) {
-      if (_isImageNode(node)) {
-        currentRun.add(node);
-      } else {
-        if (node is html_dom.Text && node.text.trim().isEmpty) {
-          if (currentRun.isNotEmpty) currentRun.add(node);
-          continue;
-        }
-        if (currentRun.length >= 2) runs.add(List.from(currentRun));
-        currentRun = [];
-      }
-    }
-    if (currentRun.length >= 2) runs.add(currentRun);
-
-    for (final run in runs) {
-      final urls = <String>[];
-      for (final node in run) {
-        final url = _extractImageUrl(node);
-        if (url != null && url.isNotEmpty) urls.add(url);
-      }
-      if (urls.length < 2) continue;
-
-      final carousel = html_dom.Element.tag('img-carousel')
-        ..attributes['data-urls'] = urls.join('|');
-
-      run.first.replaceWith(carousel);
-      for (int i = 1; i < run.length; i++) {
-        run[i].remove();
-      }
-    }
-  }
-
-  bool _isImageNode(html_dom.Node node) {
-    if (node is! html_dom.Element) return false;
-    if (node.localName == 'img') return true;
-    if ({'figure', 'picture', 'a', 'div'}.contains(node.localName)) {
-      final imgs = node.getElementsByTagName('img');
-      if (imgs.isNotEmpty) {
-        final nonImgText = node.text.trim();
-        return nonImgText.length < 30;
-      }
-    }
-    return false;
-  }
-
-  String? _extractImageUrl(html_dom.Node node) {
-    if (node is! html_dom.Element) return null;
-    if (node.localName == 'img') return node.attributes['src'];
-    final imgs = node.getElementsByTagName('img');
-    if (imgs.isNotEmpty) return imgs.first.attributes['src'];
-    return null;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Scroll tracking for reading progress
-  // ---------------------------------------------------------------------------
-
-  bool _onScrollNotification(ScrollNotification notification) {
-    if (notification is ScrollUpdateNotification) {
-      final metrics = notification.metrics;
-      if (metrics.maxScrollExtent > 0) {
-        _readingProgress.value = (metrics.pixels / metrics.maxScrollExtent)
-            .clamp(0.0, 1.0);
-      }
-    }
-    return false;
-  }
-
-  // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
 
@@ -481,6 +173,7 @@ class _ArticlePageState extends State<_ArticlePage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settings = context.watch<SettingsProvider>();
+    final provider = context.watch<ArticlePageProvider>();
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -524,17 +217,13 @@ class _ArticlePageState extends State<_ArticlePage> {
         break;
     }
 
-    // Decide which content to render, then pre-process (cached)
-    final rawContent =
-        _fullTextContent ?? widget.item.content ?? widget.item.description;
-    _cachedDisplayContent ??= _preprocessHtml(rawContent);
-    _cachedReadingMinutes ??= _estimateReadingMinutes(rawContent);
-    final String displayContent = _cachedDisplayContent!;
+    // Get content from provider
+    final String displayContent = provider.displayContent;
     final hasHero =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
 
     // Estimated reading time
-    final readingMinutes = _cachedReadingMinutes!;
+    final readingMinutes = provider.readingMinutes;
     final readTimeText = readingMinutes <= 0
         ? l10n.lessThanOneMinRead
         : l10n.estimatedReadTime(readingMinutes);
@@ -545,7 +234,7 @@ class _ArticlePageState extends State<_ArticlePage> {
         children: [
           // ── Article content with scroll tracking ──────────────────────
           NotificationListener<ScrollNotification>(
-            onNotification: _onScrollNotification,
+            onNotification: provider.updateReadingProgress,
             child: CustomScrollView(
               slivers: [
                 // ── Collapsing AppBar with hero image ────────────────────
@@ -586,12 +275,14 @@ class _ArticlePageState extends State<_ArticlePage> {
                     // Full-text toggle (icon only)
                     if (widget.item.link.isNotEmpty)
                       _CircleActionButton(
-                        icon: _fullTextActive
+                        icon: provider.fullTextActive
                             ? Icons.auto_stories_rounded
                             : Icons.short_text_rounded,
-                        isActive: _fullTextActive,
-                        onPressed: _isLoadingFullText ? null : _toggleFullText,
-                        tooltip: _fullTextActive
+                        isActive: provider.fullTextActive,
+                        onPressed: provider.isLoadingFullText
+                            ? null
+                            : provider.toggleFullText,
+                        tooltip: provider.fullTextActive
                             ? l10n.fullTextExtraction
                             : l10n.shortTextMode,
                       ),
@@ -780,11 +471,11 @@ class _ArticlePageState extends State<_ArticlePage> {
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              if (!_isLoadingFullText) ...[
+                              if (!provider.isLoadingFullText) ...[
                                 _ModeBadge(
                                   isFullText:
-                                      _fullTextActive &&
-                                      _fullTextContent != null,
+                                      provider.fullTextActive &&
+                                      provider.fullTextContent != null,
                                   fullTextLabel: l10n.fullTextExtraction,
                                   shortTextLabel: l10n.shortTextMode,
                                 ),
@@ -796,7 +487,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                         const SizedBox(height: 24),
 
                         // Full-text loading indicator
-                        if (!_contentReady) ...[
+                        if (!provider.contentReady) ...[
                           // Lightweight placeholder while the transition
                           // animation plays — avoids blocking the first frame.
                           Padding(
@@ -814,7 +505,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                               ),
                             ),
                           ),
-                        ] else if (_isLoadingFullText) ...[
+                        ] else if (provider.isLoadingFullText) ...[
                           Center(
                             child: Padding(
                               padding: const EdgeInsets.symmetric(vertical: 40),
@@ -1016,7 +707,7 @@ class _ArticlePageState extends State<_ArticlePage> {
             child: SafeArea(
               bottom: false,
               child: ValueListenableBuilder<double>(
-                valueListenable: _readingProgress,
+                valueListenable: provider.readingProgress,
                 builder: (context, progress, _) {
                   if (progress <= 0.01) return const SizedBox.shrink();
                   return Semantics(
