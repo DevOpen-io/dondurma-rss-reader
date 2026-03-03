@@ -395,6 +395,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openInBrowser => 'Open in Browser';
 
   @override
+  String get shareArticle => 'Share Article';
+
+  @override
   String get readOnOriginalWebpage => 'Read on Original Webpage';
 
   @override

@@ -393,6 +393,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get openInBrowser => 'Tarayıcıda Aç';
 
   @override
+  String get shareArticle => 'Makaleyi Paylaş';
+
+  @override
   String get readOnOriginalWebpage => 'Orijinal Web Sitesinde Oku';
 
   @override

@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:share_plus/share_plus.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/article_page_provider.dart';
@@ -298,6 +299,20 @@ class _ArticlePageState extends State<_ArticlePage> {
                           : null,
                       tooltip: l10n.openInBrowser,
                     ),
+                    // Share article
+                    if (widget.item.link.isNotEmpty)
+                      _CircleActionButton(
+                        icon: Icons.share_rounded,
+                        onPressed: () {
+                          SharePlus.instance.share(
+                            ShareParams(
+                              text: widget.item.link,
+                              subject: widget.item.title,
+                            ),
+                          );
+                        },
+                        tooltip: l10n.shareArticle,
+                      ),
                     const SizedBox(width: 4),
                   ],
                   flexibleSpace: hasHero

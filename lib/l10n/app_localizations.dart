@@ -818,6 +818,12 @@ abstract class AppLocalizations {
   /// **'Open in Browser'**
   String get openInBrowser;
 
+  /// No description provided for @shareArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Article'**
+  String get shareArticle;
+
   /// No description provided for @readOnOriginalWebpage.
   ///
   /// In en, this message translates to:
