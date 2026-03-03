@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
@@ -506,52 +507,13 @@ class _ArticlePageState extends State<_ArticlePage> {
 
                         const SizedBox(height: 24),
 
-                        // Full-text loading indicator
-                        if (!provider.contentReady) ...[
-                          // Lightweight placeholder while the transition
-                          // animation plays — avoids blocking the first frame.
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 32),
-                            child: Center(
-                              child: SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.4,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ] else if (provider.isLoadingFullText) ...[
-                          Center(
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 40),
-                              child: Column(
-                                children: [
-                                  SizedBox(
-                                    width: 28,
-                                    height: 28,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.5,
-                                      color: colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 14),
-                                  Text(
-                                    l10n.fullTextLoading,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface.withValues(
-                                        alpha: 0.5,
-                                      ),
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                        // Shimmer skeleton loading indicator
+                        if (!provider.contentReady ||
+                            provider.isLoadingFullText) ...[
+                          _ArticleContentSkeleton(
+                            label: provider.isLoadingFullText
+                                ? l10n.fullTextLoading
+                                : null,
                           ),
                         ] else ...[
                           // Rich HTML content
@@ -605,9 +567,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                               "body": Style(
                                 fontSize: FontSize(baseFontSize),
                                 fontFamily: fontFamily,
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.85,
-                                ),
+                                color: colorScheme.onSurface,
                                 lineHeight: LineHeight(settings.lineSpacing),
                                 margin: Margins.zero,
                                 padding: HtmlPaddings.zero,
@@ -989,6 +949,74 @@ class _ImageCarouselState extends State<_ImageCarousel> {
           ),
         ],
       ),
+    );
+  }
+}
+
+// =============================================================================
+// Skeleton shimmer placeholder for article content loading
+// =============================================================================
+
+/// Shimmer skeleton that mimics the article HTML content layout.
+///
+/// Shows animated placeholder blocks for paragraphs of varying widths
+/// to give the impression of real article text loading.
+/// Optionally displays a [label] (e.g. "Loading full text…") below the
+/// skeleton.
+class _ArticleContentSkeleton extends StatelessWidget {
+  const _ArticleContentSkeleton({this.label});
+
+  final String? label;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Skeletonizer(
+          effect: ShimmerEffect(
+            baseColor: colorScheme.onSurface.withValues(alpha: 0.08),
+            highlightColor: colorScheme.onSurface.withValues(alpha: 0.15),
+            duration: const Duration(milliseconds: 1500),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Fake paragraph block 1
+              Bone.multiText(lines: 4, fontSize: 16),
+              const SizedBox(height: 20),
+              // Fake paragraph block 2
+              Bone.multiText(lines: 3, fontSize: 16),
+              const SizedBox(height: 20),
+              // Fake image placeholder
+              Bone(
+                height: 180,
+                width: double.infinity,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              const SizedBox(height: 20),
+              // Fake paragraph block 3
+              Bone.multiText(lines: 5, fontSize: 16),
+              const SizedBox(height: 20),
+              // Fake paragraph block 4
+              Bone.multiText(lines: 3, fontSize: 16),
+            ],
+          ),
+        ),
+        if (label != null) ...[
+          const SizedBox(height: 16),
+          Center(
+            child: Text(
+              label!,
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 13,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

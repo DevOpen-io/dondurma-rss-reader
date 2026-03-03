@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
@@ -155,7 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
         await provider.refreshAll();
       },
       child: provider.isLoading && provider.items.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? const _FeedListSkeleton()
           : Column(
               children: [
                 // ── Offline banner ─────────────────────────────────────────
@@ -598,10 +599,7 @@ class _PaginationFooter extends StatelessWidget {
     if (provider.items.isEmpty) return const SizedBox.shrink();
 
     if (provider.isLoadingMore) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24.0),
-        child: Center(child: CircularProgressIndicator()),
-      );
+      return const _FeedListSkeleton(itemCount: 2, showHeader: false);
     }
 
     if (provider.hasMoreItems) {
@@ -636,5 +634,93 @@ class _PaginationFooter extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+}
+
+// =============================================================================
+// Skeleton shimmer placeholder for feed list loading states
+// =============================================================================
+
+/// Shimmer skeleton that mimics the [FeedListItem] card layout.
+///
+/// Used both for initial full-screen loading and for pagination "load more"
+/// states. [itemCount] controls how many fake cards are shown and
+/// [showHeader] adds a fake section header above the cards.
+class _FeedListSkeleton extends StatelessWidget {
+  const _FeedListSkeleton({this.itemCount = 6, this.showHeader = true});
+
+  final int itemCount;
+  final bool showHeader;
+
+  @override
+  Widget build(BuildContext context) {
+    return Skeletonizer(
+      effect: ShimmerEffect(
+        baseColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.08),
+        highlightColor: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.15),
+        duration: const Duration(milliseconds: 1500),
+      ),
+      child: ListView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        shrinkWrap: true,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: itemCount + (showHeader ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (showHeader && index == 0) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              child: Bone.text(words: 1, fontSize: 12),
+            );
+          }
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Container(
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Icon skeleton
+                  Bone.square(
+                    size: 44,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  const SizedBox(width: 12),
+                  // Content skeleton
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: Bone.text(words: 2, fontSize: 12)),
+                            const SizedBox(width: 8),
+                            Bone.text(words: 1, fontSize: 11),
+                          ],
+                        ),
+                        const SizedBox(height: 5),
+                        Bone.multiText(lines: 2, fontSize: 15),
+                        const SizedBox(height: 4),
+                        Bone.text(words: 5, fontSize: 13),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  // Action skeleton
+                  Bone.icon(size: 20),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 }
