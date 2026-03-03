@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_subscription.dart';
 
-/// Manages the user's RSS feed subscriptions and categories.
+/// Manages the user's RSS feed subscriptions, categories, and their icons.
 ///
 /// Supports add/remove/rename/move operations for both feeds and categories.
 /// Categories come from two sources — feed subscriptions and standalone
 /// custom categories — merged in the [categories] getter.
 ///
-/// Persists data in the `'feeds'` Hive box under `'subscriptions'` and
-/// `'custom_categories'` keys.
+/// Persists data in the `'feeds'` Hive box under `'subscriptions'`,
+/// `'custom_categories'`, and `'category_icons'` keys.
 class SubscriptionProvider extends ChangeNotifier {
   List<FeedSubscription> _subscriptions = [];
   Set<String> _customCategories = {};
+  Map<String, String> _categoryIcons = {};
 
   /// All current feed subscriptions.
   List<FeedSubscription> get subscriptions => _subscriptions;
@@ -36,16 +37,24 @@ class SubscriptionProvider extends ChangeNotifier {
   // Persistence helpers
   // ---------------------------------------------------------------------------
 
-  /// Loads subscriptions and custom categories synchronously from Hive.
+  /// Loads subscriptions, custom categories, and icons synchronously from Hive.
   /// Hive box reads are in-memory, so no await needed.
   void _loadSubscriptions() {
     final String? data = _box.get('subscriptions');
+    bool iconsNeedSave = false;
 
     // Load custom categories
     final String? catData = _box.get('custom_categories');
     if (catData != null) {
       final List<dynamic> catList = jsonDecode(catData);
       _customCategories = catList.cast<String>().toSet();
+    }
+
+    // Load category icons
+    final String? iconsData = _box.get('category_icons');
+    if (iconsData != null) {
+      final Map<String, dynamic> iconsMap = jsonDecode(iconsData);
+      _categoryIcons = iconsMap.cast<String, String>();
     }
 
     if (data != null) {
@@ -74,6 +83,18 @@ class SubscriptionProvider extends ChangeNotifier {
       ];
       _saveSubscriptions();
     }
+
+    // Ensure all categories have an assigned icon map
+    for (var category in categories) {
+      if (!_categoryIcons.containsKey(category)) {
+        _assignDefaultIcon(category);
+        iconsNeedSave = true;
+      }
+    }
+
+    if (iconsNeedSave) {
+      _saveCategoryIcons();
+    }
     notifyListeners();
   }
 
@@ -89,9 +110,32 @@ class SubscriptionProvider extends ChangeNotifier {
     await _box.put('custom_categories', data);
   }
 
+  Future<void> _saveCategoryIcons() async {
+    final String data = jsonEncode(_categoryIcons);
+    await _box.put('category_icons', data);
+  }
+
+  void _assignDefaultIcon(String category) {
+    _categoryIcons[category] = '📁';
+  }
+
   // ---------------------------------------------------------------------------
   // Category operations
   // ---------------------------------------------------------------------------
+
+  String getCategoryIcon(String category) {
+    if (!_categoryIcons.containsKey(category)) {
+      _assignDefaultIcon(category);
+      _saveCategoryIcons();
+    }
+    return _categoryIcons[category] ?? '📁';
+  }
+
+  Future<void> setCategoryIcon(String category, String icon) async {
+    _categoryIcons[category] = icon;
+    await _saveCategoryIcons();
+    notifyListeners();
+  }
 
   /// Adds a new empty category/folder. Returns `false` if it already exists.
   Future<bool> addCategory(String name) async {
@@ -99,7 +143,9 @@ class SubscriptionProvider extends ChangeNotifier {
       return false;
     }
     _customCategories.add(name);
+    _assignDefaultIcon(name);
     await _saveCustomCategories();
+    await _saveCategoryIcons();
     notifyListeners();
     return true;
   }
@@ -119,6 +165,17 @@ class SubscriptionProvider extends ChangeNotifier {
       await _saveCustomCategories();
       changed = true;
     }
+
+    // Move icon mapping
+    if (_categoryIcons.containsKey(oldCategory)) {
+      _categoryIcons[newCategory] = _categoryIcons[oldCategory]!;
+      _categoryIcons.remove(oldCategory);
+      await _saveCategoryIcons();
+    } else if (changed) {
+      _assignDefaultIcon(newCategory);
+      await _saveCategoryIcons();
+    }
+
     if (changed) {
       await _saveSubscriptions();
       notifyListeners();
@@ -138,6 +195,12 @@ class SubscriptionProvider extends ChangeNotifier {
       await _saveCustomCategories();
       changed = true;
     }
+
+    if (_categoryIcons.containsKey(category)) {
+      _categoryIcons.remove(category);
+      await _saveCategoryIcons();
+    }
+
     if (changed) {
       notifyListeners();
     }
@@ -154,6 +217,13 @@ class SubscriptionProvider extends ChangeNotifier {
       _subscriptions.add(
         FeedSubscription(url: url, name: name, category: category),
       );
+
+      // Ensure category has an icon
+      if (!_categoryIcons.containsKey(category)) {
+        _assignDefaultIcon(category);
+        await _saveCategoryIcons();
+      }
+
       await _saveSubscriptions();
       notifyListeners();
       return true;
@@ -175,6 +245,12 @@ class SubscriptionProvider extends ChangeNotifier {
       _subscriptions[index] = _subscriptions[index].copyWith(
         category: newCategory,
       );
+
+      if (!_categoryIcons.containsKey(newCategory)) {
+        _assignDefaultIcon(newCategory);
+        await _saveCategoryIcons();
+      }
+
       await _saveSubscriptions();
       notifyListeners();
     }
@@ -227,12 +303,22 @@ class SubscriptionProvider extends ChangeNotifier {
   /// exists. Returns the number of newly added feeds.
   Future<int> importFeeds(List<FeedSubscription> feeds) async {
     int added = 0;
+    bool newIcons = false;
     for (final feed in feeds) {
       if (!_subscriptions.any((s) => s.url == feed.url)) {
         _subscriptions.add(feed);
         added++;
+        if (!_categoryIcons.containsKey(feed.category)) {
+          _assignDefaultIcon(feed.category);
+          newIcons = true;
+        }
       }
     }
+
+    if (newIcons) {
+      await _saveCategoryIcons();
+    }
+
     if (added > 0) {
       await _saveSubscriptions();
       notifyListeners();

@@ -124,6 +124,100 @@ class FoldersScreen extends StatelessWidget {
     );
   }
 
+  void _showEmojiPicker(BuildContext context, String categoryName) {
+    // List of common emojis to pick from
+    final List<String> emojis = [
+      '📁',
+      '📚',
+      '📰',
+      '🎮',
+      '💡',
+      '🔥',
+      '✨',
+      '🌟',
+      '📱',
+      '💻',
+      '🎬',
+      '🎵',
+      '⚽️',
+      '🍳',
+      '✈️',
+      '🎨',
+      '💼',
+      '📈',
+      '🔬',
+      '🌿',
+      '🤖',
+      '🚗',
+      '🐱',
+      '🐶',
+      '🍕',
+      '☕',
+      '❤️',
+      '🌎',
+      '🚀',
+      '📷',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (bottomSheetContext) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'Select Icon for $categoryName',
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+              Flexible(
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  itemCount: emojis.length,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    crossAxisSpacing: 10,
+                    mainAxisSpacing: 10,
+                  ),
+                  itemBuilder: (context, index) {
+                    final emoji = emojis[index];
+                    return InkWell(
+                      onTap: () {
+                        context.read<SubscriptionProvider>().setCategoryIcon(
+                          categoryName,
+                          emoji,
+                        );
+                        Navigator.pop(bottomSheetContext);
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Center(
+                        child: Text(
+                          emoji,
+                          style: const TextStyle(fontSize: 28),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
     final l10n = AppLocalizations.of(context);
     final TextEditingController feedNameController = TextEditingController(
@@ -335,11 +429,9 @@ class FoldersScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final category = allCategories[index];
                 return ListTile(
-                  leading: Icon(
-                    Icons.folder_open,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.8),
+                  leading: Text(
+                    subscriptionProvider.getCategoryIcon(category),
+                    style: const TextStyle(fontSize: 20),
                   ),
                   title: Text(category),
                   onTap: () {
@@ -435,6 +527,9 @@ class FoldersScreen extends StatelessWidget {
           itemBuilder: (context, index) {
             final categoryName = sortedCategoryNames[index];
             final subs = categoryFeeds[categoryName]!;
+            final String categoryIcon = subscriptionProvider.getCategoryIcon(
+              categoryName,
+            );
 
             return Card(
               margin: const EdgeInsets.symmetric(
@@ -444,11 +539,47 @@ class FoldersScreen extends StatelessWidget {
               child: ExpansionTile(
                 shape: const Border(),
                 collapsedShape: const Border(),
-                leading: Icon(
-                  Icons.folder_open,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.primary.withValues(alpha: 0.8),
+                leading: Tooltip(
+                  message: 'Change Icon',
+                  child: InkWell(
+                    onTap: () => _showEmojiPicker(context, categoryName),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6.0,
+                        vertical: 4.0,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .surfaceContainerHighest
+                            .withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.outline.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            categoryIcon,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.edit,
+                            size: 12,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ),
                 title: Row(
                   children: [

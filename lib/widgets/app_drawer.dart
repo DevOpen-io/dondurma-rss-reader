@@ -83,7 +83,7 @@ class AppDrawer extends StatelessWidget {
                         .toList();
 
                     return _buildExpandableCategoryItem(
-                      icon: Icons.folder,
+                      emojiIcon: subscriptionProvider.getCategoryIcon(category),
                       title: category,
                       feedSources: feedSources,
                       provider: provider,
@@ -101,7 +101,9 @@ class AppDrawer extends StatelessWidget {
                   if (categories.contains('Uncategorized')) ...[
                     _buildSectionHeader(context, l10n.uncategorized),
                     _buildExpandableCategoryItem(
-                      icon: Icons.rss_feed,
+                      emojiIcon: subscriptionProvider.getCategoryIcon(
+                        'Uncategorized',
+                      ),
                       title: l10n.randomBlogs,
                       feedSources: subscriptionProvider.subscriptions
                           .where((sub) => sub.category == 'Uncategorized')
@@ -164,7 +166,7 @@ class AppDrawer extends StatelessWidget {
 
   /// Expandable category tile with child feed items.
   Widget _buildExpandableCategoryItem({
-    required IconData icon,
+    required String emojiIcon,
     required String title,
     required List<FeedSubscription> feedSources,
     required FeedProvider provider,
@@ -201,15 +203,7 @@ class AppDrawer extends StatelessWidget {
           collapsedBackgroundColor: isCategorySelected
               ? colorScheme.primary.withAlpha((0.1 * 255).toInt())
               : Colors.transparent,
-          leading: Icon(
-            icon,
-            color: isCategorySelected
-                ? colorScheme.primary
-                : Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.5),
-            size: 22,
-          ),
+          leading: Text(emojiIcon, style: const TextStyle(fontSize: 20)),
           title: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {
