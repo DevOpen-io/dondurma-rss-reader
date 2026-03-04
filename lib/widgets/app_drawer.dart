@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
@@ -151,6 +152,57 @@ class AppDrawer extends StatelessWidget {
                   const SizedBox(height: 20),
                 ],
               ),
+            ),
+            Divider(
+              color: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.1),
+              height: 1,
+            ),
+            AboutListTile(
+              icon: const Icon(Icons.info_outline),
+              applicationName: l10n.appName,
+              applicationIcon: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset('assets/logo.ico', width: 48, height: 48),
+              ),
+              applicationVersion: '1.0.0',
+              aboutBoxChildren: [
+                const SizedBox(height: 16),
+                InkWell(
+                  onTap: () {
+                    launchUrl(
+                      Uri.parse('https://github.com/user/ice_cream_rss_reader'),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4.0,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.code,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'GitHub',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+              child: const Text('About App'),
             ),
           ],
         ),
