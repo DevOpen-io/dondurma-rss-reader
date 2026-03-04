@@ -82,6 +82,10 @@
   "randomBlogs": "Random Blogs",
   "discover": "DISCOVER",
   "suggestedFeeds": "Suggested Feeds",
+  "whatIsRss": "What is RSS?",
+  "@whatIsRss": {
+    "description": "Label for the What is RSS section in the drawer"
+  },
 
   "all": "All",
   "noFeedsInThisCategory": "No feeds in this category",

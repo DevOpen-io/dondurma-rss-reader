@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../models/feed_subscription.dart';
+import '../screens/what_is_rss_page.dart';
 import 'explore_feeds_dialog.dart';
 
 /// Navigation drawer showing category-based feed filtering.
@@ -130,6 +131,19 @@ class AppDrawer extends StatelessWidget {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (_) => const ExploreFeedsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.help_outline,
+                    title: l10n.whatIsRss,
+                    context: context,
+                    onTap: () {
+                      context.pop();
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const WhatIsRssPage(),
                         ),
                       );
                     },

@@ -174,6 +174,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get suggestedFeeds => 'Suggested Feeds';
 
   @override
+  String get whatIsRss => 'What is RSS?';
+
+  @override
   String get all => 'All';
 
   @override

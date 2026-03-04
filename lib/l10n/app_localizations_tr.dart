@@ -175,6 +175,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get suggestedFeeds => 'Önerilen Kaynaklar';
 
   @override
+  String get whatIsRss => 'RSS Nedir?';
+
+  @override
   String get all => 'Tümü';
 
   @override

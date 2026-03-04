@@ -410,6 +410,12 @@ abstract class AppLocalizations {
   /// **'Suggested Feeds'**
   String get suggestedFeeds;
 
+  /// Label for the What is RSS section in the drawer
+  ///
+  /// In en, this message translates to:
+  /// **'What is RSS?'**
+  String get whatIsRss;
+
   /// No description provided for @all.
   ///
   /// In en, this message translates to:
