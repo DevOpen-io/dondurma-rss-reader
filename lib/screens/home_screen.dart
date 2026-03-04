@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
+import '../providers/subscription_provider.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/add_feed_dialog.dart';
@@ -42,6 +43,63 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _showAddFeedDialog() {
     showDialog(context: context, builder: (context) => const AddFeedDialog());
+  }
+
+  void _showAddFolderDialog() {
+    final l10n = AppLocalizations.of(context);
+    final nameController = TextEditingController();
+    String? errorText;
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          title: Text(l10n.addFolder),
+          content: TextField(
+            controller: nameController,
+            autofocus: true,
+            decoration: InputDecoration(
+              labelText: l10n.newFolderName,
+              border: const OutlineInputBorder(),
+              errorText: errorText,
+            ),
+            onChanged: (_) {
+              if (errorText != null) {
+                setDialogState(() => errorText = null);
+              }
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: Text(l10n.cancel),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final name = nameController.text.trim();
+                if (name.isEmpty) {
+                  setDialogState(() {
+                    errorText = l10n.pleaseEnterFolderName;
+                  });
+                  return;
+                }
+                context.read<SubscriptionProvider>().addCategory(name).then((
+                  success,
+                ) {
+                  if (!success && ctx.mounted) {
+                    setDialogState(() {
+                      errorText = l10n.folderAlreadyExists;
+                    });
+                  } else if (ctx.mounted) {
+                    Navigator.of(ctx).pop();
+                  }
+                });
+              },
+              child: Text(l10n.save),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   Widget _buildHomeBody(
@@ -377,41 +435,108 @@ class _HomeScreenState extends State<HomeScreen> {
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),
-      floatingActionButton: _selectedIndex == 0
-          ? FloatingActionButton(
-              onPressed: _showAddFeedDialog,
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              tooltip: l10n.semanticAddFeed,
-              child: const Icon(Icons.add, size: 28),
+      floatingActionButton: _selectedIndex <= 1
+          ? Theme(
+              data: Theme.of(context).copyWith(
+                floatingActionButtonTheme: const FloatingActionButtonThemeData(
+                  sizeConstraints: BoxConstraints.tightFor(
+                    width: 80,
+                    height: 80,
+                  ),
+                ),
+              ),
+              child: FloatingActionButton(
+                onPressed: _selectedIndex == 0
+                    ? _showAddFeedDialog
+                    : _showAddFolderDialog,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Colors.white,
+                tooltip: _selectedIndex == 0
+                    ? l10n.semanticAddFeed
+                    : l10n.addFolder,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _selectedIndex == 0
+                          ? Icons.rss_feed
+                          : Icons.create_new_folder_outlined,
+                      size: 28,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _selectedIndex == 0 ? 'Add Feed' : 'Add Folder',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        height: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             )
           : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.list_outlined),
-            selectedIcon: const Icon(Icons.list),
-            label: l10n.feedsTab,
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 10,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              // Left side: Feeds
+              Expanded(
+                child: _NavBarItem(
+                  icon: _selectedIndex == 0 ? Icons.list : Icons.list_outlined,
+                  label: l10n.feedsTab,
+                  selected: _selectedIndex == 0,
+                  onTap: () => _onItemTapped(0),
+                ),
+              ),
+              // Left side: Folders
+              Expanded(
+                child: _NavBarItem(
+                  icon: _selectedIndex == 1
+                      ? Icons.folder
+                      : Icons.folder_outlined,
+                  label: l10n.foldersTab,
+                  selected: _selectedIndex == 1,
+                  onTap: () => _onItemTapped(1),
+                ),
+              ),
+              // Center gap for FAB
+              const SizedBox(width: 94),
+              // Right side: Bookmarks
+              Expanded(
+                child: _NavBarItem(
+                  icon: _selectedIndex == 2
+                      ? Icons.bookmark
+                      : Icons.bookmark_border,
+                  label: l10n.bookmarksTab,
+                  selected: _selectedIndex == 2,
+                  onTap: () => _onItemTapped(2),
+                ),
+              ),
+              // Right side: Settings
+              Expanded(
+                child: _NavBarItem(
+                  icon: _selectedIndex == 3
+                      ? Icons.settings
+                      : Icons.settings_outlined,
+                  label: l10n.settingsTab,
+                  selected: _selectedIndex == 3,
+                  onTap: () => _onItemTapped(3),
+                ),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.folder_outlined),
-            selectedIcon: const Icon(Icons.folder),
-            label: l10n.foldersTab,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.bookmark_border),
-            selectedIcon: const Icon(Icons.bookmark),
-            label: l10n.bookmarksTab,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.settings_outlined),
-            selectedIcon: const Icon(Icons.settings),
-            label: l10n.settingsTab,
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -455,6 +580,52 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// A single navigation bar item used inside the custom [BottomAppBar].
+class _NavBarItem extends StatelessWidget {
+  const _NavBarItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected
+        ? Theme.of(context).colorScheme.primary
+        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 24),
+            if (selected) ...[
+              const SizedBox(height: 2),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

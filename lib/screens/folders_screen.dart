@@ -15,69 +15,6 @@ import '../widgets/keyword_input_dialog.dart';
 class FoldersScreen extends StatelessWidget {
   const FoldersScreen({super.key});
 
-  void _showAddCategoryDialog(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final TextEditingController nameController = TextEditingController();
-    String? errorText;
-
-    showDialog(
-      context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(l10n.addFolder),
-              content: TextField(
-                controller: nameController,
-                decoration: InputDecoration(
-                  labelText: l10n.newFolderName,
-                  border: const OutlineInputBorder(),
-                  errorText: errorText,
-                ),
-                autofocus: true,
-                onChanged: (_) {
-                  if (errorText != null) {
-                    setDialogState(() {
-                      errorText = null;
-                    });
-                  }
-                },
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(l10n.cancel),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final name = nameController.text.trim();
-                    if (name.isEmpty) {
-                      setDialogState(() {
-                        errorText = l10n.pleaseEnterFolderName;
-                      });
-                      return;
-                    }
-                    final provider = context.read<SubscriptionProvider>();
-                    provider.addCategory(name).then((success) {
-                      if (!success && context.mounted) {
-                        setDialogState(() {
-                          errorText = l10n.folderAlreadyExists;
-                        });
-                      } else if (context.mounted) {
-                        context.pop();
-                      }
-                    });
-                  },
-                  child: Text(l10n.save),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-  }
-
   void _showEditCategoryDialog(BuildContext context, String currentCategory) {
     final l10n = AppLocalizations.of(context);
     final TextEditingController nameController = TextEditingController(
@@ -493,274 +430,232 @@ class FoldersScreen extends StatelessWidget {
     final sortedCategoryNames = categoryFeeds.keys.toList()..sort();
 
     if (sortedCategoryNames.isEmpty) {
-      return Stack(
-        children: [
-          Center(
-            child: Text(
-              l10n.noFolders,
-              style: TextStyle(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
+      return Center(
+        child: Text(
+          l10n.noFolders,
+          style: TextStyle(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
-          Positioned(
-            bottom: 16,
-            right: 16,
-            child: FloatingActionButton(
-              onPressed: () => _showAddCategoryDialog(context),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-              child: const Icon(Icons.create_new_folder, size: 28),
-            ),
-          ),
-        ],
+        ),
       );
     }
 
-    return Stack(
-      children: [
-        ScrollablePositionedList.builder(
-          padding: const EdgeInsets.symmetric(vertical: 8.0),
-          itemCount: sortedCategoryNames.length,
-          itemBuilder: (context, index) {
-            final categoryName = sortedCategoryNames[index];
-            final subs = categoryFeeds[categoryName]!;
-            final String categoryIcon = subscriptionProvider.getCategoryIcon(
-              categoryName,
-            );
+    return ScrollablePositionedList.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      itemCount: sortedCategoryNames.length,
+      itemBuilder: (context, index) {
+        final categoryName = sortedCategoryNames[index];
+        final subs = categoryFeeds[categoryName]!;
+        final String categoryIcon = subscriptionProvider.getCategoryIcon(
+          categoryName,
+        );
 
-            return Card(
-              margin: const EdgeInsets.symmetric(
-                horizontal: 16.0,
-                vertical: 8.0,
-              ),
-              child: ExpansionTile(
-                shape: const Border(),
-                collapsedShape: const Border(),
-                leading: Tooltip(
-                  message: 'Change Icon',
-                  child: InkWell(
-                    onTap: () => _showEmojiPicker(context, categoryName),
+        return Card(
+          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: ExpansionTile(
+            shape: const Border(),
+            collapsedShape: const Border(),
+            leading: Tooltip(
+              message: 'Change Icon',
+              child: InkWell(
+                onTap: () => _showEmojiPicker(context, categoryName),
+                borderRadius: BorderRadius.circular(8),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6.0,
+                    vertical: 4.0,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest
+                        .withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(8),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6.0,
-                        vertical: 4.0,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest
-                            .withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.outline.withValues(alpha: 0.2),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            categoryIcon,
-                            style: const TextStyle(fontSize: 20),
-                          ),
-                          const SizedBox(width: 4),
-                          Icon(
-                            Icons.edit,
-                            size: 12,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
-                        ],
-                      ),
+                    border: Border.all(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.outline.withValues(alpha: 0.2),
                     ),
                   ),
-                ),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        categoryName,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.delete_outline,
-                        size: 20,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.error.withValues(alpha: 0.8),
-                      ),
-                      onPressed: () => _showDeleteCategoryConfirmation(
-                        context,
-                        categoryName,
-                        subs.length,
-                      ),
-                      tooltip: l10n.deleteFolder,
-                    ),
-                    IconButton(
-                      icon: Icon(
-                        Icons.edit,
-                        size: 20,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
-                      ),
-                      onPressed: () =>
-                          _showEditCategoryDialog(context, categoryName),
-                      tooltip: l10n.renameFolder,
-                    ),
-                  ],
-                ),
-                children: subs.map((sub) {
-                  return Column(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      Divider(
-                        height: 1,
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.1),
+                      Text(categoryIcon, style: const TextStyle(fontSize: 20)),
+                      const SizedBox(width: 4),
+                      Icon(
+                        Icons.edit,
+                        size: 12,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
-                      Padding(
-                        padding: const EdgeInsets.only(
-                          left: 48.0,
-                          right: 16.0,
-                          top: 12.0,
-                          bottom: 8.0,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            title: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    categoryName,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.delete_outline,
+                    size: 20,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.error.withValues(alpha: 0.8),
+                  ),
+                  onPressed: () => _showDeleteCategoryConfirmation(
+                    context,
+                    categoryName,
+                    subs.length,
+                  ),
+                  tooltip: l10n.deleteFolder,
+                ),
+                IconButton(
+                  icon: Icon(
+                    Icons.edit,
+                    size: 20,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                  onPressed: () =>
+                      _showEditCategoryDialog(context, categoryName),
+                  tooltip: l10n.renameFolder,
+                ),
+              ],
+            ),
+            children: subs.map((sub) {
+              return Column(
+                children: [
+                  Divider(
+                    height: 1,
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.1),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 48.0,
+                      right: 16.0,
+                      top: 12.0,
+                      bottom: 8.0,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          sub.name,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        const SizedBox(height: 4),
+                        Text(
+                          sub.url,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 8),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
                           children: [
-                            Text(
-                              sub.name,
-                              style: const TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
+                            IconButton(
+                              icon: Icon(
+                                sub.notificationsEnabled
+                                    ? Icons.notifications_active_outlined
+                                    : Icons.notifications_off_outlined,
+                                size: 18,
+                                color: sub.notificationsEnabled
+                                    ? Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.7)
+                                    : Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.3),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              onPressed: () {
+                                context
+                                    .read<SubscriptionProvider>()
+                                    .toggleFeedNotifications(sub.url);
+                              },
+                              tooltip: l10n.feedNotifications,
                             ),
-                            const SizedBox(height: 4),
-                            Text(
-                              sub.url,
-                              style: TextStyle(
-                                fontSize: 12,
+                            IconButton(
+                              icon: Icon(
+                                sub.fullTextEnabled
+                                    ? Icons.article
+                                    : Icons.article_outlined,
+                                size: 18,
+                                color: sub.fullTextEnabled
+                                    ? Theme.of(context).colorScheme.primary
+                                          .withValues(alpha: 0.7)
+                                    : Theme.of(context).colorScheme.onSurface
+                                          .withValues(alpha: 0.3),
+                              ),
+                              onPressed: () {
+                                context
+                                    .read<SubscriptionProvider>()
+                                    .toggleFullText(sub.url);
+                              },
+                              tooltip: l10n.fullTextToggle,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.drive_file_move_outline,
+                                size: 18,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.primary.withValues(alpha: 0.7),
+                              ),
+                              onPressed: () =>
+                                  _showMoveFeedDialog(context, sub),
+                              tooltip: l10n.moveToFolder,
+                            ),
+                            IconButton(
+                              icon: Icon(
+                                Icons.edit_outlined,
+                                size: 18,
                                 color: Theme.of(
                                   context,
                                 ).colorScheme.onSurface.withValues(alpha: 0.5),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                              onPressed: () =>
+                                  _showEditSubscriptionDialog(context, sub),
+                              tooltip: l10n.editFeed,
                             ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                IconButton(
-                                  icon: Icon(
-                                    sub.notificationsEnabled
-                                        ? Icons.notifications_active_outlined
-                                        : Icons.notifications_off_outlined,
-                                    size: 18,
-                                    color: sub.notificationsEnabled
-                                        ? Theme.of(context).colorScheme.primary
-                                              .withValues(alpha: 0.7)
-                                        : Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.3),
-                                  ),
-                                  onPressed: () {
-                                    context
-                                        .read<SubscriptionProvider>()
-                                        .toggleFeedNotifications(sub.url);
-                                  },
-                                  tooltip: l10n.feedNotifications,
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    sub.fullTextEnabled
-                                        ? Icons.article
-                                        : Icons.article_outlined,
-                                    size: 18,
-                                    color: sub.fullTextEnabled
-                                        ? Theme.of(context).colorScheme.primary
-                                              .withValues(alpha: 0.7)
-                                        : Theme.of(context)
-                                              .colorScheme
-                                              .onSurface
-                                              .withValues(alpha: 0.3),
-                                  ),
-                                  onPressed: () {
-                                    context
-                                        .read<SubscriptionProvider>()
-                                        .toggleFullText(sub.url);
-                                  },
-                                  tooltip: l10n.fullTextToggle,
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.drive_file_move_outline,
-                                    size: 18,
-                                    color: Theme.of(context).colorScheme.primary
-                                        .withValues(alpha: 0.7),
-                                  ),
-                                  onPressed: () =>
-                                      _showMoveFeedDialog(context, sub),
-                                  tooltip: l10n.moveToFolder,
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.edit_outlined,
-                                    size: 18,
-                                    color: Theme.of(context)
-                                        .colorScheme
-                                        .onSurface
-                                        .withValues(alpha: 0.5),
-                                  ),
-                                  onPressed: () =>
-                                      _showEditSubscriptionDialog(context, sub),
-                                  tooltip: l10n.editFeed,
-                                ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
-                                    color: Theme.of(context).colorScheme.error,
-                                  ),
-                                  onPressed: () =>
-                                      _showDeleteConfirmation(context, sub),
-                                  tooltip: l10n.deleteFeed,
-                                ),
-                              ],
+                            IconButton(
+                              icon: Icon(
+                                Icons.delete_outline,
+                                size: 18,
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                              onPressed: () =>
+                                  _showDeleteConfirmation(context, sub),
+                              tooltip: l10n.deleteFeed,
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            );
-          },
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton(
-            onPressed: () => _showAddCategoryDialog(context),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-            foregroundColor: Colors.white,
-            child: const Icon(Icons.create_new_folder, size: 28),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
