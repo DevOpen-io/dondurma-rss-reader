@@ -1148,6 +1148,36 @@ abstract class AppLocalizations {
   /// **'Recent Searches'**
   String get recentSearches;
 
+  /// No description provided for @factoryReset.
+  ///
+  /// In en, this message translates to:
+  /// **'Factory Reset'**
+  String get factoryReset;
+
+  /// No description provided for @factoryResetDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Erase all data and restore default settings'**
+  String get factoryResetDesc;
+
+  /// No description provided for @factoryResetConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure?'**
+  String get factoryResetConfirmTitle;
+
+  /// No description provided for @factoryResetConfirmDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'This will permanently erase all your feeds, folders, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.'**
+  String get factoryResetConfirmDesc;
+
+  /// No description provided for @factoryResetSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'All data and settings have been erased.'**
+  String get factoryResetSuccess;
+
   /// No description provided for @browserMode.
   ///
   /// In en, this message translates to:

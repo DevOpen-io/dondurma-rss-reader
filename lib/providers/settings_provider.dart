@@ -307,4 +307,10 @@ class SettingsProvider extends ChangeNotifier {
     notifyListeners();
     await _box.put('searchHistory', <String>[]);
   }
+
+  /// Clears all settings and restores default values.
+  Future<void> factoryReset() async {
+    await _box.clear();
+    _loadSettings();
+  }
 }

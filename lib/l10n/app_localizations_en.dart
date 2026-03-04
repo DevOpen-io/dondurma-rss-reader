@@ -571,6 +571,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get recentSearches => 'Recent Searches';
 
   @override
+  String get factoryReset => 'Factory Reset';
+
+  @override
+  String get factoryResetDesc => 'Erase all data and restore default settings';
+
+  @override
+  String get factoryResetConfirmTitle => 'Are you sure?';
+
+  @override
+  String get factoryResetConfirmDesc =>
+      'This will permanently erase all your feeds, folders, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.';
+
+  @override
+  String get factoryResetSuccess => 'All data and settings have been erased.';
+
+  @override
   String get browserMode => 'Browser Mode';
 
   @override

@@ -570,6 +570,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get recentSearches => 'Son Aramalar';
 
   @override
+  String get factoryReset => 'Fabrika Ayarlarına Sıfırla';
+
+  @override
+  String get factoryResetDesc =>
+      'Tüm verileri silin ve varsayılan ayarlara dönün';
+
+  @override
+  String get factoryResetConfirmTitle => 'Emin misiniz?';
+
+  @override
+  String get factoryResetConfirmDesc =>
+      'Bu işlem takip ettiğiniz tüm haber kaynaklarını, klasörleri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.';
+
+  @override
+  String get factoryResetSuccess => 'Tüm veri ve ayarlar silindi.';
+
+  @override
   String get browserMode => 'Tarayıcı Modu';
 
   @override

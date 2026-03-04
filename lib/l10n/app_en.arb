@@ -254,6 +254,12 @@
   "searchHistoryCleared": "Search history cleared.",
   "recentSearches": "Recent Searches",
 
+  "factoryReset": "Factory Reset",
+  "factoryResetDesc": "Erase all data and restore default settings",
+  "factoryResetConfirmTitle": "Are you sure?",
+  "factoryResetConfirmDesc": "This will permanently erase all your feeds, folders, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.",
+  "factoryResetSuccess": "All data and settings have been erased.",
+
   "browserMode": "Browser Mode",
   "browserModeDesc": "Choose how links open",
   "browserBuiltin": "Built-in Browser",

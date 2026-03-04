@@ -77,4 +77,12 @@ class BookmarkProvider extends ChangeNotifier {
   bool isBookmarked(String id) {
     return _bookmarkedItemIds.contains(id);
   }
+
+  /// Clears all bookmarks and resets to default state.
+  Future<void> factoryReset() async {
+    _savedBookmarks.clear();
+    _bookmarkedItemIds.clear();
+    await _box.clear();
+    notifyListeners();
+  }
 }

@@ -603,6 +603,26 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Clears all feed data, caches, and read states, resetting to default.
+  Future<void> factoryReset() async {
+    _items.clear();
+    _selectedCategory = null;
+    _selectedFeedUrl = null;
+    _readItemIds.clear();
+    _cachedItemIds.clear();
+    _searchQuery = '';
+    _showUnreadOnly = false;
+    _itemRenderLimit = _pageSize;
+
+    _lastSyncTime = null;
+    _lastSyncDuration = null;
+    _hasLoadedOnce = false;
+
+    await _box.clear();
+    _invalidateFilterCache();
+    notifyListeners();
+  }
+
   @override
   void dispose() {
     _cacheTimer?.cancel();

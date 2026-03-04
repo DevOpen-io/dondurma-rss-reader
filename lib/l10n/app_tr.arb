@@ -199,6 +199,12 @@
   "searchHistoryCleared": "Arama geçmişi temizlendi.",
   "recentSearches": "Son Aramalar",
 
+  "factoryReset": "Fabrika Ayarlarına Sıfırla",
+  "factoryResetDesc": "Tüm verileri silin ve varsayılan ayarlara dönün",
+  "factoryResetConfirmTitle": "Emin misiniz?",
+  "factoryResetConfirmDesc": "Bu işlem takip ettiğiniz tüm haber kaynaklarını, klasörleri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.",
+  "factoryResetSuccess": "Tüm veri ve ayarlar silindi.",
+
   "browserMode": "Tarayıcı Modu",
   "browserModeDesc": "Bağlantıların nasıl açılacağını seçin",
   "browserBuiltin": "Dahili Tarayıcı",

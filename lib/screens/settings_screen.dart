@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
+import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
@@ -449,6 +450,14 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
+            const _TileDivider(),
+            _ActionTile(
+              icon: Icons.warning_amber_rounded,
+              title: l10n.factoryReset,
+              subtitle: l10n.factoryResetDesc,
+              iconColor: theme.colorScheme.error,
+              onTap: () => _showFactoryResetDialog(context),
+            ),
           ],
         ),
 
@@ -698,6 +707,56 @@ class SettingsScreen extends StatelessWidget {
         onSave: (keywords) =>
             settingsProvider.setGlobalExcludedKeywords(keywords),
         onReset: () => settingsProvider.setGlobalExcludedKeywords([]),
+      ),
+    );
+  }
+
+  void _showFactoryResetDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final theme = Theme.of(context);
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.factoryResetConfirmTitle),
+        content: Text(l10n.factoryResetConfirmDesc),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text(
+              l10n.cancel,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              ),
+            ),
+          ),
+          FilledButton.tonal(
+            onPressed: () async {
+              Navigator.of(context).pop();
+
+              final feeds = context.read<FeedProvider>();
+              final subs = context.read<SubscriptionProvider>();
+              final settings = context.read<SettingsProvider>();
+              final bookmarks = context.read<BookmarkProvider>();
+
+              await bookmarks.factoryReset();
+              await subs.factoryReset();
+              await feeds.factoryReset();
+              await settings.factoryReset();
+
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text(l10n.factoryResetSuccess)),
+                );
+              }
+            },
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.errorContainer,
+              foregroundColor: theme.colorScheme.onErrorContainer,
+            ),
+            child: Text(l10n.factoryReset),
+          ),
+        ],
       ),
     );
   }
