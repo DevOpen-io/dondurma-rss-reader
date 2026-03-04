@@ -615,12 +615,16 @@ class _NavBarItem extends StatelessWidget {
             Icon(icon, color: color, size: 24),
             if (selected) ...[
               const SizedBox(height: 2),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color,
-                  fontWeight: FontWeight.bold,
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
