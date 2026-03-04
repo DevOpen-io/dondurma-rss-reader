@@ -263,7 +263,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: l10n.close,
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
         ),
         title: Text(
           _pageTitle,
@@ -459,7 +459,7 @@ Future<void> openInAppBrowser(
     case 'builtin':
     default:
       if (_webViewSupported) {
-        await Navigator.of(context).push(
+        await Navigator.of(context, rootNavigator: true).push(
           MaterialPageRoute(
             builder: (_) => InAppBrowser(
               url: url,

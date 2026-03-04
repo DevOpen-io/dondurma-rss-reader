@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
@@ -8,18 +7,18 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 
-/// Dialog that displays a curated list of suggested RSS feeds, fetched from
-/// a remote JSON endpoint.
+/// Full-screen page that displays a curated list of suggested RSS feeds,
+/// fetched from a remote JSON endpoint.
 ///
 /// Users can filter by category and subscribe to feeds with a single tap.
-class ExploreFeedsDialog extends StatefulWidget {
-  const ExploreFeedsDialog({super.key});
+class ExploreFeedsPage extends StatefulWidget {
+  const ExploreFeedsPage({super.key});
 
   @override
-  State<ExploreFeedsDialog> createState() => _ExploreFeedsDialogState();
+  State<ExploreFeedsPage> createState() => _ExploreFeedsPageState();
 }
 
-class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
+class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
   List<Map<String, String>> _popularFeeds = [];
   bool _isLoading = true;
   bool _hasError = false;
@@ -68,145 +67,115 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.suggestedFeeds,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(l10n.suggestedFeeds),
+        leading: const BackButton(),
+        bottom: (!_isLoading && _popularFeeds.isNotEmpty)
+            ? PreferredSize(
+                preferredSize: const Size.fromHeight(60),
+                child: Column(
+                  children: [
+                    Divider(
+                      height: 1,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.1),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close),
-                    onPressed: () => context.pop(),
-                  ),
-                ],
-              ),
-            ),
-            Divider(
-              height: 1,
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.1),
-            ),
-            // Category filter chips
-            if (!_isLoading && _popularFeeds.isNotEmpty) ...[
-              _CategoryChipBar(
-                feeds: _popularFeeds,
-                selectedCategory: _selectedCategory,
-                onCategorySelected: (cat) {
-                  setState(() => _selectedCategory = cat);
-                },
-              ),
-              Divider(
-                height: 1,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.1),
-              ),
-            ],
-            Flexible(
-              child: _isLoading
-                  ? const Padding(
-                      padding: EdgeInsets.all(32.0),
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : _hasError
-                  ? Padding(
-                      padding: const EdgeInsets.all(32.0),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.cloud_off_rounded,
-                              size: 48,
-                              color: Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.3),
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              l10n.errorLoadingSuggestedFeeds,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.5),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : Builder(
-                      builder: (context) {
-                        final displayedFeeds = _selectedCategory == null
-                            ? _popularFeeds
-                            : _popularFeeds
-                                  .where(
-                                    (f) => f['category'] == _selectedCategory,
-                                  )
-                                  .toList();
-
-                        if (displayedFeeds.isEmpty) {
-                          return Padding(
-                            padding: const EdgeInsets.all(32.0),
-                            child: Center(
-                              child: Text(l10n.noFeedsInThisCategory),
-                            ),
-                          );
-                        }
-
-                        return ListView.builder(
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16.0,
-                            vertical: 8.0,
-                          ),
-                          itemCount: displayedFeeds.length,
-                          itemBuilder: (context, index) {
-                            return _SuggestedFeedTile(
-                              feed: displayedFeeds[index],
-                              onSubscribe: _showConfirmationDialog,
-                            );
-                          },
-                        );
+                    _CategoryChipBar(
+                      feeds: _popularFeeds,
+                      selectedCategory: _selectedCategory,
+                      onCategorySelected: (cat) {
+                        setState(() => _selectedCategory = cat);
                       },
                     ),
-            ),
-            // Disclaimer
-            Padding(
-              padding: const EdgeInsets.only(
-                bottom: 16.0,
-                left: 16.0,
-                right: 16.0,
-                top: 4.0,
-              ),
-              child: Text(
-                l10n.suggestedFeedsWarning,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.5),
-                  fontStyle: FontStyle.italic,
+                  ],
                 ),
+              )
+            : null,
+      ),
+      body: Column(
+        children: [
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _hasError
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(32.0),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.cloud_off_rounded,
+                            size: 64,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurface.withValues(alpha: 0.3),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            l10n.errorLoadingSuggestedFeeds,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                : Builder(
+                    builder: (context) {
+                      final displayedFeeds = _selectedCategory == null
+                          ? _popularFeeds
+                          : _popularFeeds
+                                .where(
+                                  (f) => f['category'] == _selectedCategory,
+                                )
+                                .toList();
+
+                      if (displayedFeeds.isEmpty) {
+                        return Center(child: Text(l10n.noFeedsInThisCategory));
+                      }
+
+                      return ListView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 12.0,
+                        ),
+                        itemCount: displayedFeeds.length,
+                        itemBuilder: (context, index) {
+                          return _SuggestedFeedTile(
+                            feed: displayedFeeds[index],
+                            onSubscribe: _showConfirmationDialog,
+                          );
+                        },
+                      );
+                    },
+                  ),
+          ),
+          // Disclaimer
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 10.0,
+            ),
+            child: Text(
+              l10n.suggestedFeedsWarning,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontStyle: FontStyle.italic,
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -229,7 +198,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
           content: Text(l10n.addSubscriptionConfirm(name)),
           actions: [
             TextButton(
-              onPressed: () => context.pop(),
+              onPressed: () => Navigator.of(context).pop(),
               child: Text(l10n.cancel),
             ),
             ElevatedButton(
@@ -247,8 +216,7 @@ class _ExploreFeedsDialogState extends State<ExploreFeedsDialog> {
                         parentContext.read<FeedProvider>().refreshAll();
                       }
                     });
-                context.pop(); // Close confirm dialog
-                parentContext.pop(); // Close explore dialog
+                Navigator.of(context).pop(); // Close confirm dialog
 
                 scaffoldMessenger.showSnackBar(
                   SnackBar(

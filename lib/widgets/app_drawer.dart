@@ -127,9 +127,10 @@ class AppDrawer extends StatelessWidget {
                     context: context,
                     onTap: () {
                       context.pop();
-                      showDialog(
-                        context: context,
-                        builder: (context) => const ExploreFeedsDialog(),
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const ExploreFeedsPage(),
+                        ),
                       );
                     },
                   ),
