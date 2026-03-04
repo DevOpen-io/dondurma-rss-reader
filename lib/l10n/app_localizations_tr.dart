@@ -742,4 +742,43 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semanticReadingProgress => 'Okuma ilerlemesi';
+
+  @override
+  String get whatIsRssTitle1 => 'Kişisel Gazeteniz';
+
+  @override
+  String get whatIsRssDesc1 =>
+      'RSS\'i, size özel bir gazete dağıtım sistemi gibi düşünün. Her gün yeni makaleler olup olmadığını kontrol etmek için 10 farklı web sitesini dolaşmak yerine, bu uygulamaya sitenin \"RSS adresini\" verirsiniz.\n\nWeb sitesi yeni bir şey yayınladığında, buradaki akışınıza otomatik olarak ulaşır. Neyi göreceğinize karar veren algoritmalar yok, dikkat dağıtıcı unsurlar yok ve dolup taşan e-posta kutuları yok.';
+
+  @override
+  String get whatIsRssTitle2 => 'Yeni RSS akışları nasıl bulunur?';
+
+  @override
+  String get whatIsRssDesc2 =>
+      'Akışları bulmak tahmin ettiğinizden daha kolaydır. İşte onları bulmanın en yaygın yolları:';
+
+  @override
+  String get whatIsRssMethod1Title => 'Simgeyi Arayın';
+
+  @override
+  String get whatIsRssMethod1Desc =>
+      'Birçok blog ve haber sitesinin ana sayfasında veya alt bilgisinde belirli bir RSS simgesi bulunur.';
+
+  @override
+  String get whatIsRssMethod2Title =>
+      'Sadece Web Sitesi Bağlantısını Yapıştırın';
+
+  @override
+  String get whatIsRssMethod2Desc =>
+      'Çoğu zaman tam RSS bağlantısına bile ihtiyacınız yoktur. Bu uygulamada \'Kaynak Ekle\' düğmesine dokunduğunuzda, normal web sitesi adresini (örn. \'verge.com\' veya \'techcrunch.com\') yapıştırmanız yeterlidir. Uygulama otomatik olarak sizin için gizli RSS akışını bulmaya çalışacaktır!';
+
+  @override
+  String get whatIsRssMethod3Title => 'Önerilen Akışları Kullanın';
+
+  @override
+  String get whatIsRssMethod3Desc =>
+      'Nereden başlayacağınızdan emin değil misiniz? Kategoriye göre ayrılmış özel kürate edilmiş harika içerik listelerine göz atmak için menüdeki \'Önerilen Akışlar\' bölümünü inceleyin.';
+
+  @override
+  String get gotItLetsRead => 'Anladım, hadi okuyalım!';
 }

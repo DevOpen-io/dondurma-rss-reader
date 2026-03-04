@@ -1477,6 +1477,72 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reading progress'**
   String get semanticReadingProgress;
+
+  /// No description provided for @whatIsRssTitle1.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Personal Newspaper'**
+  String get whatIsRssTitle1;
+
+  /// No description provided for @whatIsRssDesc1.
+  ///
+  /// In en, this message translates to:
+  /// **'Think of RSS like a personalized newspaper delivery system. Instead of visiting 10 different websites every day to check for new articles, you just give this app the website\'s \"RSS address\".\n\nWhenever the website publishes something new, it automatically arrives here in your feed. No algorithms deciding what you see, no distractions, and no overflowing email inboxes.'**
+  String get whatIsRssDesc1;
+
+  /// No description provided for @whatIsRssTitle2.
+  ///
+  /// In en, this message translates to:
+  /// **'How to find new RSS feeds?'**
+  String get whatIsRssTitle2;
+
+  /// No description provided for @whatIsRssDesc2.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding feeds is easier than you might think. Here are the most common ways to find them:'**
+  String get whatIsRssDesc2;
+
+  /// No description provided for @whatIsRssMethod1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Look for the Icon'**
+  String get whatIsRssMethod1Title;
+
+  /// No description provided for @whatIsRssMethod1Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Many blogs and news sites have a specific RSS icon on their homepage or in their footer.'**
+  String get whatIsRssMethod1Desc;
+
+  /// No description provided for @whatIsRssMethod2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Just Paste the Website Link'**
+  String get whatIsRssMethod2Title;
+
+  /// No description provided for @whatIsRssMethod2Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Often, you don\'t even need the exact RSS link. When you tap \'Add Feed\' in this app, just paste the regular website address (like \'verge.com\' or \'techcrunch.com\'). The app will automatically try to find the hidden RSS feed for you!'**
+  String get whatIsRssMethod2Desc;
+
+  /// No description provided for @whatIsRssMethod3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Use Suggested Feeds'**
+  String get whatIsRssMethod3Title;
+
+  /// No description provided for @whatIsRssMethod3Desc.
+  ///
+  /// In en, this message translates to:
+  /// **'Not sure where to start? Check out our \'Suggested Feeds\' section in the menu to browse curated lists of great content separated by category.'**
+  String get whatIsRssMethod3Desc;
+
+  /// No description provided for @gotItLetsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Got it, let\'s read!'**
+  String get gotItLetsRead;
 }
 
 class _AppLocalizationsDelegate

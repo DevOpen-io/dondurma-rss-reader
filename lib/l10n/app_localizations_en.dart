@@ -742,4 +742,42 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get semanticReadingProgress => 'Reading progress';
+
+  @override
+  String get whatIsRssTitle1 => 'Your Personal Newspaper';
+
+  @override
+  String get whatIsRssDesc1 =>
+      'Think of RSS like a personalized newspaper delivery system. Instead of visiting 10 different websites every day to check for new articles, you just give this app the website\'s \"RSS address\".\n\nWhenever the website publishes something new, it automatically arrives here in your feed. No algorithms deciding what you see, no distractions, and no overflowing email inboxes.';
+
+  @override
+  String get whatIsRssTitle2 => 'How to find new RSS feeds?';
+
+  @override
+  String get whatIsRssDesc2 =>
+      'Finding feeds is easier than you might think. Here are the most common ways to find them:';
+
+  @override
+  String get whatIsRssMethod1Title => 'Look for the Icon';
+
+  @override
+  String get whatIsRssMethod1Desc =>
+      'Many blogs and news sites have a specific RSS icon on their homepage or in their footer.';
+
+  @override
+  String get whatIsRssMethod2Title => 'Just Paste the Website Link';
+
+  @override
+  String get whatIsRssMethod2Desc =>
+      'Often, you don\'t even need the exact RSS link. When you tap \'Add Feed\' in this app, just paste the regular website address (like \'verge.com\' or \'techcrunch.com\'). The app will automatically try to find the hidden RSS feed for you!';
+
+  @override
+  String get whatIsRssMethod3Title => 'Use Suggested Feeds';
+
+  @override
+  String get whatIsRssMethod3Desc =>
+      'Not sure where to start? Check out our \'Suggested Feeds\' section in the menu to browse curated lists of great content separated by category.';
+
+  @override
+  String get gotItLetsRead => 'Got it, let\'s read!';
 }
