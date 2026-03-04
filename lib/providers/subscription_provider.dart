@@ -78,7 +78,7 @@ class SubscriptionProvider extends ChangeNotifier {
         FeedSubscription(
           url: 'https://news.ycombinator.com/rss',
           name: 'Hacker News',
-          category: 'All News',
+          category: 'Technology',
         ),
       ];
       _saveSubscriptions();
