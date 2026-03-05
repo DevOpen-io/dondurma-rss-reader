@@ -54,7 +54,13 @@ void main() async {
     try {
       final json = jsonDecode(payload) as Map<String, dynamic>;
       final item = FeedItem.fromJson(json);
-      appRouter.push('/article', extra: item);
+      appRouter.push(
+        '/article',
+        extra: {
+          'items': [item],
+          'initialIndex': 0,
+        },
+      );
     } catch (e) {
       debugPrint('Failed to navigate from notification tap: $e');
     }
