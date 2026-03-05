@@ -22,6 +22,12 @@ bool get _webViewSupported {
       platform == TargetPlatform.macOS;
 }
 
+/// Modern Chrome User-Agent to avoid YouTube / Google rejecting the WebView.
+const _kBrowserUserAgent =
+    'Mozilla/5.0 (Linux; Android 13; Pixel 7) '
+    'AppleWebKit/537.36 (KHTML, like Gecko) '
+    'Chrome/122.0.0.0 Mobile Safari/537.36';
+
 /// A full-screen in-app browser page built on WebView.
 ///
 /// Features:
@@ -84,6 +90,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
   void _initStandardController() {
     _standardController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setUserAgent(_kBrowserUserAgent)
       ..setNavigationDelegate(
         NavigationDelegate(
           onPageStarted: (url) {
@@ -205,6 +212,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
       return AdBlockerWebview(
         url: Uri.parse(widget.url),
         shouldBlockAds: true,
+        userAgent: _kBrowserUserAgent,
         adBlockerWebviewController: _adBlockController,
         onLoadStart: (url) {
           if (!mounted) return;
