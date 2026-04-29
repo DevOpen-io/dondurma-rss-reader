@@ -59,16 +59,14 @@ android {
 
     buildTypes {
         release {
-            // 3. Oluşturduğumuz release konfigürasyonunu bağlama
-            signingConfig = signingConfigs.getByName("release")
-
-            // Kod küçültme ve temizleme (Play Store için genelde true önerilir)
-            isMinifyEnabled = false
-            isShrinkResources = false
-            
-            // Warning: when key.properties missing, uses debug keystore
-            if (!keystoreExists) {
-                println("⚠️  NOTICE: Release build using debug keystore (key.properties missing)")
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                // Warning: Using the debug keys for release. This is not recommended for production.
+                println("Warning: Keystore properties are not set properly. Using debug signing config.")
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
