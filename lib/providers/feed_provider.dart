@@ -1,13 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+
 import '../models/feed_item.dart';
 import '../services/feed_service.dart';
 import '../services/notification_service.dart';
-import 'subscription_provider.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
+import 'subscription_provider.dart';
 
 /// Core provider that manages fetching, caching, filtering, and paginated
 /// rendering of RSS/Atom feed items.
@@ -500,7 +502,7 @@ class FeedProvider extends ChangeNotifier {
         if (b.pubDate == null) return -1;
         return b.pubDate!.compareTo(a.pubDate!);
       });
-
+      freshItems.shuffle();
       _items = freshItems;
     } else {
       // Offline: keep existing _items but still ensure bookmarks are present.

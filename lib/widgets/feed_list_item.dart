@@ -1,12 +1,13 @@
+import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter/services.dart';
-import 'package:cached_network_image_ce/cached_network_image.dart';
+
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
-import '../providers/feed_provider.dart';
 import '../providers/bookmark_provider.dart';
+import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 
 /// A single feed article card with swipe-to-read and swipe-to-bookmark gestures.
@@ -317,19 +318,15 @@ class _FeedItemIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Get the category emoji to use as fallback icon
+    // Use category icon as fallback when feed image is missing.
     final subscriptionProvider = context.watch<SubscriptionProvider>();
     final categoryIcon = subscriptionProvider.getCategoryIcon(item.category);
 
     final iconWidget = Center(
-      child: Text(
+      child: Icon(
         categoryIcon,
-        style: TextStyle(
-          fontSize: 22,
-          color: isRead
-              ? item.iconColor.withValues(alpha: 0.4)
-              : item.iconColor,
-        ),
+        size: 22,
+        color: isRead ? item.iconColor.withValues(alpha: 0.4) : item.iconColor,
       ),
     );
 

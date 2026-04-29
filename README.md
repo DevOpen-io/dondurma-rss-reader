@@ -188,7 +188,7 @@ Contributions are welcome! Feel free to submit issues and pull requests.
 
 ## 📄 License
 
-This project is open source. See the repository for license details.
+This project is open source. Privacy policy: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-policy.tr.md).
 
 ---
 
@@ -359,7 +359,7 @@ Katkılarınızı bekliyoruz! Sorun bildirmek ve pull request göndermekten çek
 
 ## 📄 Lisans
 
-Bu proje açık kaynaklıdır. Lisans detayları için depoya bakın.
+Bu proje açık kaynaklıdır. Gizlilik politikası: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-policy.tr.md).
 
 ---
 

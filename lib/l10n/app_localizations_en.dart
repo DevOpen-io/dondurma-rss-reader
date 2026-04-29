@@ -796,4 +796,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get gotItLetsRead => 'Got it, let\'s read!';
+
+  @override
+  String get contactUs => 'Contact Us';
 }

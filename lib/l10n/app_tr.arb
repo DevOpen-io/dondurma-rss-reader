@@ -277,5 +277,6 @@
   "whatIsRssMethod2Desc": "Çoğu zaman tam RSS bağlantısına bile ihtiyacınız yoktur. Bu uygulamada 'Kaynak Ekle' düğmesine dokunduğunuzda, normal web sitesi adresini (örn. 'verge.com' veya 'techcrunch.com') yapıştırmanız yeterlidir. Uygulama otomatik olarak sizin için gizli RSS akışını bulmaya çalışacaktır!",
   "whatIsRssMethod3Title": "Önerilen Akışları Kullanın",
   "whatIsRssMethod3Desc": "Nereden başlayacağınızdan emin değil misiniz? Kategoriye göre ayrılmış özel kürate edilmiş harika içerik listelerine göz atmak için menüdeki 'Önerilen Akışlar' bölümünü inceleyin.",
-  "gotItLetsRead": "Anladım, hadi okuyalım!"
+  "gotItLetsRead": "Anladım, hadi okuyalım!",
+  "contactUs": "Bize Ulaşın"
 }

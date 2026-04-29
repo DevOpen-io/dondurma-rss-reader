@@ -798,4 +798,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get gotItLetsRead => 'Anladım, hadi okuyalım!';
+
+  @override
+  String get contactUs => 'Bize Ulaşın';
 }

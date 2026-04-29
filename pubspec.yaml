@@ -1,5 +1,5 @@
 name: ice_cream_rss_reader
-description: "A new Flutter project."
+description: "Fast, private RSS reader. No algorithms, no tracking. Just your news."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -70,6 +70,7 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  rider: ^0.0.1
 
 dependency_overrides:
   intl: ^0.20.2

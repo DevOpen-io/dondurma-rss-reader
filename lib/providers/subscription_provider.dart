@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+
 import '../models/feed_subscription.dart';
 
 /// Manages the user's RSS feed subscriptions, categories, and their icons.
@@ -12,6 +14,79 @@ import '../models/feed_subscription.dart';
 /// Persists data in the `'feeds'` Hive box under `'subscriptions'`,
 /// `'custom_categories'`, and `'category_icons'` keys.
 class SubscriptionProvider extends ChangeNotifier {
+  static const List<IconData> categoryIconOptions = [
+    Icons.folder_outlined,
+    Icons.menu_book_outlined,
+    Icons.newspaper_outlined,
+    Icons.sports_esports_outlined,
+    Icons.lightbulb_outline,
+    Icons.local_fire_department_outlined,
+    Icons.auto_awesome_outlined,
+    Icons.star_outline,
+    Icons.smartphone_outlined,
+    Icons.laptop_mac_outlined,
+    Icons.movie_outlined,
+    Icons.music_note_outlined,
+    Icons.sports_soccer,
+    Icons.restaurant_outlined,
+    Icons.flight_outlined,
+    Icons.palette_outlined,
+    Icons.work_outline,
+    Icons.trending_up,
+    Icons.science_outlined,
+    Icons.park_outlined,
+    Icons.smart_toy_outlined,
+    Icons.directions_car_outlined,
+    Icons.pets_outlined,
+    Icons.local_pizza_outlined,
+    Icons.coffee_outlined,
+    Icons.favorite_outline,
+    Icons.public_outlined,
+    Icons.rocket_launch_outlined,
+    Icons.photo_camera_outlined,
+  ];
+
+  static const Map<String, IconData> _legacyEmojiIcons = {
+    '📁': Icons.folder_outlined,
+    '📚': Icons.menu_book_outlined,
+    '📰': Icons.newspaper_outlined,
+    '🎮': Icons.sports_esports_outlined,
+    '💡': Icons.lightbulb_outline,
+    '🔥': Icons.local_fire_department_outlined,
+    '✨': Icons.auto_awesome_outlined,
+    '🌟': Icons.star_outline,
+    '📱': Icons.smartphone_outlined,
+    '💻': Icons.laptop_mac_outlined,
+    '🎬': Icons.movie_outlined,
+    '🎵': Icons.music_note_outlined,
+    '⚽️': Icons.sports_soccer,
+    '⚽': Icons.sports_soccer,
+    '🍳': Icons.restaurant_outlined,
+    '✈️': Icons.flight_outlined,
+    '✈': Icons.flight_outlined,
+    '🎨': Icons.palette_outlined,
+    '💼': Icons.work_outline,
+    '📈': Icons.trending_up,
+    '🔬': Icons.science_outlined,
+    '🌿': Icons.park_outlined,
+    '🤖': Icons.smart_toy_outlined,
+    '🚗': Icons.directions_car_outlined,
+    '🐱': Icons.pets_outlined,
+    '🐶': Icons.pets_outlined,
+    '🍕': Icons.local_pizza_outlined,
+    '☕': Icons.coffee_outlined,
+    '❤️': Icons.favorite_outline,
+    '❤': Icons.favorite_outline,
+    '🌎': Icons.public_outlined,
+    '🚀': Icons.rocket_launch_outlined,
+    '📷': Icons.photo_camera_outlined,
+  };
+
+  static const IconData _defaultCategoryIcon = Icons.folder_outlined;
+  static final Set<int> _supportedCategoryCodePoints = categoryIconOptions
+      .map((icon) => icon.codePoint)
+      .toSet();
+
   List<FeedSubscription> _subscriptions = [];
   Set<String> _customCategories = {};
   Map<String, String> _categoryIcons = {};
@@ -54,7 +129,15 @@ class SubscriptionProvider extends ChangeNotifier {
     final String? iconsData = _box.get('category_icons');
     if (iconsData != null) {
       final Map<String, dynamic> iconsMap = jsonDecode(iconsData);
-      _categoryIcons = iconsMap.cast<String, String>();
+      _categoryIcons = iconsMap.map((key, storedIcon) {
+        final normalizedStoredValue = _storedValueForIcon(
+          _resolveCategoryIcon(storedIcon),
+        );
+        if (storedIcon?.toString() != normalizedStoredValue) {
+          iconsNeedSave = true;
+        }
+        return MapEntry(key.toString(), normalizedStoredValue);
+      });
     }
 
     if (data != null) {
@@ -115,24 +198,55 @@ class SubscriptionProvider extends ChangeNotifier {
     await _box.put('category_icons', data);
   }
 
+  IconData _resolveCategoryIcon(dynamic storedIcon) {
+    final int? parsedCodePoint = int.tryParse(storedIcon?.toString() ?? '');
+    if (parsedCodePoint != null &&
+        _supportedCategoryCodePoints.contains(parsedCodePoint)) {
+      return IconData(parsedCodePoint, fontFamily: 'MaterialIcons');
+    }
+
+    final legacyIcon = _legacyEmojiIcons[storedIcon];
+    if (legacyIcon != null) {
+      return legacyIcon;
+    }
+
+    return _defaultCategoryIcon;
+  }
+
+  String _storedValueForIcon(IconData icon) {
+    final iconToStore = _supportedCategoryCodePoints.contains(icon.codePoint)
+        ? icon
+        : _defaultCategoryIcon;
+    return iconToStore.codePoint.toString();
+  }
+
   void _assignDefaultIcon(String category) {
-    _categoryIcons[category] = '📁';
+    _categoryIcons[category] = _storedValueForIcon(_defaultCategoryIcon);
   }
 
   // ---------------------------------------------------------------------------
   // Category operations
   // ---------------------------------------------------------------------------
 
-  String getCategoryIcon(String category) {
-    if (!_categoryIcons.containsKey(category)) {
+  IconData getCategoryIcon(String category) {
+    final storedIcon = _categoryIcons[category];
+    if (storedIcon == null) {
       _assignDefaultIcon(category);
       _saveCategoryIcons();
+      return _defaultCategoryIcon;
     }
-    return _categoryIcons[category] ?? '📁';
+
+    final resolvedIcon = _resolveCategoryIcon(storedIcon);
+    final normalizedStoredValue = _storedValueForIcon(resolvedIcon);
+    if (storedIcon != normalizedStoredValue) {
+      _categoryIcons[category] = normalizedStoredValue;
+      _saveCategoryIcons();
+    }
+    return resolvedIcon;
   }
 
-  Future<void> setCategoryIcon(String category, String icon) async {
-    _categoryIcons[category] = icon;
+  Future<void> setCategoryIcon(String category, IconData icon) async {
+    _categoryIcons[category] = _storedValueForIcon(icon);
     await _saveCategoryIcons();
     notifyListeners();
   }

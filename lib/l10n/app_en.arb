@@ -348,5 +348,6 @@
   "whatIsRssMethod2Desc": "Often, you don't even need the exact RSS link. When you tap 'Add Feed' in this app, just paste the regular website address (like 'verge.com' or 'techcrunch.com'). The app will automatically try to find the hidden RSS feed for you!",
   "whatIsRssMethod3Title": "Use Suggested Feeds",
   "whatIsRssMethod3Desc": "Not sure where to start? Check out our 'Suggested Feeds' section in the menu to browse curated lists of great content separated by category.",
-  "gotItLetsRead": "Got it, let's read!"
+  "gotItLetsRead": "Got it, let's read!",
+  "contactUs": "Contact Us"
 }

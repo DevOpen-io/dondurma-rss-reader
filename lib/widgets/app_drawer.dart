@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../l10n/app_localizations.dart';
+import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../models/feed_subscription.dart';
 import '../screens/what_is_rss_page.dart';
 import 'explore_feeds_dialog.dart';
 
@@ -85,7 +86,9 @@ class AppDrawer extends StatelessWidget {
                         .toList();
 
                     return _buildExpandableCategoryItem(
-                      emojiIcon: subscriptionProvider.getCategoryIcon(category),
+                      categoryIcon: subscriptionProvider.getCategoryIcon(
+                        category,
+                      ),
                       title: category,
                       feedSources: feedSources,
                       provider: provider,
@@ -103,7 +106,7 @@ class AppDrawer extends StatelessWidget {
                   if (categories.contains('Uncategorized')) ...[
                     _buildSectionHeader(context, l10n.uncategorized),
                     _buildExpandableCategoryItem(
-                      emojiIcon: subscriptionProvider.getCategoryIcon(
+                      categoryIcon: subscriptionProvider.getCategoryIcon(
                         'Uncategorized',
                       ),
                       title: l10n.randomBlogs,
@@ -147,6 +150,15 @@ class AppDrawer extends StatelessWidget {
                           builder: (_) => const WhatIsRssPage(),
                         ),
                       );
+                    },
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.mail_outline,
+                    title: l10n.contactUs,
+                    context: context,
+                    onTap: () {
+                      context.pop();
+                      launchUrl(Uri(scheme: 'mailto', path: 'info@devopen.io'));
                     },
                   ),
                   const SizedBox(height: 20),
@@ -233,7 +245,7 @@ class AppDrawer extends StatelessWidget {
 
   /// Expandable category tile with child feed items.
   Widget _buildExpandableCategoryItem({
-    required String emojiIcon,
+    required IconData categoryIcon,
     required String title,
     required List<FeedSubscription> feedSources,
     required FeedProvider provider,
@@ -270,7 +282,11 @@ class AppDrawer extends StatelessWidget {
           collapsedBackgroundColor: isCategorySelected
               ? colorScheme.primary.withAlpha((0.1 * 255).toInt())
               : Colors.transparent,
-          leading: Text(emojiIcon, style: const TextStyle(fontSize: 20)),
+          leading: Icon(
+            categoryIcon,
+            size: 20,
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
           title: GestureDetector(
             behavior: HitTestBehavior.opaque,
             onTap: () {

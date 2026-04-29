@@ -1,4 +1,4 @@
-package com.example.ice_cream_rss_reader
+package io.devopen.dondurma
 
 import io.flutter.embedding.android.FlutterActivity
 

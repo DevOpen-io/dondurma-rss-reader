@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+
 import '../l10n/app_localizations.dart';
+import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../models/feed_subscription.dart';
 import '../widgets/keyword_input_dialog.dart';
 
 /// Screen for managing feed categories (folders) and their subscriptions.
@@ -61,40 +62,8 @@ class FoldersScreen extends StatelessWidget {
     );
   }
 
-  void _showEmojiPicker(BuildContext context, String categoryName) {
-    // List of common emojis to pick from
-    final List<String> emojis = [
-      '📁',
-      '📚',
-      '📰',
-      '🎮',
-      '💡',
-      '🔥',
-      '✨',
-      '🌟',
-      '📱',
-      '💻',
-      '🎬',
-      '🎵',
-      '⚽️',
-      '🍳',
-      '✈️',
-      '🎨',
-      '💼',
-      '📈',
-      '🔬',
-      '🌿',
-      '🤖',
-      '🚗',
-      '🐱',
-      '🐶',
-      '🍕',
-      '☕',
-      '❤️',
-      '🌎',
-      '🚀',
-      '📷',
-    ];
+  void _showIconPicker(BuildContext context, String categoryName) {
+    final icons = SubscriptionProvider.categoryIconOptions;
 
     showModalBottomSheet(
       context: context,
@@ -120,27 +89,28 @@ class FoldersScreen extends StatelessWidget {
               Flexible(
                 child: GridView.builder(
                   shrinkWrap: true,
-                  itemCount: emojis.length,
+                  itemCount: icons.length,
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 6,
                     crossAxisSpacing: 10,
                     mainAxisSpacing: 10,
                   ),
                   itemBuilder: (context, index) {
-                    final emoji = emojis[index];
+                    final iconData = icons[index];
                     return InkWell(
                       onTap: () {
                         context.read<SubscriptionProvider>().setCategoryIcon(
                           categoryName,
-                          emoji,
+                          iconData,
                         );
                         Navigator.pop(bottomSheetContext);
                       },
                       borderRadius: BorderRadius.circular(10),
                       child: Center(
-                        child: Text(
-                          emoji,
-                          style: const TextStyle(fontSize: 28),
+                        child: Icon(
+                          iconData,
+                          size: 28,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     );
@@ -366,9 +336,10 @@ class FoldersScreen extends StatelessWidget {
               itemBuilder: (context, index) {
                 final category = allCategories[index];
                 return ListTile(
-                  leading: Text(
+                  leading: Icon(
                     subscriptionProvider.getCategoryIcon(category),
-                    style: const TextStyle(fontSize: 20),
+                    size: 20,
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                   title: Text(category),
                   onTap: () {
@@ -448,7 +419,7 @@ class FoldersScreen extends StatelessWidget {
       itemBuilder: (context, index) {
         final categoryName = sortedCategoryNames[index];
         final subs = categoryFeeds[categoryName]!;
-        final String categoryIcon = subscriptionProvider.getCategoryIcon(
+        final IconData categoryIcon = subscriptionProvider.getCategoryIcon(
           categoryName,
         );
 
@@ -460,7 +431,7 @@ class FoldersScreen extends StatelessWidget {
             leading: Tooltip(
               message: 'Change Icon',
               child: InkWell(
-                onTap: () => _showEmojiPicker(context, categoryName),
+                onTap: () => _showIconPicker(context, categoryName),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
@@ -480,7 +451,11 @@ class FoldersScreen extends StatelessWidget {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(categoryIcon, style: const TextStyle(fontSize: 20)),
+                      Icon(
+                        categoryIcon,
+                        size: 20,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                       const SizedBox(width: 4),
                       Icon(
                         Icons.edit,

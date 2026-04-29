@@ -15,7 +15,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.ice_cream_rss_reader"
+    namespace = "io.devopen.dondurma"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -40,7 +40,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.example.ice_cream_rss_reader"
+        applicationId = "io.devopen.dondurma"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
