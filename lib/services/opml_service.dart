@@ -166,7 +166,7 @@ class OpmlService {
   /// Returns an empty list if the user cancels or the file is invalid.
   Future<List<FeedSubscription>> importOpml() async {
     try {
-      final result = await FilePicker.platform.pickFiles(
+      final result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['opml', 'xml'],
         withData: true,

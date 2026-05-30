@@ -200,16 +200,24 @@ class SubscriptionProvider extends ChangeNotifier {
 
   IconData _resolveCategoryIcon(dynamic storedIcon) {
     final int? parsedCodePoint = int.tryParse(storedIcon?.toString() ?? '');
-    if (parsedCodePoint != null &&
-        _supportedCategoryCodePoints.contains(parsedCodePoint)) {
-      return IconData(parsedCodePoint, fontFamily: 'MaterialIcons');
+
+    if (parsedCodePoint != null) {
+      // 1. ÇÖZÜM: Sadece ve sadece categoryIconOptions listesindeki const ikonları eşleştiriyoruz.
+      // Eğer listede yoksa, orElse bloğunda ASLA dinamik IconData üretmiyoruz, direkt default ikona düşürüyoruz.
+      for (final icon in categoryIconOptions) {
+        if (icon.codePoint == parsedCodePoint) {
+          return icon;
+        }
+      }
     }
 
+    // 2. Eski emojilerden kalma mapping desteği
     final legacyIcon = _legacyEmojiIcons[storedIcon];
     if (legacyIcon != null) {
       return legacyIcon;
     }
 
+    // 3. Hiçbiri tutmazsa const olan varsayılan ikonu dönüyoruz (Icons.folder_outlined)
     return _defaultCategoryIcon;
   }
 

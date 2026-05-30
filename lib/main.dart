@@ -42,14 +42,7 @@ void main() async {
   await Hive.openBox('bookmarks');
   await _migrateHiveBoxes();
   await NotificationService.instance.init();
-  await NotificationService.instance.requestPermission();
 
-  // Initialize the ad blocker controller with EasyList + AdGuard filters.
-  await AdBlockerWebviewController.instance.initialize(
-    FilterConfig(filterTypes: [FilterType.easyList, FilterType.adGuard]),
-  );
-
-  // Listen for notification taps and navigate to the article screen.
   NotificationService.instance.onArticleTapped.listen((payload) {
     try {
       final json = jsonDecode(payload) as Map<String, dynamic>;
@@ -65,6 +58,9 @@ void main() async {
       debugPrint('Failed to navigate from notification tap: $e');
     }
   });
+
+  // Ağır işleri arka plana fırlatıyoruz
+  _initHeavyServicesInBackground();
 
   runApp(
     MultiProvider(
@@ -87,6 +83,24 @@ void main() async {
       child: const MyApp(),
     ),
   );
+}
+
+// Bu yeni fonksiyonu da hemen main'in bittiği yere ekle:
+void _initHeavyServicesInBackground() {
+  NotificationService.instance.requestPermission().catchError((e) {
+    debugPrint('Notification permission error: $e');
+  });
+
+  AdBlockerWebviewController.instance
+      .initialize(
+        FilterConfig(filterTypes: [FilterType.easyList, FilterType.adGuard]),
+      )
+      .then((_) {
+        debugPrint('🚀 AdBlocker initialized successfully in background.');
+      })
+      .catchError((e) {
+        debugPrint('❌ AdBlocker initialization failed: $e');
+      });
 }
 
 /// One-time migration: move feed and bookmark keys from the legacy
