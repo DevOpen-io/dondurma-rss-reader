@@ -307,6 +307,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
+      extendBody: true,
       appBar: AppBar(
         title: AnimatedSwitcher(
           duration: const Duration(milliseconds: 300),
@@ -456,6 +457,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     : l10n.addFolder,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(50),
+                  side: BorderSide(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.6),
+                    width:
+                        2, // Çizgiyi belirginleştirmek için kalınlığı 2 yaptık
+                  ),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -484,6 +492,7 @@ class _HomeScreenState extends State<HomeScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       bottomNavigationBar: BottomAppBar(
         shape: const CircularNotchedRectangle(),
+        clipBehavior: .antiAlias,
         notchMargin: 10,
         child: SizedBox(
           height: 60,
