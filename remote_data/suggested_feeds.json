@@ -1,3 +1,4 @@
+
 [
   {
     "category": "Technology",
@@ -1341,7 +1342,7 @@
   },
   {
     "category": "Food",
-    "name": "Bon Appétit",
+    "name": "Bon App\u00e9tit",
     "url": "https://www.bonappetit.com/feed/rss"
   },
   {
@@ -1423,5 +1424,1140 @@
     "category": "Space",
     "name": "Sky & Telescope",
     "url": "https://skyandtelescope.org/astronomy-news/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Afford Anything",
+    "url": "https://affordanything.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Student Loan Hero",
+    "url": "https://studentloanhero.com/blog/feed"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Budgets Are Sexy",
+    "url": "https://feeds2.feedburner.com/budgetsaresexy"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Financial Samurai",
+    "url": "https://www.financialsamurai.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Frugalwoods",
+    "url": "https://feeds.feedburner.com/Frugalwoods"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Get Rich Slowly",
+    "url": "https://www.getrichslowly.org/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Good Financial Cents",
+    "url": "https://www.goodfinancialcents.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "I Will Teach You To Be Rich",
+    "url": "https://www.iwillteachyoutoberich.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Learn To Trade The Market",
+    "url": "https://www.learntotradethemarket.com/feed"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Making Sense Of Cents",
+    "url": "https://www.makingsenseofcents.com/feed"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Millennial Money",
+    "url": "https://millennialmoney.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "MintLife Blog",
+    "url": "https://blog.mint.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Money Crashers",
+    "url": "https://www.moneycrashers.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Money Saving Mom",
+    "url": "https://moneysavingmom.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Money Under 30",
+    "url": "https://www.moneyunder30.com/feed"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "MoneyNing",
+    "url": "http://feeds.feedburner.com/MoneyNing"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "MyWifeQuitHerJob",
+    "url": "https://mywifequitherjob.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Nerd's Eye View",
+    "url": "http://feeds.feedblitz.com/kitcesnerdseyeview&x=1"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "NerdWallet",
+    "url": "https://www.nerdwallet.com/blog/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Oblivious Investor",
+    "url": "https://obliviousinvestor.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Reddit Personal Finance",
+    "url": "https://reddit.com/r/personalfinance/.rss"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "SavingAdvice",
+    "url": "https://www.savingadvice.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Side Hustle Nation",
+    "url": "https://www.sidehustlenation.com/feed"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "The College Investor",
+    "url": "https://thecollegeinvestor.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "The Dough Roller",
+    "url": "https://www.doughroller.net/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "The Penny Hoarder",
+    "url": "https://www.thepennyhoarder.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Well Kept Wallet",
+    "url": "https://wellkeptwallet.com/feed/"
+  },
+  {
+    "category": "Personal Finance",
+    "name": "Wise Bread",
+    "url": "http://feeds.killeraces.com/wisebread"
+  },
+  {
+    "category": "Photography",
+    "name": "500px",
+    "url": "https://iso.500px.com/feed/"
+  },
+  {
+    "category": "Photography",
+    "name": "500px Editors",
+    "url": "https://500px.com/editors.rss"
+  },
+  {
+    "category": "Photography",
+    "name": "Big Picture",
+    "url": "https://www.bostonglobe.com/rss/bigpicture"
+  },
+  {
+    "category": "Photography",
+    "name": "Canon Rumors",
+    "url": "https://www.canonrumors.com/feed/"
+  },
+  {
+    "category": "Photography",
+    "name": "Digital Photography School",
+    "url": "https://feeds.feedburner.com/DigitalPhotographySchool"
+  },
+  {
+    "category": "Photography",
+    "name": "Light Stalking",
+    "url": "https://www.lightstalking.com/feed/"
+  },
+  {
+    "category": "Photography",
+    "name": "Lightroom Killer Tips",
+    "url": "https://lightroomkillertips.com/feed/"
+  },
+  {
+    "category": "Photography",
+    "name": "One Big Photo",
+    "url": "http://feeds.feedburner.com/OneBigPhoto"
+  },
+  {
+    "category": "Photography",
+    "name": "PetaPixel",
+    "url": "https://petapixel.com/feed/"
+  },
+  {
+    "category": "Photography",
+    "name": "Strobist",
+    "url": "http://feeds.feedburner.com/blogspot/WOBq"
+  },
+  {
+    "category": "Photography",
+    "name": "Stuck in Customs",
+    "url": "https://stuckincustoms.com/feed/"
+  },
+  {
+    "category": "Photography",
+    "name": "The Sartorialist",
+    "url": "https://feeds.feedburner.com/TheSartorialist"
+  },
+  {
+    "category": "Travel",
+    "name": "Atlas Obscura",
+    "url": "https://www.atlasobscura.com/feeds/latest"
+  },
+  {
+    "category": "Travel",
+    "name": "Live Life Travel",
+    "url": "https://www.livelifetravel.world/feed/"
+  },
+  {
+    "category": "Travel",
+    "name": "Lonely Planet Travel News",
+    "url": "https://www.lonelyplanet.com/news/feed/atom/"
+  },
+  {
+    "category": "Travel",
+    "name": "NYT Travel",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml"
+  },
+  {
+    "category": "Travel",
+    "name": "Nomadic Matt's Travel Site",
+    "url": "https://www.nomadicmatt.com/travel-blog/feed/"
+  },
+  {
+    "category": "Travel",
+    "name": "The Guardian Travel",
+    "url": "https://www.theguardian.com/uk/travel/rss"
+  },
+  {
+    "category": "Web Development",
+    "name": "Code Wall",
+    "url": "https://www.codewall.co.uk/feed/"
+  },
+  {
+    "category": "Web Development",
+    "name": "David Walsh Blog",
+    "url": "https://davidwalsh.name/feed"
+  },
+  {
+    "category": "Web Development",
+    "name": "Mozilla Hacks",
+    "url": "https://hacks.mozilla.org/feed/"
+  },
+  {
+    "category": "Web Development",
+    "name": "Sink In",
+    "url": "https://gosink.in/rss/"
+  },
+  {
+    "category": "Web Development",
+    "name": "Google Web Updates",
+    "url": "https://developers.google.com/web/updates/rss.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Better Programming",
+    "url": "https://medium.com/feed/better-programming"
+  },
+  {
+    "category": "Programming",
+    "name": "Code as Craft",
+    "url": "https://codeascraft.com/feed/atom/"
+  },
+  {
+    "category": "Programming",
+    "name": "CodeNewbie Podcast",
+    "url": "http://feeds.codenewbie.org/cnpodcast.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Coding Horror",
+    "url": "https://feeds.feedburner.com/codinghorror"
+  },
+  {
+    "category": "Programming",
+    "name": "Complete Developer Podcast",
+    "url": "https://completedeveloperpodcast.com/feed/podcast/"
+  },
+  {
+    "category": "Programming",
+    "name": "Overreacted",
+    "url": "https://overreacted.io/rss.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Developer Tea",
+    "url": "https://feeds.simplecast.com/dLRotFGk"
+  },
+  {
+    "category": "Programming",
+    "name": "FLOSS Weekly",
+    "url": "https://feeds.twit.tv/floss.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Facebook Engineering",
+    "url": "https://engineering.fb.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "GitLab Blog",
+    "url": "https://about.gitlab.com/atom.xml"
+  },
+  {
+    "category": "Programming",
+    "name": "Google Developers Blog",
+    "url": "http://feeds.feedburner.com/GDBcode"
+  },
+  {
+    "category": "Programming",
+    "name": "HackerNoon",
+    "url": "https://medium.com/feed/hackernoon"
+  },
+  {
+    "category": "Programming",
+    "name": "Hanselminutes",
+    "url": "https://feeds.simplecast.com/gvtxUiIf"
+  },
+  {
+    "category": "Programming",
+    "name": "Instagram Engineering",
+    "url": "https://instagram-engineering.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Java, SQL and jOOQ",
+    "url": "https://blog.jooq.org/feed"
+  },
+  {
+    "category": "Programming",
+    "name": "Joel on Software",
+    "url": "https://www.joelonsoftware.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "LinkedIn Engineering",
+    "url": "https://engineering.linkedin.com/blog.rss.html"
+  },
+  {
+    "category": "Programming",
+    "name": "Netflix TechBlog",
+    "url": "https://netflixtechblog.com/feed"
+  },
+  {
+    "category": "Programming",
+    "name": "Overflow",
+    "url": "https://buffer.com/resources/overflow/rss/"
+  },
+  {
+    "category": "Programming",
+    "name": "Software Engineering Daily Podcast",
+    "url": "https://softwareengineeringdaily.com/category/podcast/feed"
+  },
+  {
+    "category": "Android",
+    "name": "Android Central",
+    "url": "http://feeds.androidcentral.com/androidcentral"
+  },
+  {
+    "category": "Android",
+    "name": "Android Central Podcast",
+    "url": "http://feeds.feedburner.com/AndroidCentralPodcast"
+  },
+  {
+    "category": "Android",
+    "name": "Android Community",
+    "url": "https://androidcommunity.com/feed/"
+  },
+  {
+    "category": "Android",
+    "name": "Android Police",
+    "url": "http://feeds.feedburner.com/AndroidPolice"
+  },
+  {
+    "category": "Android",
+    "name": "AndroidGuys",
+    "url": "https://www.androidguys.com/feed"
+  },
+  {
+    "category": "Android",
+    "name": "Cult of Android",
+    "url": "https://www.cultofandroid.com/feed"
+  },
+  {
+    "category": "Android",
+    "name": "CyanogenMods",
+    "url": "https://www.cyanogenmods.org/feed"
+  },
+  {
+    "category": "Android",
+    "name": "Droid Life",
+    "url": "https://www.droid-life.com/feed"
+  },
+  {
+    "category": "Android",
+    "name": "GSMArena",
+    "url": "https://www.gsmarena.com/rss-news-reviews.php3"
+  },
+  {
+    "category": "Android",
+    "name": "Phandroid",
+    "url": "http://feeds2.feedburner.com/AndroidPhoneFans"
+  },
+  {
+    "category": "Android",
+    "name": "TalkAndroid",
+    "url": "http://feeds.feedburner.com/AndroidNewsGoogleAndroidForums"
+  },
+  {
+    "category": "Android",
+    "name": "xda-developers",
+    "url": "https://data.xda-developers.com/portal-feed"
+  },
+  {
+    "category": "Android",
+    "name": "Android Authority Podcast",
+    "url": "https://androidauthority.libsyn.com/rss"
+  },
+  {
+    "category": "Android Development",
+    "name": "Android - Buffer Resources",
+    "url": "https://buffer.com/resources/android/rss/"
+  },
+  {
+    "category": "Android Development",
+    "name": "Android Developers (YouTube)",
+    "url": "https://www.youtube.com/feeds/videos.xml?user=androiddevelopers"
+  },
+  {
+    "category": "Android Development",
+    "name": "Android Developers (Medium)",
+    "url": "https://medium.com/feed/androiddevelopers"
+  },
+  {
+    "category": "Android Development",
+    "name": "Android Developers Backstage",
+    "url": "http://feeds.feedburner.com/blogspot/androiddevelopersbackstage"
+  },
+  {
+    "category": "Android Development",
+    "name": "Android Developers Blog",
+    "url": "http://feeds.feedburner.com/blogspot/hsDu"
+  },
+  {
+    "category": "Android Development",
+    "name": "Android Weekly Archive",
+    "url": "https://us2.campaign-archive.com/feed?u=887caf4f48db76fd91e20a06d&id=4eb677ad19"
+  },
+  {
+    "category": "Android Development",
+    "name": "Instagram Engineering (Android)",
+    "url": "https://instagram-engineering.com/feed/tagged/android"
+  },
+  {
+    "category": "Android Development",
+    "name": "MindOrks",
+    "url": "https://medium.com/feed/mindorks/tagged/android"
+  },
+  {
+    "category": "Android Development",
+    "name": "Dan Lew Codes",
+    "url": "https://blog.danlew.net/rss/"
+  },
+  {
+    "category": "Android Development",
+    "name": "r/androiddev",
+    "url": "https://reddit.com/r/androiddev.rss"
+  },
+  {
+    "category": "Android Development",
+    "name": "Fragmented Podcast",
+    "url": "https://feeds.simplecast.com/LpAGSLnY"
+  },
+  {
+    "category": "Android Development",
+    "name": "Handstand Sam",
+    "url": "https://handstandsam.com/feed/"
+  },
+  {
+    "category": "Android Development",
+    "name": "Jake Wharton",
+    "url": "https://jakewharton.com/atom.xml"
+  },
+  {
+    "category": "Android Development",
+    "name": "Kt. Academy",
+    "url": "https://blog.kotlin-academy.com/feed"
+  },
+  {
+    "category": "Tennis",
+    "name": "Grand Slam Fantasy Tennis",
+    "url": "http://www.grandslamfantasytennis.com/feed/?x=1"
+  },
+  {
+    "category": "Tennis",
+    "name": "ATP World Tour",
+    "url": "https://www.atptour.com/en/media/rss-feed/xml-feed"
+  },
+  {
+    "category": "Tennis",
+    "name": "Reddit Tennis",
+    "url": "https://www.reddit.com/r/tennis/.rss"
+  },
+  {
+    "category": "Tennis",
+    "name": "peRFect Tennis",
+    "url": "https://www.perfect-tennis.com/feed/"
+  },
+  {
+    "category": "Tennis",
+    "name": "ESPN Tennis",
+    "url": "https://www.espn.com/espn/rss/tennis/news"
+  },
+  {
+    "category": "Learning",
+    "name": "The Decision Lab",
+    "url": "https://thedecisionlab.com/feed/"
+  },
+  {
+    "category": "Learning",
+    "name": "Ness Labs",
+    "url": "https://nesslabs.com/feed"
+  },
+  {
+    "category": "Learning",
+    "name": "Farnam Street",
+    "url": "https://fs.blog/feed/"
+  },
+  {
+    "category": "Learning",
+    "name": "The Sunday Wisdom",
+    "url": "https://coffeeandjunk.substack.com/feed"
+  },
+  {
+    "category": "Learning",
+    "name": "Commonplace - The Commoncog Blog",
+    "url": "https://commoncog.com/blog/rss/"
+  },
+  {
+    "category": "Learning",
+    "name": "Scott H Young",
+    "url": "https://feeds.feedburner.com/scotthyoung/HAHx"
+  },
+  {
+    "category": "Learning",
+    "name": "Big Think",
+    "url": "https://feeds.feedburner.com/bigthink/main"
+  },
+  {
+    "category": "Startup",
+    "name": "Steve Blank",
+    "url": "http://steveblank.com/feed/"
+  },
+  {
+    "category": "Startup",
+    "name": "The singularity is nearer",
+    "url": "https://geohot.github.io/blog/feed.xml"
+  },
+  {
+    "category": "Startup",
+    "name": "Guy Kawasaki",
+    "url": "http://guykawasaki.com/feed/"
+  },
+  {
+    "category": "Startup",
+    "name": "Essays - Benedict Evans",
+    "url": "http://ben-evans.com/benedictevans?format=rss"
+  },
+  {
+    "category": "Startup",
+    "name": "First Round Review",
+    "url": "http://firstround.com/review/feed.xml"
+  },
+  {
+    "category": "Startup",
+    "name": "Sam Altman",
+    "url": "http://blog.samaltman.com/posts.atom"
+  },
+  {
+    "category": "Startup",
+    "name": "Andrew Chen",
+    "url": "http://andrewchen.co/feed/"
+  },
+  {
+    "category": "Startup",
+    "name": "Both Sides of the Table - Medium",
+    "url": "https://bothsidesofthetable.com/feed"
+  },
+  {
+    "category": "Startup",
+    "name": "Both Sides of the Table",
+    "url": "http://feeds.feedburner.com/BothSidesOfTheTable"
+  },
+  {
+    "category": "Startup",
+    "name": "OnStartups",
+    "url": "http://feed.onstartups.com/onstartups"
+  },
+  {
+    "category": "Startup",
+    "name": "The Black Box of Product Management - Medium",
+    "url": "https://medium.com/feed/the-black-box-of-product-management"
+  },
+  {
+    "category": "Startup",
+    "name": "Product Life",
+    "url": "https://productlife.to/feed"
+  },
+  {
+    "category": "Startup",
+    "name": "Irrational Exuberance",
+    "url": "https://lethain.com/feeds/"
+  },
+  {
+    "category": "Tech News",
+    "name": "SlashGear",
+    "url": "http://feeds.slashgear.com/slashgear"
+  },
+  {
+    "category": "Tech News",
+    "name": "Tech in Asia",
+    "url": "https://feeds2.feedburner.com/PennOlson"
+  },
+  {
+    "category": "Tech News",
+    "name": "Fast Company (Design)",
+    "url": "http://www.fastcodesign.com/rss.xml"
+  },
+  {
+    "category": "Tech News",
+    "name": "Startups \u2013 TechCrunch",
+    "url": "https://techcrunch.com/startups/feed/"
+  },
+  {
+    "category": "Tech News",
+    "name": "Forbes - Leadership",
+    "url": "https://www.forbes.com/leadership/feed/"
+  },
+  {
+    "category": "Tech News",
+    "name": "Forbes - Entrepreneurs",
+    "url": "http://www.forbes.com/entrepreneurs/index.xml"
+  },
+  {
+    "category": "Products & Ideas",
+    "name": "Product Hunt \u2014 The best new products, every day",
+    "url": "http://www.producthunt.com/feed"
+  },
+  {
+    "category": "Products & Ideas",
+    "name": "Hacker News: Show HN",
+    "url": "http://hnrss.org/show"
+  },
+  {
+    "category": "Products & Ideas",
+    "name": "Hacker News: Launches",
+    "url": "https://hnrss.org/launches"
+  },
+  {
+    "category": "Products & Ideas",
+    "name": "Sachin Rekhi's Blog",
+    "url": "http://feeds.feedburner.com/sachinrekhiblog"
+  },
+  {
+    "category": "Engineering",
+    "name": "The Pragmatic Engineer",
+    "url": "https://blog.pragmaticengineer.com/rss/"
+  },
+  {
+    "category": "Engineering",
+    "name": "The Airtable Engineering Blog",
+    "url": "https://medium.com/feed/airtable-eng"
+  },
+  {
+    "category": "Engineering",
+    "name": "Medium Engineering",
+    "url": "https://medium.com/feed/medium-eng"
+  },
+  {
+    "category": "Engineering",
+    "name": "The PayPal Technology Blog",
+    "url": "https://medium.com/feed/paypal-engineering"
+  },
+  {
+    "category": "Engineering",
+    "name": "Pinterest Engineering Blog",
+    "url": "https://medium.com/feed/pinterest-engineering"
+  },
+  {
+    "category": "Engineering",
+    "name": "Grab Tech",
+    "url": "http://engineering.grab.com/feed.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Slack Engineering",
+    "url": "https://slack.engineering/feed"
+  },
+  {
+    "category": "Engineering",
+    "name": "Engineering \u2013 The GitHub Blog",
+    "url": "http://githubengineering.com/atom.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Atlassian Developer Blog",
+    "url": "https://developer.atlassian.com/blog/feed.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Grokking Newsletter",
+    "url": "http://newsletter.grokking.org/?format=rss"
+  },
+  {
+    "category": "Engineering",
+    "name": "eBay Tech Blog",
+    "url": "http://www.ebaytechblog.com/feed/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Spotify Engineering",
+    "url": "http://labs.spotify.com/feed/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Twitter Engineering",
+    "url": "https://blog.twitter.com/engineering/en_us/blog.rss"
+  },
+  {
+    "category": "Engineering",
+    "name": "Stripe Blog",
+    "url": "https://stripe.com/blog/feed.rss"
+  },
+  {
+    "category": "Engineering",
+    "name": "The Cloudflare Blog",
+    "url": "https://blog.cloudflare.com/rss/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Engineering \u2013 The Asana Blog",
+    "url": "https://blog.asana.com/category/eng/feed/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Canva Engineering Blog",
+    "url": "https://engineering.canva.com/rss"
+  },
+  {
+    "category": "Engineering",
+    "name": "The Airbnb Tech Blog",
+    "url": "https://medium.com/feed/airbnb-engineering"
+  },
+  {
+    "category": "Engineering",
+    "name": "Dropbox Tech",
+    "url": "https://dropbox.tech/feed"
+  },
+  {
+    "category": "Engineering",
+    "name": "WePay Engineering Blog",
+    "url": "https://wecode.wepay.com/feed.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Web Browser Engineering",
+    "url": "https://browser.engineering/rss.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Spotify Engineering (Official)",
+    "url": "https://engineering.atspotify.com/feed/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Mind the Product",
+    "url": "https://www.mindtheproduct.com/feed/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Julia Evans",
+    "url": "https://jvns.ca/atom.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Martin Kleppmann's blog",
+    "url": "https://feeds.feedburner.com/martinkl?format=xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Dan Luu",
+    "url": "https://danluu.com/atom.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Shopify Engineering",
+    "url": "https://shopifyengineering.myshopify.com/blogs/engineering.atom"
+  },
+  {
+    "category": "Engineering",
+    "name": "Josh Comeau's blog",
+    "url": "https://joshwcomeau.com/rss.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Uber Engineering Blog",
+    "url": "https://www.uber.com/blog/engineering/rss/"
+  },
+  {
+    "category": "Engineering",
+    "name": "Flurries of latent creativity - Stripe CTO blog",
+    "url": "https://blog.singleton.io/index.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Sophie Alpert",
+    "url": "https://sophiebits.com/atom.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Amjad Masad",
+    "url": "https://amasad.me/rss"
+  },
+  {
+    "category": "Engineering",
+    "name": "Signal Blog",
+    "url": "https://signal.org/blog/rss.xml"
+  },
+  {
+    "category": "Engineering",
+    "name": "Nvidia Developer Blog",
+    "url": "https://developer.nvidia.com/blog/feed"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Machine Learning Blog | ML@CMU",
+    "url": "https://blog.ml.cmu.edu/feed/"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "DeepMind",
+    "url": "https://deepmind.com/blog/feed/basic/"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Jay Alammar",
+    "url": "https://jalammar.github.io/feed.xml"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Distill",
+    "url": "http://distill.pub/rss.xml"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Lil\u2019Log",
+    "url": "https://lilianweng.github.io/lil-log/feed.xml"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "MIT News - Artificial Intelligence",
+    "url": "http://news.mit.edu/rss/topic/artificial-intelligence2"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Sebastian Ruder",
+    "url": "http://ruder.io/rss/index.rss"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "The Berkeley Artificial Intelligence Research Blog",
+    "url": "http://bair.berkeley.edu/blog/feed.xml"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "DeepLearningAI",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCcIXc5mJsHVYTZR1maL5l9w"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Eric Jang (Blogspot)",
+    "url": "http://blog.evjang.com/feeds/posts/default?alt=rss"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "OpenAI",
+    "url": "https://openai.com/news/engineering/rss.xml"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "The Gradient",
+    "url": "https://thegradient.pub/rss/"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Magenta",
+    "url": "http://magenta.tensorflow.org/feed.xml"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "NLP News",
+    "url": "http://newsletter.ruder.io/?format=rss"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Towards Data Science",
+    "url": "https://towardsdatascience.com/feed"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Unite.AI",
+    "url": "https://www.unite.ai/feed/"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Grammarly Blog",
+    "url": "https://www.grammarly.com/blog/feed/"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Eric Jang (Personal)",
+    "url": "https://evjang.com/feed"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Amazon Science Homepage",
+    "url": "https://www.amazon.science/index.rss"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Machine Learning (Reddit)",
+    "url": "http://www.reddit.com/r/MachineLearning/.rss"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Yannic Kilcher",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "Two Minute Papers",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg"
+  },
+  {
+    "category": "Machine Learning",
+    "name": "PyTorch",
+    "url": "https://pytorch.org/feed"
+  },
+  {
+    "category": "Design",
+    "name": "UX Planet",
+    "url": "https://uxplanet.org/feed"
+  },
+  {
+    "category": "Design",
+    "name": "UX Movement",
+    "url": "http://feeds.feedburner.com/uxmovement"
+  },
+  {
+    "category": "Design",
+    "name": "Inside Design",
+    "url": "http://blog.invisionapp.com/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "UXmatters",
+    "url": "https://uxmatters.com/index.xml"
+  },
+  {
+    "category": "Design",
+    "name": "Airbnb Design",
+    "url": "http://airbnb.design/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "Slack Design",
+    "url": "https://slack.design/feed/"
+  },
+  {
+    "category": "Design",
+    "name": "UX Daily",
+    "url": "https://interaction-design.org/rss/site_news.xml"
+  },
+  {
+    "category": "Psychology",
+    "name": "PsyBlog",
+    "url": "http://feeds.feedburner.com/PsychologyBlog"
+  },
+  {
+    "category": "Psychology",
+    "name": "Psychology Blog",
+    "url": "http://www.all-about-psychology.com/psychology.xml"
+  },
+  {
+    "category": "Psychology",
+    "name": "Psychology Headlines Around the World",
+    "url": "http://www.socialpsychology.org/headlines.rss"
+  },
+  {
+    "category": "Psychology",
+    "name": "Nautilus (Psychology)",
+    "url": "https://nautil.us/rss/all"
+  },
+  {
+    "category": "Psychology",
+    "name": "Freakonomics",
+    "url": "http://freakonomics.blogs.nytimes.com/feed/"
+  },
+  {
+    "category": "Psychology",
+    "name": "Psychology Today",
+    "url": "https://www.psychologytoday.com/intl/rss.xml"
+  },
+  {
+    "category": "Neuroscience",
+    "name": "Neuroscience News",
+    "url": "http://neurosciencenews.com/feed/"
+  },
+  {
+    "category": "Neuroscience",
+    "name": "Neuroscience News -- ScienceDaily",
+    "url": "https://sciencedaily.com/rss/mind_brain/neuroscience.xml"
+  },
+  {
+    "category": "Neuroscience",
+    "name": "SharpBrains",
+    "url": "http://www.sharpbrains.com/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "Quanta Magazine",
+    "url": "http://www.quantamagazine.org/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "Nature",
+    "url": "http://www.nature.com/nature/current_issue/rss"
+  },
+  {
+    "category": "Science",
+    "name": "MIT News - Science, Technology and Society",
+    "url": "https://news.mit.edu/rss/topic/science-technology-and-society"
+  },
+  {
+    "category": "Science",
+    "name": "MIT News (Research)",
+    "url": "https://news.mit.edu/rss/research"
+  },
+  {
+    "category": "Science",
+    "name": "ScienceAlert",
+    "url": "https://www.sciencealert.com/rss"
+  },
+  {
+    "category": "Science",
+    "name": "Singularity Hub",
+    "url": "https://singularityhub.com/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "Lesics",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJ4600a9wIfMPbYc60OQ"
+  },
+  {
+    "category": "Marketing",
+    "name": "Moz",
+    "url": "http://feeds.feedburner.com/seomoz"
+  },
+  {
+    "category": "Marketing",
+    "name": "Content Marketing Institute",
+    "url": "http://feeds.feedburner.com/cmi-content-marketing"
+  },
+  {
+    "category": "Marketing",
+    "name": "Neil Patel",
+    "url": "http://feeds.feedburner.com/KISSmetrics"
+  },
+  {
+    "category": "Marketing",
+    "name": "MarketingProfs",
+    "url": "http://rss.marketingprofs.com/marketingprofs/daily"
+  },
+  {
+    "category": "Marketing",
+    "name": "Marketo Marketing blog",
+    "url": "http://feeds.feedburner.com/modernb2bmarketing"
+  },
+  {
+    "category": "Marketing",
+    "name": "Quick Sprout",
+    "url": "http://www.quicksprout.com/feed/"
+  },
+  {
+    "category": "Marketing",
+    "name": "Social Media Examiner",
+    "url": "http://www.socialmediaexaminer.com/feed/"
+  },
+  {
+    "category": "Marketing",
+    "name": "John Egan",
+    "url": "http://jwegan.com/feed/rss/"
+  },
+  {
+    "category": "Marketing",
+    "name": "Convince and Convert",
+    "url": "http://www.convinceandconvert.com/feed/"
+  },
+  {
+    "category": "Marketing",
+    "name": "Hubspot",
+    "url": "http://blog.hubspot.com/CMS/UI/Modules/BizBlogger/rss.aspx?tabid=6307&moduleid=8441&maxcount=25"
+  },
+  {
+    "category": "Marketing",
+    "name": "Seth Godin's Blog",
+    "url": "http://sethgodin.typepad.com/seths_blog/atom.xml"
+  },
+  {
+    "category": "Marketing",
+    "name": "Backlinko",
+    "url": "http://backlinko.com/feed"
+  },
+  {
+    "category": "Others",
+    "name": "TED Talks Daily (SD video)",
+    "url": "http://feeds.feedburner.com/tedtalks_video"
+  },
+  {
+    "category": "Others",
+    "name": "HBR.org",
+    "url": "http://feeds.harvardbusiness.org/harvardbusiness/"
   }
 ]
