@@ -34,7 +34,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
     try {
       final response = await http.get(
         Uri.parse(
-          'https://gitlab.com/alhaKK/ice_cream_rss_reader/-/raw/main/remote_data/suggested_feeds.json?ref_type=heads',
+          'https://raw.githubusercontent.com/DevOpen-io/dondurma-rss-reader/refs/heads/main/remote_data/suggested_feeds.json',
         ),
       );
       if (response.statusCode == 200) {

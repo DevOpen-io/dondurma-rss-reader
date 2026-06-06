@@ -1579,6 +1579,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Contact Us'**
   String get contactUs;
+
+  /// No description provided for @contactUsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Send us feedback or report an issue'**
+  String get contactUsDesc;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get privacyPolicy;
+
+  /// No description provided for @privacyPolicyDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'How we handle your data'**
+  String get privacyPolicyDesc;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @termsOfServiceDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Usage terms and conditions'**
+  String get termsOfServiceDesc;
+
+  /// No description provided for @openSourceLicenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Source Licenses'**
+  String get openSourceLicenses;
+
+  /// No description provided for @openSourceLicensesDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Third-party libraries used in this app'**
+  String get openSourceLicensesDesc;
+
+  /// No description provided for @developerInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Developed by DevOpen'**
+  String get developerInfo;
+
+  /// No description provided for @developerInfoDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Talha Aksoy & Eren Gün'**
+  String get developerInfoDesc;
 }
 
 class _AppLocalizationsDelegate

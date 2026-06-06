@@ -799,4 +799,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contactUs => 'Contact Us';
+
+  @override
+  String get contactUsDesc => 'Send us feedback or report an issue';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy';
+
+  @override
+  String get privacyPolicyDesc => 'How we handle your data';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get termsOfServiceDesc => 'Usage terms and conditions';
+
+  @override
+  String get openSourceLicenses => 'Open Source Licenses';
+
+  @override
+  String get openSourceLicensesDesc => 'Third-party libraries used in this app';
+
+  @override
+  String get developerInfo => 'Developed by DevOpen';
+
+  @override
+  String get developerInfoDesc => 'Talha Aksoy & Eren Gün';
 }

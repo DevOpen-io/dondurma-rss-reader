@@ -12,6 +12,9 @@ import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/keyword_input_dialog.dart';
+import 'privacy_policy_page.dart';
+import 'terms_of_service_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 /// Premium settings screen with grouped card sections inspired by iOS Settings.
 ///
@@ -596,6 +599,32 @@ class SettingsScreen extends StatelessWidget {
             ),
             const _TileDivider(),
             _ActionTile(
+              icon: Icons.people_outline_rounded,
+              title: l10n.developerInfo,
+              subtitle: l10n.developerInfoDesc,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+              onTap: () {
+                launchUrl(Uri.parse('https://github.com/DevOpen-io'));
+              },
+            ),
+            const _TileDivider(),
+            _ActionTile(
+              icon: Icons.email_outlined,
+              title: l10n.contactUs,
+              subtitle: l10n.contactUsDesc,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+              onTap: () {
+                launchUrl(Uri.parse('mailto:info@devopen.io'));
+              },
+            ),
+            const _TileDivider(),
+            _ActionTile(
               icon: Icons.star_outline_rounded,
               title: l10n.rateTheApp,
               subtitle: l10n.rateTheAppDesc,
@@ -604,6 +633,74 @@ class SettingsScreen extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
               onTap: () {},
+            ),
+          ],
+        ),
+
+        // ── Legal ──────────────────────────────────────────────────────
+        const SizedBox(height: 4),
+        _SettingsCard(
+          children: [
+            _ActionTile(
+              icon: Icons.privacy_tip_outlined,
+              title: l10n.privacyPolicy,
+              subtitle: l10n.privacyPolicyDesc,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const PrivacyPolicyPage(),
+                  ),
+                );
+              },
+            ),
+            const _TileDivider(),
+            _ActionTile(
+              icon: Icons.description_outlined,
+              title: l10n.termsOfService,
+              subtitle: l10n.termsOfServiceDesc,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const TermsOfServicePage(),
+                  ),
+                );
+              },
+            ),
+            const _TileDivider(),
+            _ActionTile(
+              icon: Icons.source_outlined,
+              title: l10n.openSourceLicenses,
+              subtitle: l10n.openSourceLicensesDesc,
+              trailing: Icon(
+                Icons.chevron_right_rounded,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+              onTap: () {
+                showLicensePage(
+                  context: context,
+                  applicationName: l10n.appName,
+                  applicationVersion: '1.0.0',
+                  applicationIcon: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/logo.ico',
+                        width: 48,
+                        height: 48,
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ],
         ),

@@ -278,5 +278,14 @@
   "whatIsRssMethod3Title": "Önerilen Akışları Kullanın",
   "whatIsRssMethod3Desc": "Nereden başlayacağınızdan emin değil misiniz? Kategoriye göre ayrılmış özel kürate edilmiş harika içerik listelerine göz atmak için menüdeki 'Önerilen Akışlar' bölümünü inceleyin.",
   "gotItLetsRead": "Anladım, hadi okuyalım!",
-  "contactUs": "Bize Ulaşın"
+  "contactUs": "Bize Ulaşın",
+  "contactUsDesc": "Geri bildirim gönderin veya sorun bildirin",
+  "privacyPolicy": "Gizlilik Politikası",
+  "privacyPolicyDesc": "Verilerinizi nasıl işlediğimiz hakkında",
+  "termsOfService": "Kullanım Koşulları",
+  "termsOfServiceDesc": "Kullanım şartları ve koşulları",
+  "openSourceLicenses": "Açık Kaynak Lisansları",
+  "openSourceLicensesDesc": "Bu uygulamada kullanılan üçüncü taraf kütüphaneler",
+  "developerInfo": "DevOpen tarafından geliştirildi",
+  "developerInfoDesc": "Talha Aksoy & Eren Gün"
 }

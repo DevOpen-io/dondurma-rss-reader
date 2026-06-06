@@ -181,10 +181,55 @@ class AppDrawer extends StatelessWidget {
               applicationVersion: '1.0.0',
               aboutBoxChildren: [
                 const SizedBox(height: 16),
+                Text(
+                  'Talha Aksoy & Eren Gün',
+                  style: TextStyle(
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.6),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 12),
                 InkWell(
                   onTap: () {
                     launchUrl(
-                      Uri.parse('https://github.com/user/ice_cream_rss_reader'),
+                      Uri.parse('mailto:info@devopen.io'),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(8),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 8.0,
+                      horizontal: 4.0,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.email_outlined,
+                          size: 20,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'info@devopen.io',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                InkWell(
+                  onTap: () {
+                    launchUrl(
+                      Uri.parse(
+                        'https://github.com/DevOpen-io/Dondurma-Rss-Reader',
+                      ),
                     );
                   },
                   borderRadius: BorderRadius.circular(8),

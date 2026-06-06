@@ -349,5 +349,14 @@
   "whatIsRssMethod3Title": "Use Suggested Feeds",
   "whatIsRssMethod3Desc": "Not sure where to start? Check out our 'Suggested Feeds' section in the menu to browse curated lists of great content separated by category.",
   "gotItLetsRead": "Got it, let's read!",
-  "contactUs": "Contact Us"
+  "contactUs": "Contact Us",
+  "contactUsDesc": "Send us feedback or report an issue",
+  "privacyPolicy": "Privacy Policy",
+  "privacyPolicyDesc": "How we handle your data",
+  "termsOfService": "Terms of Service",
+  "termsOfServiceDesc": "Usage terms and conditions",
+  "openSourceLicenses": "Open Source Licenses",
+  "openSourceLicensesDesc": "Third-party libraries used in this app",
+  "developerInfo": "Developed by DevOpen",
+  "developerInfoDesc": "Talha Aksoy & Eren Gün"
 }

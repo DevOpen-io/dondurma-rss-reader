@@ -801,4 +801,32 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get contactUs => 'Bize Ulaşın';
+
+  @override
+  String get contactUsDesc => 'Geri bildirim gönderin veya sorun bildirin';
+
+  @override
+  String get privacyPolicy => 'Gizlilik Politikası';
+
+  @override
+  String get privacyPolicyDesc => 'Verilerinizi nasıl işlediğimiz hakkında';
+
+  @override
+  String get termsOfService => 'Kullanım Koşulları';
+
+  @override
+  String get termsOfServiceDesc => 'Kullanım şartları ve koşulları';
+
+  @override
+  String get openSourceLicenses => 'Açık Kaynak Lisansları';
+
+  @override
+  String get openSourceLicensesDesc =>
+      'Bu uygulamada kullanılan üçüncü taraf kütüphaneler';
+
+  @override
+  String get developerInfo => 'DevOpen tarafından geliştirildi';
+
+  @override
+  String get developerInfoDesc => 'Talha Aksoy & Eren Gün';
 }
