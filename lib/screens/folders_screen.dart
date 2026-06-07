@@ -59,7 +59,7 @@ class FoldersScreen extends StatelessWidget {
           ],
         );
       },
-    );
+    ).then((_) => nameController.dispose());
   }
 
   void _showIconPicker(BuildContext context, String categoryName) {
@@ -230,7 +230,10 @@ class FoldersScreen extends StatelessWidget {
           },
         );
       },
-    );
+    ).then((_) {
+      feedNameController.dispose();
+      feedUrlController.dispose();
+    });
   }
 
   void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {

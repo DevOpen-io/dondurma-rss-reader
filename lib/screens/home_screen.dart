@@ -104,7 +104,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-    );
+    ).then((_) => nameController.dispose());
   }
 
   Widget _buildHomeBody(
