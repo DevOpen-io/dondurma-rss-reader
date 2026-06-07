@@ -191,7 +191,13 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get addSource => 'Add Source';
+  String get addSource => 'Subscribe';
+
+  @override
+  String get subscribed => 'Subscribed';
+
+  @override
+  String get undo => 'Undo';
 
   @override
   String addedSubscription(String name) {

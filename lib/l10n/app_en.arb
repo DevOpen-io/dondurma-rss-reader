@@ -96,7 +96,9 @@
       "name": { "type": "String" }
     }
   },
-  "addSource": "Add Source",
+  "addSource": "Subscribe",
+  "subscribed": "Subscribed",
+  "undo": "Undo",
   "addedSubscription": "Added {name} to your subscriptions!",
   "@addedSubscription": {
     "placeholders": {

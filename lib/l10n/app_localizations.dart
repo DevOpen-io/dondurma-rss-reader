@@ -443,8 +443,20 @@ abstract class AppLocalizations {
   /// No description provided for @addSource.
   ///
   /// In en, this message translates to:
-  /// **'Add Source'**
+  /// **'Subscribe'**
   String get addSource;
+
+  /// No description provided for @subscribed.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribed'**
+  String get subscribed;
+
+  /// No description provided for @undo.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
 
   /// No description provided for @addedSubscription.
   ///

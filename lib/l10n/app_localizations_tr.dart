@@ -192,7 +192,13 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get addSource => 'Kaynak Ekle';
+  String get addSource => 'Abone Ol';
+
+  @override
+  String get subscribed => 'Abone Olundu';
+
+  @override
+  String get undo => 'Geri Al';
 
   @override
   String addedSubscription(String name) {
