@@ -455,114 +455,118 @@ class _HomeScreenState extends State<HomeScreen> {
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),
-      floatingActionButton: _selectedIndex <= 1
-          ? Theme(
-              data: Theme.of(context).copyWith(
-                floatingActionButtonTheme: const FloatingActionButtonThemeData(
-                  sizeConstraints: BoxConstraints.tightFor(
-                    width: 80,
-                    height: 80,
-                  ),
-                ),
+      bottomNavigationBar: Padding(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          0,
+          16,
+          16 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.10),
+                blurRadius: 24,
+                offset: const Offset(0, 6),
               ),
-              child: FloatingActionButton(
-                onPressed: _selectedIndex == 0
-                    ? _showAddFeedDialog
-                    : _showAddFolderDialog,
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                tooltip: _selectedIndex == 0
-                    ? l10n.semanticAddFeed
-                    : l10n.addFolder,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(50),
-                  side: BorderSide(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    width:
-                        2, // Çizgiyi belirginleştirmek için kalınlığı 2 yaptık
-                  ),
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: Material(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              child: SizedBox(
+                height: 64,
+                child: Row(
                   children: [
-                    Icon(
-                      _selectedIndex == 0
-                          ? Icons.rss_feed
-                          : Icons.create_new_folder_outlined,
-                      size: 28,
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: _selectedIndex == 0
+                            ? Icons.list
+                            : Icons.list_outlined,
+                        label: l10n.feedsTab,
+                        selected: _selectedIndex == 0,
+                        onTap: () => _onItemTapped(0),
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _selectedIndex == 0 ? l10n.semanticAddFeed : l10n.addFolder,
-                      style: const TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                        height: 1,
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: _selectedIndex == 1
+                            ? Icons.folder
+                            : Icons.folder_outlined,
+                        label: l10n.foldersTab,
+                        selected: _selectedIndex == 1,
+                        onTap: () => _onItemTapped(1),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 10,
+                      ),
+                      child: AnimatedOpacity(
+                        opacity: _selectedIndex <= 1 ? 1.0 : 0.0,
+                        duration: const Duration(milliseconds: 150),
+                        child: IgnorePointer(
+                          ignoring: _selectedIndex > 1,
+                          child: Tooltip(
+                            message: _selectedIndex == 0
+                                ? l10n.semanticAddFeed
+                                : l10n.addFolder,
+                            child: GestureDetector(
+                              onTap: _selectedIndex == 0
+                                  ? _showAddFeedDialog
+                                  : _showAddFolderDialog,
+                              child: Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.primary,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: Icon(
+                                  _selectedIndex == 0
+                                      ? Icons.rss_feed
+                                      : Icons.create_new_folder_outlined,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimary,
+                                  size: 22,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: _selectedIndex == 2
+                            ? Icons.bookmark
+                            : Icons.bookmark_border,
+                        label: l10n.bookmarksTab,
+                        selected: _selectedIndex == 2,
+                        onTap: () => _onItemTapped(2),
+                      ),
+                    ),
+                    Expanded(
+                      child: _NavBarItem(
+                        icon: _selectedIndex == 3
+                            ? Icons.settings
+                            : Icons.settings_outlined,
+                        label: l10n.settingsTab,
+                        selected: _selectedIndex == 3,
+                        onTap: () => _onItemTapped(3),
                       ),
                     ),
                   ],
                 ),
               ),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        clipBehavior: .antiAlias,
-        notchMargin: 10,
-        child: SizedBox(
-          height: 60,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              // Left side: Feeds
-              Expanded(
-                child: _NavBarItem(
-                  icon: _selectedIndex == 0 ? Icons.list : Icons.list_outlined,
-                  label: l10n.feedsTab,
-                  selected: _selectedIndex == 0,
-                  onTap: () => _onItemTapped(0),
-                ),
-              ),
-              // Left side: Folders
-              Expanded(
-                child: _NavBarItem(
-                  icon: _selectedIndex == 1
-                      ? Icons.folder
-                      : Icons.folder_outlined,
-                  label: l10n.foldersTab,
-                  selected: _selectedIndex == 1,
-                  onTap: () => _onItemTapped(1),
-                ),
-              ),
-              // Center gap for FAB
-              const SizedBox(width: 94),
-              // Right side: Bookmarks
-              Expanded(
-                child: _NavBarItem(
-                  icon: _selectedIndex == 2
-                      ? Icons.bookmark
-                      : Icons.bookmark_border,
-                  label: l10n.bookmarksTab,
-                  selected: _selectedIndex == 2,
-                  onTap: () => _onItemTapped(2),
-                ),
-              ),
-              // Right side: Settings
-              Expanded(
-                child: _NavBarItem(
-                  icon: _selectedIndex == 3
-                      ? Icons.settings
-                      : Icons.settings_outlined,
-                  label: l10n.settingsTab,
-                  selected: _selectedIndex == 3,
-                  onTap: () => _onItemTapped(3),
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),

@@ -894,9 +894,6 @@ class _SettingsCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 2),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(
-          alpha: 0.35,
-        ),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
@@ -904,7 +901,10 @@ class _SettingsCard extends StatelessWidget {
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
-        child: Column(mainAxisSize: MainAxisSize.min, children: children),
+        child: Material(
+          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          child: Column(mainAxisSize: MainAxisSize.min, children: children),
+        ),
       ),
     );
   }
