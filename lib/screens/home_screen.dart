@@ -122,10 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
       listItems.add(
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: _buildSectionHeader(
-            l10n.today,
-            trailingText: l10n.subscribedOnly,
-          ),
+          child: _buildSectionHeader(l10n.today),
         ),
       );
       listItems.addAll(
@@ -179,13 +176,35 @@ class _HomeScreenState extends State<HomeScreen> {
     if (provider.items.isEmpty && !provider.isLoading) {
       listItems.add(
         Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Center(
-            child: Text(
-              l10n.noFeedsFound,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
-            ),
+          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.rss_feed,
+                size: 56,
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.2),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.noFeedsFound,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.55),
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 20),
+              FilledButton.icon(
+                onPressed: _showAddFeedDialog,
+                icon: const Icon(Icons.add, size: 18),
+                label: Text(l10n.semanticAddFeed),
+              ),
+            ],
           ),
         ),
       );
@@ -477,7 +496,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      _selectedIndex == 0 ? 'Add Feed' : 'Add Folder',
+                      _selectedIndex == 0 ? l10n.semanticAddFeed : l10n.addFolder,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -622,21 +641,19 @@ class _NavBarItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, color: color, size: 24),
-            if (selected) ...[
-              const SizedBox(height: 2),
-              Flexible(
-                child: Text(
-                  label,
-                  overflow: TextOverflow.ellipsis,
-                  softWrap: false,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: color,
-                    fontWeight: FontWeight.bold,
-                  ),
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: selected ? 11 : 10,
+                  color: color,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.w500,
                 ),
               ),
-            ],
+            ),
           ],
         ),
       ),

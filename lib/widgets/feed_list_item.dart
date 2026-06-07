@@ -187,15 +187,15 @@ class _ArticleCard extends StatelessWidget {
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
-          BoxShadow(
-            color: colorScheme.primary.withValues(alpha: isRead ? 0 : 0.04),
-            blurRadius: 20,
-            offset: const Offset(0, 2),
-          ),
         ],
       ),
       child: Material(
-        color: surfaceColor,
+        color: isRead
+            ? surfaceColor
+            : Color.alphaBlend(
+                colorScheme.primary.withValues(alpha: 0.035),
+                surfaceColor,
+              ),
         borderRadius: BorderRadius.circular(16),
         clipBehavior: Clip.antiAlias,
         child: InkWell(
@@ -215,19 +215,7 @@ class _ArticleCard extends StatelessWidget {
             // rebuild doesn't block the navigation transition.
             feedProvider.markAsRead(item.id);
           },
-          child: Container(
-            decoration: BoxDecoration(
-              // Subtle left border accent for unread items
-              border: isRead
-                  ? null
-                  : Border(
-                      left: BorderSide(
-                        color: colorScheme.primary.withValues(alpha: 0.6),
-                        width: 3,
-                      ),
-                    ),
-            ),
-            child: Padding(
+          child: Padding(
               padding: const EdgeInsets.all(14.0),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -252,12 +240,12 @@ class _ArticleCard extends StatelessWidget {
                 ],
               ),
             ),
-          ),
         ),
       ),
     );
   }
 }
+
 
 // =============================================================================
 // Swipe background
@@ -338,12 +326,6 @@ class _FeedItemIcon extends StatelessWidget {
             ? item.iconBackgroundColor.withValues(alpha: 0.12)
             : item.iconBackgroundColor,
         borderRadius: BorderRadius.circular(12.0),
-        border: Border.all(
-          color: Theme.of(
-            context,
-          ).colorScheme.onSurface.withValues(alpha: 0.08),
-          width: 0.5,
-        ),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(12.0),
@@ -401,7 +383,7 @@ class _FeedItemContent extends StatelessWidget {
                 item.siteName,
                 style: TextStyle(
                   color: isRead
-                      ? colorScheme.primary.withValues(alpha: 0.5)
+                      ? colorScheme.onSurface.withValues(alpha: 0.6)
                       : colorScheme.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
@@ -415,9 +397,7 @@ class _FeedItemContent extends StatelessWidget {
             Text(
               _formatDate(item),
               style: TextStyle(
-                color: colorScheme.onSurface.withValues(
-                  alpha: isRead ? 0.3 : 0.45,
-                ),
+                color: colorScheme.onSurface.withValues(alpha: 0.55),
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -431,7 +411,7 @@ class _FeedItemContent extends StatelessWidget {
           item.title.trim(),
           style: TextStyle(
             color: isRead
-                ? colorScheme.onSurface.withValues(alpha: 0.45)
+                ? colorScheme.onSurface.withValues(alpha: 0.65)
                 : colorScheme.onSurface,
             fontSize: 15,
             fontWeight: isRead ? FontWeight.w400 : FontWeight.w700,
@@ -447,7 +427,7 @@ class _FeedItemContent extends StatelessWidget {
         Text(
           item.description,
           style: TextStyle(
-            color: colorScheme.onSurface.withValues(alpha: isRead ? 0.3 : 0.55),
+            color: colorScheme.onSurface.withValues(alpha: isRead ? 0.55 : 0.65),
             fontSize: 13,
             height: 1.35,
           ),
@@ -492,7 +472,7 @@ class _FeedItemActions extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      width: 28,
+      width: 40,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -558,7 +538,7 @@ class _ActionIcon extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Padding(
-          padding: const EdgeInsets.all(4.0),
+          padding: const EdgeInsets.all(10.0),
           child: Icon(icon, color: color, size: size),
         ),
       ),
