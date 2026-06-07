@@ -51,60 +51,10 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddFolderDialog() {
-    final l10n = AppLocalizations.of(context);
-    final nameController = TextEditingController();
-    String? errorText;
     showDialog(
       context: context,
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setDialogState) => AlertDialog(
-          title: Text(l10n.addFolder),
-          content: TextField(
-            controller: nameController,
-            autofocus: true,
-            decoration: InputDecoration(
-              labelText: l10n.newFolderName,
-              border: const OutlineInputBorder(),
-              errorText: errorText,
-            ),
-            onChanged: (_) {
-              if (errorText != null) {
-                setDialogState(() => errorText = null);
-              }
-            },
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final name = nameController.text.trim();
-                if (name.isEmpty) {
-                  setDialogState(() {
-                    errorText = l10n.pleaseEnterFolderName;
-                  });
-                  return;
-                }
-                context.read<SubscriptionProvider>().addCategory(name).then((
-                  success,
-                ) {
-                  if (!success && ctx.mounted) {
-                    setDialogState(() {
-                      errorText = l10n.folderAlreadyExists;
-                    });
-                  } else if (ctx.mounted) {
-                    Navigator.of(ctx).pop();
-                  }
-                });
-              },
-              child: Text(l10n.save),
-            ),
-          ],
-        ),
-      ),
-    ).then((_) => nameController.dispose());
+      builder: (ctx) => const _AddFolderDialog(),
+    );
   }
 
   Widget _buildHomeBody(
@@ -931,6 +881,68 @@ class _FeedListSkeleton extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _AddFolderDialog extends StatefulWidget {
+  const _AddFolderDialog();
+
+  @override
+  State<_AddFolderDialog> createState() => _AddFolderDialogState();
+}
+
+class _AddFolderDialogState extends State<_AddFolderDialog> {
+  final _nameController = TextEditingController();
+  String? _errorText;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.addFolder),
+      content: TextField(
+        controller: _nameController,
+        autofocus: true,
+        decoration: InputDecoration(
+          labelText: l10n.newFolderName,
+          border: const OutlineInputBorder(),
+          errorText: _errorText,
+        ),
+        onChanged: (_) {
+          if (_errorText != null) setState(() => _errorText = null);
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final name = _nameController.text.trim();
+            if (name.isEmpty) {
+              setState(() => _errorText = l10n.pleaseEnterFolderName);
+              return;
+            }
+            context.read<SubscriptionProvider>().addCategory(name).then((success) {
+              if (!mounted) return;
+              if (!success) {
+                setState(() => _errorText = l10n.folderAlreadyExists);
+              } else {
+                if (context.mounted) Navigator.of(context).pop();
+              }
+            });
+          },
+          child: Text(l10n.save),
+        ),
+      ],
     );
   }
 }
