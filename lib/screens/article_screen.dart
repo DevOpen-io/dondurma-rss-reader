@@ -448,62 +448,61 @@ class _ArticlePageState extends State<_ArticlePage> {
 
                         const SizedBox(height: 16),
 
-                        // Source info bar
-                        GestureDetector(
-                          onTap: provider.isLoadingFullText
-                              ? null
-                              : provider.toggleFullText,
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant.withValues(
-                                  alpha: 0.15,
-                                ),
+                        // Source info bar (informational only)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant.withValues(
+                                alpha: 0.15,
                               ),
                             ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.rss_feed_rounded,
-                                  size: 16,
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.7,
-                                  ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.rss_feed_rounded,
+                                size: 16,
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.7,
                                 ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    widget.item.siteName,
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w600,
-                                      color: colorScheme.onSurface.withValues(
-                                        alpha: 0.7,
-                                      ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  widget.item.siteName,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.7,
                                     ),
-                                    overflow: TextOverflow.ellipsis,
                                   ),
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                if (!provider.isLoadingFullText) ...[
-                                  _ModeBadge(
-                                    isFullText:
-                                        provider.fullTextActive &&
-                                        provider.fullTextContent != null,
-                                    fullTextLabel: l10n.fullTextExtraction,
-                                    shortTextLabel: l10n.shortTextMode,
-                                  ),
-                                ],
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ),
+
+                        // Reading mode toggle — visible affordance for new users
+                        if (widget.item.link.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          _ReadingModeToggle(
+                            isFullText: provider.fullTextActive &&
+                                provider.fullTextContent != null,
+                            isLoading: provider.isLoadingFullText,
+                            onToggle: provider.toggleFullText,
+                            colorScheme: colorScheme,
+                            l10n: l10n,
+                          ),
+                        ],
 
                         const SizedBox(height: 24),
 
@@ -753,46 +752,161 @@ class _CircleBackButton extends StatelessWidget {
   }
 }
 
-/// Compact full-text / short-text mode badge.
-class _ModeBadge extends StatelessWidget {
+/// Explicit reading mode selector replacing the old hidden tappable source bar.
+///
+/// Shows two labeled pill options (Summary / Full Article) so new users
+/// immediately understand the feature exists and how to use it.
+class _ReadingModeToggle extends StatelessWidget {
   final bool isFullText;
-  final String fullTextLabel;
-  final String shortTextLabel;
+  final bool isLoading;
+  final VoidCallback onToggle;
+  final ColorScheme colorScheme;
+  final AppLocalizations l10n;
 
-  const _ModeBadge({
+  const _ReadingModeToggle({
     required this.isFullText,
-    required this.fullTextLabel,
-    required this.shortTextLabel,
+    required this.isLoading,
+    required this.onToggle,
+    required this.colorScheme,
+    required this.l10n,
   });
 
   @override
   Widget build(BuildContext context) {
-    final color = isFullText
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.secondary;
-    final label = isFullText ? fullTextLabel : shortTextLabel;
-    final icon = isFullText ? Icons.article_rounded : Icons.short_text_rounded;
-
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.15),
+        ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: 13, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 10.5,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
+          Row(
+            children: [
+              Icon(
+                Icons.menu_book_rounded,
+                size: 13,
+                color: colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const SizedBox(width: 5),
+              Text(
+                l10n.readingModeLabel,
+                style: TextStyle(
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w500,
+                  color: colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: _ModeOption(
+                  label: l10n.modeShort,
+                  icon: Icons.short_text_rounded,
+                  isSelected: !isFullText,
+                  isLoading: false,
+                  onTap: isFullText && !isLoading ? onToggle : null,
+                  colorScheme: colorScheme,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _ModeOption(
+                  label: isLoading ? l10n.fullTextLoading : l10n.modeFull,
+                  icon: isLoading ? null : Icons.auto_stories_rounded,
+                  isSelected: isFullText,
+                  isLoading: isLoading,
+                  onTap: !isFullText && !isLoading ? onToggle : null,
+                  colorScheme: colorScheme,
+                ),
+              ),
+            ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ModeOption extends StatelessWidget {
+  final String label;
+  final IconData? icon;
+  final bool isSelected;
+  final bool isLoading;
+  final VoidCallback? onTap;
+  final ColorScheme colorScheme;
+
+  const _ModeOption({
+    required this.label,
+    required this.icon,
+    required this.isSelected,
+    required this.isLoading,
+    required this.onTap,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? colorScheme.primaryContainer
+            : colorScheme.onSurface.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isLoading)
+                  SizedBox(
+                    width: 13,
+                    height: 13,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: colorScheme.primary,
+                    ),
+                  )
+                else if (icon != null)
+                  Icon(
+                    icon,
+                    size: 14,
+                    color: isSelected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                if (!isLoading) const SizedBox(width: 5),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: isSelected
+                        ? colorScheme.onPrimaryContainer
+                        : colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

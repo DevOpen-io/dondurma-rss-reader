@@ -245,6 +245,9 @@
   "fullTextFailed": "Could not load full content. Showing feed excerpt.",
   "fullTextToggle": "Full-Text",
   "shortTextMode": "Short Text Mode",
+  "readingModeLabel": "Reading mode",
+  "modeShort": "Summary",
+  "modeFull": "Full Article",
 
   "searchHistory": "Search History",
   "clearSearchHistory": "Clear Search History",

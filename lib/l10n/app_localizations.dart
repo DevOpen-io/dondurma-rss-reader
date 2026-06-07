@@ -1106,6 +1106,24 @@ abstract class AppLocalizations {
   /// **'Short Text Mode'**
   String get shortTextMode;
 
+  /// No description provided for @readingModeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading mode'**
+  String get readingModeLabel;
+
+  /// No description provided for @modeShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get modeShort;
+
+  /// No description provided for @modeFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Article'**
+  String get modeFull;
+
   /// No description provided for @searchHistory.
   ///
   /// In en, this message translates to:

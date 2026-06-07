@@ -548,6 +548,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shortTextMode => 'Kısa Metin Modu';
 
   @override
+  String get readingModeLabel => 'Okuma modu';
+
+  @override
+  String get modeShort => 'Özet';
+
+  @override
+  String get modeFull => 'Tam Makale';
+
+  @override
   String get searchHistory => 'Arama Geçmişi';
 
   @override

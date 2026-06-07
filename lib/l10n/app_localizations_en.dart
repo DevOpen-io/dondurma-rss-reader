@@ -550,6 +550,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shortTextMode => 'Short Text Mode';
 
   @override
+  String get readingModeLabel => 'Reading mode';
+
+  @override
+  String get modeShort => 'Summary';
+
+  @override
+  String get modeFull => 'Full Article';
+
+  @override
   String get searchHistory => 'Search History';
 
   @override

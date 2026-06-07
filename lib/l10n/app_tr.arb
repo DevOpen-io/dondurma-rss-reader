@@ -184,6 +184,9 @@
   "notificationsNotSupported": "Bu platformda bildirimler desteklenmiyor",
   "notificationsSupportedPlatforms": "Desteklenen platformlar: Android, iOS",
 
+  "readingModeLabel": "Okuma modu",
+  "modeShort": "Özet",
+  "modeFull": "Tam Makale",
   "fullTextExtraction": "Tam Metin Modu",
   "fullTextExtractionDesc": "Orijinal web sayfasından tam içeriği getir",
   "fullTextLoading": "Tam makale yükleniyor…",
