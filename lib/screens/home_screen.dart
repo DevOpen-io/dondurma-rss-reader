@@ -42,7 +42,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddFeedDialog() {
-    showDialog(context: context, builder: (context) => const AddFeedDialog());
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (context) => const AddFeedDialog(),
+    );
   }
 
   void _showAddFolderDialog() {

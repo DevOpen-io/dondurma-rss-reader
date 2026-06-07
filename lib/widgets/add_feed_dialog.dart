@@ -16,18 +16,24 @@ class AddFeedDialog extends StatefulWidget {
 class _AddFeedDialogState extends State<AddFeedDialog> {
   final _urlController = TextEditingController();
   final _nameController = TextEditingController();
+  final _urlFocusNode = FocusNode();
   TextEditingController? _categoryController;
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _urlHasInput = false;
   bool _urlFormatValid = false;
+  bool _urlFocused = false;
   String? _selectedCategory;
+  String? _urlValidationError;
 
   @override
   void initState() {
     super.initState();
     _urlController.addListener(_onUrlChanged);
     _nameController.addListener(() => setState(() {}));
+    _urlFocusNode.addListener(
+      () => setState(() => _urlFocused = _urlFocusNode.hasFocus),
+    );
   }
 
   void _onUrlChanged() {
@@ -36,6 +42,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     setState(() {
       _urlHasInput = val.isNotEmpty;
       _urlFormatValid = val.isNotEmpty && uri != null && uri.isAbsolute;
+      if (_urlValidationError != null && _urlFormatValid) {
+        _urlValidationError = null;
+      }
     });
   }
 
@@ -66,6 +75,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
+    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
 
     final categories = context
         .watch<SubscriptionProvider>()
@@ -76,10 +86,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         .toList()
       ..sort();
 
-    final fieldDecoration = InputDecoration(
+    final supportFieldDecoration = InputDecoration(
       filled: true,
       fillColor: cs.surfaceContainerHigh,
       border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
@@ -95,73 +109,96 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: cs.error, width: 2),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
     );
 
-    return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      clipBehavior: Clip.antiAlias,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
-      child: Form(
-        key: _formKey,
+    return Form(
+      key: _formKey,
+      child: Padding(
+        padding: EdgeInsets.only(bottom: keyboardHeight),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _Header(l10n: l10n, theme: theme, cs: cs),
+            // Drag handle
+            Center(
+              child: Container(
+                margin: const EdgeInsets.only(top: 12, bottom: 4),
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            // Title
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.rss_feed_rounded,
+                      color: cs.onPrimaryContainer,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.addRssFeed,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      Text(
+                        l10n.addFeedSubtitle,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            // Form body
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _Label(l10n.feedUrlLabel, theme, cs),
-                    const SizedBox(height: 6),
-                    TextFormField(
+                    // Hero URL card
+                    _UrlCard(
                       controller: _urlController,
-                      autofocus: true,
-                      keyboardType: TextInputType.url,
-                      textInputAction: TextInputAction.next,
-                      decoration: fieldDecoration.copyWith(
-                        hintText: l10n.feedUrlHint,
-                        prefixIcon: Icon(
-                          Icons.link_rounded,
-                          color: _urlFormatValid ? cs.primary : cs.onSurfaceVariant,
-                          size: 20,
-                        ),
-                        suffixIcon: _urlHasInput
-                            ? AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 180),
-                                child: _urlFormatValid
-                                    ? Icon(
-                                        Icons.check_circle_rounded,
-                                        key: const ValueKey('ok'),
-                                        color: cs.primary,
-                                        size: 20,
-                                      )
-                                    : Icon(
-                                        Icons.error_outline_rounded,
-                                        key: const ValueKey('err'),
-                                        color: cs.error,
-                                        size: 20,
-                                      ),
-                              )
-                            : null,
-                      ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) return l10n.pleaseEnterUrl;
-                        final uri = Uri.tryParse(v.trim());
-                        if (uri == null || !uri.isAbsolute) return l10n.pleaseEnterValidUrl;
-                        return null;
-                      },
+                      focusNode: _urlFocusNode,
+                      focused: _urlFocused,
+                      hasInput: _urlHasInput,
+                      isValid: _urlFormatValid,
+                      hintText: l10n.feedUrlHint,
+                      label: l10n.feedUrlLabel,
+                      cs: cs,
+                      theme: theme,
+                      validationError: _urlValidationError,
                     ),
+                    // Name suggestion
                     AnimatedSize(
                       duration: const Duration(milliseconds: 220),
                       curve: Curves.easeOutCubic,
                       child: _suggestedName != null
                           ? Padding(
-                              padding: const EdgeInsets.only(top: 8),
-                              child: _SuggestionChip(
+                              padding: const EdgeInsets.only(top: 10),
+                              child: _SuggestionRow(
                                 label: l10n.useSuggestedName(_suggestedName!),
                                 onTap: _applySuggestion,
                                 cs: cs,
@@ -171,12 +208,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                           : const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 16),
-                    _Label(l10n.siteNameLabel, theme, cs),
+                    // Name field
+                    _FieldLabel(l10n.siteNameLabel, theme, cs),
                     const SizedBox(height: 6),
                     TextFormField(
                       controller: _nameController,
                       textInputAction: TextInputAction.next,
-                      decoration: fieldDecoration.copyWith(
+                      style: const TextStyle(fontSize: 15),
+                      decoration: supportFieldDecoration.copyWith(
                         hintText: 'TechCrunch, BBC News…',
                         prefixIcon: Icon(
                           Icons.title_rounded,
@@ -190,7 +229,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    _Label(l10n.categoryOptional, theme, cs),
+                    // Category
+                    _FieldLabel(l10n.categoryOptional, theme, cs),
                     if (categories.isNotEmpty) ...[
                       const SizedBox(height: 8),
                       Wrap(
@@ -204,7 +244,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                             onSelected: (_) => _tapCategory(cat),
                             visualDensity: VisualDensity.compact,
                             labelStyle: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight: selected ? FontWeight.w600 : FontWeight.normal,
+                              fontWeight:
+                                  selected ? FontWeight.w600 : FontWeight.normal,
                             ),
                           );
                         }).toList(),
@@ -221,8 +262,11 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                             .toSet()
                             .toList();
                         if (textEditingValue.text.isEmpty) return subs;
-                        return subs.where((c) =>
-                            c.toLowerCase().contains(textEditingValue.text.toLowerCase()));
+                        return subs.where(
+                          (c) => c.toLowerCase().contains(
+                            textEditingValue.text.toLowerCase(),
+                          ),
+                        );
                       },
                       fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
                         _categoryController = controller;
@@ -230,7 +274,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                           controller: controller,
                           focusNode: focusNode,
                           textInputAction: TextInputAction.done,
-                          decoration: fieldDecoration.copyWith(
+                          style: const TextStyle(fontSize: 15),
+                          decoration: supportFieldDecoration.copyWith(
                             hintText: l10n.categoryHint,
                             prefixIcon: Icon(
                               Icons.folder_outlined,
@@ -242,16 +287,17 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                         );
                       },
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: 24),
                   ],
                 ),
               ),
             ),
-            _ActionBar(
+            // Actions
+            _ActionRow(
               isLoading: _isLoading,
               l10n: l10n,
-              theme: theme,
               cs: cs,
+              theme: theme,
               onCancel: () => context.pop(),
               onSubmit: () => _submit(context),
             ),
@@ -263,9 +309,15 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
   Future<void> _submit(BuildContext context) async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _isLoading = true);
 
     final l10n = AppLocalizations.of(context);
+    if (!_urlFormatValid) {
+      setState(() => _urlValidationError = l10n.pleaseEnterValidUrl);
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
     final url = _urlController.text.trim();
     final name = _nameController.text.trim();
     String category = _categoryController?.text.trim() ?? '';
@@ -293,7 +345,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              l10n.errorAddingFeed(e.toString().replaceAll('Exception: ', '')),
+              l10n.errorAddingFeed(
+                e.toString().replaceAll('Exception: ', ''),
+              ),
             ),
           ),
         );
@@ -306,66 +360,137 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void dispose() {
     _urlController.dispose();
     _nameController.dispose();
+    _urlFocusNode.dispose();
     super.dispose();
   }
 }
 
-class _Header extends StatelessWidget {
-  final AppLocalizations l10n;
-  final ThemeData theme;
-  final ColorScheme cs;
+// ── URL hero card ──────────────────────────────────────────────────────────────
 
-  const _Header({required this.l10n, required this.theme, required this.cs});
+class _UrlCard extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool focused;
+  final bool hasInput;
+  final bool isValid;
+  final String hintText;
+  final String label;
+  final ColorScheme cs;
+  final ThemeData theme;
+  final String? validationError;
+
+  const _UrlCard({
+    required this.controller,
+    required this.focusNode,
+    required this.focused,
+    required this.hasInput,
+    required this.isValid,
+    required this.hintText,
+    required this.label,
+    required this.cs,
+    required this.theme,
+    required this.validationError,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      color: cs.primaryContainer,
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-      child: Row(
+    final borderColor = validationError != null
+        ? cs.error
+        : focused
+        ? cs.primary
+        : cs.outlineVariant;
+    final borderWidth = focused || validationError != null ? 2.0 : 1.0;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: borderColor, width: borderWidth),
+      ),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: cs.primary.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(Icons.rss_feed_rounded, color: cs.onPrimaryContainer, size: 22),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  l10n.addRssFeed,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: cs.onPrimaryContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
+          Row(
+            children: [
+              Icon(
+                Icons.link_rounded,
+                size: 15,
+                color: focused ? cs.primary : cs.onSurfaceVariant,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: focused ? cs.primary : cs.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.3,
                 ),
-                const SizedBox(height: 2),
-                Text(
-                  l10n.addFeedSubtitle,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: cs.onPrimaryContainer.withValues(alpha: 0.72),
-                  ),
+              ),
+              const Spacer(),
+              if (hasInput)
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  child: isValid
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          key: const ValueKey('ok'),
+                          color: cs.primary,
+                          size: 16,
+                        )
+                      : Icon(
+                          Icons.error_outline_rounded,
+                          key: const ValueKey('err'),
+                          color: cs.error,
+                          size: 16,
+                        ),
                 ),
-              ],
+            ],
+          ),
+          const SizedBox(height: 10),
+          TextField(
+            controller: controller,
+            focusNode: focusNode,
+            autofocus: true,
+            keyboardType: TextInputType.url,
+            textInputAction: TextInputAction.next,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: cs.onSurface,
+            ),
+            decoration: InputDecoration.collapsed(
+              hintText: hintText,
+              hintStyle: TextStyle(
+                fontSize: 15,
+                color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                fontWeight: FontWeight.normal,
+              ),
             ),
           ),
+          if (validationError != null) ...[
+            const SizedBox(height: 6),
+            Text(
+              validationError!,
+              style: theme.textTheme.bodySmall?.copyWith(color: cs.error),
+            ),
+          ],
         ],
       ),
     );
   }
 }
 
-class _Label extends StatelessWidget {
+// ── Supporting widgets ─────────────────────────────────────────────────────────
+
+class _FieldLabel extends StatelessWidget {
   final String text;
   final ThemeData theme;
   final ColorScheme cs;
 
-  const _Label(this.text, this.theme, this.cs);
+  const _FieldLabel(this.text, this.theme, this.cs);
 
   @override
   Widget build(BuildContext context) {
@@ -380,13 +505,13 @@ class _Label extends StatelessWidget {
   }
 }
 
-class _SuggestionChip extends StatelessWidget {
+class _SuggestionRow extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
   final ColorScheme cs;
   final ThemeData theme;
 
-  const _SuggestionChip({
+  const _SuggestionRow({
     required this.label,
     required this.onTap,
     required this.cs,
@@ -398,9 +523,9 @@ class _SuggestionChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
-          color: cs.primaryContainer.withValues(alpha: 0.6),
+          color: cs.primaryContainer.withValues(alpha: 0.55),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -424,7 +549,7 @@ class _SuggestionChip extends StatelessWidget {
   }
 }
 
-class _ActionBar extends StatelessWidget {
+class _ActionRow extends StatelessWidget {
   final bool isLoading;
   final AppLocalizations l10n;
   final ThemeData theme;
@@ -432,7 +557,7 @@ class _ActionBar extends StatelessWidget {
   final VoidCallback onCancel;
   final VoidCallback onSubmit;
 
-  const _ActionBar({
+  const _ActionRow({
     required this.isLoading,
     required this.l10n,
     required this.theme,
@@ -444,11 +569,11 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
       decoration: BoxDecoration(
         color: cs.surface,
         border: Border(
-          top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.5)),
+          top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
       child: Row(
@@ -477,7 +602,9 @@ class _ActionBar extends StatelessWidget {
             label: Text(isLoading ? l10n.addingFeed : l10n.saveFeed),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],
