@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_subscription.dart';
@@ -17,49 +16,10 @@ class FoldersScreen extends StatelessWidget {
   const FoldersScreen({super.key});
 
   void _showEditCategoryDialog(BuildContext context, String currentCategory) {
-    final l10n = AppLocalizations.of(context);
-    final TextEditingController nameController = TextEditingController(
-      text: currentCategory,
-    );
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.renameFolder),
-          content: TextField(
-            controller: nameController,
-            decoration: InputDecoration(
-              labelText: l10n.folderName,
-              border: const OutlineInputBorder(),
-            ),
-            autofocus: true,
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final newName = nameController.text.trim();
-                if (newName.isNotEmpty && newName != currentCategory) {
-                  context
-                      .read<SubscriptionProvider>()
-                      .renameCategory(currentCategory, newName)
-                      .then((_) {
-                        if (context.mounted) {
-                          context.read<FeedProvider>().refreshAll();
-                        }
-                      });
-                }
-                context.pop();
-              },
-              child: Text(l10n.save),
-            ),
-          ],
-        );
-      },
-    ).then((_) => nameController.dispose());
+      builder: (context) => _EditCategoryDialog(currentCategory: currentCategory),
+    );
   }
 
   void _showIconPicker(BuildContext context, String categoryName) {
@@ -126,114 +86,10 @@ class FoldersScreen extends StatelessWidget {
   }
 
   void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
-    final l10n = AppLocalizations.of(context);
-    final TextEditingController feedNameController = TextEditingController(
-      text: sub.name,
-    );
-    final TextEditingController feedUrlController = TextEditingController(
-      text: sub.url,
-    );
-
-    // Hold local state for keywords so we can pass it on save
-    List<String> currentKeywords = List.from(sub.excludedKeywords);
-
-    showDialog(
+    showDialog<void>(
       context: context,
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(l10n.editFeed),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  TextField(
-                    controller: feedNameController,
-                    decoration: InputDecoration(
-                      labelText: l10n.feedName,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  TextField(
-                    controller: feedUrlController,
-                    decoration: InputDecoration(
-                      labelText: l10n.feedUrl,
-                      border: const OutlineInputBorder(),
-                    ),
-                    keyboardType: TextInputType.url,
-                  ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      showDialog(
-                        context: context,
-                        builder: (ctx) {
-                          return KeywordInputDialog(
-                            title: l10n.excludedKeywords,
-                            initialKeywords: currentKeywords,
-                            onSave: (keywords) {
-                              setState(() {
-                                currentKeywords = keywords;
-                              });
-                            },
-                            onReset: () {
-                              setState(() {
-                                currentKeywords = [];
-                              });
-                            },
-                          );
-                        },
-                      );
-                    },
-                    icon: const Icon(Icons.filter_alt_off_outlined),
-                    label: Text(
-                      currentKeywords.isEmpty
-                          ? l10n.excludedKeywords
-                          : '${l10n.excludedKeywords} (${currentKeywords.length})',
-                    ),
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => context.pop(),
-                  child: Text(l10n.cancel),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final newName = feedNameController.text.trim();
-                    final newUrl = feedUrlController.text.trim();
-
-                    if (newName.isNotEmpty && newUrl.isNotEmpty) {
-                      context
-                          .read<SubscriptionProvider>()
-                          .editSubscription(
-                            sub.url,
-                            newUrl,
-                            newName,
-                            excludedKeywords: currentKeywords,
-                          )
-                          .then((_) {
-                            if (context.mounted) {
-                              context.read<FeedProvider>().refreshAll();
-                            }
-                          });
-                    }
-                    context.pop();
-                  },
-                  child: Text(l10n.save),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    ).then((_) {
-      feedNameController.dispose();
-      feedUrlController.dispose();
-    });
+      builder: (context) => _EditSubscriptionDialog(sub: sub),
+    );
   }
 
   void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
@@ -379,28 +235,44 @@ class FoldersScreen extends StatelessWidget {
     );
   }
 
+  void _showFeedActionSheet(BuildContext context, FeedSubscription sub) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _FeedActionSheet(
+        subUrl: sub.url,
+        onMove: () {
+          Navigator.of(ctx).pop();
+          _showMoveFeedDialog(context, sub);
+        },
+        onEdit: () {
+          Navigator.of(ctx).pop();
+          _showEditSubscriptionDialog(context, sub);
+        },
+        onDelete: () {
+          Navigator.of(ctx).pop();
+          _showDeleteConfirmation(context, sub);
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final subscriptionProvider = context.watch<SubscriptionProvider>();
     final subscriptions = subscriptionProvider.subscriptions;
 
-    // Group subscriptions by category
     final Map<String, List<FeedSubscription>> categoryFeeds = {};
     for (var sub in subscriptions) {
-      if (!categoryFeeds.containsKey(sub.category)) {
-        categoryFeeds[sub.category] = [];
-      }
-      categoryFeeds[sub.category]!.add(sub);
+      categoryFeeds.putIfAbsent(sub.category, () => []).add(sub);
     }
-
-    // Include empty custom categories
     for (var cat in subscriptionProvider.categories) {
-      if (!categoryFeeds.containsKey(cat)) {
-        categoryFeeds[cat] = [];
-      }
+      categoryFeeds.putIfAbsent(cat, () => []);
     }
-
     final sortedCategoryNames = categoryFeeds.keys.toList()..sort();
 
     if (sortedCategoryNames.isEmpty) {
@@ -408,232 +280,603 @@ class FoldersScreen extends StatelessWidget {
         child: Text(
           l10n.noFolders,
           style: TextStyle(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.5),
+            color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
           ),
         ),
       );
     }
 
-    return ScrollablePositionedList.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: sortedCategoryNames.length,
       itemBuilder: (context, index) {
         final categoryName = sortedCategoryNames[index];
         final subs = categoryFeeds[categoryName]!;
-        final IconData categoryIcon = subscriptionProvider.getCategoryIcon(
-          categoryName,
+        return _CategorySection(
+          categoryName: categoryName,
+          subs: subs,
+          subscriptionProvider: subscriptionProvider,
+          onIconTap: () => _showIconPicker(context, categoryName),
+          onRename: () => _showEditCategoryDialog(context, categoryName),
+          onDelete: () => _showDeleteCategoryConfirmation(context, categoryName, subs.length),
+          onFeedTap: (sub) => _showFeedActionSheet(context, sub),
         );
+      },
+    );
+  }
+}
 
-        return Card(
-          margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: ExpansionTile(
-            shape: const Border(),
-            collapsedShape: const Border(),
-            leading: Tooltip(
-              message: 'Change Icon',
-              child: InkWell(
-                onTap: () => _showIconPicker(context, categoryName),
-                borderRadius: BorderRadius.circular(8),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6.0,
-                    vertical: 4.0,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.outline.withValues(alpha: 0.2),
+enum _CategoryAction { rename, delete }
+
+class _CategorySection extends StatelessWidget {
+  const _CategorySection({
+    required this.categoryName,
+    required this.subs,
+    required this.subscriptionProvider,
+    required this.onIconTap,
+    required this.onRename,
+    required this.onDelete,
+    required this.onFeedTap,
+  });
+
+  final String categoryName;
+  final List<FeedSubscription> subs;
+  final SubscriptionProvider subscriptionProvider;
+  final VoidCallback onIconTap;
+  final VoidCallback onRename;
+  final VoidCallback onDelete;
+  final void Function(FeedSubscription) onFeedTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final icon = subscriptionProvider.getCategoryIcon(categoryName);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: cs.surfaceContainerLow,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 10, 8, 10),
+            child: Row(
+              children: [
+                InkWell(
+                  onTap: onIconTap,
+                  borderRadius: BorderRadius.circular(10),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.6),
+                      borderRadius: BorderRadius.circular(10),
                     ),
+                    child: Icon(icon, size: 18, color: cs.onPrimaryContainer),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    categoryName,
+                    style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    '${subs.length}',
+                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
+                  ),
+                ),
+                const SizedBox(width: 2),
+                PopupMenuButton<_CategoryAction>(
+                  icon: Icon(Icons.more_vert, size: 20, color: cs.onSurfaceVariant),
+                  onSelected: (action) {
+                    if (action == _CategoryAction.rename) onRename();
+                    if (action == _CategoryAction.delete) onDelete();
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: _CategoryAction.rename,
+                      child: Row(children: [
+                        Icon(Icons.drive_file_rename_outline, size: 18),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context).renameFolder),
+                      ]),
+                    ),
+                    PopupMenuItem(
+                      value: _CategoryAction.delete,
+                      child: Row(children: [
+                        Icon(Icons.delete_outline, size: 18, color: cs.error),
+                        const SizedBox(width: 8),
+                        Text(
+                          AppLocalizations.of(context).deleteFolder,
+                          style: TextStyle(color: cs.error),
+                        ),
+                      ]),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          if (subs.isNotEmpty) ...[
+            Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
+            for (int i = 0; i < subs.length; i++) ...[
+              if (i > 0)
+                Divider(height: 1, indent: 16, color: cs.outlineVariant.withValues(alpha: 0.3)),
+              _FeedRow(sub: subs[i], onTap: () => onFeedTap(subs[i])),
+            ],
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FeedRow extends StatelessWidget {
+  const _FeedRow({required this.sub, required this.onTap});
+
+  final FeedSubscription sub;
+  final VoidCallback onTap;
+
+  String _domain(String url) {
+    try {
+      return Uri.parse(url).host.replaceFirst('www.', '');
+    } catch (_) {
+      return url;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    sub.name,
+                    style: tt.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _domain(sub.url),
+                    style: tt.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.45),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (sub.notificationsEnabled)
+                  Icon(
+                    Icons.notifications_active_outlined,
+                    size: 14,
+                    color: cs.primary.withValues(alpha: 0.7),
+                  ),
+                if (sub.fullTextEnabled) ...[
+                  if (sub.notificationsEnabled) const SizedBox(width: 4),
+                  Icon(
+                    Icons.article_outlined,
+                    size: 14,
+                    color: cs.primary.withValues(alpha: 0.7),
+                  ),
+                ],
+                const SizedBox(width: 4),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 16,
+                  color: cs.onSurface.withValues(alpha: 0.3),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FeedActionSheet extends StatelessWidget {
+  const _FeedActionSheet({
+    required this.subUrl,
+    required this.onMove,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  final String subUrl;
+  final VoidCallback onMove;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  String _domain(String url) {
+    try {
+      return Uri.parse(url).host.replaceFirst('www.', '');
+    } catch (_) {
+      return url;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sp = context.watch<SubscriptionProvider>();
+    final matches = sp.subscriptions.where((s) => s.url == subUrl);
+    if (matches.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (context.mounted) Navigator.of(context).pop();
+      });
+      return const SizedBox.shrink();
+    }
+    final sub = matches.first;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    final l10n = AppLocalizations.of(context);
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.onSurface.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: cs.primaryContainer.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.rss_feed_rounded, size: 20, color: cs.onPrimaryContainer),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(
-                        categoryIcon,
-                        size: 20,
-                        color: Theme.of(context).colorScheme.onSurface,
+                      Text(
+                        sub.name,
+                        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(width: 4),
-                      Icon(
-                        Icons.edit,
-                        size: 12,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      Text(
+                        _domain(sub.url),
+                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-              ),
-            ),
-            title: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    categoryName,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.delete_outline,
-                    size: 20,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.error.withValues(alpha: 0.8),
-                  ),
-                  onPressed: () => _showDeleteCategoryConfirmation(
-                    context,
-                    categoryName,
-                    subs.length,
-                  ),
-                  tooltip: l10n.deleteFolder,
-                ),
-                IconButton(
-                  icon: Icon(
-                    Icons.edit,
-                    size: 20,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                  onPressed: () =>
-                      _showEditCategoryDialog(context, categoryName),
-                  tooltip: l10n.renameFolder,
-                ),
               ],
             ),
-            children: subs.map((sub) {
-              return Column(
+            const SizedBox(height: 16),
+            Container(
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
                 children: [
-                  Divider(
-                    height: 1,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.1),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      left: 48.0,
-                      right: 16.0,
-                      top: 12.0,
-                      bottom: 8.0,
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    leading: Icon(
+                      sub.notificationsEnabled
+                          ? Icons.notifications_active_outlined
+                          : Icons.notifications_off_outlined,
+                      size: 20,
+                      color: sub.notificationsEnabled ? cs.primary : cs.onSurfaceVariant,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          sub.name,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          sub.url,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: [
-                            IconButton(
-                              icon: Icon(
-                                sub.notificationsEnabled
-                                    ? Icons.notifications_active_outlined
-                                    : Icons.notifications_off_outlined,
-                                size: 18,
-                                color: sub.notificationsEnabled
-                                    ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha: 0.7)
-                                    : Theme.of(context).colorScheme.onSurface
-                                          .withValues(alpha: 0.3),
-                              ),
-                              onPressed: () {
-                                context
-                                    .read<SubscriptionProvider>()
-                                    .toggleFeedNotifications(sub.url);
-                              },
-                              tooltip: l10n.feedNotifications,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                sub.fullTextEnabled
-                                    ? Icons.article
-                                    : Icons.article_outlined,
-                                size: 18,
-                                color: sub.fullTextEnabled
-                                    ? Theme.of(context).colorScheme.primary
-                                          .withValues(alpha: 0.7)
-                                    : Theme.of(context).colorScheme.onSurface
-                                          .withValues(alpha: 0.3),
-                              ),
-                              onPressed: () {
-                                context
-                                    .read<SubscriptionProvider>()
-                                    .toggleFullText(sub.url);
-                              },
-                              tooltip: l10n.fullTextToggle,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.drive_file_move_outline,
-                                size: 18,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.primary.withValues(alpha: 0.7),
-                              ),
-                              onPressed: () =>
-                                  _showMoveFeedDialog(context, sub),
-                              tooltip: l10n.moveToFolder,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.edit_outlined,
-                                size: 18,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onSurface.withValues(alpha: 0.5),
-                              ),
-                              onPressed: () =>
-                                  _showEditSubscriptionDialog(context, sub),
-                              tooltip: l10n.editFeed,
-                            ),
-                            IconButton(
-                              icon: Icon(
-                                Icons.delete_outline,
-                                size: 18,
-                                color: Theme.of(context).colorScheme.error,
-                              ),
-                              onPressed: () =>
-                                  _showDeleteConfirmation(context, sub),
-                              tooltip: l10n.deleteFeed,
-                            ),
-                          ],
-                        ),
-                      ],
+                    title: Text(l10n.feedNotifications, style: tt.bodyMedium),
+                    trailing: Switch(
+                      value: sub.notificationsEnabled,
+                      onChanged: (_) => context.read<SubscriptionProvider>().toggleFeedNotifications(sub.url),
+                    ),
+                  ),
+                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  ListTile(
+                    dense: true,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                    leading: Icon(
+                      sub.fullTextEnabled ? Icons.article : Icons.article_outlined,
+                      size: 20,
+                      color: sub.fullTextEnabled ? cs.primary : cs.onSurfaceVariant,
+                    ),
+                    title: Text(l10n.fullTextToggle, style: tt.bodyMedium),
+                    trailing: Switch(
+                      value: sub.fullTextEnabled,
+                      onChanged: (_) => context.read<SubscriptionProvider>().toggleFullText(sub.url),
                     ),
                   ),
                 ],
-              );
-            }).toList(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Container(
+              decoration: BoxDecoration(
+                color: cs.surfaceContainerHigh,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Column(
+                children: [
+                  _ActionTile(
+                    icon: Icons.drive_file_move_outline,
+                    label: l10n.moveToFolder,
+                    trailing: Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant),
+                    onTap: onMove,
+                  ),
+                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  _ActionTile(
+                    icon: Icons.edit_outlined,
+                    label: l10n.editFeed,
+                    trailing: Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant),
+                    onTap: onEdit,
+                  ),
+                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  _ActionTile(
+                    icon: Icons.delete_outline,
+                    label: l10n.deleteFeed,
+                    color: cs.error,
+                    onTap: onDelete,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  final Color? color;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final effectiveColor = color ?? cs.onSurface;
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: effectiveColor),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                label,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: effectiveColor),
+              ),
+            ),
+            if (trailing != null) trailing!,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EditCategoryDialog extends StatefulWidget {
+  const _EditCategoryDialog({required this.currentCategory});
+  final String currentCategory;
+
+  @override
+  State<_EditCategoryDialog> createState() => _EditCategoryDialogState();
+}
+
+class _EditCategoryDialogState extends State<_EditCategoryDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.currentCategory);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.renameFolder),
+      content: TextField(
+        controller: _controller,
+        decoration: InputDecoration(
+          labelText: l10n.folderName,
+          border: const OutlineInputBorder(),
+        ),
+        autofocus: true,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(l10n.cancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final newName = _controller.text.trim();
+            if (newName.isNotEmpty && newName != widget.currentCategory) {
+              context
+                  .read<SubscriptionProvider>()
+                  .renameCategory(widget.currentCategory, newName)
+                  .then((_) {
+                    if (context.mounted) {
+                      context.read<FeedProvider>().refreshAll();
+                    }
+                  });
+            }
+            context.pop();
+          },
+          child: Text(l10n.save),
+        ),
+      ],
+    );
+  }
+}
+
+class _EditSubscriptionDialog extends StatefulWidget {
+  const _EditSubscriptionDialog({required this.sub});
+  final FeedSubscription sub;
+
+  @override
+  State<_EditSubscriptionDialog> createState() => _EditSubscriptionDialogState();
+}
+
+class _EditSubscriptionDialogState extends State<_EditSubscriptionDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _urlController;
+  late List<String> _keywords;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.sub.name);
+    _urlController = TextEditingController(text: widget.sub.url);
+    _keywords = List.from(widget.sub.excludedKeywords);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _urlController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(l10n.editFeed),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _nameController,
+            decoration: InputDecoration(
+              labelText: l10n.feedName,
+              border: const OutlineInputBorder(),
+            ),
           ),
-        );
-      },
+          const SizedBox(height: 16),
+          TextField(
+            controller: _urlController,
+            decoration: InputDecoration(
+              labelText: l10n.feedUrl,
+              border: const OutlineInputBorder(),
+            ),
+            keyboardType: TextInputType.url,
+          ),
+          const SizedBox(height: 16),
+          OutlinedButton.icon(
+            onPressed: () {
+              showDialog<void>(
+                context: context,
+                builder: (ctx) => KeywordInputDialog(
+                  title: l10n.excludedKeywords,
+                  initialKeywords: _keywords,
+                  onSave: (keywords) => setState(() => _keywords = keywords),
+                  onReset: () => setState(() => _keywords = []),
+                ),
+              );
+            },
+            icon: const Icon(Icons.filter_alt_off_outlined),
+            label: Text(
+              _keywords.isEmpty
+                  ? l10n.excludedKeywords
+                  : '${l10n.excludedKeywords} (${_keywords.length})',
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => context.pop(),
+          child: Text(l10n.cancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final newName = _nameController.text.trim();
+            final newUrl = _urlController.text.trim();
+            if (newName.isNotEmpty && newUrl.isNotEmpty) {
+              context
+                  .read<SubscriptionProvider>()
+                  .editSubscription(
+                    widget.sub.url,
+                    newUrl,
+                    newName,
+                    excludedKeywords: _keywords,
+                  )
+                  .then((_) {
+                    if (context.mounted) {
+                      context.read<FeedProvider>().refreshAll();
+                    }
+                  });
+            }
+            context.pop();
+          },
+          child: Text(l10n.save),
+        ),
+      ],
     );
   }
 }
