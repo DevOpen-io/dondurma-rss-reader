@@ -17,13 +17,12 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   final _urlController = TextEditingController();
   final _nameController = TextEditingController();
   final _urlFocusNode = FocusNode();
-  TextEditingController? _categoryController;
+  final _categoryController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _urlHasInput = false;
   bool _urlFormatValid = false;
   bool _urlFocused = false;
-  String? _selectedCategory;
   String? _urlValidationError;
 
   @override
@@ -64,10 +63,35 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     if (name != null) _nameController.text = name;
   }
 
-  void _tapCategory(String cat) {
-    final next = _selectedCategory == cat ? '' : cat;
-    setState(() => _selectedCategory = next.isEmpty ? null : next);
-    _categoryController?.text = next;
+  void _openCategorySheet(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final categories = context
+        .read<SubscriptionProvider>()
+        .subscriptions
+        .map((s) => s.category)
+        .where((c) => c != 'Uncategorized' && c.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort();
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => _CategorySheet(
+        categories: categories,
+        currentCategory: _categoryController.text.trim(),
+        onSelect: (cat) {
+          setState(() => _categoryController.text = cat);
+          Navigator.of(ctx).pop();
+        },
+        colorScheme: colorScheme,
+        l10n: l10n,
+      ),
+    );
   }
 
   @override
@@ -76,15 +100,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
-
-    final categories = context
-        .watch<SubscriptionProvider>()
-        .subscriptions
-        .map((s) => s.category)
-        .where((c) => c != 'Uncategorized' && c.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
 
     final supportFieldDecoration = InputDecoration(
       filled: true,
@@ -231,61 +246,39 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                     const SizedBox(height: 16),
                     // Category
                     _FieldLabel(l10n.categoryOptional, theme, cs),
-                    if (categories.isNotEmpty) ...[
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 4,
-                        children: categories.map((cat) {
-                          final selected = _selectedCategory == cat;
-                          return FilterChip(
-                            label: Text(cat),
-                            selected: selected,
-                            onSelected: (_) => _tapCategory(cat),
-                            visualDensity: VisualDensity.compact,
-                            labelStyle: theme.textTheme.labelSmall?.copyWith(
-                              fontWeight:
-                                  selected ? FontWeight.w600 : FontWeight.normal,
-                            ),
-                          );
-                        }).toList(),
+                    const SizedBox(height: 6),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _categoryController,
+                      builder: (_, value, _) => TextFormField(
+                        controller: _categoryController,
+                        readOnly: true,
+                        onTap: () => _openCategorySheet(context),
+                        style: const TextStyle(fontSize: 15),
+                        decoration: supportFieldDecoration.copyWith(
+                          hintText: l10n.categoryHint,
+                          prefixIcon: Icon(
+                            Icons.folder_outlined,
+                            color: cs.onSurfaceVariant,
+                            size: 20,
+                          ),
+                          suffixIcon: value.text.isNotEmpty
+                              ? IconButton(
+                                  icon: Icon(
+                                    Icons.close_rounded,
+                                    size: 18,
+                                    color: cs.onSurfaceVariant,
+                                  ),
+                                  onPressed: () => setState(
+                                    () => _categoryController.clear(),
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.keyboard_arrow_down_rounded,
+                                  size: 20,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                        ),
                       ),
-                    ],
-                    const SizedBox(height: 8),
-                    Autocomplete<String>(
-                      optionsBuilder: (textEditingValue) {
-                        final subs = context
-                            .read<SubscriptionProvider>()
-                            .subscriptions
-                            .map((s) => s.category)
-                            .where((c) => c != 'Uncategorized' && c.isNotEmpty)
-                            .toSet()
-                            .toList();
-                        if (textEditingValue.text.isEmpty) return subs;
-                        return subs.where(
-                          (c) => c.toLowerCase().contains(
-                            textEditingValue.text.toLowerCase(),
-                          ),
-                        );
-                      },
-                      fieldViewBuilder: (ctx, controller, focusNode, onSubmitted) {
-                        _categoryController = controller;
-                        return TextFormField(
-                          controller: controller,
-                          focusNode: focusNode,
-                          textInputAction: TextInputAction.done,
-                          style: const TextStyle(fontSize: 15),
-                          decoration: supportFieldDecoration.copyWith(
-                            hintText: l10n.categoryHint,
-                            prefixIcon: Icon(
-                              Icons.folder_outlined,
-                              color: cs.onSurfaceVariant,
-                              size: 20,
-                            ),
-                          ),
-                          onFieldSubmitted: (_) => onSubmitted(),
-                        );
-                      },
                     ),
                     const SizedBox(height: 24),
                   ],
@@ -320,7 +313,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
     final url = _urlController.text.trim();
     final name = _nameController.text.trim();
-    String category = _categoryController?.text.trim() ?? '';
+    String category = _categoryController.text.trim();
     if (category.isEmpty) category = 'Uncategorized';
 
     try {
@@ -360,6 +353,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void dispose() {
     _urlController.dispose();
     _nameController.dispose();
+    _categoryController.dispose();
     _urlFocusNode.dispose();
     super.dispose();
   }
@@ -544,6 +538,271 @@ class _SuggestionRow extends StatelessWidget {
             Icon(Icons.north_east_rounded, size: 12, color: cs.primary),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _CategorySheet extends StatefulWidget {
+  final List<String> categories;
+  final String currentCategory;
+  final void Function(String) onSelect;
+  final ColorScheme colorScheme;
+  final AppLocalizations l10n;
+
+  const _CategorySheet({
+    required this.categories,
+    required this.currentCategory,
+    required this.onSelect,
+    required this.colorScheme,
+    required this.l10n,
+  });
+
+  @override
+  State<_CategorySheet> createState() => _CategorySheetState();
+}
+
+class _CategorySheetState extends State<_CategorySheet> {
+  final _newCatController = TextEditingController();
+  bool _newFieldFocused = false;
+
+  @override
+  void dispose() {
+    _newCatController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final trimmed = _newCatController.text.trim();
+    if (trimmed.isNotEmpty) widget.onSelect(trimmed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = widget.colorScheme;
+    final l10n = widget.l10n;
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 28,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Drag handle
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              decoration: BoxDecoration(
+                color: cs.onSurfaceVariant.withValues(alpha: 0.3),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
+          // Title row
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(7),
+                decoration: BoxDecoration(
+                  color: cs.primaryContainer,
+                  borderRadius: BorderRadius.circular(9),
+                ),
+                child: Icon(
+                  Icons.folder_rounded,
+                  color: cs.onPrimaryContainer,
+                  size: 16,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Text(
+                l10n.categoryOptional,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+
+          if (widget.categories.isNotEmpty) ...[
+            const SizedBox(height: 20),
+            // Section label
+            Text(
+              'Existing',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: cs.onSurfaceVariant,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.3,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: widget.categories.map((cat) {
+                final selected = cat == widget.currentCategory;
+                return GestureDetector(
+                  onTap: () => widget.onSelect(cat),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 160),
+                    curve: Curves.easeOutCubic,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 9,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? cs.primary
+                          : cs.surfaceContainerHighest,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (selected) ...[
+                          Icon(
+                            Icons.check_rounded,
+                            size: 13,
+                            color: cs.onPrimary,
+                          ),
+                          const SizedBox(width: 5),
+                        ],
+                        Text(
+                          cat,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: selected ? cs.onPrimary : cs.onSurface,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 22),
+            Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: cs.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    'or create new',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: cs.outlineVariant.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+          ] else ...[
+            const SizedBox(height: 20),
+          ],
+
+          // New category input + add button
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: _newFieldFocused
+                    ? cs.primary
+                    : cs.outlineVariant.withValues(alpha: 0.4),
+                width: _newFieldFocused ? 2 : 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                const SizedBox(width: 14),
+                Icon(
+                  Icons.drive_file_rename_outline_rounded,
+                  size: 18,
+                  color: _newFieldFocused
+                      ? cs.primary
+                      : cs.onSurfaceVariant,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Focus(
+                    onFocusChange: (f) =>
+                        setState(() => _newFieldFocused = f),
+                    child: TextField(
+                      controller: _newCatController,
+                      autofocus: widget.categories.isEmpty,
+                      textInputAction: TextInputAction.done,
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration.collapsed(
+                        hintText: l10n.categoryHint,
+                        hintStyle: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.normal,
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.55),
+                        ),
+                      ),
+                      onSubmitted: (_) => _submit(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Padding(
+                  padding: const EdgeInsets.all(6),
+                  child: ValueListenableBuilder<TextEditingValue>(
+                    valueListenable: _newCatController,
+                    builder: (_, val, _) {
+                      final hasText = val.text.trim().isNotEmpty;
+                      return AnimatedOpacity(
+                        duration: const Duration(milliseconds: 160),
+                        opacity: hasText ? 1.0 : 0.35,
+                        child: FilledButton(
+                          onPressed: hasText ? _submit : null,
+                          style: FilledButton.styleFrom(
+                            minimumSize: Size.zero,
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            textStyle: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          child: const Text('Add'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
