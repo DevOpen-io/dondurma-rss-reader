@@ -308,6 +308,24 @@ abstract class AppLocalizations {
   /// **'Add RSS Feed'**
   String get addRssFeed;
 
+  /// No description provided for @addFeedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Paste a website URL to subscribe'**
+  String get addFeedSubtitle;
+
+  /// No description provided for @useSuggestedName.
+  ///
+  /// In en, this message translates to:
+  /// **'Use \"{name}\" as name'**
+  String useSuggestedName(String name);
+
+  /// No description provided for @addingFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Adding…'**
+  String get addingFeed;
+
   /// No description provided for @feedUrlLabel.
   ///
   /// In en, this message translates to:

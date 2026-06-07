@@ -122,6 +122,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get addRssFeed => 'RSS Kaynağı Ekle';
 
   @override
+  String get addFeedSubtitle =>
+      'Abone olmak için bir web sitesi URL\'si yapıştırın';
+
+  @override
+  String useSuggestedName(String name) {
+    return '\"$name\" adını kullan';
+  }
+
+  @override
+  String get addingFeed => 'Ekleniyor…';
+
+  @override
   String get feedUrlLabel => 'Kaynak URL\'si';
 
   @override

@@ -59,6 +59,14 @@
   "reset": "Reset",
 
   "addRssFeed": "Add RSS Feed",
+  "addFeedSubtitle": "Paste a website URL to subscribe",
+  "useSuggestedName": "Use \"{name}\" as name",
+  "@useSuggestedName": {
+    "placeholders": {
+      "name": { "type": "String" }
+    }
+  },
+  "addingFeed": "Adding…",
   "feedUrlLabel": "Feed URL",
   "feedUrlHint": "e.g. https://techcrunch.com/feed/",
   "siteNameLabel": "Site Name",
