@@ -23,9 +23,6 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final provider = context.watch<FeedProvider>();
-    final subscriptionProvider = context.watch<SubscriptionProvider>();
-    final categories = subscriptionProvider.categories.toList()..sort();
 
     return Drawer(
       backgroundColor: Theme.of(context).colorScheme.surface,
@@ -61,108 +58,113 @@ class AppDrawer extends StatelessWidget {
               ).colorScheme.onSurface.withValues(alpha: 0.1),
             ),
             Expanded(
-              child: ListView(
-                padding: EdgeInsets.zero,
-                children: [
-                  _buildSectionHeader(context, l10n.categories),
-                  _buildDrawerItem(
-                    icon: Icons.article,
-                    title: l10n.allNews,
-                    count: '${provider.items.length}',
-                    isSelected: provider.selectedCategory == null,
-                    context: context,
-                    onTap: () {
-                      provider.selectCategory(null);
-                      onFeedSelected?.call();
-                      context.pop();
-                    },
-                  ),
+              child: Consumer2<FeedProvider, SubscriptionProvider>(
+                builder: (context, provider, subscriptionProvider, _) {
+                  final categories = subscriptionProvider.categories.toList()..sort();
+                  return ListView(
+                    padding: EdgeInsets.zero,
+                    children: [
+                      _buildSectionHeader(context, l10n.categories),
+                      _buildDrawerItem(
+                        icon: Icons.article,
+                        title: l10n.allNews,
+                        count: '${provider.items.length}',
+                        isSelected: provider.selectedCategory == null,
+                        context: context,
+                        onTap: () {
+                          provider.selectCategory(null);
+                          onFeedSelected?.call();
+                          context.pop();
+                        },
+                      ),
 
-                  ...categories.where((c) => c != 'Uncategorized').map((
-                    category,
-                  ) {
-                    final feedSources = subscriptionProvider.subscriptions
-                        .where((sub) => sub.category == category)
-                        .toList();
-
-                    return _buildExpandableCategoryItem(
-                      categoryIcon: subscriptionProvider.getCategoryIcon(
+                      ...categories.where((c) => c != 'Uncategorized').map((
                         category,
+                      ) {
+                        final feedSources = subscriptionProvider.subscriptions
+                            .where((sub) => sub.category == category)
+                            .toList();
+
+                        return _buildExpandableCategoryItem(
+                          categoryIcon: subscriptionProvider.getCategoryIcon(
+                            category,
+                          ),
+                          title: category,
+                          feedSources: feedSources,
+                          provider: provider,
+                          context: context,
+                        );
+                      }),
+
+                      Divider(
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.1),
+                        height: 32,
                       ),
-                      title: category,
-                      feedSources: feedSources,
-                      provider: provider,
-                      context: context,
-                    );
-                  }),
 
-                  Divider(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.1),
-                    height: 32,
-                  ),
+                      if (categories.contains('Uncategorized')) ...[
+                        _buildSectionHeader(context, l10n.uncategorized),
+                        _buildExpandableCategoryItem(
+                          categoryIcon: subscriptionProvider.getCategoryIcon(
+                            'Uncategorized',
+                          ),
+                          title: l10n.randomBlogs,
+                          feedSources: subscriptionProvider.subscriptions
+                              .where((sub) => sub.category == 'Uncategorized')
+                              .toList(),
+                          provider: provider,
+                          context: context,
+                          isUncategorizedNode: true,
+                        ),
+                        Divider(
+                          color: Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.1),
+                          height: 32,
+                        ),
+                      ],
 
-                  if (categories.contains('Uncategorized')) ...[
-                    _buildSectionHeader(context, l10n.uncategorized),
-                    _buildExpandableCategoryItem(
-                      categoryIcon: subscriptionProvider.getCategoryIcon(
-                        'Uncategorized',
+                      _buildSectionHeader(context, l10n.discover),
+                      _buildDrawerItem(
+                        icon: Icons.lightbulb_outline,
+                        title: l10n.suggestedFeeds,
+                        context: context,
+                        onTap: () {
+                          context.pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const ExploreFeedsPage(),
+                            ),
+                          );
+                        },
                       ),
-                      title: l10n.randomBlogs,
-                      feedSources: subscriptionProvider.subscriptions
-                          .where((sub) => sub.category == 'Uncategorized')
-                          .toList(),
-                      provider: provider,
-                      context: context,
-                      isUncategorizedNode: true,
-                    ),
-                    Divider(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.1),
-                      height: 32,
-                    ),
-                  ],
-
-                  _buildSectionHeader(context, l10n.discover),
-                  _buildDrawerItem(
-                    icon: Icons.lightbulb_outline,
-                    title: l10n.suggestedFeeds,
-                    context: context,
-                    onTap: () {
-                      context.pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const ExploreFeedsPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.help_outline,
-                    title: l10n.whatIsRss,
-                    context: context,
-                    onTap: () {
-                      context.pop();
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => const WhatIsRssPage(),
-                        ),
-                      );
-                    },
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.mail_outline,
-                    title: l10n.contactUs,
-                    context: context,
-                    onTap: () {
-                      context.pop();
-                      launchUrl(Uri(scheme: 'mailto', path: 'info@devopen.io'));
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                ],
+                      _buildDrawerItem(
+                        icon: Icons.help_outline,
+                        title: l10n.whatIsRss,
+                        context: context,
+                        onTap: () {
+                          context.pop();
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const WhatIsRssPage(),
+                            ),
+                          );
+                        },
+                      ),
+                      _buildDrawerItem(
+                        icon: Icons.mail_outline,
+                        title: l10n.contactUs,
+                        context: context,
+                        onTap: () {
+                          context.pop();
+                          launchUrl(Uri(scheme: 'mailto', path: 'info@devopen.io'));
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                    ],
+                  );
+                },
               ),
             ),
             Divider(

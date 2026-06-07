@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
-import '../providers/subscription_provider.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/add_feed_dialog.dart';
+import '../widgets/home/home_bottom_nav.dart';
+import '../widgets/home/home_search_history_panel.dart';
+import '../widgets/home/home_pagination_footer.dart';
+import '../widgets/home/feed_list_skeleton.dart';
+import '../widgets/home/add_folder_dialog.dart';
 import 'folders_screen.dart';
 import 'bookmarks_screen.dart';
 import 'settings_screen.dart';
@@ -58,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => const _AddFolderDialog(),
+      builder: (ctx) => const AddFolderDialog(),
     );
   }
 
@@ -130,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // Pagination footer
-    listItems.add(_PaginationFooter(provider: provider));
+    listItems.add(HomePaginationFooter(provider: provider));
 
     // Empty states
     if (provider.items.isEmpty && !provider.isLoading) {
@@ -193,7 +196,7 @@ class _HomeScreenState extends State<HomeScreen> {
         await provider.refreshAll();
       },
       child: provider.isLoading && provider.items.isEmpty
-          ? const _FeedListSkeleton()
+          ? const FeedListSkeleton()
           : Column(
               children: [
                 // ── Offline banner ─────────────────────────────────────────
@@ -264,26 +267,22 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    final provider = context.watch<FeedProvider>();
-    final todayItems = provider.todayItems;
-    final yesterdayItems = provider.yesterdayItems;
-    final olderItems = provider.olderItems;
-
-    String appBarTitle;
-    switch (_selectedIndex) {
-      case 1:
-        appBarTitle = l10n.foldersTab;
-        break;
-      case 2:
-        appBarTitle = l10n.bookmarksTab;
-        break;
-      case 3:
-        appBarTitle = l10n.settingsTab;
-        break;
-      case 0:
-      default:
-        appBarTitle = provider.selectedCategory ?? l10n.myFeeds;
-    }
+    final appBarTitle = context.select<FeedProvider, String>((p) {
+      switch (_selectedIndex) {
+        case 1:
+          return l10n.foldersTab;
+        case 2:
+          return l10n.bookmarksTab;
+        case 3:
+          return l10n.settingsTab;
+        case 0:
+        default:
+          return p.selectedCategory ?? l10n.myFeeds;
+      }
+    });
+    final showUnreadOnly = context.select<FeedProvider, bool>(
+      (p) => p.showUnreadOnly,
+    );
 
     return Scaffold(
       extendBody: true,
@@ -312,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     fontSize: 16,
                   ),
                   onChanged: (value) {
-                    provider.setSearchQuery(value);
+                    context.read<FeedProvider>().setSearchQuery(value);
                   },
                   onSubmitted: (value) {
                     if (value.trim().isNotEmpty) {
@@ -331,20 +330,20 @@ class _HomeScreenState extends State<HomeScreen> {
             if (!_isSearching)
               IconButton(
                 icon: Icon(
-                  provider.showUnreadOnly
+                  showUnreadOnly
                       ? Icons.visibility_off
                       : Icons.visibility,
-                  color: provider.showUnreadOnly
+                  color: showUnreadOnly
                       ? Theme.of(context).colorScheme.primary
                       : Theme.of(
                           context,
                         ).colorScheme.onSurface.withValues(alpha: 0.5),
                 ),
-                tooltip: provider.showUnreadOnly
+                tooltip: showUnreadOnly
                     ? l10n.semanticShowAll
                     : l10n.semanticFilterUnread,
                 onPressed: () {
-                  provider.toggleShowUnreadOnly();
+                  context.read<FeedProvider>().toggleShowUnreadOnly();
                 },
               ),
             if (_isSearching)
@@ -360,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     _isSearching = false;
                     _searchController.clear();
                   });
-                  provider.setSearchQuery('');
+                  context.read<FeedProvider>().setSearchQuery('');
                 },
               )
             else
@@ -385,30 +384,38 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: _selectedIndex == 0
-          ? Column(
-              children: [
-                // ── Search history suggestions ────────────────────────────
-                if (_isSearching)
-                  _SearchHistoryPanel(
-                    searchController: _searchController,
-                    onQuerySelected: (query) {
-                      _searchController.text = query;
-                      _searchController.selection = TextSelection.fromPosition(
-                        TextPosition(offset: query.length),
-                      );
-                      provider.setSearchQuery(query);
-                    },
-                  ),
-                Expanded(
-                  child: _buildHomeBody(
-                    context,
-                    provider,
-                    todayItems,
-                    yesterdayItems,
-                    olderItems,
-                  ),
-                ),
-              ],
+          ? Consumer<FeedProvider>(
+              builder: (context, provider, _) {
+                final todayItems = provider.todayItems;
+                final yesterdayItems = provider.yesterdayItems;
+                final olderItems = provider.olderItems;
+                return Column(
+                  children: [
+                    // ── Search history suggestions ────────────────────────────
+                    if (_isSearching)
+                      HomeSearchHistoryPanel(
+                        searchController: _searchController,
+                        onQuerySelected: (query) {
+                          _searchController.text = query;
+                          _searchController.selection =
+                              TextSelection.fromPosition(
+                            TextPosition(offset: query.length),
+                          );
+                          provider.setSearchQuery(query);
+                        },
+                      ),
+                    Expanded(
+                      child: _buildHomeBody(
+                        context,
+                        provider,
+                        todayItems,
+                        yesterdayItems,
+                        olderItems,
+                      ),
+                    ),
+                  ],
+                );
+              },
             )
           : _selectedIndex == 1
           ? const FoldersScreen()
@@ -442,7 +449,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Row(
                   children: [
                     Expanded(
-                      child: _NavBarItem(
+                      child: NavBarItem(
                         icon: _selectedIndex == 0
                             ? Icons.list
                             : Icons.list_outlined,
@@ -452,7 +459,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Expanded(
-                      child: _NavBarItem(
+                      child: NavBarItem(
                         icon: _selectedIndex == 1
                             ? Icons.folder
                             : Icons.folder_outlined,
@@ -504,7 +511,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Expanded(
-                      child: _NavBarItem(
+                      child: NavBarItem(
                         icon: _selectedIndex == 2
                             ? Icons.bookmark
                             : Icons.bookmark_border,
@@ -514,7 +521,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     Expanded(
-                      child: _NavBarItem(
+                      child: NavBarItem(
                         icon: _selectedIndex == 3
                             ? Icons.settings
                             : Icons.settings_outlined,
@@ -577,531 +584,3 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-/// A single navigation bar item used inside the custom [BottomAppBar].
-class _NavBarItem extends StatelessWidget {
-  const _NavBarItem({
-    required this.icon,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, color: color, size: 24),
-            const SizedBox(height: 2),
-            Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: TextStyle(
-                  fontSize: selected ? 11 : 10,
-                  color: color,
-                  fontWeight: selected ? FontWeight.bold : FontWeight.w500,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Panel that shows recent search queries as tappable suggestions.
-///
-/// Displayed below the AppBar when the search field is active. Filters
-/// suggestions based on the current text in [searchController]. Each
-/// suggestion can be tapped to fill the search or dismissed with ×.
-class _SearchHistoryPanel extends StatelessWidget {
-  const _SearchHistoryPanel({
-    required this.searchController,
-    required this.onQuerySelected,
-  });
-
-  final TextEditingController searchController;
-  final ValueChanged<String> onQuerySelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final settingsProvider = context.watch<SettingsProvider>();
-    final history = settingsProvider.searchHistory;
-
-    if (history.isEmpty) return const SizedBox.shrink();
-
-    // Filter suggestions based on the current text
-    return ListenableBuilder(
-      listenable: searchController,
-      builder: (context, _) {
-        final currentText = searchController.text.toLowerCase().trim();
-        final filtered = currentText.isEmpty
-            ? history
-            : history
-                  .where(
-                    (q) =>
-                        q.toLowerCase().contains(currentText) &&
-                        q.toLowerCase() != currentText,
-                  )
-                  .toList();
-
-        if (filtered.isEmpty) return const SizedBox.shrink();
-
-        return Material(
-          color: Theme.of(
-            context,
-          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                child: Text(
-                  l10n.recentSearches,
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.0,
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-              ),
-              ...filtered.map(
-                (query) => InkWell(
-                  onTap: () => onQuerySelected(query),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.history,
-                          size: 18,
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.4),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            query,
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () {
-                            context.read<SettingsProvider>().removeSearchQuery(
-                              query,
-                            );
-                          },
-                          child: Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.4),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Divider(
-                height: 1,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.1),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
-
-/// Footer widget shown at the bottom of the feed list.
-///
-/// - While [FeedProvider.isLoadingMore] is true: shows a spinner.
-/// - When [FeedProvider.hasMoreItems] is true but not loading: shows a
-///   "Load more" button as a fallback for users who prefer tapping.
-/// - When all items are loaded: shows a subtle "You're all caught up" message.
-class _PaginationFooter extends StatelessWidget {
-  const _PaginationFooter({required this.provider});
-
-  final FeedProvider provider;
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    if (provider.items.isEmpty) return const SizedBox.shrink();
-
-    if (provider.isLoadingMore) {
-      return const _FeedListSkeleton(itemCount: 2, showHeader: false);
-    }
-
-    if (provider.hasMoreItems) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16.0),
-        child: Center(
-          child: TextButton.icon(
-            onPressed: provider.loadMoreItems,
-            icon: const Icon(Icons.expand_more),
-            label: Text(l10n.loadMore),
-          ),
-        ),
-      );
-    }
-
-    // All items rendered
-    if (provider.items.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24.0),
-        child: Center(
-          child: Text(
-            l10n.allCaughtUp,
-            style: TextStyle(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.4),
-              fontSize: 13,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
-  }
-}
-
-// =============================================================================
-// Skeleton shimmer placeholder for feed list loading states
-// =============================================================================
-
-/// Shimmer skeleton that mimics the [FeedListItem] card layout.
-///
-/// Used both for initial full-screen loading and for pagination "load more"
-/// states. [itemCount] controls how many fake cards are shown and
-/// [showHeader] adds a fake section header above the cards.
-class _FeedListSkeleton extends StatelessWidget {
-  const _FeedListSkeleton({this.itemCount = 6, this.showHeader = true});
-
-  final int itemCount;
-  final bool showHeader;
-
-  @override
-  Widget build(BuildContext context) {
-    return Skeletonizer(
-      effect: ShimmerEffect(
-        baseColor: Theme.of(
-          context,
-        ).colorScheme.onSurface.withValues(alpha: 0.08),
-        highlightColor: Theme.of(
-          context,
-        ).colorScheme.onSurface.withValues(alpha: 0.15),
-        duration: const Duration(milliseconds: 1500),
-      ),
-      child: ListView.builder(
-        physics: const NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: itemCount + (showHeader ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (showHeader && index == 0) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              child: Bone.text(words: 1, fontSize: 12),
-            );
-          }
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 10),
-            child: Container(
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.all(14),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Icon skeleton
-                  Bone.square(
-                    size: 44,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  const SizedBox(width: 12),
-                  // Content skeleton
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(child: Bone.text(words: 2, fontSize: 12)),
-                            const SizedBox(width: 8),
-                            Bone.text(words: 1, fontSize: 11),
-                          ],
-                        ),
-                        const SizedBox(height: 5),
-                        Bone.multiText(lines: 2, fontSize: 15),
-                        const SizedBox(height: 4),
-                        Bone.text(words: 5, fontSize: 13),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  // Action skeleton
-                  Bone.icon(size: 20),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-}
-
-class _AddFolderDialog extends StatefulWidget {
-  const _AddFolderDialog();
-
-  @override
-  State<_AddFolderDialog> createState() => _AddFolderDialogState();
-}
-
-class _AddFolderDialogState extends State<_AddFolderDialog> {
-  final _nameController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-  bool _isLoading = false;
-  String? _serverError;
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
-    setState(() {
-      _isLoading = true;
-      _serverError = null;
-    });
-    final name = _nameController.text.trim();
-    final success =
-        await context.read<SubscriptionProvider>().addCategory(name);
-    if (!mounted) return;
-    if (success) {
-      Navigator.of(context).pop();
-    } else {
-      setState(() {
-        _isLoading = false;
-        _serverError = AppLocalizations.of(context).folderAlreadyExists;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
-    final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
-
-    return Form(
-      key: _formKey,
-      child: Padding(
-        padding: EdgeInsets.only(bottom: keyboardHeight),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 4),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            // Title
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.create_new_folder_outlined,
-                      color: cs.onPrimaryContainer,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.addFolder,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        l10n.newFolderName,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            // Field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: TextFormField(
-                controller: _nameController,
-                autofocus: true,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _submit(),
-                style: const TextStyle(fontSize: 15),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: cs.surfaceContainerHigh,
-                  hintText: 'Tech, Sports, Finance…',
-                  prefixIcon: Icon(
-                    Icons.folder_outlined,
-                    color: cs.onSurfaceVariant,
-                    size: 20,
-                  ),
-                  errorText: _serverError,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cs.primary, width: 2),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cs.error, width: 1.5),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cs.error, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                ),
-                validator: (v) {
-                  if (v == null || v.trim().isEmpty) {
-                    return l10n.pleaseEnterFolderName;
-                  }
-                  return null;
-                },
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Action row
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
-              decoration: BoxDecoration(
-                color: cs.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: cs.outlineVariant.withValues(alpha: 0.4),
-                  ),
-                ),
-              ),
-              child: Row(
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    style: TextButton.styleFrom(
-                      foregroundColor: cs.onSurfaceVariant,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 12,
-                      ),
-                    ),
-                    child: Text(l10n.cancel),
-                  ),
-                  const Spacer(),
-                  FilledButton.icon(
-                    onPressed: _isLoading ? null : _submit,
-                    icon: _isLoading
-                        ? SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: cs.onPrimary,
-                            ),
-                          )
-                        : const Icon(Icons.create_new_folder_outlined, size: 18),
-                    label: Text(l10n.save),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 12,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}

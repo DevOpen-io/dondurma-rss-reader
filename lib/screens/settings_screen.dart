@@ -12,6 +12,7 @@ import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_dialog.dart';
+import '../widgets/settings/settings_widgets.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -29,16 +30,8 @@ const _kSchemes = [
   FlexScheme.outerSpace,
 ];
 
-/// Premium settings screen with grouped card sections inspired by iOS Settings.
-///
-/// Each section is wrapped in a rounded [Card] with a subtle surface tint,
-/// giving a clean, modern look with clear visual grouping.
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
-
-  // ---------------------------------------------------------------------------
-  // Build
-  // ---------------------------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
@@ -49,11 +42,10 @@ class SettingsScreen extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       children: [
-        // ── Appearance ──────────────────────────────────────────────────
-        _SectionTitle(title: l10n.general, icon: Icons.palette_outlined),
-        _SettingsCard(
+        SettingsSectionTitle(title: l10n.general, icon: Icons.palette_outlined),
+        SettingsCard(
           children: [
-            _DropdownTile<FlexScheme>(
+            SettingsDropdownTile<FlexScheme>(
               icon: Icons.color_lens_outlined,
               title: l10n.theme,
               value: settings.flexScheme,
@@ -73,10 +65,10 @@ class SettingsScreen extends StatelessWidget {
               }).toList(),
               onChanged: (v) => context.read<SettingsProvider>().setFlexScheme(v!),
             ),
-            const _TileDivider(),
+            const SettingsTileDivider(),
             ListTile(
               contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-              leading: _SettingsIcon(icon: Icons.brightness_6_outlined),
+              leading: SettingsIcon(icon: Icons.brightness_6_outlined),
               title: Text(l10n.brightness, style: const TextStyle(fontSize: 15)),
               subtitle: Padding(
                 padding: const EdgeInsets.only(top: 10),
@@ -96,8 +88,8 @@ class SettingsScreen extends StatelessWidget {
               ),
               isThreeLine: true,
             ),
-            const _TileDivider(),
-            _DropdownTile<Locale>(
+            const SettingsTileDivider(),
+            SettingsDropdownTile<Locale>(
               icon: Icons.language_rounded,
               title: l10n.language,
               value: settings.locale,
@@ -116,8 +108,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Browser ─────────────────────────────────────────────────────
-        _SectionTitle(title: l10n.openInBrowser, icon: Icons.public_outlined),
+        SettingsSectionTitle(title: l10n.openInBrowser, icon: Icons.public_outlined),
         Builder(
           builder: (context) {
             final isMobile =
@@ -125,8 +116,6 @@ class SettingsScreen extends StatelessWidget {
                 (defaultTargetPlatform == TargetPlatform.android ||
                     defaultTargetPlatform == TargetPlatform.iOS);
 
-            // If user had 'system' selected but is now on desktop, show
-            // 'builtin' in the dropdown to avoid a missing-value error.
             final effectiveMode =
                 (!isMobile && settings.browserMode == 'system')
                 ? 'builtin'
@@ -135,9 +124,9 @@ class SettingsScreen extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _SettingsCard(
+                SettingsCard(
                   children: [
-                    _DropdownTile<String>(
+                    SettingsDropdownTile<String>(
                       icon: Icons.open_in_browser_rounded,
                       title: l10n.browserMode,
                       subtitle: l10n.browserModeDesc,
@@ -171,8 +160,7 @@ class SettingsScreen extends StatelessWidget {
                       onChanged: (v) =>
                           context.read<SettingsProvider>().setBrowserMode(v!),
                     ),
-                    const _TileDivider(),
-                    // Ad-block & dark mode only apply to the built-in WebView
+                    const SettingsTileDivider(),
                     Opacity(
                       opacity: effectiveMode == 'builtin' ? 1.0 : 0.4,
                       child: IgnorePointer(
@@ -180,7 +168,7 @@ class SettingsScreen extends StatelessWidget {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            _SwitchTile(
+                            SettingsSwitchTile(
                               icon: Icons.shield_outlined,
                               title: l10n.adBlocker,
                               subtitle: l10n.adBlockerDesc,
@@ -189,8 +177,8 @@ class SettingsScreen extends StatelessWidget {
                                   .read<SettingsProvider>()
                                   .setAdBlockEnabled(v),
                             ),
-                            const _TileDivider(),
-                            _SwitchTile(
+                            const SettingsTileDivider(),
+                            SettingsSwitchTile(
                               icon: Icons.dark_mode_outlined,
                               title: l10n.webviewDarkMode,
                               subtitle: l10n.webviewDarkModeDesc,
@@ -205,7 +193,6 @@ class SettingsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                // Info banner — shown only on non-mobile platforms
                 if (!isMobile)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -250,14 +237,13 @@ class SettingsScreen extends StatelessWidget {
           },
         ),
 
-        // ── Display & Readability ───────────────────────────────────────
-        _SectionTitle(
+        SettingsSectionTitle(
           title: l10n.displayAndReadability,
           icon: Icons.text_fields_rounded,
         ),
-        _SettingsCard(
+        SettingsCard(
           children: [
-            _DropdownTile<String>(
+            SettingsDropdownTile<String>(
               icon: Icons.format_size_rounded,
               title: l10n.fontSize,
               value: settings.fontSize,
@@ -279,8 +265,8 @@ class SettingsScreen extends StatelessWidget {
               onChanged: (v) =>
                   context.read<SettingsProvider>().setFontSize(v!),
             ),
-            const _TileDivider(),
-            _DropdownTile<String>(
+            const SettingsTileDivider(),
+            SettingsDropdownTile<String>(
               icon: Icons.font_download_outlined,
               title: l10n.typeface,
               value: settings.typeface,
@@ -302,8 +288,8 @@ class SettingsScreen extends StatelessWidget {
               onChanged: (v) =>
                   context.read<SettingsProvider>().setTypeface(v!),
             ),
-            const _TileDivider(),
-            _DropdownTile<double>(
+            const SettingsTileDivider(),
+            SettingsDropdownTile<double>(
               icon: Icons.format_line_spacing_rounded,
               title: l10n.lineSpacing,
               value: settings.lineSpacing,
@@ -327,14 +313,13 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Content Filtering ──────────────────────────────────────────
-        _SectionTitle(
+        SettingsSectionTitle(
           title: l10n.contentFiltering,
           icon: Icons.filter_alt_outlined,
         ),
-        _SettingsCard(
+        SettingsCard(
           children: [
-            _ActionTile(
+            SettingsActionTile(
               icon: Icons.block_rounded,
               title: l10n.globalExcludedKeywords,
               subtitle: l10n.globalExcludedKeywordsDesc,
@@ -347,8 +332,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Notifications ──────────────────────────────────────────────
-        _SectionTitle(
+        SettingsSectionTitle(
           title: l10n.notifications,
           icon: Icons.notifications_outlined,
         ),
@@ -358,9 +342,9 @@ class SettingsScreen extends StatelessWidget {
           opacity: NotificationService.instance.isSupported ? 1.0 : 0.4,
           child: IgnorePointer(
             ignoring: !NotificationService.instance.isSupported,
-            child: _SettingsCard(
+            child: SettingsCard(
               children: [
-                _SwitchTile(
+                SettingsSwitchTile(
                   icon: Icons.notifications_active_outlined,
                   title: l10n.enableNotifications,
                   subtitle: l10n.enableNotificationsDesc,
@@ -369,8 +353,8 @@ class SettingsScreen extends StatelessWidget {
                       .read<SettingsProvider>()
                       .setNotificationsEnabled(v),
                 ),
-                const _TileDivider(),
-                _DropdownTile<String>(
+                const SettingsTileDivider(),
+                SettingsDropdownTile<String>(
                   icon: Icons.schedule_rounded,
                   title: l10n.digestMode,
                   subtitle: l10n.digestModeDesc,
@@ -394,8 +378,8 @@ class SettingsScreen extends StatelessWidget {
                             context.read<SettingsProvider>().setDigestMode(v!)
                       : null,
                 ),
-                const _TileDivider(),
-                _QuietHoursTile(
+                const SettingsTileDivider(),
+                SettingsQuietHoursTile(
                   icon: Icons.do_not_disturb_on_outlined,
                   title: l10n.quietHours,
                   subtitle: l10n.quietHoursDesc,
@@ -414,11 +398,10 @@ class SettingsScreen extends StatelessWidget {
           ),
         ),
 
-        // ── Data & Storage ─────────────────────────────────────────────
-        _SectionTitle(title: l10n.dataAndStorage, icon: Icons.storage_outlined),
-        _SettingsCard(
+        SettingsSectionTitle(title: l10n.dataAndStorage, icon: Icons.storage_outlined),
+        SettingsCard(
           children: [
-            _DropdownTile<int>(
+            SettingsDropdownTile<int>(
               icon: Icons.download_for_offline_outlined,
               title: l10n.offlineCacheLimit,
               subtitle: l10n.offlineCacheLimitDesc,
@@ -434,8 +417,8 @@ class SettingsScreen extends StatelessWidget {
               onChanged: (v) =>
                   context.read<SettingsProvider>().setOfflineCacheLimit(v!),
             ),
-            const _TileDivider(),
-            _DropdownTile<int>(
+            const SettingsTileDivider(),
+            SettingsDropdownTile<int>(
               icon: Icons.timer_outlined,
               title: l10n.autoRefreshFeeds,
               subtitle: l10n.autoRefreshFeedsDesc,
@@ -450,8 +433,8 @@ class SettingsScreen extends StatelessWidget {
               onChanged: (v) =>
                   context.read<SettingsProvider>().setCacheIntervalSeconds(v!),
             ),
-            const _TileDivider(),
-            _SwitchTile(
+            const SettingsTileDivider(),
+            SettingsSwitchTile(
               icon: Icons.sync_rounded,
               title: l10n.syncBackground,
               subtitle: l10n.syncBackgroundDesc,
@@ -462,11 +445,10 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Actions ────────────────────────────────────────────────────
         const SizedBox(height: 4),
-        _SettingsCard(
+        SettingsCard(
           children: [
-            _ActionTile(
+            SettingsActionTile(
               icon: Icons.delete_sweep_outlined,
               title: l10n.clearCache,
               subtitle: l10n.clearCacheDesc,
@@ -480,8 +462,8 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.manage_search_rounded,
               title: l10n.clearSearchHistory,
               subtitle: l10n.clearSearchHistoryDesc,
@@ -495,8 +477,8 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.warning_amber_rounded,
               title: l10n.factoryReset,
               subtitle: l10n.factoryResetDesc,
@@ -506,11 +488,10 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Import / Export ────────────────────────────────────────────
         const SizedBox(height: 4),
-        _SettingsCard(
+        SettingsCard(
           children: [
-            _ActionTile(
+            SettingsActionTile(
               icon: Icons.file_download_outlined,
               title: l10n.exportSubscriptions,
               subtitle: l10n.exportSubscriptionsDesc,
@@ -542,8 +523,8 @@ class SettingsScreen extends StatelessWidget {
                 }
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.file_upload_outlined,
               title: l10n.importSubscriptions,
               subtitle: l10n.importSubscriptionsDesc,
@@ -581,13 +562,12 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── About ──────────────────────────────────────────────────────
-        _SectionTitle(title: l10n.about, icon: Icons.info_outline_rounded),
-        _SettingsCard(
+        SettingsSectionTitle(title: l10n.about, icon: Icons.info_outline_rounded),
+        SettingsCard(
           children: [
             GestureDetector(
               onLongPress: () => context.push('/debug'),
-              child: _ActionTile(
+              child: SettingsActionTile(
                 icon: Icons.info_outline_rounded,
                 title: l10n.version,
                 subtitle: l10n.versionDesc,
@@ -600,8 +580,8 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.people_outline_rounded,
               title: l10n.developerInfo,
               subtitle: l10n.developerInfoDesc,
@@ -613,8 +593,8 @@ class SettingsScreen extends StatelessWidget {
                 launchUrl(Uri.parse('https://github.com/DevOpen-io'));
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.email_outlined,
               title: l10n.contactUs,
               subtitle: l10n.contactUsDesc,
@@ -626,8 +606,8 @@ class SettingsScreen extends StatelessWidget {
                 launchUrl(Uri.parse('mailto:info@devopen.io'));
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.star_outline_rounded,
               title: l10n.rateTheApp,
               subtitle: l10n.rateTheAppDesc,
@@ -640,11 +620,10 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Legal ──────────────────────────────────────────────────────
         const SizedBox(height: 4),
-        _SettingsCard(
+        SettingsCard(
           children: [
-            _ActionTile(
+            SettingsActionTile(
               icon: Icons.privacy_tip_outlined,
               title: l10n.privacyPolicy,
               subtitle: l10n.privacyPolicyDesc,
@@ -660,8 +639,8 @@ class SettingsScreen extends StatelessWidget {
                 );
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.description_outlined,
               title: l10n.termsOfService,
               subtitle: l10n.termsOfServiceDesc,
@@ -677,8 +656,8 @@ class SettingsScreen extends StatelessWidget {
                 );
               },
             ),
-            const _TileDivider(),
-            _ActionTile(
+            const SettingsTileDivider(),
+            SettingsActionTile(
               icon: Icons.source_outlined,
               title: l10n.openSourceLicenses,
               subtitle: l10n.openSourceLicensesDesc,
@@ -712,10 +691,6 @@ class SettingsScreen extends StatelessWidget {
       ],
     );
   }
-
-  // ---------------------------------------------------------------------------
-  // Helpers
-  // ---------------------------------------------------------------------------
 
   String _schemeDisplayName(FlexScheme s) {
     return s.name
@@ -843,379 +818,6 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
-}
-
-// =============================================================================
-// Reusable internal widgets
-// =============================================================================
-
-/// Section title with icon and label.
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const _SectionTitle({required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(left: 4, top: 20, bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 6),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Rounded card container for a group of settings tiles.
-class _SettingsCard extends StatelessWidget {
-  final List<Widget> children;
-
-  const _SettingsCard({required this.children});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 2),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.15),
-        ),
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Material(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
-          child: Column(mainAxisSize: MainAxisSize.min, children: children),
-        ),
-      ),
-    );
-  }
-}
-
-/// Thin divider used between items inside a [_SettingsCard].
-class _TileDivider extends StatelessWidget {
-  const _TileDivider();
-
-  @override
-  Widget build(BuildContext context) {
-    return Divider(
-      height: 0,
-      thickness: 0.5,
-      indent: 54,
-      color: Theme.of(
-        context,
-      ).colorScheme.outlineVariant.withValues(alpha: 0.25),
-    );
-  }
-}
-
-/// A settings row with an icon, title, optional subtitle, and a [Switch].
-class _SwitchTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _SwitchTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: _SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
-      trailing: Switch.adaptive(
-        value: value,
-        onChanged: onChanged,
-        activeTrackColor: theme.colorScheme.primary,
-      ),
-    );
-  }
-}
-
-/// A settings row with an icon, title, optional subtitle, and a right-aligned
-/// [DropdownButton].
-class _DropdownTile<T> extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final T value;
-  final List<DropdownMenuItem<T>> items;
-  final ValueChanged<T?>? onChanged;
-
-  const _DropdownTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    required this.value,
-    required this.items,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: _SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
-      trailing: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          items: items,
-          onChanged: onChanged,
-          borderRadius: BorderRadius.circular(12),
-          style: TextStyle(
-            fontSize: 13.5,
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w500,
-          ),
-          icon: Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Icon(
-              Icons.expand_more_rounded,
-              size: 18,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-          isDense: true,
-        ),
-      ),
-    );
-  }
-}
-
-/// A tappable settings tile (e.g. for navigation or actions).
-class _ActionTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final Widget? trailing;
-  final VoidCallback? onTap;
-  final Color? iconColor;
-
-  const _ActionTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    this.trailing,
-    this.onTap,
-    this.iconColor,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: _SettingsIcon(icon: icon, color: iconColor),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
-      trailing: trailing,
-      onTap: onTap,
-    );
-  }
-}
-
-/// Quiet-hours row with two compact time pickers.
-class _QuietHoursTile extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String? subtitle;
-  final String fromLabel;
-  final String toLabel;
-  final int startHour;
-  final int endHour;
-  final bool enabled;
-  final ValueChanged<int> onStartChanged;
-  final ValueChanged<int> onEndChanged;
-
-  const _QuietHoursTile({
-    required this.icon,
-    required this.title,
-    this.subtitle,
-    required this.fromLabel,
-    required this.toLabel,
-    required this.startHour,
-    required this.endHour,
-    required this.enabled,
-    required this.onStartChanged,
-    required this.onEndChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: _SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _TimePill(
-            label: fromLabel,
-            hour: startHour,
-            enabled: enabled,
-            onChanged: onStartChanged,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '–',
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-              ),
-            ),
-          ),
-          _TimePill(
-            label: toLabel,
-            hour: endHour,
-            enabled: enabled,
-            onChanged: onEndChanged,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Compact pill-shaped time picker.
-class _TimePill extends StatelessWidget {
-  final String label;
-  final int hour;
-  final bool enabled;
-  final ValueChanged<int> onChanged;
-
-  const _TimePill({
-    required this.label,
-    required this.hour,
-    required this.enabled,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 9,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
-          ),
-        ),
-        const SizedBox(height: 2),
-        DropdownButtonHideUnderline(
-          child: DropdownButton<int>(
-            value: hour,
-            isDense: true,
-            items: List.generate(
-              24,
-              (i) => DropdownMenuItem(
-                value: i,
-                child: Text(
-                  '${i.toString().padLeft(2, '0')}:00',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ),
-            ),
-            onChanged: enabled ? (v) => onChanged(v!) : null,
-            icon: const SizedBox.shrink(),
-            style: TextStyle(
-              fontSize: 12.5,
-              fontWeight: FontWeight.w500,
-              color: theme.colorScheme.primary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Small rounded-square icon background for consistency.
-class _SettingsIcon extends StatelessWidget {
-  final IconData icon;
-  final Color? color;
-
-  const _SettingsIcon({required this.icon, this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final iconColor = color ?? theme.colorScheme.primary;
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Icon(icon, size: 19, color: iconColor),
     );
   }
 }

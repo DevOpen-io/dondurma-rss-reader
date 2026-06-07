@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:skeletonizer/skeletonizer.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
@@ -12,6 +11,10 @@ import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../widgets/in_app_browser.dart';
+import '../widgets/article/article_circle_buttons.dart';
+import '../widgets/article/article_content_skeleton.dart';
+import '../widgets/article/article_image_carousel.dart';
+import '../widgets/article/article_reading_mode_toggle.dart';
 
 /// Full-screen article viewer with swipe navigation between articles.
 ///
@@ -98,31 +101,23 @@ class _ArticlePage extends StatefulWidget {
 }
 
 class _ArticlePageState extends State<_ArticlePage> {
+  ArticlePageProvider? _articlePageProvider;
+
   @override
   void initState() {
     super.initState();
-    // Defer heavy content rendering by one frame so the slide-in
-    // transition plays smoothly.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        final provider = context.read<ArticlePageProvider>();
-        provider.setContentReady();
-        // Listen for full-text failure to show a snackbar.
-        provider.addListener(_onProviderChanged);
-        provider.checkAutoFullText(context.read<SubscriptionProvider>());
-      }
+      if (!mounted) return;
+      _articlePageProvider = context.read<ArticlePageProvider>();
+      _articlePageProvider!.setContentReady();
+      _articlePageProvider!.addListener(_onProviderChanged);
+      _articlePageProvider!.checkAutoFullText(context.read<SubscriptionProvider>());
     });
   }
 
   @override
   void dispose() {
-    // Remove listener safely — provider may already be disposed if the
-    // ChangeNotifierProvider was unmounted first.
-    try {
-      context.read<ArticlePageProvider>().removeListener(_onProviderChanged);
-    } catch (_) {
-      // Provider already disposed — nothing to clean up.
-    }
+    _articlePageProvider?.removeListener(_onProviderChanged);
     super.dispose();
   }
 
@@ -244,7 +239,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                   expandedHeight: hasHero ? 280 : 0,
                   pinned: true,
                   stretch: true,
-                  leading: _CircleBackButton(
+                  leading: CircleBackButton(
                     onPressed: () => Navigator.pop(context),
                   ),
                   title: widget.totalCount > 1
@@ -276,7 +271,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                   actions: [
                     // Full-text toggle (icon only)
                     if (widget.item.link.isNotEmpty)
-                      _CircleActionButton(
+                      CircleActionButton(
                         icon: provider.fullTextActive
                             ? Icons.auto_stories_rounded
                             : Icons.short_text_rounded,
@@ -289,7 +284,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                             : l10n.shortTextMode,
                       ),
                     // Open in browser (icon only)
-                    _CircleActionButton(
+                    CircleActionButton(
                       icon: Icons.launch_rounded,
                       onPressed: widget.item.link.isNotEmpty
                           ? () => _openUrl(
@@ -302,7 +297,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                     ),
                     // Share article
                     if (widget.item.link.isNotEmpty)
-                      _CircleActionButton(
+                      CircleActionButton(
                         icon: Icons.share_rounded,
                         onPressed: () {
                           SharePlus.instance.share(
@@ -494,7 +489,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                         // Reading mode toggle — visible affordance for new users
                         if (widget.item.link.isNotEmpty) ...[
                           const SizedBox(height: 10),
-                          _ReadingModeToggle(
+                          ArticleReadingModeToggle(
                             isFullText: provider.fullTextActive &&
                                 provider.fullTextContent != null,
                             isLoading: provider.isLoadingFullText,
@@ -509,7 +504,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                         // Shimmer skeleton loading indicator
                         if (!provider.contentReady ||
                             provider.isLoadingFullText) ...[
-                          _ArticleContentSkeleton(
+                          ArticleContentSkeleton(
                             label: provider.isLoadingFullText
                                 ? l10n.fullTextLoading
                                 : null,
@@ -533,7 +528,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                                   if (urls.isEmpty) {
                                     return const SizedBox.shrink();
                                   }
-                                  return _ImageCarousel(imageUrls: urls);
+                                  return ArticleImageCarousel(imageUrls: urls);
                                 },
                               ),
                               TagExtension(
@@ -718,419 +713,4 @@ class _ArticlePageState extends State<_ArticlePage> {
   }
 }
 
-// =============================================================================
-// Small internal widgets used by ArticleScreen
-// =============================================================================
 
-/// Circular translucent back button for the SliverAppBar.
-class _CircleBackButton extends StatelessWidget {
-  final VoidCallback onPressed;
-  const _CircleBackButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8),
-      child: Material(
-        color: Theme.of(context).colorScheme.surface.withValues(alpha: 0.7),
-        shape: const CircleBorder(),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onPressed,
-          child: SizedBox(
-            width: 36,
-            height: 36,
-            child: Icon(
-              Icons.arrow_back_rounded,
-              size: 20,
-              color: Theme.of(context).colorScheme.onSurface,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Explicit reading mode selector replacing the old hidden tappable source bar.
-///
-/// Shows two labeled pill options (Summary / Full Article) so new users
-/// immediately understand the feature exists and how to use it.
-class _ReadingModeToggle extends StatelessWidget {
-  final bool isFullText;
-  final bool isLoading;
-  final VoidCallback onToggle;
-  final ColorScheme colorScheme;
-  final AppLocalizations l10n;
-
-  const _ReadingModeToggle({
-    required this.isFullText,
-    required this.isLoading,
-    required this.onToggle,
-    required this.colorScheme,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: colorScheme.outlineVariant.withValues(alpha: 0.15),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.menu_book_rounded,
-                size: 13,
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-              const SizedBox(width: 5),
-              Text(
-                l10n.readingModeLabel,
-                style: TextStyle(
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w500,
-                  color: colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _ModeOption(
-                  label: l10n.modeShort,
-                  icon: Icons.short_text_rounded,
-                  isSelected: !isFullText,
-                  isLoading: false,
-                  onTap: isFullText && !isLoading ? onToggle : null,
-                  colorScheme: colorScheme,
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: _ModeOption(
-                  label: isLoading ? l10n.fullTextLoading : l10n.modeFull,
-                  icon: isLoading ? null : Icons.auto_stories_rounded,
-                  isSelected: isFullText,
-                  isLoading: isLoading,
-                  onTap: !isFullText && !isLoading ? onToggle : null,
-                  colorScheme: colorScheme,
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ModeOption extends StatelessWidget {
-  final String label;
-  final IconData? icon;
-  final bool isSelected;
-  final bool isLoading;
-  final VoidCallback? onTap;
-  final ColorScheme colorScheme;
-
-  const _ModeOption({
-    required this.label,
-    required this.icon,
-    required this.isSelected,
-    required this.isLoading,
-    required this.onTap,
-    required this.colorScheme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? colorScheme.primaryContainer
-            : colorScheme.onSurface.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                if (isLoading)
-                  SizedBox(
-                    width: 13,
-                    height: 13,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: colorScheme.primary,
-                    ),
-                  )
-                else if (icon != null)
-                  Icon(
-                    icon,
-                    size: 14,
-                    color: isSelected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                if (!isLoading) const SizedBox(width: 5),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: isSelected
-                        ? colorScheme.onPrimaryContainer
-                        : colorScheme.onSurface.withValues(alpha: 0.6),
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Circular translucent action button for the SliverAppBar.
-///
-/// Matches the visual style of [_CircleBackButton] for consistency.
-/// Shows a tooltip on long-press so the icon meaning is discoverable.
-class _CircleActionButton extends StatelessWidget {
-  final IconData icon;
-  final VoidCallback? onPressed;
-  final String? tooltip;
-  final bool isActive;
-
-  const _CircleActionButton({
-    required this.icon,
-    this.onPressed,
-    this.tooltip,
-    this.isActive = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final color = isActive ? colorScheme.primary : colorScheme.onSurface;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2),
-      child: Tooltip(
-        message: tooltip ?? '',
-        child: Material(
-          color: isActive
-              ? colorScheme.primary.withValues(alpha: 0.2)
-              : colorScheme.surface.withValues(alpha: 0.7),
-          shape: const CircleBorder(),
-          clipBehavior: Clip.antiAlias,
-          child: InkWell(
-            onTap: onPressed,
-            child: SizedBox(
-              width: 36,
-              height: 36,
-              child: Icon(icon, size: 18, color: color),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Image Carousel Widget — swipeable PageView with dot indicators
-// =============================================================================
-
-class _ImageCarousel extends StatefulWidget {
-  final List<String> imageUrls;
-  const _ImageCarousel({required this.imageUrls});
-
-  @override
-  State<_ImageCarousel> createState() => _ImageCarouselState();
-}
-
-class _ImageCarouselState extends State<_ImageCarousel> {
-  int _currentPage = 0;
-  late final PageController _pageController;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final imageCount = widget.imageUrls.length;
-    final screenWidth = MediaQuery.of(context).size.width - 40;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Column(
-        children: [
-          // Swipeable image area
-          SizedBox(
-            height: screenWidth * 0.65,
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: imageCount,
-              onPageChanged: (index) {
-                setState(() => _currentPage = index);
-              },
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: widget.imageUrls[index],
-                    memCacheWidth: 800,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    errorWidget: (context, url, error) => Container(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.05),
-                      child: const Center(
-                        child: Icon(Icons.broken_image_outlined, size: 40),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // Dot indicators + counter
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ...List.generate(imageCount, (index) {
-                final isActive = index == _currentPage;
-                return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: isActive ? 20 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                );
-              }),
-              const SizedBox(width: 8),
-              Text(
-                '${_currentPage + 1} / $imageCount',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Skeleton shimmer placeholder for article content loading
-// =============================================================================
-
-/// Shimmer skeleton that mimics the article HTML content layout.
-///
-/// Shows animated placeholder blocks for paragraphs of varying widths
-/// to give the impression of real article text loading.
-/// Optionally displays a [label] (e.g. "Loading full text…") below the
-/// skeleton.
-class _ArticleContentSkeleton extends StatelessWidget {
-  const _ArticleContentSkeleton({this.label});
-
-  final String? label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Skeletonizer(
-          effect: ShimmerEffect(
-            baseColor: colorScheme.onSurface.withValues(alpha: 0.08),
-            highlightColor: colorScheme.onSurface.withValues(alpha: 0.15),
-            duration: const Duration(milliseconds: 1500),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Fake paragraph block 1
-              Bone.multiText(lines: 4, fontSize: 16),
-              const SizedBox(height: 20),
-              // Fake paragraph block 2
-              Bone.multiText(lines: 3, fontSize: 16),
-              const SizedBox(height: 20),
-              // Fake image placeholder
-              Bone(
-                height: 180,
-                width: double.infinity,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              const SizedBox(height: 20),
-              // Fake paragraph block 3
-              Bone.multiText(lines: 5, fontSize: 16),
-              const SizedBox(height: 20),
-              // Fake paragraph block 4
-              Bone.multiText(lines: 3, fontSize: 16),
-            ],
-          ),
-        ),
-        if (label != null) ...[
-          const SizedBox(height: 16),
-          Center(
-            child: Text(
-              label!,
-              style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.5),
-                fontSize: 13,
-              ),
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-}
