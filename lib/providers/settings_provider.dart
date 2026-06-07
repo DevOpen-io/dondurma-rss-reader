@@ -1,6 +1,6 @@
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
-import '../theme/app_theme.dart';
 
 /// Manages global application settings with Hive persistence.
 ///
@@ -8,7 +8,8 @@ import '../theme/app_theme.dart';
 /// preferences (master toggle, digest mode, quiet hours), display/readability
 /// options (font size, typeface, line spacing), and content filtering keywords.
 class SettingsProvider extends ChangeNotifier {
-  AppTheme _selectedTheme = AppTheme.system;
+  FlexScheme _flexScheme = FlexScheme.material;
+  ThemeMode _themeMode = ThemeMode.system;
   int _offlineCacheLimit = 50;
   int _cacheIntervalSeconds = 30;
   bool _syncBackground = true;
@@ -44,7 +45,8 @@ class SettingsProvider extends ChangeNotifier {
   // Getters
   // ---------------------------------------------------------------------------
 
-  AppTheme get selectedTheme => _selectedTheme;
+  FlexScheme get flexScheme => _flexScheme;
+  ThemeMode get themeMode => _themeMode;
   int get offlineCacheLimit => _offlineCacheLimit;
   int get cacheIntervalSeconds => _cacheIntervalSeconds;
   bool get syncBackground => _syncBackground;
@@ -97,17 +99,17 @@ class SettingsProvider extends ChangeNotifier {
         : savedInterval;
     _syncBackground = _box.get('syncBackground', defaultValue: true);
 
-    final themeName = _box.get('selectedTheme');
-    if (themeName != null) {
-      try {
-        _selectedTheme = AppTheme.values.firstWhere((e) => e.name == themeName);
-      } catch (_) {
-        _selectedTheme = AppTheme.system;
-      }
-    } else {
-      final isDark = _box.get('isDarkMode', defaultValue: true);
-      _selectedTheme = isDark ? AppTheme.dark : AppTheme.system;
-    }
+    final schemeName = _box.get('flexScheme', defaultValue: 'material') as String;
+    _flexScheme = FlexScheme.values.firstWhere(
+      (e) => e.name == schemeName,
+      orElse: () => FlexScheme.material,
+    );
+
+    final modeName = _box.get('themeMode', defaultValue: 'system') as String;
+    _themeMode = ThemeMode.values.firstWhere(
+      (e) => e.name == modeName,
+      orElse: () => ThemeMode.system,
+    );
 
     // Locale
     final savedLocale = _box.get('locale');
@@ -166,11 +168,16 @@ class SettingsProvider extends ChangeNotifier {
   // Setters — each persists to Hive then notifies listeners
   // ---------------------------------------------------------------------------
 
-  /// Updates the active theme and persists the choice.
-  Future<void> setTheme(AppTheme theme) async {
-    _selectedTheme = theme;
+  Future<void> setFlexScheme(FlexScheme scheme) async {
+    _flexScheme = scheme;
     notifyListeners();
-    await _box.put('selectedTheme', theme.name);
+    await _box.put('flexScheme', scheme.name);
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    _themeMode = mode;
+    notifyListeners();
+    await _box.put('themeMode', mode.name);
   }
 
   /// Sets the maximum number of articles cached for offline reading.

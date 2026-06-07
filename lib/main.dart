@@ -150,16 +150,13 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final settingsProvider = context.watch<SettingsProvider>();
-    final platformBrightness = MediaQuery.platformBrightnessOf(context);
-    final themeData = AppThemeBuilder.getTheme(
-      settingsProvider.selectedTheme,
-      platformBrightness,
-    );
 
     return MaterialApp.router(
       title: 'RSS Reader',
       debugShowCheckedModeBanner: false,
-      theme: themeData,
+      theme: AppThemeBuilder.light(settingsProvider.flexScheme),
+      darkTheme: AppThemeBuilder.dark(settingsProvider.flexScheme),
+      themeMode: settingsProvider.themeMode,
       scrollBehavior: const PremiumScrollBehavior(),
       locale: settingsProvider.locale,
       supportedLocales: const [Locale('en'), Locale('tr')],

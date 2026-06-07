@@ -213,9 +213,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get theme => 'Theme';
 
   @override
-  String get selectAppStyle => 'Select application style';
-
-  @override
   String get language => 'Language';
 
   @override
@@ -422,25 +419,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get refresh => 'Refresh';
 
   @override
-  String get themeSystemDefault => 'System Default';
+  String get brightness => 'Brightness';
 
   @override
-  String get themeLightClassic => 'Light (Classic)';
+  String get brightnessSystem => 'System';
 
   @override
-  String get themeDarkClassic => 'Dark (Classic)';
+  String get brightnessLight => 'Light';
 
   @override
-  String get themeLatte => 'Latte (Light)';
-
-  @override
-  String get themeFrappe => 'Frappé (Dark)';
-
-  @override
-  String get themeMacchiato => 'Macchiato (Dark)';
-
-  @override
-  String get themeMocha => 'Mocha (Dark)';
+  String get brightnessDark => 'Dark';
 
   @override
   String get manageFeeds => 'Manage Feeds';
@@ -617,21 +605,6 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get webviewDarkModeDesc =>
       'Apply dark mode to articles viewed inside the app';
-
-  @override
-  String get accessibility => 'Accessibility';
-
-  @override
-  String get highContrastMode => 'High Contrast Mode';
-
-  @override
-  String get highContrastModeDesc => 'Increase contrast for better visibility';
-
-  @override
-  String get themeHighContrastLight => 'High Contrast (Light)';
-
-  @override
-  String get themeHighContrastDark => 'High Contrast (Dark)';
 
   @override
   String get semanticToggleRead => 'Toggle read status';

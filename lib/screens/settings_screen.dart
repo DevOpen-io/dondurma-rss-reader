@@ -10,11 +10,24 @@ import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
-import '../theme/app_theme.dart';
+import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_dialog.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+const _kSchemes = [
+  FlexScheme.material,
+  FlexScheme.blue,
+  FlexScheme.indigo,
+  FlexScheme.deepPurple,
+  FlexScheme.sakura,
+  FlexScheme.red,
+  FlexScheme.tealM3,
+  FlexScheme.green,
+  FlexScheme.amber,
+  FlexScheme.outerSpace,
+];
 
 /// Premium settings screen with grouped card sections inspired by iOS Settings.
 ///
@@ -40,19 +53,48 @@ class SettingsScreen extends StatelessWidget {
         _SectionTitle(title: l10n.general, icon: Icons.palette_outlined),
         _SettingsCard(
           children: [
-            _DropdownTile<AppTheme>(
+            _DropdownTile<FlexScheme>(
               icon: Icons.color_lens_outlined,
               title: l10n.theme,
-              value: settings.selectedTheme,
-              items: AppTheme.values
-                  .map(
-                    (t) => DropdownMenuItem(
-                      value: t,
-                      child: Text(_themeDisplayName(context, t)),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (v) => context.read<SettingsProvider>().setTheme(v!),
+              value: settings.flexScheme,
+              items: _kSchemes.map((s) {
+                final color = FlexColor.schemes[s]?.light.primary ?? Colors.blue;
+                return DropdownMenuItem<FlexScheme>(
+                  value: s,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircleAvatar(backgroundColor: color, radius: 8),
+                      const SizedBox(width: 8),
+                      Text(_schemeDisplayName(s)),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (v) => context.read<SettingsProvider>().setFlexScheme(v!),
+            ),
+            const _TileDivider(),
+            ListTile(
+              contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+              leading: _SettingsIcon(icon: Icons.brightness_6_outlined),
+              title: Text(l10n.brightness, style: const TextStyle(fontSize: 15)),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 10),
+                child: SegmentedButton<ThemeMode>(
+                  segments: [
+                    ButtonSegment(value: ThemeMode.system, label: Text(l10n.brightnessSystem)),
+                    ButtonSegment(value: ThemeMode.light, label: Text(l10n.brightnessLight)),
+                    ButtonSegment(value: ThemeMode.dark, label: Text(l10n.brightnessDark)),
+                  ],
+                  selected: {settings.themeMode},
+                  onSelectionChanged: (s) =>
+                      context.read<SettingsProvider>().setThemeMode(s.first),
+                  style: const ButtonStyle(
+                    visualDensity: VisualDensity(horizontal: -2, vertical: -2),
+                  ),
+                ),
+              ),
+              isThreeLine: true,
             ),
             const _TileDivider(),
             _DropdownTile<Locale>(
@@ -539,45 +581,6 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
 
-        // ── Accessibility ──────────────────────────────────────────────
-        _SectionTitle(
-          title: l10n.accessibility,
-          icon: Icons.accessibility_new_rounded,
-        ),
-        _SettingsCard(
-          children: [
-            _SwitchTile(
-              icon: Icons.contrast_rounded,
-              title: l10n.highContrastMode,
-              subtitle: l10n.highContrastModeDesc,
-              value:
-                  settings.selectedTheme == AppTheme.highContrastLight ||
-                  settings.selectedTheme == AppTheme.highContrastDark,
-              onChanged: (val) {
-                final current = context.read<SettingsProvider>().selectedTheme;
-                if (val) {
-                  final isDark =
-                      current == AppTheme.dark ||
-                      current == AppTheme.catppuccinFrappe ||
-                      current == AppTheme.catppuccinMacchiato ||
-                      current == AppTheme.catppuccinMocha ||
-                      current == AppTheme.highContrastDark;
-                  context.read<SettingsProvider>().setTheme(
-                    isDark
-                        ? AppTheme.highContrastDark
-                        : AppTheme.highContrastLight,
-                  );
-                } else {
-                  final isDark = current == AppTheme.highContrastDark;
-                  context.read<SettingsProvider>().setTheme(
-                    isDark ? AppTheme.dark : AppTheme.light,
-                  );
-                }
-              },
-            ),
-          ],
-        ),
-
         // ── About ──────────────────────────────────────────────────────
         _SectionTitle(title: l10n.about, icon: Icons.info_outline_rounded),
         _SettingsCard(
@@ -714,28 +717,13 @@ class SettingsScreen extends StatelessWidget {
   // Helpers
   // ---------------------------------------------------------------------------
 
-  String _themeDisplayName(BuildContext context, AppTheme theme) {
-    final l10n = AppLocalizations.of(context);
-    switch (theme) {
-      case AppTheme.system:
-        return l10n.themeSystemDefault;
-      case AppTheme.light:
-        return l10n.themeLightClassic;
-      case AppTheme.dark:
-        return l10n.themeDarkClassic;
-      case AppTheme.catppuccinLatte:
-        return l10n.themeLatte;
-      case AppTheme.catppuccinFrappe:
-        return l10n.themeFrappe;
-      case AppTheme.catppuccinMacchiato:
-        return l10n.themeMacchiato;
-      case AppTheme.catppuccinMocha:
-        return l10n.themeMocha;
-      case AppTheme.highContrastLight:
-        return l10n.themeHighContrastLight;
-      case AppTheme.highContrastDark:
-        return l10n.themeHighContrastDark;
-    }
+  String _schemeDisplayName(FlexScheme s) {
+    return s.name
+        .replaceAllMapped(RegExp(r'([A-Z])'), (m) => ' ${m.group(1)}')
+        .trim()
+        .split(' ')
+        .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+        .join(' ');
   }
 
   Widget _buildNotificationWarning(

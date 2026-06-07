@@ -108,7 +108,6 @@
 
   "general": "General",
   "theme": "Theme",
-  "selectAppStyle": "Select application style",
   "language": "Language",
   "changeAppLanguage": "Change the app language",
   "english": "English",
@@ -186,13 +185,10 @@
   "forward": "Forward",
   "refresh": "Refresh",
 
-  "themeSystemDefault": "System Default",
-  "themeLightClassic": "Light (Classic)",
-  "themeDarkClassic": "Dark (Classic)",
-  "themeLatte": "Latte (Light)",
-  "themeFrappe": "Frappé (Dark)",
-  "themeMacchiato": "Macchiato (Dark)",
-  "themeMocha": "Mocha (Dark)",
+  "brightness": "Brightness",
+  "brightnessSystem": "System",
+  "brightnessLight": "Light",
+  "brightnessDark": "Dark",
 
   "manageFeeds": "Manage Feeds",
   "noFeedsSubscribed": "No feeds subscribed.\nAdd one from the Home Screen.",
@@ -273,11 +269,6 @@
   "webviewDarkMode": "In-App Browser Dark Mode",
   "webviewDarkModeDesc": "Apply dark mode to articles viewed inside the app",
 
-  "accessibility": "Accessibility",
-  "highContrastMode": "High Contrast Mode",
-  "highContrastModeDesc": "Increase contrast for better visibility",
-  "themeHighContrastLight": "High Contrast (Light)",
-  "themeHighContrastDark": "High Contrast (Dark)",
 
   "semanticToggleRead": "Toggle read status",
   "semanticToggleBookmark": "Toggle bookmark",

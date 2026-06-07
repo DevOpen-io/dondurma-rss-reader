@@ -74,7 +74,6 @@
 
   "general": "Genel",
   "theme": "Tema",
-  "selectAppStyle": "Uygulama stilini seçin",
   "language": "Dil",
   "changeAppLanguage": "Uygulama dilini değiştirin",
   "english": "English",
@@ -147,13 +146,10 @@
   "forward": "İleri",
   "refresh": "Yenile",
 
-  "themeSystemDefault": "Sistem Varsayılanı",
-  "themeLightClassic": "Aydınlık (Klasik)",
-  "themeDarkClassic": "Karanlık (Klasik)",
-  "themeLatte": "Latte (Aydınlık)",
-  "themeFrappe": "Frappé (Karanlık)",
-  "themeMacchiato": "Macchiato (Karanlık)",
-  "themeMocha": "Mocha (Karanlık)",
+  "brightness": "Parlaklık",
+  "brightnessSystem": "Sistem",
+  "brightnessLight": "Açık",
+  "brightnessDark": "Koyu",
 
   "manageFeeds": "Kaynakları Yönet",
   "noFeedsSubscribed": "Abone olunan kaynak yok.\nAna Ekrandan bir tane ekleyin.",
@@ -218,11 +214,6 @@
   "webviewDarkMode": "Uygulama İçi Tarayıcı Karanlık Modu",
   "webviewDarkModeDesc": "Uygulama içindeki makalelerde karanlık modu uygula",
 
-  "accessibility": "Erişilebilirlik",
-  "highContrastMode": "Yüksek Kontrast Modu",
-  "highContrastModeDesc": "Daha iyi görünürlük için kontrastı artır",
-  "themeHighContrastLight": "Yüksek Kontrast (Açık)",
-  "themeHighContrastDark": "Yüksek Kontrast (Koyu)",
 
   "semanticToggleRead": "Okundu durumunu değiştir",
   "semanticToggleBookmark": "Yer işaretini değiştir",

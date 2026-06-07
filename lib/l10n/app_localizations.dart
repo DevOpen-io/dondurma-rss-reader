@@ -476,12 +476,6 @@ abstract class AppLocalizations {
   /// **'Theme'**
   String get theme;
 
-  /// No description provided for @selectAppStyle.
-  ///
-  /// In en, this message translates to:
-  /// **'Select application style'**
-  String get selectAppStyle;
-
   /// No description provided for @language.
   ///
   /// In en, this message translates to:
@@ -872,47 +866,29 @@ abstract class AppLocalizations {
   /// **'Refresh'**
   String get refresh;
 
-  /// No description provided for @themeSystemDefault.
+  /// No description provided for @brightness.
   ///
   /// In en, this message translates to:
-  /// **'System Default'**
-  String get themeSystemDefault;
+  /// **'Brightness'**
+  String get brightness;
 
-  /// No description provided for @themeLightClassic.
+  /// No description provided for @brightnessSystem.
   ///
   /// In en, this message translates to:
-  /// **'Light (Classic)'**
-  String get themeLightClassic;
+  /// **'System'**
+  String get brightnessSystem;
 
-  /// No description provided for @themeDarkClassic.
+  /// No description provided for @brightnessLight.
   ///
   /// In en, this message translates to:
-  /// **'Dark (Classic)'**
-  String get themeDarkClassic;
+  /// **'Light'**
+  String get brightnessLight;
 
-  /// No description provided for @themeLatte.
+  /// No description provided for @brightnessDark.
   ///
   /// In en, this message translates to:
-  /// **'Latte (Light)'**
-  String get themeLatte;
-
-  /// No description provided for @themeFrappe.
-  ///
-  /// In en, this message translates to:
-  /// **'Frappé (Dark)'**
-  String get themeFrappe;
-
-  /// No description provided for @themeMacchiato.
-  ///
-  /// In en, this message translates to:
-  /// **'Macchiato (Dark)'**
-  String get themeMacchiato;
-
-  /// No description provided for @themeMocha.
-  ///
-  /// In en, this message translates to:
-  /// **'Mocha (Dark)'**
-  String get themeMocha;
+  /// **'Dark'**
+  String get brightnessDark;
 
   /// No description provided for @manageFeeds.
   ///
@@ -1237,36 +1213,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Apply dark mode to articles viewed inside the app'**
   String get webviewDarkModeDesc;
-
-  /// No description provided for @accessibility.
-  ///
-  /// In en, this message translates to:
-  /// **'Accessibility'**
-  String get accessibility;
-
-  /// No description provided for @highContrastMode.
-  ///
-  /// In en, this message translates to:
-  /// **'High Contrast Mode'**
-  String get highContrastMode;
-
-  /// No description provided for @highContrastModeDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Increase contrast for better visibility'**
-  String get highContrastModeDesc;
-
-  /// No description provided for @themeHighContrastLight.
-  ///
-  /// In en, this message translates to:
-  /// **'High Contrast (Light)'**
-  String get themeHighContrastLight;
-
-  /// No description provided for @themeHighContrastDark.
-  ///
-  /// In en, this message translates to:
-  /// **'High Contrast (Dark)'**
-  String get themeHighContrastDark;
 
   /// No description provided for @semanticToggleRead.
   ///

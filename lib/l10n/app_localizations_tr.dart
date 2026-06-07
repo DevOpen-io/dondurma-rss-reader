@@ -214,9 +214,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get theme => 'Tema';
 
   @override
-  String get selectAppStyle => 'Uygulama stilini seçin';
-
-  @override
   String get language => 'Dil';
 
   @override
@@ -420,25 +417,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get refresh => 'Yenile';
 
   @override
-  String get themeSystemDefault => 'Sistem Varsayılanı';
+  String get brightness => 'Parlaklık';
 
   @override
-  String get themeLightClassic => 'Aydınlık (Klasik)';
+  String get brightnessSystem => 'Sistem';
 
   @override
-  String get themeDarkClassic => 'Karanlık (Klasik)';
+  String get brightnessLight => 'Açık';
 
   @override
-  String get themeLatte => 'Latte (Aydınlık)';
-
-  @override
-  String get themeFrappe => 'Frappé (Karanlık)';
-
-  @override
-  String get themeMacchiato => 'Macchiato (Karanlık)';
-
-  @override
-  String get themeMocha => 'Mocha (Karanlık)';
+  String get brightnessDark => 'Koyu';
 
   @override
   String get manageFeeds => 'Kaynakları Yönet';
@@ -618,21 +606,6 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get webviewDarkModeDesc =>
       'Uygulama içindeki makalelerde karanlık modu uygula';
-
-  @override
-  String get accessibility => 'Erişilebilirlik';
-
-  @override
-  String get highContrastMode => 'Yüksek Kontrast Modu';
-
-  @override
-  String get highContrastModeDesc => 'Daha iyi görünürlük için kontrastı artır';
-
-  @override
-  String get themeHighContrastLight => 'Yüksek Kontrast (Açık)';
-
-  @override
-  String get themeHighContrastDark => 'Yüksek Kontrast (Koyu)';
 
   @override
   String get semanticToggleRead => 'Okundu durumunu değiştir';
