@@ -135,40 +135,56 @@ class SettingsDropdownTile<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
-      trailing: DropdownButtonHideUnderline(
-        child: DropdownButton<T>(
-          value: value,
-          items: items,
-          onChanged: onChanged,
-          borderRadius: BorderRadius.circular(12),
-          style: TextStyle(
-            fontSize: 13.5,
-            color: theme.colorScheme.primary,
-            fontWeight: FontWeight.w500,
-          ),
-          icon: Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Icon(
-              Icons.expand_more_rounded,
-              size: 18,
-              color: theme.colorScheme.primary,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SettingsIcon(icon: icon),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 15)),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          isDense: true,
-        ),
+          const SizedBox(width: 8),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<T>(
+              value: value,
+              items: items,
+              onChanged: onChanged,
+              borderRadius: BorderRadius.circular(12),
+              style: TextStyle(
+                fontSize: 13.5,
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w500,
+              ),
+              icon: Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+              isDense: true,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -243,42 +259,58 @@ class SettingsQuietHoursTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          SettingsTimePill(
-            label: fromLabel,
-            hour: startHour,
-            enabled: enabled,
-            onChanged: onStartChanged,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              '–',
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-              ),
+          SettingsIcon(icon: icon),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(title, style: const TextStyle(fontSize: 15)),
+                if (subtitle != null) ...[
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle!,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
-          SettingsTimePill(
-            label: toLabel,
-            hour: endHour,
-            enabled: enabled,
-            onChanged: onEndChanged,
+          const SizedBox(width: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              SettingsTimePill(
+                label: fromLabel,
+                hour: startHour,
+                enabled: enabled,
+                onChanged: onStartChanged,
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Text(
+                  '–',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                  ),
+                ),
+              ),
+              SettingsTimePill(
+                label: toLabel,
+                hour: endHour,
+                enabled: enabled,
+                onChanged: onEndChanged,
+              ),
+            ],
           ),
         ],
       ),
