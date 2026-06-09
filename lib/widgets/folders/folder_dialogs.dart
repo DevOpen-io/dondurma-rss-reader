@@ -6,7 +6,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/feed_subscription.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
-import '../../widgets/keyword_input_dialog.dart';
+import '../../widgets/keyword_input_sheet.dart';
 
 class EditCategoryDialog extends StatefulWidget {
   const EditCategoryDialog({super.key, required this.currentCategory});
@@ -228,9 +228,13 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                   ),
                   const SizedBox(height: 6),
                   InkWell(
-                    onTap: () => showDialog<void>(
+                    onTap: () => showModalBottomSheet<void>(
                       context: context,
-                      builder: (ctx) => KeywordInputDialog(
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      builder: (ctx) => KeywordInputSheet(
                         title: l10n.excludedKeywords,
                         initialKeywords: _keywords,
                         onSave: (kw) => setState(() => _keywords = kw),

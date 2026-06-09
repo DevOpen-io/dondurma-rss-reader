@@ -11,7 +11,7 @@ import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
-import '../widgets/keyword_input_dialog.dart';
+import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
@@ -759,9 +759,13 @@ class SettingsScreen extends StatelessWidget {
   void _showGlobalKeywordsDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settingsProvider = context.read<SettingsProvider>();
-    showDialog(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => KeywordInputDialog(
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => KeywordInputSheet(
         title: l10n.globalExcludedKeywords,
         initialKeywords: settingsProvider.globalExcludedKeywords,
         onSave: (keywords) =>
