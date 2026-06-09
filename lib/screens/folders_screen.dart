@@ -87,9 +87,13 @@ class FoldersScreen extends StatelessWidget {
   }
 
   void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) => EditSubscriptionDialog(sub: sub),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => EditSubscriptionDialog(sub: sub),
     );
   }
 
@@ -183,54 +187,91 @@ class FoldersScreen extends StatelessWidget {
 
     if (allCategories.isEmpty) return;
 
-    showDialog(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: Text(l10n.moveToFolder),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: allCategories.length,
-              itemBuilder: (context, index) {
-                final category = allCategories[index];
-                return ListTile(
-                  leading: Icon(
-                    subscriptionProvider.getCategoryIcon(category),
-                    size: 20,
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        final cs = Theme.of(context).colorScheme;
+        final tt = Theme.of(context).textTheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurface.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                  title: Text(category),
-                  onTap: () {
-                    subscriptionProvider
-                        .moveFeedToCategory(sub.url, category)
-                        .then((_) {
-                          if (dialogContext.mounted) {
-                            Navigator.of(dialogContext).pop();
-                          }
-                          if (context.mounted) {
-                            context.read<FeedProvider>().refreshAll();
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  l10n.feedMovedToFolder(sub.name, category),
-                                ),
-                              ),
-                            );
-                          }
-                        });
-                  },
-                );
-              },
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.moveToFolder,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: allCategories.length,
+                    separatorBuilder: (_, __) => Divider(
+                      height: 1,
+                      indent: 16,
+                      color: cs.outline.withValues(alpha: 0.2),
+                    ),
+                    itemBuilder: (_, index) {
+                      final category = allCategories[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        leading: Icon(
+                          subscriptionProvider.getCategoryIcon(category),
+                          size: 20,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        title: Text(category, style: tt.bodyMedium),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        onTap: () {
+                          subscriptionProvider
+                              .moveFeedToCategory(sub.url, category)
+                              .then((_) {
+                                if (sheetCtx.mounted) {
+                                  Navigator.of(sheetCtx).pop();
+                                }
+                                if (context.mounted) {
+                                  context.read<FeedProvider>().refreshAll();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        l10n.feedMovedToFolder(sub.name, category),
+                                      ),
+                                    ),
+                                  );
+                                }
+                              });
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: Text(l10n.cancel),
-            ),
-          ],
         );
       },
     );
