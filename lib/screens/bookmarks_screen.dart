@@ -18,12 +18,41 @@ class BookmarksScreen extends StatelessWidget {
 
     if (bookmarkedItems.isEmpty) {
       return Center(
-        child: Text(
-          l10n.noBookmarks,
-          style: TextStyle(
-            color: Theme.of(
-              context,
-            ).colorScheme.onSurface.withValues(alpha: 0.5),
+        child: Padding(
+          padding: const EdgeInsets.all(40.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.bookmark_border_rounded,
+                size: 64,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.15),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                l10n.noBookmarks,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Swipe left on any article to save it here.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.5),
+                  fontSize: 14,
+                  height: 1.5,
+                ),
+              ),
+            ],
           ),
         ),
       );

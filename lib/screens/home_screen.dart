@@ -181,7 +181,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   ? l10n.noFeedsInCategory(provider.selectedCategory!)
                   : l10n.noFeedsMatchFilter,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.grey),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+                fontSize: 14,
+              ),
             ),
           ),
         ),
@@ -541,43 +544,47 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSectionHeader(String title, {String? trailingText}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12.0),
-      color: Colors.transparent,
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, bottom: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
+          Container(
+            width: 3,
+            height: 14,
+            decoration: BoxDecoration(
+              color: colorScheme.primary,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 8),
           Text(
-            title,
+            title.toUpperCase(),
             style: TextStyle(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.6),
-              fontSize: 12.0,
-              fontWeight: FontWeight.bold,
+              color: colorScheme.primary.withValues(alpha: 0.85),
+              fontSize: 11.5,
+              fontWeight: FontWeight.w700,
               letterSpacing: 1.2,
             ),
           ),
-          if (trailingText != null)
+          if (trailingText != null) ...[
+            const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.1),
+                color: colorScheme.onSurface.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 trailingText,
                 style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colorScheme.onSurface.withValues(alpha: 0.55),
                   fontSize: 11.0,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
+          ],
         ],
       ),
     );

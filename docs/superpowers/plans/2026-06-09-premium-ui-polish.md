@@ -1,3 +1,205 @@
+# Premium UI Polish Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Polish the existing RSS reader UI to feel premium — richer theme system, nav bar pill indicator, improved feed cards with thumbnails, article reading comfort, and richer empty states.
+
+**Architecture:** All changes are additive visual polish to existing widgets. No new providers, routes, or architectural changes. Five independent tasks covering theme, nav, feed list, article view, and empty states.
+
+**Tech Stack:** Flutter, Material 3, FlexColorScheme, GoogleFonts (Outfit), CachedNetworkImage, Provider
+
+---
+
+### Task 1: Enhance AppThemeBuilder with component overrides
+
+**Files:**
+- Modify: `lib/theme/app_theme.dart`
+
+- [ ] **Step 1: Replace app_theme.dart with enhanced version**
+
+Replace the entire file content:
+
+```dart
+import 'package:flex_color_scheme/flex_color_scheme.dart';
+import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+class AppThemeBuilder {
+  static final String _font = GoogleFonts.outfit().fontFamily!;
+
+  static TextTheme _textTheme(Color color) =>
+      GoogleFonts.outfitTextTheme().apply(bodyColor: color, displayColor: color).copyWith(
+        displayLarge: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: color),
+        displayMedium: GoogleFonts.outfit(fontWeight: FontWeight.w800, color: color),
+        displaySmall: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: color),
+        headlineLarge: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: color),
+        headlineMedium: GoogleFonts.outfit(fontWeight: FontWeight.w700, color: color),
+        headlineSmall: GoogleFonts.outfit(fontWeight: FontWeight.w600, color: color),
+        titleLarge: GoogleFonts.outfit(fontWeight: FontWeight.w700, fontSize: 20, color: color),
+        titleMedium: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 16, color: color),
+        titleSmall: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14, color: color),
+        bodyLarge: GoogleFonts.outfit(fontWeight: FontWeight.w400, fontSize: 16, color: color),
+        bodyMedium: GoogleFonts.outfit(fontWeight: FontWeight.w400, fontSize: 14, color: color),
+        bodySmall: GoogleFonts.outfit(fontWeight: FontWeight.w400, fontSize: 12, color: color),
+        labelLarge: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 14, color: color),
+        labelMedium: GoogleFonts.outfit(fontWeight: FontWeight.w600, fontSize: 12, color: color),
+        labelSmall: GoogleFonts.outfit(fontWeight: FontWeight.w500, fontSize: 11, color: color),
+      );
+
+  static ThemeData _applyOverrides(ThemeData base) {
+    return base.copyWith(
+      textTheme: _textTheme(base.colorScheme.onSurface),
+      appBarTheme: AppBarTheme(
+        centerTitle: false,
+        scrolledUnderElevation: 0,
+        elevation: 0,
+        backgroundColor: base.colorScheme.surface,
+        surfaceTintColor: Colors.transparent,
+        titleTextStyle: GoogleFonts.outfit(
+          fontWeight: FontWeight.w700,
+          fontSize: 20,
+          color: base.colorScheme.onSurface,
+        ),
+      ),
+      cardTheme: CardThemeData(
+        elevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        margin: EdgeInsets.zero,
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        border: InputBorder.none,
+        contentPadding: EdgeInsets.zero,
+        isDense: true,
+      ),
+      snackBarTheme: SnackBarThemeData(
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        showDragHandle: true,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData light(FlexScheme scheme) =>
+      _applyOverrides(FlexColorScheme.light(scheme: scheme, fontFamily: _font).toTheme);
+
+  static ThemeData dark(FlexScheme scheme) =>
+      _applyOverrides(FlexColorScheme.dark(scheme: scheme, fontFamily: _font).toTheme);
+}
+```
+
+- [ ] **Step 2: Run analysis to verify no errors**
+
+Run: `flutter analyze lib/theme/app_theme.dart`
+Expected: No issues found.
+
+- [ ] **Step 3: Run the app and verify theme applies**
+
+Run: `flutter run`
+Expected: App launches. AppBar has no scroll-under tint. SnackBars float with rounded corners. Typography feels more consistent across screens.
+
+---
+
+### Task 2: Bottom nav pill indicator
+
+**Files:**
+- Modify: `lib/widgets/home/home_bottom_nav.dart`
+
+- [ ] **Step 1: Replace NavBarItem with animated pill version**
+
+Replace the entire file content:
+
+```dart
+import 'package:flutter/material.dart';
+
+class NavBarItem extends StatelessWidget {
+  const NavBarItem({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final color = selected ? primary : onSurface.withValues(alpha: 0.55);
+
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+              decoration: BoxDecoration(
+                color: selected
+                    ? primary.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                softWrap: false,
+                style: TextStyle(
+                  fontSize: 10.5,
+                  color: color,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 2: Run analysis**
+
+Run: `flutter analyze lib/widgets/home/home_bottom_nav.dart`
+Expected: No issues found.
+
+- [ ] **Step 3: Run app and verify pill indicator**
+
+Run: `flutter run`
+Expected: Selected nav tab shows a soft colored pill behind its icon. Tapping a different tab animates the pill away and shows it on the new tab.
+
+---
+
+### Task 3: Feed list card improvements
+
+**Files:**
+- Modify: `lib/widgets/feed_list_item.dart`
+- Modify: `lib/screens/home_screen.dart`
+
+- [ ] **Step 1: Rewrite feed_list_item.dart**
+
+Replace the entire content of `lib/widgets/feed_list_item.dart`:
+
+```dart
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -612,3 +814,376 @@ class _ActionIcon extends StatelessWidget {
     );
   }
 }
+```
+
+- [ ] **Step 2: Update section headers in home_screen.dart**
+
+In `lib/screens/home_screen.dart`, replace the entire `_buildSectionHeader` method (find it by the `Widget _buildSectionHeader(String title` signature):
+
+```dart
+Widget _buildSectionHeader(String title, {String? trailingText}) {
+  final colorScheme = Theme.of(context).colorScheme;
+  return Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 8),
+    child: Row(
+      children: [
+        Container(
+          width: 3,
+          height: 14,
+          decoration: BoxDecoration(
+            color: colorScheme.primary,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title.toUpperCase(),
+          style: TextStyle(
+            color: colorScheme.primary.withValues(alpha: 0.85),
+            fontSize: 11.5,
+            fontWeight: FontWeight.w700,
+            letterSpacing: 1.2,
+          ),
+        ),
+        if (trailingText != null) ...[
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: colorScheme.onSurface.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(
+              trailingText,
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.55),
+                fontSize: 11.0,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ],
+    ),
+  );
+}
+```
+
+Also fix the hardcoded `Colors.grey` in the empty/filter state text. Find this exact block in `home_screen.dart`:
+```dart
+style: const TextStyle(color: Colors.grey),
+```
+Replace with:
+```dart
+style: TextStyle(
+  color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+  fontSize: 14,
+),
+```
+
+- [ ] **Step 3: Run analysis**
+
+Run: `flutter analyze lib/widgets/feed_list_item.dart lib/screens/home_screen.dart`
+Expected: No issues found.
+
+- [ ] **Step 4: Run app and verify**
+
+Run: `flutter run`
+Expected:
+- Feed cards with images show a 72×72 rounded thumbnail on the right; bookmark icon overlays the thumbnail bottom-right corner.
+- Cards without images show the bookmark column on the right as before.
+- Unread cards have a slightly more visible primary tint (0.07 vs 0.035 previously).
+- Swiping: the action icon smoothly scales up when swipe threshold is hit, scales back on release.
+- Section headers (Today/Yesterday/Older) show a small primary-colored left accent bar.
+
+---
+
+### Task 4: Article reading view improvements
+
+**Files:**
+- Modify: `lib/screens/article_screen.dart`
+
+- [ ] **Step 1: Remove full-text toggle from AppBar actions**
+
+In `lib/screens/article_screen.dart`, find and delete this block inside the `actions:` list of `SliverAppBar` (it appears before the "Open in browser" button):
+
+```dart
+// Full-text toggle (icon only)
+if (widget.item.link.isNotEmpty)
+  CircleActionButton(
+    icon: provider.fullTextActive
+        ? Icons.auto_stories_rounded
+        : Icons.short_text_rounded,
+    isActive: provider.fullTextActive,
+    onPressed: provider.isLoadingFullText
+        ? null
+        : provider.toggleFullText,
+    tooltip: provider.fullTextActive
+        ? l10n.fullTextExtraction
+        : l10n.shortTextMode,
+  ),
+```
+
+- [ ] **Step 2: Add max-width constraint around article body**
+
+Use computed padding — no re-indentation needed.
+
+**Edit A:** Add `import 'dart:math' as math;` at top of `lib/screens/article_screen.dart`. Find:
+```dart
+import '../widgets/article/article_reading_mode_toggle.dart';
+```
+Replace with:
+```dart
+import '../widgets/article/article_reading_mode_toggle.dart';
+import 'dart:math' as math;
+```
+
+**Edit B:** Change the `SliverToBoxAdapter`'s padding to adapt on wide screens. Find:
+```dart
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+```
+Replace with:
+```dart
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: math.max(
+                        20.0,
+                        (MediaQuery.of(context).size.width - 680) / 2,
+                      ),
+                    ),
+```
+
+- [ ] **Step 3: Remove the source info bar**
+
+Find and delete this entire Container (the "Source info bar") in `lib/screens/article_screen.dart`:
+
+```dart
+                        // Source info bar (informational only)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.4),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant.withValues(
+                                alpha: 0.15,
+                              ),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.rss_feed_rounded,
+                                size: 16,
+                                color: colorScheme.primary.withValues(
+                                  alpha: 0.7,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  widget.item.siteName,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.7,
+                                    ),
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+```
+
+- [ ] **Step 4: Make reading progress bar more prominent**
+
+Find:
+```dart
+return LinearProgressIndicator(
+  value: animatedProgress,
+  minHeight: 2.5,
+  backgroundColor: Colors.transparent,
+  valueColor: AlwaysStoppedAnimation<Color>(
+    colorScheme.primary.withValues(alpha: 0.7),
+  ),
+);
+```
+Replace with:
+```dart
+return LinearProgressIndicator(
+  value: animatedProgress,
+  minHeight: 3.0,
+  backgroundColor: Colors.transparent,
+  valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+);
+```
+
+- [ ] **Step 5: Run analysis**
+
+Run: `flutter analyze lib/screens/article_screen.dart`
+Expected: No issues found.
+
+- [ ] **Step 6: Run app and open an article to verify**
+
+Run: `flutter run`
+Expected:
+- AppBar has only "Open in browser" and "Share" actions (no reading mode toggle in AppBar).
+- Article source info bar removed — header is cleaner.
+- Article content constrained to 680px max on wide screens; on phone it fills width normally.
+- Reading progress bar is solid primary color, 3px height — clearly visible as you scroll.
+- Inline reading mode toggle widget still present below article title area.
+
+---
+
+### Task 5: Rich empty states for Bookmarks and Folders
+
+**Files:**
+- Modify: `lib/screens/bookmarks_screen.dart`
+- Modify: `lib/screens/folders_screen.dart`
+
+- [ ] **Step 1: Replace bookmarks empty state**
+
+In `lib/screens/bookmarks_screen.dart`, find the empty state block:
+```dart
+if (bookmarkedItems.isEmpty) {
+  return Center(
+    child: Text(
+      l10n.noBookmarks,
+      style: TextStyle(
+        color: Theme.of(
+          context,
+        ).colorScheme.onSurface.withValues(alpha: 0.5),
+      ),
+    ),
+  );
+}
+```
+
+Replace with:
+```dart
+if (bookmarkedItems.isEmpty) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(40.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.bookmark_border_rounded,
+            size: 64,
+            color: Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.15),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.noBookmarks,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Swipe left on any article to save it here.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.5),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+```
+
+- [ ] **Step 2: Replace folders empty state**
+
+In `lib/screens/folders_screen.dart`, find:
+```dart
+if (sortedCategoryNames.isEmpty) {
+  return Center(
+    child: Text(
+      l10n.noFolders,
+      style: TextStyle(
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
+      ),
+    ),
+  );
+}
+```
+
+Replace with:
+```dart
+if (sortedCategoryNames.isEmpty) {
+  return Center(
+    child: Padding(
+      padding: const EdgeInsets.all(40.0),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.folder_open_rounded,
+            size: 64,
+            color: Theme.of(context)
+                .colorScheme
+                .onSurface
+                .withValues(alpha: 0.15),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            l10n.noFolders,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add a folder to organize your feeds.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.5),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+```
+
+- [ ] **Step 3: Run analysis**
+
+Run: `flutter analyze lib/screens/bookmarks_screen.dart lib/screens/folders_screen.dart`
+Expected: No issues found.
+
+- [ ] **Step 4: Run app and verify empty states**
+
+Run: `flutter run`
+Expected:
+- Empty Bookmarks tab: large faded bookmark icon (64px) + bold title + descriptive subtitle.
+- Empty Folders tab: large faded folder icon (64px) + bold title + descriptive subtitle.
+- Both screens feel intentional rather than forgotten.

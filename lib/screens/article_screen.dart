@@ -15,6 +15,7 @@ import '../widgets/article/article_circle_buttons.dart';
 import '../widgets/article/article_content_skeleton.dart';
 import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
+import 'dart:math' as math;
 
 /// Full-screen article viewer with swipe navigation between articles.
 ///
@@ -269,20 +270,6 @@ class _ArticlePageState extends State<_ArticlePage> {
                       : null,
                   centerTitle: true,
                   actions: [
-                    // Full-text toggle (icon only)
-                    if (widget.item.link.isNotEmpty)
-                      CircleActionButton(
-                        icon: provider.fullTextActive
-                            ? Icons.auto_stories_rounded
-                            : Icons.short_text_rounded,
-                        isActive: provider.fullTextActive,
-                        onPressed: provider.isLoadingFullText
-                            ? null
-                            : provider.toggleFullText,
-                        tooltip: provider.fullTextActive
-                            ? l10n.fullTextExtraction
-                            : l10n.shortTextMode,
-                      ),
                     // Open in browser (icon only)
                     CircleActionButton(
                       icon: Icons.launch_rounded,
@@ -350,7 +337,12 @@ class _ArticlePageState extends State<_ArticlePage> {
                 // ── Article content ──────────────────────────────────────
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: math.max(
+                        20.0,
+                        (MediaQuery.of(context).size.width - 680) / 2,
+                      ),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -442,49 +434,6 @@ class _ArticlePageState extends State<_ArticlePage> {
                         ),
 
                         const SizedBox(height: 16),
-
-                        // Source info bar (informational only)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: colorScheme.surfaceContainerHighest
-                                .withValues(alpha: 0.4),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: colorScheme.outlineVariant.withValues(
-                                alpha: 0.15,
-                              ),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.rss_feed_rounded,
-                                size: 16,
-                                color: colorScheme.primary.withValues(
-                                  alpha: 0.7,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  widget.item.siteName,
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.7,
-                                    ),
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
 
                         // Reading mode toggle — visible affordance for new users
                         if (widget.item.link.isNotEmpty) ...[
@@ -694,11 +643,9 @@ class _ArticlePageState extends State<_ArticlePage> {
                       builder: (context, animatedProgress, _) {
                         return LinearProgressIndicator(
                           value: animatedProgress,
-                          minHeight: 2.5,
+                          minHeight: 3.0,
                           backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            colorScheme.primary.withValues(alpha: 0.7),
-                          ),
+                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
                         );
                       },
                     ),
