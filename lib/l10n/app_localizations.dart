@@ -1627,6 +1627,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Talha Aksoy & Eren Gün'**
   String get developerInfoDesc;
+
+  /// No description provided for @add.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get add;
+
+  /// No description provided for @siteNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'TechCrunch, BBC News…'**
+  String get siteNameHint;
+
+  /// No description provided for @folderNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tech, Sports, Finance…'**
+  String get folderNameHint;
+
+  /// No description provided for @aboutApp.
+  ///
+  /// In en, this message translates to:
+  /// **'About App'**
+  String get aboutApp;
+
+  /// No description provided for @lastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated: June 2026'**
+  String get lastUpdated;
 }
 
 class _AppLocalizationsDelegate

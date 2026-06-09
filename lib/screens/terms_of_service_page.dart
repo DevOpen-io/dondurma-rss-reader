@@ -18,7 +18,7 @@ class TermsOfServicePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _header(theme, isEn),
+            _header(theme, l10n),
             const SizedBox(height: 24),
             ..._sections(isEn).map((s) => _card(theme, s)),
           ],
@@ -27,7 +27,7 @@ class TermsOfServicePage extends StatelessWidget {
     );
   }
 
-  Widget _header(ThemeData theme, bool isEn) {
+  Widget _header(ThemeData theme, AppLocalizations l10n) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -42,14 +42,14 @@ class TermsOfServicePage extends StatelessWidget {
         children: [
           Icon(Icons.description_outlined, size: 48, color: theme.colorScheme.primary),
           const SizedBox(height: 12),
-          Text('Dondurma RSS Reader',
+          Text(l10n.appName,
               style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
-          Text(isEn ? 'Terms of Service' : 'Kullanım Koşulları',
+          Text(l10n.termsOfService,
               style: theme.textTheme.bodyMedium?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
           const SizedBox(height: 8),
-          Text(isEn ? 'Last updated: June 2026' : 'Son güncelleme: Haziran 2026',
+          Text(l10n.lastUpdated,
               style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.5))),
         ],

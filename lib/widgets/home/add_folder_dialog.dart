@@ -117,7 +117,7 @@ class _AddFolderDialogState extends State<AddFolderDialog> {
                 decoration: InputDecoration(
                   filled: true,
                   fillColor: cs.surfaceContainerHigh,
-                  hintText: 'Tech, Sports, Finance…',
+                  hintText: l10n.folderNameHint,
                   prefixIcon: Icon(
                     Icons.folder_outlined,
                     color: cs.onSurfaceVariant,

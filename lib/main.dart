@@ -152,7 +152,7 @@ class MyApp extends StatelessWidget {
     final settingsProvider = context.watch<SettingsProvider>();
 
     return MaterialApp.router(
-      title: 'RSS Reader',
+      onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppThemeBuilder.light(settingsProvider.flexScheme),
       darkTheme: AppThemeBuilder.dark(settingsProvider.flexScheme),

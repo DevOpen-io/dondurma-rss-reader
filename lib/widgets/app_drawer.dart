@@ -261,7 +261,7 @@ class AppDrawer extends StatelessWidget {
                   ),
                 ),
               ],
-              child: const Text('About App'),
+              child: Text(l10n.aboutApp),
             ),
           ],
         ),

@@ -362,5 +362,11 @@
   "openSourceLicenses": "Open Source Licenses",
   "openSourceLicensesDesc": "Third-party libraries used in this app",
   "developerInfo": "Developed by DevOpen",
-  "developerInfoDesc": "Talha Aksoy & Eren Gün"
+  "developerInfoDesc": "Talha Aksoy & Eren Gün",
+
+  "add": "Add",
+  "siteNameHint": "TechCrunch, BBC News…",
+  "folderNameHint": "Tech, Sports, Finance…",
+  "aboutApp": "About App",
+  "lastUpdated": "Last updated: June 2026"
 }

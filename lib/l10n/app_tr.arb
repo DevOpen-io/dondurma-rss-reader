@@ -286,5 +286,11 @@
   "openSourceLicenses": "Açık Kaynak Lisansları",
   "openSourceLicensesDesc": "Bu uygulamada kullanılan üçüncü taraf kütüphaneler",
   "developerInfo": "DevOpen tarafından geliştirildi",
-  "developerInfoDesc": "Talha Aksoy & Eren Gün"
+  "developerInfoDesc": "Talha Aksoy & Eren Gün",
+
+  "add": "Ekle",
+  "siteNameHint": "TechCrunch, BBC News…",
+  "folderNameHint": "Teknoloji, Spor, Finans…",
+  "aboutApp": "Uygulama Hakkında",
+  "lastUpdated": "Son güncelleme: Haziran 2026"
 }

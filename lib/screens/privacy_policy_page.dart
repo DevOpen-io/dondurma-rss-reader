@@ -45,23 +45,21 @@ class PrivacyPolicyPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Dondurma RSS Reader',
+                    l10n.appName,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    isEnglish ? 'Privacy Policy' : 'Gizlilik Politikası',
+                    l10n.privacyPolicy,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    isEnglish
-                        ? 'Last updated: June 2026'
-                        : 'Son güncelleme: Haziran 2026',
+                    l10n.lastUpdated,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),

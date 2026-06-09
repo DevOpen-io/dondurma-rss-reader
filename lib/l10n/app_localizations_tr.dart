@@ -829,4 +829,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get developerInfoDesc => 'Talha Aksoy & Eren Gün';
+
+  @override
+  String get add => 'Ekle';
+
+  @override
+  String get siteNameHint => 'TechCrunch, BBC News…';
+
+  @override
+  String get folderNameHint => 'Teknoloji, Spor, Finans…';
+
+  @override
+  String get aboutApp => 'Uygulama Hakkında';
+
+  @override
+  String get lastUpdated => 'Son güncelleme: Haziran 2026';
 }

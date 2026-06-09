@@ -231,7 +231,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                       textInputAction: TextInputAction.next,
                       style: const TextStyle(fontSize: 15),
                       decoration: supportFieldDecoration.copyWith(
-                        hintText: 'TechCrunch, BBC News…',
+                        hintText: l10n.siteNameHint,
                         prefixIcon: Icon(
                           Icons.title_rounded,
                           color: cs.onSurfaceVariant,
@@ -793,7 +793,7 @@ class _CategorySheetState extends State<_CategorySheet> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          child: const Text('Add'),
+                          child: Text(l10n.add),
                         ),
                       );
                     },
