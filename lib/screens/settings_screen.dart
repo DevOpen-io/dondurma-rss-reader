@@ -16,6 +16,7 @@ import '../widgets/settings/settings_widgets.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 const _kSchemes = [
   FlexScheme.material,
@@ -578,17 +579,25 @@ class SettingsScreen extends StatelessWidget {
           children: [
             GestureDetector(
               onLongPress: () => context.push('/debug'),
-              child: SettingsActionTile(
-                icon: Icons.info_outline_rounded,
-                title: l10n.version,
-                subtitle: l10n.versionDesc,
-                trailing: Text(
-                  '1.0.0',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontSize: 14,
-                  ),
-                ),
+              child: FutureBuilder<PackageInfo>(
+                future: PackageInfo.fromPlatform(),
+                builder: (context, snap) {
+                  final version = snap.hasData
+                      ? snap.data!.version
+                      : '—';
+                  return SettingsActionTile(
+                    icon: Icons.info_outline_rounded,
+                    title: l10n.version,
+                    subtitle: l10n.versionDesc,
+                    trailing: Text(
+                      version,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        fontSize: 14,
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
             const SettingsTileDivider(),
