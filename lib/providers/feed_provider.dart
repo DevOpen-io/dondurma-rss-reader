@@ -502,7 +502,6 @@ class FeedProvider extends ChangeNotifier {
         if (b.pubDate == null) return -1;
         return b.pubDate!.compareTo(a.pubDate!);
       });
-      freshItems.shuffle();
       _items = freshItems;
     } else {
       // Offline: keep existing _items but still ensure bookmarks are present.
