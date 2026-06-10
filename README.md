@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/Flutter-3.11+-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter" />
   <img src="https://img.shields.io/badge/Dart-3.11+-0175C2?style=for-the-badge&logo=dart&logoColor=white" alt="Dart" />
   <img src="https://img.shields.io/badge/Material_3-Design-6750A4?style=for-the-badge&logo=material-design&logoColor=white" alt="Material 3" />
+  <img src="https://img.shields.io/badge/License-MIT-green?style=for-the-badge" alt="MIT License" />
   <img src="https://img.shields.io/badge/Platform-Android%20|%20iOS%20|%20Web%20|%20Desktop-43A047?style=for-the-badge" alt="Platforms" />
 </p>
 
@@ -37,6 +38,7 @@ No algorithms. No tracking. Just your feeds, your way.
 - **OPML Import/Export** — Easily migrate from other readers or share your subscriptions
 - **Feed Discovery** — Curated list of suggested feeds to explore new content
 - **Per-Feed Keyword Filtering** — Exclude articles containing unwanted keywords
+- **Global Content Filtering** — Define excluded keywords that apply across all feeds
 
 ### 📱 Reading Experience
 - **Beautiful Article Viewer** — Full-screen article reading with image carousels
@@ -47,24 +49,31 @@ No algorithms. No tracking. Just your feeds, your way.
 - **Search & Search History** — Find articles quickly with persistent search suggestions
 
 ### 🎨 Theming & Customization
-- **9 Theme Options** — System, Light, Dark, 4 Catppuccin flavors (Latte, Frappé, Macchiato, Mocha), and 2 High Contrast themes
+- **10 Color Schemes** — Material, Blue, Indigo, Deep Purple, Sakura, Red, Teal, Green, Amber, and Outer Space — powered by [FlexColorScheme](https://pub.dev/packages/flex_color_scheme)
+- **3 Brightness Modes** — System, Light, and Dark for each color scheme
 - **Google Fonts (Outfit)** — Premium typography throughout the app
 - **iOS-Style Scroll Physics** — Buttery-smooth bouncing scroll on all platforms
+
+### ✏️ Display & Readability
+- **Font Size** — Choose from Small, Medium, Large, or Extra Large
+- **Typeface** — Switch between System, Serif, Sans-Serif, and Mono
+- **Line Spacing** — Tight (1.2), Normal (1.5), or Relaxed (1.8)
 
 ### 🌐 In-App Browser
 - **Built-in WebView** — Read articles without leaving the app
 - **Ad Blocker** — EasyList + AdGuard filter-based ad blocking with toggle
+- **WebView Dark Mode** — Force dark mode in the in-app browser
 - **External Browser Option** — Choose between built-in, external, or system browser
 
 ### 🔔 Notifications
 - **New Article Alerts** — Get notified when new articles arrive in your subscribed feeds
 - **Quiet Hours** — Silence notifications during specified time windows
-- **Digest Mode** — Configure how notification summaries are delivered
+- **Digest Mode** — Configure how notification summaries are delivered (Instant / Daily / Weekly)
 - **Tap-to-Navigate** — Tap a notification to jump directly to the article
 
 ### 💾 Offline & Performance
 - **Offline Caching** — Read previously loaded articles without an internet connection
-- **Background Sync** — Configurable auto-refresh intervals to keep feeds up to date
+- **Background Sync** — Configurable auto-refresh intervals (30s / 1m / 5m) to keep feeds up to date
 - **Image Caching** — Optimized network image loading with persistent cache
 - **Skeleton Shimmer Loading** — Beautiful loading states that mirror the actual content layout
 - **Pagination** — Date-based sections (Today / Yesterday / Older) with load-more support
@@ -102,16 +111,34 @@ lib/
 │   ├── bookmarks_screen.dart      # Saved articles list
 │   ├── settings_screen.dart       # Premium iOS-style settings
 │   ├── debug_screen.dart          # Developer utilities
-│   └── what_is_rss_page.dart      # Educational RSS explainer
+│   ├── what_is_rss_page.dart      # Educational RSS explainer
+│   ├── privacy_policy_page.dart   # Privacy policy
+│   └── terms_of_service_page.dart # Terms of service
 ├── widgets/                   # Reusable UI components
 │   ├── feed_list_item.dart        # Article card with swipe actions
 │   ├── app_drawer.dart            # Category navigation drawer
 │   ├── in_app_browser.dart        # WebView with ad blocker
 │   ├── add_feed_dialog.dart       # Feed subscription dialog
 │   ├── explore_feeds_dialog.dart  # Feed discovery page
-│   └── keyword_input_dialog.dart  # Keyword filter input
+│   ├── keyword_input_sheet.dart   # Keyword filter bottom sheet
+│   ├── article/                   # Article-specific widgets
+│   │   ├── article_circle_buttons.dart
+│   │   ├── article_content_skeleton.dart
+│   │   ├── article_image_carousel.dart
+│   │   └── article_reading_mode_toggle.dart
+│   ├── folders/                   # Folder-specific widgets
+│   │   ├── feed_action_sheet.dart
+│   │   └── folder_dialogs.dart
+│   ├── home/                      # Home screen widgets
+│   │   ├── add_folder_dialog.dart
+│   │   ├── feed_list_skeleton.dart
+│   │   ├── home_bottom_nav.dart
+│   │   ├── home_pagination_footer.dart
+│   │   └── home_search_history_panel.dart
+│   └── settings/                  # Settings screen widgets
+│       └── settings_widgets.dart
 ├── theme/
-│   └── app_theme.dart         # 9 theme variants + Material 3 config
+│   └── app_theme.dart         # FlexColorScheme + Material 3 config
 ├── router/
 │   └── app_router.dart        # GoRouter declarative routing
 └── l10n/                      # Localization (EN & TR)
@@ -127,9 +154,11 @@ lib/
 | **Routing** | GoRouter |
 | **Networking** | http package |
 | **Feed Parsing** | dart_rss (RSS 2.0 & Atom) |
-| **Theming** | catppuccin_flutter + Google Fonts |
+| **Theming** | FlexColorScheme + Google Fonts (Outfit) |
+| **Image Caching** | cached_network_image_ce |
 | **WebView** | webview_flutter + adblocker_webview |
 | **Notifications** | flutter_local_notifications |
+| **Skeleton Loading** | skeletonizer |
 | **XML** | xml (for OPML) |
 | **Sharing** | share_plus, url_launcher |
 
@@ -188,7 +217,9 @@ Contributions are welcome! Feel free to submit issues and pull requests.
 
 ## 📄 License
 
-This project is open source. Privacy policy: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-policy.tr.md).
+This project is licensed under the [MIT License](LICENSE).
+
+Privacy policy: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-policy.tr.md).
 
 ---
 
@@ -208,6 +239,7 @@ Algoritma yok. Takip yok. Sadece sizin akışlarınız, sizin kurallarınız.
 - **OPML İçe/Dışa Aktarım** — Diğer okuyuculardan kolayca geçiş yapın veya aboneliklerinizi paylaşın
 - **Akış Keşfi** — Yeni içerik keşfetmek için önerilen akışlar listesi
 - **Akış Bazlı Anahtar Kelime Filtreleme** — İstenmeyen anahtar kelimeleri içeren makaleleri hariç tutun
+- **Genel İçerik Filtreleme** — Tüm akışlara uygulanan hariç tutma anahtar kelimeleri belirleyin
 
 ### 📱 Okuma Deneyimi
 - **Güzel Makale Görüntüleyici** — Tam ekran makale okuma ve resim karuseli
@@ -218,24 +250,31 @@ Algoritma yok. Takip yok. Sadece sizin akışlarınız, sizin kurallarınız.
 - **Arama ve Arama Geçmişi** — Kalıcı arama önerileriyle makaleleri hızla bulun
 
 ### 🎨 Tema ve Özelleştirme
-- **9 Tema Seçeneği** — Sistem, Açık, Koyu, 4 Catppuccin aroması (Latte, Frappé, Macchiato, Mocha) ve 2 Yüksek Kontrast tema
+- **10 Renk Şeması** — Material, Blue, Indigo, Deep Purple, Sakura, Red, Teal, Green, Amber ve Outer Space — [FlexColorScheme](https://pub.dev/packages/flex_color_scheme) ile
+- **3 Parlaklık Modu** — Her renk şeması için Sistem, Açık ve Koyu
 - **Google Fonts (Outfit)** — Uygulama genelinde premium tipografi
 - **iOS Tarzı Kaydırma Fiziği** — Tüm platformlarda ipeksi-akıcı kaydırma
+
+### ✏️ Görüntüleme ve Okunabilirlik
+- **Yazı Tipi Boyutu** — Küçük, Orta, Büyük veya Çok Büyük arasında seçim yapın
+- **Yazı Tipi** — Sistem, Serif, Sans-Serif ve Mono arasında geçiş yapın
+- **Satır Aralığı** — Dar (1.2), Normal (1.5) veya Geniş (1.8)
 
 ### 🌐 Uygulama İçi Tarayıcı
 - **Yerleşik WebView** — Uygulamadan çıkmadan makaleleri okuyun
 - **Reklam Engelleyici** — EasyList + AdGuard filtre tabanlı reklam engelleme
+- **WebView Karanlık Mod** — Uygulama içi tarayıcıda karanlık mod zorlama
 - **Harici Tarayıcı Seçeneği** — Yerleşik, harici veya sistem tarayıcısı arasında seçim yapın
 
 ### 🔔 Bildirimler
 - **Yeni Makale Uyarıları** — Abone olduğunuz akışlara yeni makale geldiğinde bildirim alın
 - **Sessiz Saatler** — Belirlediğiniz zaman dilimlerinde bildirimleri susturun
-- **Özet Modu** — Bildirim özetlerinin nasıl gönderileceğini yapılandırın
+- **Özet Modu** — Bildirim özetlerinin nasıl gönderileceğini yapılandırın (Anlık / Günlük / Haftalık)
 - **Dokunarak Git** — Bildirime dokunarak doğrudan makaleye gidin
 
 ### 💾 Çevrimdışı ve Performans
 - **Çevrimdışı Önbellekleme** — İnternet bağlantısı olmadan daha önce yüklenen makaleleri okuyun
-- **Arka Plan Senkronizasyonu** — Akışları güncel tutmak için yapılandırılabilir otomatik yenileme
+- **Arka Plan Senkronizasyonu** — Akışları güncel tutmak için yapılandırılabilir otomatik yenileme (30sn / 1dk / 5dk)
 - **Görsel Önbellekleme** — Kalıcı önbellekle optimize edilmiş ağ görseli yükleme
 - **İskelet Yükleme Animasyonu** — İçerik düzenini yansıtan güzel yükleme durumları
 - **Sayfalama** — Tarih bazlı bölümler (Bugün / Dün / Daha Eski) ve daha fazla yükleme desteği
@@ -273,16 +312,22 @@ lib/
 │   ├── bookmarks_screen.dart      # Kaydedilmiş makaleler listesi
 │   ├── settings_screen.dart       # Premium iOS tarzı ayarlar
 │   ├── debug_screen.dart          # Geliştirici araçları
-│   └── what_is_rss_page.dart      # Eğitici RSS açıklama sayfası
+│   ├── what_is_rss_page.dart      # Eğitici RSS açıklama sayfası
+│   ├── privacy_policy_page.dart   # Gizlilik politikası
+│   └── terms_of_service_page.dart # Kullanım koşulları
 ├── widgets/                   # Tekrar kullanılabilir UI bileşenleri
 │   ├── feed_list_item.dart        # Kaydırma aksiyonlu makale kartı
 │   ├── app_drawer.dart            # Kategori navigasyon çekmecesi
 │   ├── in_app_browser.dart        # Reklam engelleyicili WebView
 │   ├── add_feed_dialog.dart       # Akış abonelik diyaloğu
 │   ├── explore_feeds_dialog.dart  # Akış keşif sayfası
-│   └── keyword_input_dialog.dart  # Anahtar kelime filtre girişi
+│   ├── keyword_input_sheet.dart   # Anahtar kelime filtre bottom sheet
+│   ├── article/                   # Makale bileşenleri
+│   ├── folders/                   # Klasör bileşenleri
+│   ├── home/                      # Ana ekran bileşenleri
+│   └── settings/                  # Ayarlar bileşenleri
 ├── theme/
-│   └── app_theme.dart         # 9 tema varyantı + Material 3 yapılandırma
+│   └── app_theme.dart         # FlexColorScheme + Material 3 yapılandırma
 ├── router/
 │   └── app_router.dart        # GoRouter deklaratif yönlendirme
 └── l10n/                      # Yerelleştirme (EN & TR)
@@ -298,9 +343,11 @@ lib/
 | **Yönlendirme** | GoRouter |
 | **Ağ İstekleri** | http paketi |
 | **Akış Ayrıştırma** | dart_rss (RSS 2.0 & Atom) |
-| **Tema** | catppuccin_flutter + Google Fonts |
+| **Tema** | FlexColorScheme + Google Fonts (Outfit) |
+| **Görsel Önbellek** | cached_network_image_ce |
 | **WebView** | webview_flutter + adblocker_webview |
 | **Bildirimler** | flutter_local_notifications |
+| **İskelet Yükleme** | skeletonizer |
 | **XML** | xml (OPML için) |
 | **Paylaşım** | share_plus, url_launcher |
 
@@ -359,7 +406,9 @@ Katkılarınızı bekliyoruz! Sorun bildirmek ve pull request göndermekten çek
 
 ## 📄 Lisans
 
-Bu proje açık kaynaklıdır. Gizlilik politikası: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-policy.tr.md).
+Bu proje [MIT Lisansı](LICENSE) altında lisanslanmıştır.
+
+Gizlilik politikası: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-policy.tr.md).
 
 ---
 
