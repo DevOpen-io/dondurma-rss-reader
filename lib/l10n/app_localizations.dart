@@ -1052,6 +1052,12 @@ abstract class AppLocalizations {
   /// **'Mute notifications during these hours'**
   String get quietHoursDesc;
 
+  /// No description provided for @quietHoursEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable Quiet Hours'**
+  String get quietHoursEnabled;
+
   /// No description provided for @quietHoursFrom.
   ///
   /// In en, this message translates to:

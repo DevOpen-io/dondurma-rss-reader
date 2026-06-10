@@ -18,6 +18,7 @@ class SettingsProvider extends ChangeNotifier {
   // Notification settings
   bool _notificationsEnabled = true;
   String _digestMode = 'instant'; // 'instant', 'daily', 'weekly'
+  bool _quietHoursEnabled = true;
   int _quietHoursStart = 22;
   int _quietHoursEnd = 7;
 
@@ -54,6 +55,7 @@ class SettingsProvider extends ChangeNotifier {
 
   bool get notificationsEnabled => _notificationsEnabled;
   String get digestMode => _digestMode;
+  bool get quietHoursEnabled => _quietHoursEnabled;
   int get quietHoursStart => _quietHoursStart;
   int get quietHoursEnd => _quietHoursEnd;
 
@@ -127,6 +129,7 @@ class SettingsProvider extends ChangeNotifier {
       defaultValue: true,
     );
     _digestMode = _box.get('digestMode', defaultValue: 'instant');
+    _quietHoursEnabled = _box.get('quietHoursEnabled', defaultValue: true);
     _quietHoursStart = _box.get('quietHoursStart', defaultValue: 22);
     _quietHoursEnd = _box.get('quietHoursEnd', defaultValue: 7);
 
@@ -213,6 +216,12 @@ class SettingsProvider extends ChangeNotifier {
     _notificationsEnabled = value;
     notifyListeners();
     await _box.put('notificationsEnabled', value);
+  }
+
+  Future<void> setQuietHoursEnabled(bool value) async {
+    _quietHoursEnabled = value;
+    notifyListeners();
+    await _box.put('quietHoursEnabled', value);
   }
 
   /// Sets the notification digest mode: `'instant'`, `'daily'`, or `'weekly'`.

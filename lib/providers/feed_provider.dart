@@ -569,6 +569,7 @@ class FeedProvider extends ChangeNotifier {
       newItems: newItems,
       notificationsEnabled: settingsProvider!.notificationsEnabled,
       digestMode: settingsProvider!.digestMode,
+      quietHoursEnabled: settingsProvider!.quietHoursEnabled,
       quietHoursStart: settingsProvider!.quietHoursStart,
       quietHoursEnd: settingsProvider!.quietHoursEnd,
       latestItemJson: latestJson,

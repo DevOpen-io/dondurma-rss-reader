@@ -135,14 +135,17 @@ class NotificationService {
     required String digestMode,
     required int quietHoursStart,
     required int quietHoursEnd,
+    bool quietHoursEnabled = true,
     String? latestItemJson,
   }) async {
     if (!notificationsEnabled) return;
     if (newItems.isEmpty) return;
 
     // Quiet hours check
-    final now = DateTime.now().hour;
-    if (_isInQuietHours(now, quietHoursStart, quietHoursEnd)) return;
+    if (quietHoursEnabled) {
+      final now = DateTime.now().hour;
+      if (_isInQuietHours(now, quietHoursStart, quietHoursEnd)) return;
+    }
 
     // In digest mode, we don't fire instant notifications
     if (digestMode != 'instant') return;
@@ -179,12 +182,7 @@ class NotificationService {
     }
   }
 
-  /// Returns `true` if [currentHour] falls within the quiet window
-  /// defined by [start] and [end] (both in 0-23 hour range).
-  ///
-  /// Handles midnight-wrapping (e.g. 22:00 → 07:00).
-  @visibleForTesting
-  static bool isInQuietHoursForTest(int currentHour, int start, int end) =>
+  static bool isInQuietHours(int currentHour, int start, int end) =>
       _isInQuietHours(currentHour, start, end);
 
   static bool _isInQuietHours(int currentHour, int start, int end) {

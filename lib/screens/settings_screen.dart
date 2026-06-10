@@ -379,20 +379,31 @@ class SettingsScreen extends StatelessWidget {
                       : null,
                 ),
                 const SettingsTileDivider(),
-                SettingsQuietHoursTile(
+                SettingsSwitchTile(
                   icon: Icons.do_not_disturb_on_outlined,
-                  title: l10n.quietHours,
-                  subtitle: l10n.quietHoursDesc,
-                  fromLabel: l10n.quietHoursFrom,
-                  toLabel: l10n.quietHoursTo,
-                  startHour: settings.quietHoursStart,
-                  endHour: settings.quietHoursEnd,
-                  enabled: settings.notificationsEnabled,
-                  onStartChanged: (v) =>
-                      context.read<SettingsProvider>().setQuietHoursStart(v),
-                  onEndChanged: (v) =>
-                      context.read<SettingsProvider>().setQuietHoursEnd(v),
+                  title: l10n.quietHoursEnabled,
+                  value: settings.quietHoursEnabled,
+                  onChanged: (v) => context
+                      .read<SettingsProvider>()
+                      .setQuietHoursEnabled(v),
                 ),
+                if (settings.quietHoursEnabled) ...[
+                  const SettingsTileDivider(),
+                  SettingsQuietHoursTile(
+                    icon: Icons.schedule_outlined,
+                    title: l10n.quietHours,
+                    subtitle: l10n.quietHoursDesc,
+                    fromLabel: l10n.quietHoursFrom,
+                    toLabel: l10n.quietHoursTo,
+                    startHour: settings.quietHoursStart,
+                    endHour: settings.quietHoursEnd,
+                    enabled: settings.notificationsEnabled,
+                    onStartChanged: (v) =>
+                        context.read<SettingsProvider>().setQuietHoursStart(v),
+                    onEndChanged: (v) =>
+                        context.read<SettingsProvider>().setQuietHoursEnd(v),
+                  ),
+                ],
               ],
             ),
           ),

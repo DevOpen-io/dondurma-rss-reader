@@ -180,6 +180,7 @@
   "digestWeekly": "Haftalık Özet",
   "quietHours": "Sessiz Saatler",
   "quietHoursDesc": "Bu saatlerde bildirimleri sessize al",
+  "quietHoursEnabled": "Sessiz Saatleri Etkinleştir",
   "quietHoursFrom": "Başlangıç",
   "quietHoursTo": "Bitiş",
   "newArticlesNotification": "{count} yeni makale",

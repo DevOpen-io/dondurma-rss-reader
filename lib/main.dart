@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:adblocker_webview/adblocker_webview.dart';
+import 'package:workmanager/workmanager.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
@@ -13,6 +14,7 @@ import 'providers/bookmark_provider.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
+import 'services/background_fetch_service.dart';
 import 'services/notification_service.dart';
 import 'models/feed_item.dart';
 
@@ -59,6 +61,16 @@ void main() async {
     }
   });
 
+  // Register WorkManager for background feed fetching
+  await Workmanager().initialize(callbackDispatcher);
+  await Workmanager().registerPeriodicTask(
+    'rss_bg_fetch',
+    bgFetchTaskName,
+    frequency: const Duration(minutes: 15),
+    constraints: Constraints(networkType: NetworkType.connected),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
+  );
+
   // Ağır işleri arka plana fırlatıyoruz
   _initHeavyServicesInBackground();
 
@@ -89,6 +101,7 @@ void main() async {
 void _initHeavyServicesInBackground() {
   NotificationService.instance.requestPermission().catchError((e) {
     debugPrint('Notification permission error: $e');
+    return false;
   });
 
   AdBlockerWebviewController.instance

@@ -519,6 +519,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quietHoursDesc => 'Mute notifications during these hours';
 
   @override
+  String get quietHoursEnabled => 'Enable Quiet Hours';
+
+  @override
   String get quietHoursFrom => 'From';
 
   @override

@@ -235,6 +235,7 @@
   "digestWeekly": "Weekly Summary",
   "quietHours": "Quiet Hours",
   "quietHoursDesc": "Mute notifications during these hours",
+  "quietHoursEnabled": "Enable Quiet Hours",
   "quietHoursFrom": "From",
   "quietHoursTo": "To",
   "newArticlesNotification": "{count} new articles",

@@ -518,6 +518,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get quietHoursDesc => 'Bu saatlerde bildirimleri sessize al';
 
   @override
+  String get quietHoursEnabled => 'Sessiz Saatleri Etkinleştir';
+
+  @override
   String get quietHoursFrom => 'Başlangıç';
 
   @override

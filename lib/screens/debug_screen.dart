@@ -2,16 +2,43 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
+import 'package:workmanager/workmanager.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/background_fetch_service.dart';
 
 /// Hidden debug screen accessible by long-pressing the app version tile in
 /// Settings. Displays Hive box sizes, background sync status, and data metrics.
-class DebugScreen extends StatelessWidget {
+class DebugScreen extends StatefulWidget {
   const DebugScreen({super.key});
+
+  @override
+  State<DebugScreen> createState() => _DebugScreenState();
+}
+
+class _DebugScreenState extends State<DebugScreen> {
+  bool _triggering = false;
+
+  Future<void> _triggerBgFetch() async {
+    setState(() => _triggering = true);
+    try {
+      await Workmanager().registerOneOffTask(
+        'debug_bg_fetch_${DateTime.now().millisecondsSinceEpoch}',
+        bgFetchTaskName,
+        constraints: Constraints(networkType: NetworkType.connected),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Background task queued')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _triggering = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +48,10 @@ class DebugScreen extends StatelessWidget {
     final bookmarks = context.watch<BookmarkProvider>();
     final subscriptions = context.watch<SubscriptionProvider>();
     final settings = context.watch<SettingsProvider>();
+    final feedsBox = Hive.box('feeds');
+    final List<dynamic>? knownIds = feedsBox.get('bgKnownItemIds');
+    final int bgKnownCount = knownIds?.length ?? 0;
+    final bool bgRanOnce = knownIds != null;
 
     return Scaffold(
       appBar: AppBar(
@@ -143,6 +174,64 @@ class DebugScreen extends StatelessWidget {
                 value: subscriptions.subscriptions.length.toString(),
               ),
             ],
+          ),
+
+          // ── Background Fetch ─────────────────────────────────────────
+          _SectionTitle(
+            title: 'Background Fetch',
+            icon: Icons.sync_lock_rounded,
+          ),
+          _DebugCard(
+            children: [
+              _InfoRow(
+                icon: Icons.history_rounded,
+                label: 'Status',
+                value: bgRanOnce ? 'Ran at least once' : 'Never ran',
+                valueColor: bgRanOnce
+                    ? Colors.green
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+              const _CardDivider(),
+              _InfoRow(
+                icon: Icons.list_alt_rounded,
+                label: 'Known Item IDs',
+                value: '$bgKnownCount items tracked',
+              ),
+              const _CardDivider(),
+              _InfoRow(
+                icon: Icons.notifications_active_outlined,
+                label: 'Notifications enabled',
+                value: settings.notificationsEnabled ? 'Yes' : 'No',
+                valueColor: settings.notificationsEnabled
+                    ? Colors.green
+                    : theme.colorScheme.error,
+              ),
+              const _CardDivider(),
+              _InfoRow(
+                icon: Icons.do_not_disturb_on_outlined,
+                label: 'Quiet hours',
+                value: settings.quietHoursEnabled
+                    ? '${settings.quietHoursStart}:00 – ${settings.quietHoursEnd}:00'
+                    : 'Disabled',
+                valueColor: settings.quietHoursEnabled
+                    ? null
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.tonal(
+              onPressed: _triggering ? null : _triggerBgFetch,
+              child: _triggering
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Trigger Background Fetch Now'),
+            ),
           ),
 
           const SizedBox(height: 32),
