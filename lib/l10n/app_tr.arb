@@ -293,6 +293,13 @@
   "tabTurkish": "Türkçe",
   "categoriesSheetTitle": "Kategoriler",
 
+  "onboardingTitle": "İlgi Alanlarını Seç",
+  "onboardingSubtitle": "Takip etmek istediğin kategorileri seç. En popüler kaynakları sana ekleyelim.",
+  "onboardingContinue": "Başlayalım",
+  "onboardingExploreHint": "Önerilen Kaynaklar'da istediğin zaman daha fazlasını keşfedebilirsin.",
+  "onboardingLoadError": "Kategoriler yüklenemedi. Bağlantını kontrol edip tekrar dene.",
+  "onboardingSkip": "Şimdilik atla",
+
   "add": "Ekle",
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Teknoloji, Spor, Finans…",

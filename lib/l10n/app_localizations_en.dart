@@ -839,6 +839,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get categoriesSheetTitle => 'Categories';
 
   @override
+  String get onboardingTitle => 'Pick Your Interests';
+
+  @override
+  String get onboardingSubtitle =>
+      'Choose the categories you want to follow. We\'ll add the top feeds to get you started.';
+
+  @override
+  String get onboardingContinue => 'Get Started';
+
+  @override
+  String get onboardingExploreHint =>
+      'You can discover more sources anytime in Suggested Feeds.';
+
+  @override
+  String get onboardingLoadError =>
+      'Couldn\'t load categories. Check your connection and try again.';
+
+  @override
+  String get onboardingSkip => 'Skip for now';
+
+  @override
   String get add => 'Add';
 
   @override

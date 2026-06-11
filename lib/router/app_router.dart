@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:hive_ce/hive.dart';
 import '../screens/home_screen.dart';
 import '../screens/article_screen.dart';
 import '../screens/debug_screen.dart';
+import '../screens/onboarding_screen.dart';
 import '../models/feed_item.dart';
+import 'onboarding_state.dart';
 
 /// Navigator key used for programmatic navigation from outside the widget tree
 /// (e.g. notification tap handlers).
@@ -18,7 +21,17 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
   initialLocation: '/',
+  redirect: (context, state) {
+    if (sessionOnboardingBypassed) return null;
+    final seen = Hive.box('settings').get('hasSeenOnboarding', defaultValue: false) as bool;
+    if (!seen && state.matchedLocation != '/onboarding') return '/onboarding';
+    return null;
+  },
   routes: [
+    GoRoute(
+      path: '/onboarding',
+      builder: (context, state) => const OnboardingScreen(),
+    ),
     GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
     GoRoute(
       path: '/article',

@@ -369,6 +369,13 @@
   "tabTurkish": "Turkish",
   "categoriesSheetTitle": "Categories",
 
+  "onboardingTitle": "Pick Your Interests",
+  "onboardingSubtitle": "Choose the categories you want to follow. We'll add the top feeds to get you started.",
+  "onboardingContinue": "Get Started",
+  "onboardingExploreHint": "You can discover more sources anytime in Suggested Feeds.",
+  "onboardingLoadError": "Couldn't load categories. Check your connection and try again.",
+  "onboardingSkip": "Skip for now",
+
   "add": "Add",
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Tech, Sports, Finance…",

@@ -146,24 +146,7 @@ class SubscriptionProvider extends ChangeNotifier {
           .map((e) => FeedSubscription.fromJson(e))
           .toList();
     } else {
-      // Default sample feeds if user has none
-      _subscriptions = [
-        FeedSubscription(
-          url: 'https://techcrunch.com/feed/',
-          name: 'TechCrunch',
-          category: 'Technology',
-        ),
-        FeedSubscription(
-          url: 'https://www.theverge.com/rss/index.xml',
-          name: 'The Verge',
-          category: 'Technology',
-        ),
-        FeedSubscription(
-          url: 'https://news.ycombinator.com/rss',
-          name: 'Hacker News',
-          category: 'Technology',
-        ),
-      ];
+      _subscriptions = [];
       _saveSubscriptions();
     }
 
@@ -351,6 +334,27 @@ class SubscriptionProvider extends ChangeNotifier {
       return true;
     }
     return false;
+  }
+
+  /// Adds multiple feeds in one Hive write + one [notifyListeners] call.
+  Future<void> addFeedsBatch(
+    List<({String url, String name, String category})> feeds,
+  ) async {
+    bool changed = false;
+    for (final f in feeds) {
+      if (_subscriptions.any((s) => s.url == f.url)) continue;
+      _subscriptions.add(
+        FeedSubscription(url: f.url, name: f.name, category: f.category),
+      );
+      if (!_categoryIcons.containsKey(f.category)) {
+        _assignDefaultIcon(f.category);
+      }
+      changed = true;
+    }
+    if (!changed) return;
+    await _saveCategoryIcons();
+    await _saveSubscriptions();
+    notifyListeners();
   }
 
   /// Removes the feed with the given [url].

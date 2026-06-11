@@ -67,14 +67,16 @@ class FeedService {
   /// response cannot be parsed as either RSS or Atom.
   Future<List<FeedItem>> fetchFeed(String url, String category) async {
     try {
-      final response = await http.get(
-        Uri.parse(url),
-        headers: {
-          'User-Agent': _userAgent,
-          'Accept': _acceptHeader,
-          'Accept-Language': 'en-US,en;q=0.9',
-        },
-      );
+      final response = await http
+          .get(
+            Uri.parse(url),
+            headers: {
+              'User-Agent': _userAgent,
+              'Accept': _acceptHeader,
+              'Accept-Language': 'en-US,en;q=0.9',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode != 200) {
         throw Exception(
           'Failed to load RSS feed (Status: ${response.statusCode})',

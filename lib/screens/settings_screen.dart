@@ -829,9 +829,7 @@ class SettingsScreen extends StatelessWidget {
               await settings.factoryReset();
 
               if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.factoryResetSuccess)),
-                );
+                context.go('/onboarding');
               }
             },
             style: FilledButton.styleFrom(

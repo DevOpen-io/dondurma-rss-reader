@@ -843,6 +843,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get categoriesSheetTitle => 'Kategoriler';
 
   @override
+  String get onboardingTitle => 'İlgi Alanlarını Seç';
+
+  @override
+  String get onboardingSubtitle =>
+      'Takip etmek istediğin kategorileri seç. En popüler kaynakları sana ekleyelim.';
+
+  @override
+  String get onboardingContinue => 'Başlayalım';
+
+  @override
+  String get onboardingExploreHint =>
+      'Önerilen Kaynaklar\'da istediğin zaman daha fazlasını keşfedebilirsin.';
+
+  @override
+  String get onboardingLoadError =>
+      'Kategoriler yüklenemedi. Bağlantını kontrol edip tekrar dene.';
+
+  @override
+  String get onboardingSkip => 'Şimdilik atla';
+
+  @override
   String get add => 'Ekle';
 
   @override

@@ -1652,6 +1652,42 @@ abstract class AppLocalizations {
   /// **'Categories'**
   String get categoriesSheetTitle;
 
+  /// No description provided for @onboardingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pick Your Interests'**
+  String get onboardingTitle;
+
+  /// No description provided for @onboardingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose the categories you want to follow. We\'ll add the top feeds to get you started.'**
+  String get onboardingSubtitle;
+
+  /// No description provided for @onboardingContinue.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get onboardingContinue;
+
+  /// No description provided for @onboardingExploreHint.
+  ///
+  /// In en, this message translates to:
+  /// **'You can discover more sources anytime in Suggested Feeds.'**
+  String get onboardingExploreHint;
+
+  /// No description provided for @onboardingLoadError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load categories. Check your connection and try again.'**
+  String get onboardingLoadError;
+
+  /// No description provided for @onboardingSkip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip for now'**
+  String get onboardingSkip;
+
   /// No description provided for @add.
   ///
   /// In en, this message translates to:
