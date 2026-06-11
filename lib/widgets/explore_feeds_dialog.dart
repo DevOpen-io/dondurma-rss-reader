@@ -19,18 +19,29 @@ class ExploreFeedsPage extends StatefulWidget {
   State<ExploreFeedsPage> createState() => _ExploreFeedsPageState();
 }
 
-class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
-  List<Map<String, String>> _popularFeeds = [];
-  bool _isLoading = true;
-  bool _hasError = false;
-  String? _selectedCategory;
+class _ExploreFeedsPageState extends State<ExploreFeedsPage>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  List<Map<String, String>> _globalFeeds = [];
+  List<Map<String, String>> _trFeeds = [];
+  bool _isLoadingGlobal = true;
+  bool _isLoadingTr = true;
+  bool _hasErrorGlobal = false;
+  bool _hasErrorTr = false;
+  String? _selectedCategoryGlobal;
+  String? _selectedCategoryTr;
+
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    _loadFeeds();
+    _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() => setState(() {}));
+    _loadGlobalFeeds();
+    _loadTrFeeds();
     _searchController.addListener(() {
       setState(() {
         _searchQuery = _searchController.text.toLowerCase().trim();
@@ -40,11 +51,32 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
 
   @override
   void dispose() {
+    _tabController.dispose();
     _searchController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadFeeds() async {
+  List<Map<String, String>> get _activeFeeds =>
+      _tabController.index == 0 ? _globalFeeds : _trFeeds;
+
+  bool get _activeIsLoading =>
+      _tabController.index == 0 ? _isLoadingGlobal : _isLoadingTr;
+
+  bool get _activeHasError =>
+      _tabController.index == 0 ? _hasErrorGlobal : _hasErrorTr;
+
+  String? get _activeCategory =>
+      _tabController.index == 0 ? _selectedCategoryGlobal : _selectedCategoryTr;
+
+  void _setActiveCategory(String? val) {
+    if (_tabController.index == 0) {
+      _selectedCategoryGlobal = val;
+    } else {
+      _selectedCategoryTr = val;
+    }
+  }
+
+  Future<void> _loadGlobalFeeds() async {
     try {
       final response = await http.get(
         Uri.parse(
@@ -54,7 +86,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
       if (response.statusCode == 200) {
         final List<dynamic> jsonData = json.decode(response.body);
         setState(() {
-          _popularFeeds = jsonData
+          _globalFeeds = jsonData
               .map(
                 (item) => {
                   'name': item['name'].toString(),
@@ -64,26 +96,58 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
                 },
               )
               .toList();
-          _isLoading = false;
+          _isLoadingGlobal = false;
         });
       } else {
         throw Exception('Failed to load feeds: ${response.statusCode}');
       }
     } catch (e) {
-      debugPrint('Error loading suggested feeds: $e');
+      debugPrint('Error loading global feeds: $e');
       setState(() {
-        _isLoading = false;
-        _hasError = true;
+        _isLoadingGlobal = false;
+        _hasErrorGlobal = true;
+      });
+    }
+  }
+
+  Future<void> _loadTrFeeds() async {
+    try {
+      final response = await http.get(
+        Uri.parse(
+          'https://raw.githubusercontent.com/DevOpen-io/dondurma-rss-reader/refs/heads/main/remote_data/suggested_feed_tr.json',
+        ),
+      );
+      if (response.statusCode == 200) {
+        final List<dynamic> jsonData = json.decode(response.body);
+        setState(() {
+          _trFeeds = jsonData
+              .map(
+                (item) => {
+                  'name': item['name'].toString(),
+                  'url': item['url'].toString(),
+                  'category': item['category'].toString(),
+                  'popularity': (item['popularity'] ?? 0).toString(),
+                },
+              )
+              .toList();
+          _isLoadingTr = false;
+        });
+      } else {
+        throw Exception('Failed to load TR feeds: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error loading TR feeds: $e');
+      setState(() {
+        _isLoadingTr = false;
+        _hasErrorTr = true;
       });
     }
   }
 
   List<Map<String, String>> get _displayedFeeds {
-    var feeds = _selectedCategory == null
-        ? _popularFeeds
-        : _popularFeeds
-              .where((f) => f['category'] == _selectedCategory)
-              .toList();
+    var feeds = _activeCategory == null
+        ? _activeFeeds
+        : _activeFeeds.where((f) => f['category'] == _activeCategory).toList();
     if (_searchQuery.isNotEmpty) {
       feeds = feeds
           .where(
@@ -93,12 +157,18 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
           )
           .toList();
     }
+    feeds.sort((a, b) {
+      final popA = int.tryParse(a['popularity'] ?? '0') ?? 0;
+      final popB = int.tryParse(b['popularity'] ?? '0') ?? 0;
+      if (popB != popA) return popB.compareTo(popA);
+      return a['name']!.compareTo(b['name']!);
+    });
     return feeds;
   }
 
   Map<String, int> get _categoryCounts {
     final counts = <String, int>{};
-    for (final f in _popularFeeds) {
+    for (final f in _activeFeeds) {
       counts[f['category']!] = (counts[f['category']!] ?? 0) + 1;
     }
     return counts;
@@ -106,7 +176,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
 
   Map<String, int> get _categoryPopularity {
     final maxPop = <String, int>{};
-    for (final f in _popularFeeds) {
+    for (final f in _activeFeeds) {
       final cat = f['category']!;
       final pop = int.tryParse(f['popularity'] ?? '0') ?? 0;
       if (pop > (maxPop[cat] ?? 0)) maxPop[cat] = pop;
@@ -192,11 +262,11 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
                   children: [
                     _SheetChip(
                       label: l10n.all,
-                      count: _popularFeeds.length,
-                      selected: _selectedCategory == null,
+                      count: _activeFeeds.length,
+                      selected: _activeCategory == null,
                       colorScheme: colorScheme,
                       onTap: () {
-                        setState(() => _selectedCategory = null);
+                        setState(() => _setActiveCategory(null));
                         Navigator.of(ctx).pop();
                       },
                     ),
@@ -204,12 +274,13 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
                       (cat) => _SheetChip(
                         label: cat,
                         count: counts[cat]!,
-                        selected: _selectedCategory == cat,
+                        selected: _activeCategory == cat,
                         colorScheme: colorScheme,
                         onTap: () {
                           setState(
-                            () => _selectedCategory =
-                                _selectedCategory == cat ? null : cat,
+                            () => _setActiveCategory(
+                              _activeCategory == cat ? null : cat,
+                            ),
                           );
                           Navigator.of(ctx).pop();
                         },
@@ -229,42 +300,49 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final hasContent = !_isLoading && _popularFeeds.isNotEmpty;
+    final hasContent = !_activeIsLoading && _activeFeeds.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.suggestedFeeds),
         leading: const BackButton(),
-        bottom: hasContent
-            ? PreferredSize(
-                preferredSize: const Size.fromHeight(56),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Divider(
-                      height: 1,
-                      color: colorScheme.onSurface.withValues(alpha: 0.1),
-                    ),
-                    _SearchBar(controller: _searchController),
-                  ],
+        bottom: PreferredSize(
+          preferredSize: Size.fromHeight(hasContent ? 104 : 48),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TabBar(
+                controller: _tabController,
+                tabs: const [
+                  Tab(text: 'Global'),
+                  Tab(text: 'Türkçe'),
+                ],
+              ),
+              if (hasContent) ...[
+                Divider(
+                  height: 1,
+                  color: colorScheme.onSurface.withValues(alpha: 0.1),
                 ),
-              )
-            : null,
+                _SearchBar(controller: _searchController),
+              ],
+            ],
+          ),
+        ),
       ),
       body: Column(
         children: [
           if (hasContent)
             _ActiveFilterBar(
-              selectedCategory: _selectedCategory,
+              selectedCategory: _activeCategory,
               totalCount: _displayedFeeds.length,
               onTap: _openCategorySheet,
               colorScheme: colorScheme,
               l10n: l10n,
             ),
           Expanded(
-            child: _isLoading
+            child: _activeIsLoading
                 ? const Center(child: CircularProgressIndicator())
-                : _hasError
+                : _activeHasError
                 ? const _ErrorState()
                 : Builder(
                     builder: (context) {
