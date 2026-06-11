@@ -60,6 +60,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
                   'name': item['name'].toString(),
                   'url': item['url'].toString(),
                   'category': item['category'].toString(),
+                  'popularity': (item['popularity'] ?? 0).toString(),
                 },
               )
               .toList();
@@ -103,6 +104,16 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
     return counts;
   }
 
+  Map<String, int> get _categoryPopularity {
+    final maxPop = <String, int>{};
+    for (final f in _popularFeeds) {
+      final cat = f['category']!;
+      final pop = int.tryParse(f['popularity'] ?? '0') ?? 0;
+      if (pop > (maxPop[cat] ?? 0)) maxPop[cat] = pop;
+    }
+    return maxPop;
+  }
+
   Future<void> _subscribeToFeed(
     BuildContext context,
     String name,
@@ -133,7 +144,9 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage> {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final counts = _categoryCounts;
-    final categories = counts.keys.toList()..sort();
+    final popMap = _categoryPopularity;
+    final categories = counts.keys.toList()
+      ..sort((a, b) => (popMap[b] ?? 0).compareTo(popMap[a] ?? 0));
 
     showModalBottomSheet<void>(
       context: context,
