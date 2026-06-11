@@ -41,6 +41,9 @@ class FeedProvider extends ChangeNotifier {
   /// notifications on initial startup.
   bool _hasLoadedOnce = false;
 
+  /// Throttles in-app notifications to at most one burst per 15 minutes.
+  DateTime? _lastNotificationTime;
+
   // ---------------------------------------------------------------------------
   // Sync metrics (for the debug screen)
   // ---------------------------------------------------------------------------
@@ -542,10 +545,34 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Computes newly discovered articles and triggers a notification.
+  ///
+  /// Uses the persisted [bgKnownItemIds] set (shared with the background
+  /// service) so notifications are never duplicated across sessions or between
+  /// the foreground timer and Workmanager. Only articles newer than 48 hours
+  /// are eligible, and bursts are throttled to at most one per 15 minutes.
   void _notifyNewArticles(Set<String> oldItemIds, List<FeedItem> freshItems) {
     if (settingsProvider == null || subscriptionProvider == null) return;
 
-    // Build a set of feed URLs that have notifications disabled
+    // Rate limit: max 1 notification burst per 15 minutes in-app.
+    final now = DateTime.now();
+    if (_lastNotificationTime != null &&
+        now.difference(_lastNotificationTime!) < const Duration(minutes: 15)) {
+      return;
+    }
+
+    // Use the persisted seen-ID set shared with the background service.
+    final List<dynamic>? knownIdsList = _box.get('bgKnownItemIds');
+    final Set<String> knownIds = knownIdsList?.cast<String>().toSet() ?? {};
+
+    // Always update the persisted set so the next run has an accurate baseline.
+    _box.put('bgKnownItemIds', freshItems.map((i) => i.id).toList());
+
+    // No baseline yet (first ever install) — skip to avoid flood.
+    if (knownIds.isEmpty) return;
+
+    // Recency guard: only notify for articles published in the last 48 hours.
+    final cutoff = now.subtract(const Duration(hours: 48));
+
     final mutedFeedUrls = subscriptionProvider!.subscriptions
         .where((s) => !s.notificationsEnabled)
         .map((s) => s.url)
@@ -554,14 +581,16 @@ class FeedProvider extends ChangeNotifier {
     final newItems = freshItems
         .where(
           (item) =>
-              !oldItemIds.contains(item.id) &&
-              !mutedFeedUrls.contains(item.feedUrl),
+              !knownIds.contains(item.id) &&
+              !mutedFeedUrls.contains(item.feedUrl) &&
+              item.pubDate != null &&
+              item.pubDate!.isAfter(cutoff),
         )
         .toList();
 
     if (newItems.isEmpty) return;
 
-    // Pass the latest article as JSON payload for notification tap navigation.
+    _lastNotificationTime = now;
     final latestJson = jsonEncode(newItems.first.toJson());
 
     NotificationService.instance.showNewArticlesNotification(
@@ -619,6 +648,7 @@ class FeedProvider extends ChangeNotifier {
     _lastSyncTime = null;
     _lastSyncDuration = null;
     _hasLoadedOnce = false;
+    _lastNotificationTime = null;
 
     await _box.clear();
     _invalidateFilterCache();

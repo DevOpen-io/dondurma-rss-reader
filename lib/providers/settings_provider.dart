@@ -97,7 +97,7 @@ class SettingsProvider extends ChangeNotifier {
     _offlineCacheLimit = _box.get('offlineCacheLimit', defaultValue: 50);
     final savedInterval = _box.get('cacheIntervalSeconds');
     _cacheIntervalSeconds = (savedInterval == null || savedInterval == 0)
-        ? 30
+        ? 1800
         : savedInterval;
     _syncBackground = _box.get('syncBackground', defaultValue: true);
 

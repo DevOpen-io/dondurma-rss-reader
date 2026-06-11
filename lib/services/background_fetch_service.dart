@@ -111,11 +111,16 @@ void callbackDispatcher() {
         return true;
       }
 
+      // Recency guard: only notify for articles published in the last 48 hours.
+      final cutoff = DateTime.now().subtract(const Duration(hours: 48));
+
       final newItems = allItems
           .where(
             (item) =>
                 !knownIds.contains(item.id) &&
-                !mutedUrls.contains(item.feedUrl),
+                !mutedUrls.contains(item.feedUrl) &&
+                item.pubDate != null &&
+                item.pubDate!.isAfter(cutoff),
           )
           .toList();
 
