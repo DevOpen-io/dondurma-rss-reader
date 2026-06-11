@@ -1,9 +1,513 @@
-
 [
   {
+    "category": "World News",
+    "name": "BBC World",
+    "url": "https://feeds.bbci.co.uk/news/world/rss.xml"
+  },
+  {
+    "category": "World News",
+    "name": "Guardian World",
+    "url": "https://www.theguardian.com/world/rss"
+  },
+  {
+    "category": "World News",
+    "name": "AP News",
+    "url": "https://news.google.com/rss/search?q=site:apnews.com&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "World News",
+    "name": "Reuters World",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+world&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "World News",
+    "name": "CNN World",
+    "url": "https://news.google.com/rss/search?q=site:cnn.com+world+news+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "US News",
+    "name": "Reuters US",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+US&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "US News",
+    "name": "NPR News",
+    "url": "https://feeds.npr.org/1001/rss.xml"
+  },
+  {
+    "category": "US News",
+    "name": "PBS NewsHour",
+    "url": "https://www.pbs.org/newshour/feeds/rss/headlines"
+  },
+  {
+    "category": "US News",
+    "name": "ABC News",
+    "url": "https://feeds.abcnews.com/abcnews/topstories"
+  },
+  {
+    "category": "US News",
+    "name": "CBS News",
+    "url": "https://www.cbsnews.com/latest/rss/main"
+  },
+  {
+    "category": "US News",
+    "name": "NBC News",
+    "url": "https://feeds.nbcnews.com/nbcnews/public/news"
+  },
+  {
+    "category": "US News",
+    "name": "Wall Street Journal",
+    "url": "https://feeds.content.dowjones.io/public/rss/RSSUSnews"
+  },
+  {
+    "category": "US News",
+    "name": "Politico",
+    "url": "https://rss.politico.com/politics-news.xml"
+  },
+  {
+    "category": "US News",
+    "name": "The Hill",
+    "url": "https://thehill.com/news/feed"
+  },
+  {
+    "category": "US News",
+    "name": "Axios",
+    "url": "https://api.axios.com/feed/"
+  },
+  {
+    "category": "US News",
+    "name": "Fox News",
+    "url": "https://moxie.foxnews.com/google-publisher/us.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "France 24 [en]",
+    "url": "https://www.france24.com/en/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "France 24 [fr]",
+    "url": "https://www.france24.com/fr/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "France 24 [es]",
+    "url": "https://www.france24.com/es/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "France 24 [ar]",
+    "url": "https://www.france24.com/ar/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [en]",
+    "url": "https://www.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [fr]",
+    "url": "https://fr.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [de]",
+    "url": "https://de.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [it]",
+    "url": "https://it.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [es]",
+    "url": "https://es.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [pt]",
+    "url": "https://pt.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [ru]",
+    "url": "https://ru.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "EuroNews [gr]",
+    "url": "https://gr.euronews.com/rss?format=xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Le Monde [en]",
+    "url": "https://www.lemonde.fr/en/rss/une.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Le Monde [fr]",
+    "url": "https://www.lemonde.fr/rss/une.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "DW News [en]",
+    "url": "https://rss.dw.com/xml/rss-en-all"
+  },
+  {
+    "category": "Europe News",
+    "name": "DW News [de]",
+    "url": "https://rss.dw.com/xml/rss-de-all"
+  },
+  {
+    "category": "Europe News",
+    "name": "DW News [es]",
+    "url": "https://news.google.com/rss/search?q=site:dw.com/es&hl=es-419&gl=MX&ceid=MX:es-419"
+  },
+  {
+    "category": "Europe News",
+    "name": "El País",
+    "url": "https://feeds.elpais.com/mrss-s/pages/ep/site/elpais.com/portada"
+  },
+  {
+    "category": "Europe News",
+    "name": "El Mundo",
+    "url": "https://e00-elmundo.uecdn.es/elmundo/rss/portada.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "BBC Mundo",
+    "url": "https://www.bbc.com/mundo/index.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Tagesschau",
+    "url": "https://www.tagesschau.de/xml/rss2/"
+  },
+  {
+    "category": "Europe News",
+    "name": "Bild",
+    "url": "https://www.bild.de/feed/alles.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Der Spiegel",
+    "url": "https://www.spiegel.de/schlagzeilen/tops/index.rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "Die Zeit",
+    "url": "https://newsfeed.zeit.de/index"
+  },
+  {
+    "category": "Europe News",
+    "name": "ANSA",
+    "url": "https://www.ansa.it/sito/notizie/topnews/topnews_rss.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Corriere della Sera",
+    "url": "https://www.corriere.it/rss/homepage.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Repubblica",
+    "url": "https://www.repubblica.it/rss/homepage/rss2.0.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "NOS Nieuws",
+    "url": "https://feeds.nos.nl/nosnieuwsalgemeen"
+  },
+  {
+    "category": "Europe News",
+    "name": "NRC",
+    "url": "https://www.nrc.nl/rss/"
+  },
+  {
+    "category": "Europe News",
+    "name": "De Telegraaf",
+    "url": "https://news.google.com/rss/search?q=site:telegraaf.nl+when:1d&hl=nl&gl=NL&ceid=NL:nl"
+  },
+  {
+    "category": "Europe News",
+    "name": "SVT Nyheter",
+    "url": "https://www.svt.se/nyheter/rss.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Dagens Nyheter",
+    "url": "https://www.dn.se/rss/"
+  },
+  {
+    "category": "Europe News",
+    "name": "Svenska Dagbladet",
+    "url": "https://www.svd.se/feed/articles.rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "BBC Turkce",
+    "url": "https://feeds.bbci.co.uk/turkce/rss.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "DW Turkish",
+    "url": "https://rss.dw.com/xml/rss-tur-all"
+  },
+  {
+    "category": "Europe News",
+    "name": "Hurriyet",
+    "url": "https://www.hurriyet.com.tr/rss/anasayfa"
+  },
+  {
+    "category": "Europe News",
+    "name": "TVN24",
+    "url": "https://tvn24.pl/swiat.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Polsat News",
+    "url": "https://www.polsatnews.pl/rss/wszystkie.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Rzeczpospolita",
+    "url": "https://www.rp.pl/rss_main"
+  },
+  {
+    "category": "Europe News",
+    "name": "Telex",
+    "url": "https://telex.hu/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "Index.hu",
+    "url": "https://index.hu/24ora/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "HVG",
+    "url": "https://hvg.hu/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "444.hu",
+    "url": "https://444.hu/feed"
+  },
+  {
+    "category": "Europe News",
+    "name": "24.hu",
+    "url": "https://24.hu/feed/"
+  },
+  {
+    "category": "Europe News",
+    "name": "Híradó",
+    "url": "https://news.google.com/rss/search?q=site:hirado.hu+when:2d&hl=hu&gl=HU&ceid=HU:hu"
+  },
+  {
+    "category": "Europe News",
+    "name": "Portfolio.hu",
+    "url": "https://portfolio.hu/rss/all.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "ATV",
+    "url": "https://www.atv.hu/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "N1 Croatia",
+    "url": "https://n1info.hr/feed/"
+  },
+  {
+    "category": "Europe News",
+    "name": "Index.hr",
+    "url": "https://www.index.hr/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "Jutarnji list",
+    "url": "https://www.jutarnji.hr/feed"
+  },
+  {
+    "category": "Europe News",
+    "name": "Balkan Insight",
+    "url": "https://balkaninsight.com/feed/"
+  },
+  {
+    "category": "Europe News",
+    "name": "Kathimerini",
+    "url": "https://news.google.com/rss/search?q=site:kathimerini.gr+when:2d&hl=el&gl=GR&ceid=GR:el"
+  },
+  {
+    "category": "Europe News",
+    "name": "Naftemporiki",
+    "url": "https://www.naftemporiki.gr/feed/"
+  },
+  {
+    "category": "Europe News",
+    "name": "in.gr",
+    "url": "https://www.in.gr/feed/"
+  },
+  {
+    "category": "Europe News",
+    "name": "iefimerida",
+    "url": "https://www.iefimerida.gr/rss.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Proto Thema",
+    "url": "https://news.google.com/rss/search?q=site:protothema.gr+when:2d&hl=el&gl=GR&ceid=GR:el"
+  },
+  {
+    "category": "Europe News",
+    "name": "BBC Russian",
+    "url": "https://feeds.bbci.co.uk/russian/rss.xml"
+  },
+  {
+    "category": "Europe News",
+    "name": "Meduza",
+    "url": "https://meduza.io/rss/all"
+  },
+  {
+    "category": "Europe News",
+    "name": "Novaya Gazeta Europe",
+    "url": "https://novayagazeta.eu/feed/rss"
+  },
+  {
+    "category": "Europe News",
+    "name": "TASS",
+    "url": "https://news.google.com/rss/search?q=site:tass.com+OR+TASS+Russia+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Europe News",
+    "name": "RT",
+    "url": "https://www.rt.com/rss/"
+  },
+  {
+    "category": "Europe News",
+    "name": "RT Russia",
+    "url": "https://www.rt.com/rss/russia/"
+  },
+  {
+    "category": "Europe News",
+    "name": "Kyiv Independent",
+    "url": "https://news.google.com/rss/search?q=site:kyivindependent.com+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Europe News",
+    "name": "Moscow Times",
+    "url": "https://www.themoscowtimes.com/rss/news"
+  },
+  {
+    "category": "Middle East News",
+    "name": "BBC Middle East",
+    "url": "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Al Jazeera [en]",
+    "url": "https://www.aljazeera.com/xml/rss/all.xml"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Al Jazeera [ar]",
+    "url": "https://www.aljazeera.net/aljazeerarss/a7c186be-1adb-4b11-a982-4783e765316e/4e17ecdc-8fb9-40de-a5d6-d00f72384a51"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Al Arabiya [en]",
+    "url": "https://news.google.com/rss/search?q=site:english.alarabiya.net+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Al Arabiya [ar]",
+    "url": "https://www.alarabiya.net/tools/mrss/?cat=main"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Guardian ME",
+    "url": "https://www.theguardian.com/world/middleeast/rss"
+  },
+  {
+    "category": "Middle East News",
+    "name": "BBC Persian",
+    "url": "https://feeds.bbci.co.uk/persian/rss.xml"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Iran International",
+    "url": "https://news.google.com/rss/search?q=site:iranintl.com+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Fars News",
+    "url": "https://news.google.com/rss/search?q=site:farsnews.ir+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Middle East News",
+    "name": "IRNA",
+    "url": "https://en.irna.ir/rss"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Mehr News",
+    "url": "https://en.mehrnews.com/rss"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Haaretz",
+    "url": "https://news.google.com/rss/search?q=site:haaretz.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Jerusalem Post",
+    "url": "https://www.jpost.com/rss/rssfeedsheadlines.aspx"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Ynetnews",
+    "url": "https://www.ynetnews.com/Integration/StoryRss3089.xml"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Arab News",
+    "url": "https://news.google.com/rss/search?q=site:arabnews.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Middle East News",
+    "name": "The National",
+    "url": "https://news.google.com/rss/search?q=site:thenationalnews.com+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Oman Observer",
+    "url": "https://www.omanobserver.om/rssFeed/1"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Asharq Business",
+    "url": "https://asharqbusiness.com/rss.xml"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Asharq News",
+    "url": "https://asharq.com/snapchat/rss.xml"
+  },
+  {
+    "category": "Middle East News",
+    "name": "Rudaw",
+    "url": "https://news.google.com/rss/search?q=site:rudaw.net+when:7d&hl=en&gl=US&ceid=US:en"
+  },
+  {
     "category": "Technology",
-    "name": "TechCrunch",
-    "url": "https://techcrunch.com/feed/"
+    "name": "Hacker News",
+    "url": "https://hnrss.org/frontpage"
+  },
+  {
+    "category": "Technology",
+    "name": "Ars Technica",
+    "url": "https://feeds.arstechnica.com/arstechnica/technology-lab"
   },
   {
     "category": "Technology",
@@ -12,13 +516,2353 @@
   },
   {
     "category": "Technology",
-    "name": "Wired",
-    "url": "https://www.wired.com/feed/rss"
+    "name": "MIT Tech Review",
+    "url": "https://www.technologyreview.com/feed/"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI News",
+    "url": "https://news.google.com/rss/search?q=(OpenAI+OR+Anthropic+OR+Google+AI+OR+\"large+language+model\"+OR+ChatGPT)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "VentureBeat AI",
+    "url": "https://venturebeat.com/category/ai/feed/"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "The Verge AI",
+    "url": "https://www.theverge.com/rss/ai-artificial-intelligence/index.xml"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "MIT Tech Review",
+    "url": "https://www.technologyreview.com/topic/artificial-intelligence/feed"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "ArXiv AI",
+    "url": "https://export.arxiv.org/rss/cs.AI"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "CNBC",
+    "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "MarketWatch",
+    "url": "https://news.google.com/rss/search?q=site:marketwatch.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Yahoo Finance",
+    "url": "https://finance.yahoo.com/news/rssindex"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Financial Times",
+    "url": "https://www.ft.com/rss/home"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Reuters Business",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+business+markets&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "White House",
+    "url": "https://news.google.com/rss/search?q=site:whitehouse.gov&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "State Dept",
+    "url": "https://news.google.com/rss/search?q=site:state.gov+OR+\"State+Department\"&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "Pentagon",
+    "url": "https://news.google.com/rss/search?q=site:defense.gov+OR+Pentagon&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "Treasury",
+    "url": "https://news.google.com/rss/search?q=site:treasury.gov+OR+\"Treasury+Department\"&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "DOJ",
+    "url": "https://news.google.com/rss/search?q=site:justice.gov+OR+\"Justice+Department\"+DOJ&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "Federal Reserve",
+    "url": "https://www.federalreserve.gov/feeds/press_all.xml"
+  },
+  {
+    "category": "Government & Official",
+    "name": "SEC",
+    "url": "https://www.sec.gov/news/pressreleases.rss"
+  },
+  {
+    "category": "Government & Official",
+    "name": "CDC",
+    "url": "https://news.google.com/rss/search?q=site:cdc.gov+OR+CDC+health&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "FEMA",
+    "url": "https://news.google.com/rss/search?q=site:fema.gov+OR+FEMA+emergency&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "DHS",
+    "url": "https://news.google.com/rss/search?q=site:dhs.gov+OR+\"Homeland+Security\"&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Government & Official",
+    "name": "UN News",
+    "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml"
+  },
+  {
+    "category": "Government & Official",
+    "name": "CISA",
+    "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml"
+  },
+  {
+    "category": "Layoffs Tracker",
+    "name": "Layoffs.fyi",
+    "url": "https://news.google.com/rss/search?q=tech+company+layoffs+announced&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Layoffs Tracker",
+    "name": "TechCrunch Layoffs",
+    "url": "https://techcrunch.com/tag/layoffs/feed/"
+  },
+  {
+    "category": "Layoffs Tracker",
+    "name": "Layoffs News",
+    "url": "https://news.google.com/rss/search?q=(layoffs+OR+\"job+cuts\"+OR+\"workforce+reduction\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Foreign Policy",
+    "url": "https://foreignpolicy.com/feed/"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Atlantic Council",
+    "url": "https://www.atlanticcouncil.org/feed/"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Foreign Affairs",
+    "url": "https://www.foreignaffairs.com/rss.xml"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "CSIS",
+    "url": "https://news.google.com/rss/search?q=site:csis.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "RAND",
+    "url": "https://www.rand.org/pubs/articles.xml"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Brookings",
+    "url": "https://news.google.com/rss/search?q=site:brookings.edu+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Carnegie",
+    "url": "https://news.google.com/rss/search?q=site:carnegieendowment.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "War on the Rocks",
+    "url": "https://warontherocks.com/feed"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Responsible Statecraft",
+    "url": "https://responsiblestatecraft.org/feed/"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "RUSI",
+    "url": "https://news.google.com/rss/search?q=site:rusi.org+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "FPRI",
+    "url": "https://www.fpri.org/feed/"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Jamestown",
+    "url": "https://jamestown.org/feed/"
+  },
+  {
+    "category": "Crisis Watch",
+    "name": "CrisisWatch",
+    "url": "https://www.crisisgroup.org/rss"
+  },
+  {
+    "category": "Crisis Watch",
+    "name": "IAEA",
+    "url": "https://www.iaea.org/feeds/topnews"
+  },
+  {
+    "category": "Crisis Watch",
+    "name": "WHO",
+    "url": "https://www.who.int/rss-feeds/news-english.xml"
+  },
+  {
+    "category": "Crisis Watch",
+    "name": "UNHCR",
+    "url": "https://news.google.com/rss/search?q=site:unhcr.org+OR+UNHCR+refugees+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Africa News",
+    "name": "Africa News",
+    "url": "https://news.google.com/rss/search?q=(Africa+OR+Nigeria+OR+Kenya+OR+\"South+Africa\"+OR+Ethiopia)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Africa News",
+    "name": "Sahel Crisis",
+    "url": "https://news.google.com/rss/search?q=(Sahel+OR+Mali+OR+Niger+OR+\"Burkina+Faso\"+OR+Wagner)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Africa News",
+    "name": "News24",
+    "url": "https://feeds.news24.com/articles/news24/TopStories/rss"
+  },
+  {
+    "category": "Africa News",
+    "name": "BBC Africa",
+    "url": "https://feeds.bbci.co.uk/news/world/africa/rss.xml"
+  },
+  {
+    "category": "Africa News",
+    "name": "Jeune Afrique",
+    "url": "https://www.jeuneafrique.com/feed/"
+  },
+  {
+    "category": "Africa News",
+    "name": "Africanews [en]",
+    "url": "https://www.africanews.com/feed/rss"
+  },
+  {
+    "category": "Africa News",
+    "name": "Africanews [fr]",
+    "url": "https://fr.africanews.com/feed/rss"
+  },
+  {
+    "category": "Africa News",
+    "name": "BBC Afrique",
+    "url": "https://www.bbc.com/afrique/index.xml"
+  },
+  {
+    "category": "Africa News",
+    "name": "Premium Times",
+    "url": "https://www.premiumtimesng.com/feed"
+  },
+  {
+    "category": "Africa News",
+    "name": "Vanguard Nigeria",
+    "url": "https://www.vanguardngr.com/feed/"
+  },
+  {
+    "category": "Africa News",
+    "name": "Channels TV",
+    "url": "https://www.channelstv.com/feed/"
+  },
+  {
+    "category": "Africa News",
+    "name": "Daily Trust",
+    "url": "https://dailytrust.com/feed/"
+  },
+  {
+    "category": "Africa News",
+    "name": "ThisDay",
+    "url": "https://www.thisdaylive.com/feed"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Latin America",
+    "url": "https://news.google.com/rss/search?q=(Brazil+OR+Mexico+OR+Argentina+OR+Venezuela+OR+Colombia)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Latin America News",
+    "name": "BBC Latin America",
+    "url": "https://feeds.bbci.co.uk/news/world/latin_america/rss.xml"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Reuters LatAm",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+(Brazil+OR+Mexico+OR+Argentina)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Guardian Americas",
+    "url": "https://www.theguardian.com/world/americas/rss"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Clarín",
+    "url": "https://www.clarin.com/rss/lo-ultimo/"
+  },
+  {
+    "category": "Latin America News",
+    "name": "O Globo",
+    "url": "https://news.google.com/rss/search?q=site:oglobo.globo.com+when:1d&hl=pt-BR&gl=BR&ceid=BR:pt-419"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Folha de S.Paulo",
+    "url": "https://feeds.folha.uol.com.br/emcimadahora/rss091.xml"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Brasil Paralelo",
+    "url": "https://www.brasilparalelo.com.br/noticias/rss.xml"
+  },
+  {
+    "category": "Latin America News",
+    "name": "El Tiempo",
+    "url": "https://www.eltiempo.com/rss/mundo_latinoamerica.xml"
+  },
+  {
+    "category": "Latin America News",
+    "name": "La Silla Vacía",
+    "url": "https://www.lasillavacia.com/rss"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Primicias",
+    "url": "https://www.primicias.ec/feed/"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Infobae Americas",
+    "url": "https://www.infobae.com/arc/outboundfeeds/rss/"
+  },
+  {
+    "category": "Latin America News",
+    "name": "El Universo",
+    "url": "https://www.eluniverso.com/arc/outboundfeeds/rss/category/noticias/?outputType=xml"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Mexico News Daily",
+    "url": "https://mexiconewsdaily.com/feed/"
+  },
+  {
+    "category": "Latin America News",
+    "name": "Mexico Security",
+    "url": "https://news.google.com/rss/search?q=(Mexico+cartel+OR+Mexico+violence+OR+Mexico+troops+OR+narco+Mexico)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Latin America News",
+    "name": "AP Mexico",
+    "url": "https://news.google.com/rss/search?q=site:apnews.com+Mexico+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Latin America News",
+    "name": "InSight Crime",
+    "url": "https://insightcrime.org/feed/"
+  },
+  {
+    "category": "Latin America News",
+    "name": "France 24 LatAm",
+    "url": "https://www.france24.com/en/americas/rss"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Asia News",
+    "url": "https://news.google.com/rss/search?q=(China+OR+Japan+OR+Korea+OR+India+OR+ASEAN)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "BBC Asia",
+    "url": "https://feeds.bbci.co.uk/news/world/asia/rss.xml"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "The Diplomat",
+    "url": "https://thediplomat.com/feed/"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/91/feed/"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Reuters Asia",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+(China+OR+Japan+OR+Taiwan+OR+Korea)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Xinhua",
+    "url": "https://news.google.com/rss/search?q=site:xinhuanet.com+OR+Xinhua+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Japan Today",
+    "url": "https://japantoday.com/feed/atom"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Nikkei Asia",
+    "url": "https://news.google.com/rss/search?q=site:asia.nikkei.com+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Asahi Shimbun",
+    "url": "https://www.asahi.com/rss/asahi/newsheadlines.rdf"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "The Hindu",
+    "url": "https://www.thehindu.com/news/national/feeder/default.rss"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Indian Express",
+    "url": "https://indianexpress.com/section/india/feed/"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "NDTV",
+    "url": "https://feeds.feedburner.com/ndtvnews-top-stories"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "India News Network",
+    "url": "https://news.google.com/rss/search?q=India+diplomacy+foreign+policy+news&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "BBC Hindi",
+    "url": "https://feeds.bbci.co.uk/hindi/rss.xml"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Aaj Tak",
+    "url": "https://www.aajtak.in/rssfeeds/?id=home"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "NDTV India",
+    "url": "https://feeds.feedburner.com/ndtvkhabar-latest"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Amar Ujala",
+    "url": "https://www.amarujala.com/rss/national.xml"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "CNA",
+    "url": "https://www.channelnewsasia.com/api/v1/rss-outbound-feed?_format=xml"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "MIIT (China)",
+    "url": "https://news.google.com/rss/search?q=site:miit.gov.cn+when:7d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "MOFCOM (China)",
+    "url": "https://news.google.com/rss/search?q=site:mofcom.gov.cn+when:7d&hl=zh-CN&gl=CN&ceid=CN:zh-Hans"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Bangkok Post",
+    "url": "https://news.google.com/rss/search?q=site:bangkokpost.com+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Thai PBS",
+    "url": "https://news.google.com/rss/search?q=Thai+PBS+World+news&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "VnExpress",
+    "url": "https://vnexpress.net/rss/tin-moi-nhat.rss"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Tuoi Tre News",
+    "url": "https://tuoitrenews.vn/rss"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Yonhap News",
+    "url": "https://www.yonhapnewstv.co.kr/browse/feed/"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Chosun Ilbo",
+    "url": "https://www.chosun.com/arc/outboundfeeds/rss/?outputType=xml"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "ABC News Australia",
+    "url": "https://www.abc.net.au/news/feed/2942460/rss.xml"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Guardian Australia",
+    "url": "https://www.theguardian.com/australia-news/rss"
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Island Times (Palau)",
+    "url": "https://islandtimes.org/feed/"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Oil & Gas",
+    "url": "https://news.google.com/rss/search?q=(oil+price+OR+OPEC+OR+\"natural+gas\"+OR+pipeline+OR+LNG)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Nuclear Energy",
+    "url": "https://news.google.com/rss/search?q=(\"nuclear+energy\"+OR+\"nuclear+power\"+OR+uranium+OR+IAEA)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Reuters Energy",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+(oil+OR+gas+OR+energy+OR+OPEC)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Mining & Resources",
+    "url": "https://news.google.com/rss/search?q=(lithium+OR+\"rare+earth\"+OR+cobalt+OR+mining)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Technology",
+    "name": "TechCrunch",
+    "url": "https://techcrunch.com/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "ZDNet",
+    "url": "https://www.zdnet.com/news/rss.xml"
+  },
+  {
+    "category": "Technology",
+    "name": "TechMeme",
+    "url": "https://www.techmeme.com/feed.xml"
   },
   {
     "category": "Technology",
     "name": "Engadget",
     "url": "https://www.engadget.com/rss.xml"
+  },
+  {
+    "category": "Technology",
+    "name": "Fast Company",
+    "url": "https://feeds.feedburner.com/fastcompany/headlines"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI News",
+    "url": "https://news.google.com/rss/search?q=(OpenAI+OR+Anthropic+OR+Google+AI+OR+\"large+language+model\"+OR+ChatGPT+OR+Claude+OR+\"AI+model\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "MIT Research",
+    "url": "https://news.mit.edu/rss/research"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "ArXiv ML",
+    "url": "https://export.arxiv.org/rss/cs.LG"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI Weekly",
+    "url": "https://news.google.com/rss/search?q=\"artificial+intelligence\"+OR+\"machine+learning\"+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Anthropic News",
+    "url": "https://news.google.com/rss/search?q=Anthropic+Claude+AI+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "OpenAI News",
+    "url": "https://news.google.com/rss/search?q=OpenAI+ChatGPT+GPT-4+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "TechCrunch Startups",
+    "url": "https://techcrunch.com/category/startups/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "VentureBeat",
+    "url": "https://venturebeat.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Crunchbase News",
+    "url": "https://news.crunchbase.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "SaaStr",
+    "url": "https://www.saastr.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "AngelList News",
+    "url": "https://news.google.com/rss/search?q=site:angellist.com+OR+\"AngelList\"+funding+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "TechCrunch Venture",
+    "url": "https://techcrunch.com/category/venture/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "The Information",
+    "url": "https://news.google.com/rss/search?q=site:theinformation.com+startup+OR+funding+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Fortune Term Sheet",
+    "url": "https://news.google.com/rss/search?q=\"Term+Sheet\"+venture+capital+OR+startup+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "PitchBook News",
+    "url": "https://news.google.com/rss/search?q=site:pitchbook.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "CB Insights",
+    "url": "https://www.cbinsights.com/research/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Y Combinator Blog",
+    "url": "https://www.ycombinator.com/blog/rss/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "a16z Blog",
+    "url": "https://news.google.com/rss/search?q=site:a16z.com+OR+\"Andreessen+Horowitz\"+blog+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Sequoia Blog",
+    "url": "https://news.google.com/rss/search?q=site:sequoiacap.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Paul Graham Essays",
+    "url": "https://news.google.com/rss/search?q=\"Paul+Graham\"+essay+OR+blog+when:30d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "VC Insights",
+    "url": "https://news.google.com/rss/search?q=(\"venture+capital\"+insights+OR+\"VC+trends\"+OR+\"startup+advice\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Lenny's Newsletter",
+    "url": "https://www.lennysnewsletter.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Stratechery",
+    "url": "https://stratechery.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "EU Startups",
+    "url": "https://news.google.com/rss/search?q=site:eu-startups.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Tech.eu",
+    "url": "https://tech.eu/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Sifted (Europe)",
+    "url": "https://sifted.eu/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "The Next Web",
+    "url": "https://news.google.com/rss/search?q=site:thenextweb.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Tech in Asia",
+    "url": "https://news.google.com/rss/search?q=site:techinasia.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "KrASIA",
+    "url": "https://news.google.com/rss/search?q=site:kr-asia.com+OR+KrASIA+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "SEA Startups",
+    "url": "https://news.google.com/rss/search?q=(Singapore+OR+Indonesia+OR+Vietnam+OR+Thailand+OR+Malaysia)+startup+funding+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Asia VC News",
+    "url": "https://news.google.com/rss/search?q=(\"Southeast+Asia\"+OR+ASEAN)+venture+capital+OR+funding+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "China Startups",
+    "url": "https://news.google.com/rss/search?q=China+startup+funding+OR+\"Chinese+startup\"+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "36Kr English",
+    "url": "https://news.google.com/rss/search?q=site:36kr.com+OR+\"36Kr\"+startup+china+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "China Tech Giants",
+    "url": "https://news.google.com/rss/search?q=(Alibaba+OR+Tencent+OR+ByteDance+OR+Baidu+OR+JD.com+OR+Xiaomi+OR+Huawei)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Japan Startups",
+    "url": "https://news.google.com/rss/search?q=Japan+startup+funding+OR+\"Japanese+startup\"+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Japan Tech News",
+    "url": "https://news.google.com/rss/search?q=(Japan+startup+OR+Japan+tech+OR+SoftBank+OR+Rakuten+OR+Sony)+funding+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Nikkei Tech",
+    "url": "https://news.google.com/rss/search?q=site:asia.nikkei.com+technology+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Korea Tech News",
+    "url": "https://news.google.com/rss/search?q=(Korea+startup+OR+Korean+tech+OR+Samsung+OR+Kakao+OR+Naver+OR+Coupang)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Korea Startups",
+    "url": "https://news.google.com/rss/search?q=Korea+startup+funding+OR+\"Korean+unicorn\"+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Inc42 (India)",
+    "url": "https://inc42.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "YourStory",
+    "url": "https://yourstory.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "India Startups",
+    "url": "https://news.google.com/rss/search?q=India+startup+funding+OR+\"Indian+startup\"+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "India Tech News",
+    "url": "https://news.google.com/rss/search?q=(Flipkart+OR+Razorpay+OR+Zerodha+OR+Zomato+OR+Paytm+OR+PhonePe)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "SEA Tech News",
+    "url": "https://news.google.com/rss/search?q=(Grab+OR+GoTo+OR+Sea+Limited+OR+Shopee+OR+Tokopedia)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Vietnam Tech",
+    "url": "https://news.google.com/rss/search?q=Vietnam+startup+OR+Vietnam+tech+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Indonesia Tech",
+    "url": "https://news.google.com/rss/search?q=Indonesia+startup+OR+Indonesia+tech+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Taiwan Tech",
+    "url": "https://news.google.com/rss/search?q=(Taiwan+startup+OR+TSMC+OR+MediaTek+OR+Foxconn)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "LAVCA (LATAM)",
+    "url": "https://news.google.com/rss/search?q=site:lavca.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "LATAM Startups",
+    "url": "https://news.google.com/rss/search?q=(\"Latin+America\"+startup+OR+LATAM+funding)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Startups LATAM",
+    "url": "https://news.google.com/rss/search?q=(startup+Brazil+OR+startup+Mexico+OR+startup+Argentina+OR+startup+Colombia+OR+startup+Chile)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Brazil Tech",
+    "url": "https://news.google.com/rss/search?q=(Nubank+OR+iFood+OR+Mercado+Libre+OR+Rappi+OR+VTEX)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "FinTech LATAM",
+    "url": "https://news.google.com/rss/search?q=fintech+(Brazil+OR+Mexico+OR+Argentina+OR+\"Latin+America\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "TechCabal (Africa)",
+    "url": "https://techcabal.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Africa Startups",
+    "url": "https://news.google.com/rss/search?q=Africa+startup+funding+OR+\"African+startup\"+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Africa Tech News",
+    "url": "https://news.google.com/rss/search?q=(Flutterwave+OR+Paystack+OR+Jumia+OR+Andela+OR+\"Africa+startup\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "MENA Startups",
+    "url": "https://news.google.com/rss/search?q=(MENA+startup+OR+\"Middle+East\"+funding+OR+Gulf+startup)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "MENA Tech News",
+    "url": "https://news.google.com/rss/search?q=(UAE+startup+OR+Saudi+tech+OR+Dubai+startup+OR+NEOM+tech)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "GitHub Blog",
+    "url": "https://github.blog/feed/"
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "GitHub Trending",
+    "url": "https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml"
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Show HN",
+    "url": "https://hnrss.org/show"
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "YC Launches",
+    "url": "https://news.google.com/rss/search?q=(\"Y+Combinator\"+OR+\"YC+launch\"+OR+\"YC+W25\"+OR+\"YC+S25\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Dev Events",
+    "url": "https://news.google.com/rss/search?q=(\"developer+conference\"+OR+\"tech+summit\"+OR+\"devcon\"+OR+\"developer+event\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Open Source News",
+    "url": "https://news.google.com/rss/search?q=\"open+source\"+project+release+OR+launch+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "IPO News",
+    "url": "https://news.google.com/rss/search?q=(IPO+OR+\"initial+public+offering\"+OR+SPAC)+tech+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Renaissance IPO",
+    "url": "https://news.google.com/rss/search?q=site:renaissancecapital.com+IPO+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Tech IPO News",
+    "url": "https://news.google.com/rss/search?q=tech+IPO+OR+\"tech+company\"+IPO+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "SEC Filings",
+    "url": "https://news.google.com/rss/search?q=(S-1+OR+\"IPO+filing\"+OR+\"SEC+filing\")+startup+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "VC News",
+    "url": "https://news.google.com/rss/search?q=(\"Series+A\"+OR+\"Series+B\"+OR+\"Series+C\"+OR+\"funding+round\"+OR+\"venture+capital\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seed & Pre-Seed",
+    "url": "https://news.google.com/rss/search?q=(\"seed+round\"+OR+\"pre-seed\"+OR+\"angel+round\"+OR+\"seed+funding\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Startup Funding",
+    "url": "https://news.google.com/rss/search?q=(\"startup+funding\"+OR+\"raised+funding\"+OR+\"raised+$\"+OR+\"funding+announced\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Product Launches",
+    "name": "Product Hunt",
+    "url": "https://www.producthunt.com/feed"
+  },
+  {
+    "category": "Cloud & Infrastructure Outages",
+    "name": "AWS Status",
+    "url": "https://news.google.com/rss/search?q=AWS+outage+OR+\"Amazon+Web+Services\"+down+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Cloud & Infrastructure Outages",
+    "name": "Cloud Outages",
+    "url": "https://news.google.com/rss/search?q=(Azure+OR+GCP+OR+Cloudflare+OR+Slack+OR+GitHub)+outage+OR+down+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Krebs Security",
+    "url": "https://krebsonsecurity.com/feed/"
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "The Hacker News",
+    "url": "https://feeds.feedburner.com/TheHackersNews"
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Dark Reading",
+    "url": "https://www.darkreading.com/rss.xml"
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Schneier",
+    "url": "https://www.schneier.com/feed/"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "Politico Tech",
+    "url": "https://rss.politico.com/technology.xml"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "AI Regulation",
+    "url": "https://news.google.com/rss/search?q=AI+regulation+OR+\"artificial+intelligence\"+law+OR+policy+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "Tech Antitrust",
+    "url": "https://news.google.com/rss/search?q=tech+antitrust+OR+FTC+Google+OR+FTC+Apple+OR+FTC+Amazon+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "EFF News",
+    "url": "https://news.google.com/rss/search?q=site:eff.org+OR+\"Electronic+Frontier+Foundation\"+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "EU Digital Policy",
+    "url": "https://news.google.com/rss/search?q=(\"Digital+Services+Act\"+OR+\"Digital+Markets+Act\"+OR+\"EU+AI+Act\"+OR+\"GDPR\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "Euractiv Digital",
+    "url": "https://news.google.com/rss/search?q=site:euractiv.com+digital+OR+tech+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "EU Commission Digital",
+    "url": "https://news.google.com/rss/search?q=site:ec.europa.eu+digital+OR+technology+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "China Tech Policy",
+    "url": "https://news.google.com/rss/search?q=(China+tech+regulation+OR+China+AI+policy+OR+MIIT+technology)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "UK Tech Policy",
+    "url": "https://news.google.com/rss/search?q=(UK+AI+safety+OR+\"Online+Safety+Bill\"+OR+UK+tech+regulation)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "AI Policy & Regulation",
+    "name": "India Tech Policy",
+    "url": "https://news.google.com/rss/search?q=(India+tech+regulation+OR+India+data+protection+OR+India+AI+policy)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Brookings Tech",
+    "url": "https://news.google.com/rss/search?q=site:brookings.edu+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "CSIS Tech",
+    "url": "https://news.google.com/rss/search?q=site:csis.org+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "MIT Tech Policy",
+    "url": "https://news.google.com/rss/search?q=%22Tech+Policy+Press%22&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Stanford HAI",
+    "url": "https://news.google.com/rss/search?q=site:hai.stanford.edu+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "AI Now Institute",
+    "url": "https://news.google.com/rss/search?q=%22AI+Now+Institute%22&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "OECD Digital",
+    "url": "https://news.google.com/rss/search?q=site:oecd.org+digital+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "EU Tech Policy",
+    "url": "https://news.google.com/rss/search?q=(\"EU+tech+policy\"+OR+\"European+digital\"+OR+Bruegel+tech)+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Chatham House Tech",
+    "url": "https://news.google.com/rss/search?q=site:chathamhouse.org+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "ISEAS (Singapore)",
+    "url": "https://news.google.com/rss/search?q=site:iseas.edu.sg+technology+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "ORF Tech (India)",
+    "url": "https://news.google.com/rss/search?q=(India+tech+policy+OR+ORF+technology+OR+\"Observer+Research+Foundation\"+tech)+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "RIETI (Japan)",
+    "url": "https://news.google.com/rss/search?q=site:rieti.go.jp+technology+when:30d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Asia Pacific Tech",
+    "url": "https://news.google.com/rss/search?q=(\"Asia+Pacific\"+tech+policy+OR+\"Lowy+Institute\"+technology)+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "China Tech Analysis",
+    "url": "https://news.google.com/rss/search?q=(\"China+tech+strategy\"+OR+\"Chinese+AI\"+OR+\"China+semiconductor\")+analysis+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "DigiChina",
+    "url": "https://news.google.com/rss/search?q=DigiChina+Stanford+China+technology&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "CNBC Tech",
+    "url": "https://www.cnbc.com/id/19854910/device/rss/rss.html"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "MarketWatch Tech",
+    "url": "https://news.google.com/rss/search?q=site:marketwatch.com+technology+markets+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Yahoo Finance",
+    "url": "https://finance.yahoo.com/rss/topstories"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seeking Alpha Tech",
+    "url": "https://seekingalpha.com/market_currents.xml"
+  },
+  {
+    "category": "Technology",
+    "name": "Tom's Hardware",
+    "url": "https://www.tomshardware.com/feeds.xml"
+  },
+  {
+    "category": "Technology",
+    "name": "SemiAnalysis",
+    "url": "https://news.google.com/rss/search?q=site:semianalysis.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Technology",
+    "name": "Semiconductor News",
+    "url": "https://news.google.com/rss/search?q=semiconductor+OR+chip+OR+TSMC+OR+NVIDIA+OR+Intel+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Technology",
+    "name": "InfoQ",
+    "url": "https://feed.infoq.com/"
+  },
+  {
+    "category": "Technology",
+    "name": "The New Stack",
+    "url": "https://thenewstack.io/feed/"
+  },
+  {
+    "category": "Technology",
+    "name": "DevOps.com",
+    "url": "https://devops.com/feed/"
+  },
+  {
+    "category": "Programming",
+    "name": "Dev.to",
+    "url": "https://dev.to/feed"
+  },
+  {
+    "category": "Programming",
+    "name": "Lobsters",
+    "url": "https://lobste.rs/rss"
+  },
+  {
+    "category": "Programming",
+    "name": "Changelog",
+    "url": "https://changelog.com/feed"
+  },
+  {
+    "category": "Layoffs Tracker",
+    "name": "Layoffs.fyi",
+    "url": "https://news.google.com/rss/search?q=tech+layoffs+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Unicorn News",
+    "url": "https://news.google.com/rss/search?q=(\"unicorn+startup\"+OR+\"unicorn+valuation\"+OR+\"$1+billion+valuation\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "CB Insights Unicorn",
+    "url": "https://news.google.com/rss/search?q=site:cbinsights.com+unicorn+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Decacorn News",
+    "url": "https://news.google.com/rss/search?q=(\"decacorn\"+OR+\"$10+billion+valuation\"+OR+\"$10B+valuation\")+startup+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "New Unicorns",
+    "url": "https://news.google.com/rss/search?q=(\"becomes+unicorn\"+OR+\"joins+unicorn\"+OR+\"reaches+unicorn\"+OR+\"achieved+unicorn\")+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Techstars News",
+    "url": "https://news.google.com/rss/search?q=Techstars+accelerator+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "500 Global News",
+    "url": "https://news.google.com/rss/search?q=\"500+Global\"+OR+\"500+Startups\"+accelerator+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Demo Day News",
+    "url": "https://news.google.com/rss/search?q=(\"demo+day\"+OR+\"YC+batch\"+OR+\"accelerator+batch\")+startup+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Startup School",
+    "url": "https://news.google.com/rss/search?q=\"Startup+School\"+OR+\"YC+Startup+School\"+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Acquired Episodes",
+    "url": "https://news.google.com/rss/search?q=\"Acquired+podcast\"+episode+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "All-In Podcast",
+    "url": "https://news.google.com/rss/search?q=\"All-In+podcast\"+(Chamath+OR+Sacks+OR+Friedberg)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "a16z Insights",
+    "url": "https://news.google.com/rss/search?q=(\"a16z\"+OR+\"Andreessen+Horowitz\")+podcast+OR+interview+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "TWIST Episodes",
+    "url": "https://news.google.com/rss/search?q=\"This+Week+in+Startups\"+Jason+Calacanis+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "20VC Episodes",
+    "url": "https://rss.libsyn.com/shows/61840/destinations/240976.xml"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Lex Fridman Tech",
+    "url": "https://news.google.com/rss/search?q=(\"Lex+Fridman\"+interview)+(AI+OR+tech+OR+startup+OR+CEO)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Verge Shows",
+    "url": "https://news.google.com/rss/search?q=(\"Vergecast\"+OR+\"Decoder+podcast\"+Verge)+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Hard Fork (NYT)",
+    "url": "https://news.google.com/rss/search?q=\"Hard+Fork\"+podcast+NYT+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Pivot Podcast",
+    "url": "https://feeds.megaphone.fm/pivot"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Tech Newsletters",
+    "url": "https://news.google.com/rss/search?q=(\"Benedict+Evans\"+OR+\"Pragmatic+Engineer\"+OR+Stratechery)+tech+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "AI Podcasts",
+    "url": "https://news.google.com/rss/search?q=(\"AI+podcast\"+OR+\"artificial+intelligence+podcast\")+episode+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "AI Interviews",
+    "url": "https://news.google.com/rss/search?q=(NVIDIA+OR+OpenAI+OR+Anthropic+OR+DeepMind)+interview+OR+podcast+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "How I Built This",
+    "url": "https://news.google.com/rss/search?q=\"How+I+Built+This\"+Guy+Raz+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Podcasts",
+    "name": "Masters of Scale",
+    "url": "https://rss.art19.com/masters-of-scale"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Reuters Markets",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Bloomberg Markets",
+    "url": "https://news.google.com/rss/search?q=site:bloomberg.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Investing.com News",
+    "url": "https://news.google.com/rss/search?q=site:investing.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Forex News",
+    "url": "https://news.google.com/rss/search?q=(\"forex\"+OR+\"currency\"+OR+\"FX+market\")+trading+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Dollar Watch",
+    "url": "https://news.google.com/rss/search?q=(\"dollar+index\"+OR+DXY+OR+\"US+dollar\"+OR+\"euro+dollar\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Central Bank Rates",
+    "url": "https://news.google.com/rss/search?q=(\"central+bank\"+OR+\"interest+rate\"+OR+\"rate+decision\"+OR+\"monetary+policy\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Bond Market",
+    "url": "https://news.google.com/rss/search?q=(\"bond+market\"+OR+\"treasury+yields\"+OR+\"bond+yields\"+OR+\"fixed+income\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Treasury Watch",
+    "url": "https://news.google.com/rss/search?q=(\"US+Treasury\"+OR+\"Treasury+auction\"+OR+\"10-year+yield\"+OR+\"2-year+yield\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Corporate Bonds",
+    "url": "https://news.google.com/rss/search?q=(\"corporate+bond\"+OR+\"high+yield\"+OR+\"investment+grade\"+OR+\"credit+spread\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Oil & Gas",
+    "url": "https://news.google.com/rss/search?q=(oil+price+OR+OPEC+OR+\"natural+gas\"+OR+\"crude+oil\"+OR+WTI+OR+Brent)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Gold & Metals",
+    "url": "https://news.google.com/rss/search?q=(gold+price+OR+silver+price+OR+copper+OR+platinum+OR+\"precious+metals\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Agriculture",
+    "url": "https://news.google.com/rss/search?q=(wheat+OR+corn+OR+soybeans+OR+coffee+OR+sugar)+price+OR+commodity+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Commodity Trading",
+    "url": "https://news.google.com/rss/search?q=(\"commodity+trading\"+OR+\"futures+market\"+OR+CME+OR+NYMEX+OR+COMEX)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "CoinDesk",
+    "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Cointelegraph",
+    "url": "https://cointelegraph.com/rss"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "The Block",
+    "url": "https://news.google.com/rss/search?q=site:theblock.co+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Crypto News",
+    "url": "https://news.google.com/rss/search?q=(bitcoin+OR+ethereum+OR+crypto+OR+\"digital+assets\")+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "DeFi News",
+    "url": "https://news.google.com/rss/search?q=(DeFi+OR+\"decentralized+finance\"+OR+DEX+OR+\"yield+farming\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Decrypt",
+    "url": "https://decrypt.co/feed"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "The Defiant",
+    "url": "https://thedefiant.io/feed"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Bitcoin Magazine",
+    "url": "https://bitcoinmagazine.com/feed"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "DL News",
+    "url": "https://news.google.com/rss/search?q=site:dlnews.com+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "CryptoSlate",
+    "url": "https://cryptoslate.com/feed/"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Unchained",
+    "url": "https://unchainedcrypto.com/feed/"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Wu Blockchain",
+    "url": "https://news.google.com/rss/search?q=site:wublockchain.com+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Messari",
+    "url": "https://news.google.com/rss/search?q=site:messari.io+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Bloomberg Crypto",
+    "url": "https://news.google.com/rss/search?q=bloomberg+crypto+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Reuters Crypto",
+    "url": "https://news.google.com/rss/search?q=reuters+crypto+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "NFT News",
+    "url": "https://news.google.com/rss/search?q=(NFT+OR+\"non-fungible\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Stablecoin Policy",
+    "url": "https://news.google.com/rss/search?q=(stablecoin+regulation+OR+\"stablecoin+bill\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "ECB Watch",
+    "url": "https://news.google.com/rss/search?q=(\"European+Central+Bank\"+OR+ECB+OR+Lagarde)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "BoJ Watch",
+    "url": "https://news.google.com/rss/search?q=(\"Bank+of+Japan\"+OR+BoJ)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "BoE Watch",
+    "url": "https://news.google.com/rss/search?q=(\"Bank+of+England\"+OR+BoE)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "PBoC Watch",
+    "url": "https://news.google.com/rss/search?q=(\"People%27s+Bank+of+China\"+OR+PBoC+OR+PBOC)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "Global Central Banks",
+    "url": "https://news.google.com/rss/search?q=(\"rate+hike\"+OR+\"rate+cut\"+OR+\"interest+rate+decision\")+central+bank+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Economic Data",
+    "url": "https://news.google.com/rss/search?q=(CPI+OR+inflation+OR+GDP+OR+\"jobs+report\"+OR+\"nonfarm+payrolls\"+OR+PMI)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Trade & Tariffs",
+    "url": "https://news.google.com/rss/search?q=(tariff+OR+\"trade+war\"+OR+\"trade+deficit\"+OR+sanctions)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Housing Market",
+    "url": "https://news.google.com/rss/search?q=(\"housing+market\"+OR+\"home+prices\"+OR+\"mortgage+rates\"+OR+REIT)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "IPO News",
+    "url": "https://news.google.com/rss/search?q=(IPO+OR+\"initial+public+offering\"+OR+SPAC+OR+\"direct+listing\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Earnings Reports",
+    "url": "https://news.google.com/rss/search?q=(\"earnings+report\"+OR+\"quarterly+earnings\"+OR+\"revenue+beat\"+OR+\"earnings+miss\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "M&A News",
+    "url": "https://news.google.com/rss/search?q=(\"merger\"+OR+\"acquisition\"+OR+\"takeover+bid\"+OR+\"buyout\")+billion+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Derivatives & Options",
+    "name": "Options Market",
+    "url": "https://news.google.com/rss/search?q=(\"options+market\"+OR+\"options+trading\"+OR+\"put+call+ratio\"+OR+VIX)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Derivatives & Options",
+    "name": "Futures Trading",
+    "url": "https://news.google.com/rss/search?q=(\"futures+trading\"+OR+\"S%26P+500+futures\"+OR+\"Nasdaq+futures\")+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Fintech News",
+    "url": "https://news.google.com/rss/search?q=(fintech+OR+\"payment+technology\"+OR+\"neobank\"+OR+\"digital+banking\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Trading Tech",
+    "url": "https://news.google.com/rss/search?q=(\"algorithmic+trading\"+OR+\"trading+platform\"+OR+\"quantitative+finance\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Blockchain Finance",
+    "url": "https://news.google.com/rss/search?q=(\"blockchain+finance\"+OR+\"tokenization\"+OR+\"digital+securities\"+OR+CBDC)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "Financial Regulation",
+    "url": "https://news.google.com/rss/search?q=(SEC+OR+CFTC+OR+FINRA+OR+FCA)+regulation+OR+enforcement+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "Banking Rules",
+    "url": "https://news.google.com/rss/search?q=(Basel+OR+\"capital+requirements\"+OR+\"banking+regulation\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "Crypto Regulation",
+    "url": "https://news.google.com/rss/search?q=(crypto+regulation+OR+\"digital+asset\"+regulation+OR+\"stablecoin\"+regulation)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Hedge Fund News",
+    "url": "https://news.google.com/rss/search?q=(\"hedge+fund\"+OR+\"Bridgewater\"+OR+\"Citadel\"+OR+\"Renaissance\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Private Equity",
+    "url": "https://news.google.com/rss/search?q=(\"private+equity\"+OR+Blackstone+OR+KKR+OR+Apollo+OR+Carlyle)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Sovereign Wealth",
+    "url": "https://news.google.com/rss/search?q=(\"sovereign+wealth+fund\"+OR+\"pension+fund\"+OR+\"institutional+investor\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Market Outlook",
+    "url": "https://news.google.com/rss/search?q=(\"market+outlook\"+OR+\"stock+market+forecast\"+OR+\"bull+market\"+OR+\"bear+market\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Risk & Volatility",
+    "url": "https://news.google.com/rss/search?q=(VIX+OR+\"market+volatility\"+OR+\"risk+off\"+OR+\"market+correction\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Bank Research",
+    "url": "https://news.google.com/rss/search?q=(\"Goldman+Sachs\"+OR+\"JPMorgan\"+OR+\"Morgan+Stanley\")+forecast+OR+outlook+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Arabian Business",
+    "url": "https://news.google.com/rss/search?q=site:arabianbusiness.com+(Saudi+Arabia+OR+UAE+OR+GCC)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "GCC Business News",
+    "name": "The National",
+    "url": "https://news.google.com/rss/search?q=site:thenationalnews.com+(Abu+Dhabi+OR+UAE+OR+Saudi)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Arab News",
+    "url": "https://news.google.com/rss/search?q=site:arabnews.com+(Saudi+Arabia+OR+investment+OR+infrastructure)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Gulf FDI",
+    "url": "https://news.google.com/rss/search?q=(PIF+OR+\"DP+World\"+OR+Mubadala+OR+ADNOC+OR+Masdar+OR+\"ACWA+Power\")+infrastructure+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Gulf Investments",
+    "url": "https://news.google.com/rss/search?q=(\"Saudi+Arabia\"+OR+\"UAE\"+OR+\"Abu+Dhabi\")+investment+infrastructure+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Vision 2030",
+    "url": "https://news.google.com/rss/search?q=\"Vision+2030\"+(project+OR+investment+OR+announced)+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Positive News",
+    "name": "Good News Network",
+    "url": "https://www.goodnewsnetwork.org/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Positive.News",
+    "url": "https://www.positive.news/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Reasons to be Cheerful",
+    "url": "https://reasonstobecheerful.world/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Optimist Daily",
+    "url": "https://www.optimistdaily.com/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Upworthy",
+    "url": "https://www.upworthy.com/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "DailyGood",
+    "url": "https://www.dailygood.org/feed"
+  },
+  {
+    "category": "Positive News",
+    "name": "Good Good Good",
+    "url": "https://www.goodgoodgood.co/articles/rss.xml"
+  },
+  {
+    "category": "Positive News",
+    "name": "GOOD Magazine",
+    "url": "https://www.good.is/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Sunny Skyz",
+    "url": "https://www.sunnyskyz.com/rss_tebow.php"
+  },
+  {
+    "category": "Positive News",
+    "name": "The Better India",
+    "url": "https://thebetterindia.com/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "GNN Science",
+    "url": "https://www.goodnewsnetwork.org/category/news/science/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "ScienceDaily",
+    "url": "https://www.sciencedaily.com/rss/all.xml"
+  },
+  {
+    "category": "Science",
+    "name": "Nature News",
+    "url": "https://feeds.nature.com/nature/rss/current"
+  },
+  {
+    "category": "Science",
+    "name": "Live Science",
+    "url": "https://www.livescience.com/feeds.xml"
+  },
+  {
+    "category": "Science",
+    "name": "New Scientist",
+    "url": "https://www.newscientist.com/feed/home/"
+  },
+  {
+    "category": "Science",
+    "name": "Singularity Hub",
+    "url": "https://singularityhub.com/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "Human Progress",
+    "url": "https://humanprogress.org/feed/"
+  },
+  {
+    "category": "Science",
+    "name": "Greater Good (Berkeley)",
+    "url": "https://greatergood.berkeley.edu/site/rss/articles"
+  },
+  {
+    "category": "Environment",
+    "name": "GNN Animals",
+    "url": "https://www.goodnewsnetwork.org/category/news/animals/feed/"
+  },
+  {
+    "category": "Environment",
+    "name": "GNN Earth",
+    "url": "https://www.goodnewsnetwork.org/category/news/earth/feed/"
+  },
+  {
+    "category": "Environment",
+    "name": "Mongabay",
+    "url": "https://news.mongabay.com/feed/"
+  },
+  {
+    "category": "Environment",
+    "name": "Conservation Optimism",
+    "url": "https://conservationoptimism.org/feed/"
+  },
+  {
+    "category": "Health",
+    "name": "GNN Health",
+    "url": "https://www.goodnewsnetwork.org/category/news/health/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "GNN Heroes",
+    "url": "https://www.goodnewsnetwork.org/category/news/inspiring/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "GNN Heroes Spotlight",
+    "url": "https://www.goodnewsnetwork.org/category/news/heroes/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Shareable",
+    "url": "https://www.shareable.net/feed/"
+  },
+  {
+    "category": "Positive News",
+    "name": "Yes! Magazine",
+    "url": "https://www.yesmagazine.org/feed"
+  },
+  {
+    "category": "Commodities",
+    "name": "Kitco News",
+    "url": "https://news.google.com/rss/search?q=site:kitco.com+(gold+OR+silver+OR+metals)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Mining.com",
+    "url": "https://www.mining.com/feed/"
+  },
+  {
+    "category": "Commodities",
+    "name": "Bloomberg Commodities",
+    "url": "https://news.google.com/rss/search?q=site:bloomberg.com+commodities+OR+metals+OR+mining+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Reuters Commodities",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+commodities+OR+metals+OR+mining+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "S&P Global Commodity",
+    "url": "https://news.google.com/rss/search?q=site:spglobal.com+commodities+metals+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "CNBC Commodities",
+    "url": "https://news.google.com/rss/search?q=site:cnbc.com+(commodities+OR+metals+OR+gold+OR+copper)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Kitco Gold",
+    "url": "https://news.google.com/rss/search?q=site:kitco.com+gold+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Gold Price News",
+    "url": "https://news.google.com/rss/search?q=(gold+price+OR+\"gold+market\"+OR+bullion+OR+LBMA)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Silver Price News",
+    "url": "https://news.google.com/rss/search?q=(silver+price+OR+\"silver+market\"+OR+\"silver+futures\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Precious Metals",
+    "url": "https://news.google.com/rss/search?q=(\"precious+metals\"+OR+platinum+OR+palladium+OR+\"gold+ETF\"+OR+GLD+OR+SLV)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "World Gold Council",
+    "url": "https://news.google.com/rss/search?q=\"World+Gold+Council\"+OR+\"central+bank+gold\"+OR+\"gold+reserves\"+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "GoldSeek",
+    "url": "https://www.goldseek.com/rss.xml"
+  },
+  {
+    "category": "Commodities",
+    "name": "SilverSeek",
+    "url": "https://www.silverseek.com/rss.xml"
+  },
+  {
+    "category": "Commodities",
+    "name": "Gold Silver Worlds",
+    "url": "https://goldsilverworlds.com/feed/"
+  },
+  {
+    "category": "Commodities",
+    "name": "FX Empire Gold",
+    "url": "https://news.google.com/rss/search?q=site:fxempire.com+gold+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "OilPrice.com",
+    "url": "https://oilprice.com/rss/main"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Rigzone",
+    "url": "https://www.rigzone.com/news/rss/rigzone_latest.aspx"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "EIA Reports",
+    "url": "https://www.eia.gov/rss/press_room.xml"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "OPEC News",
+    "url": "https://news.google.com/rss/search?q=(OPEC+OR+\"oil+price\"+OR+\"crude+oil\"+OR+WTI+OR+Brent+OR+\"oil+production\")+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Natural Gas News",
+    "url": "https://news.google.com/rss/search?q=(\"natural+gas\"+OR+LNG+OR+\"gas+price\"+OR+\"Henry+Hub\")+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Energy Intel",
+    "url": "https://news.google.com/rss/search?q=(energy+commodities+OR+\"energy+market\"+OR+\"energy+prices\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Reuters Energy",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+(oil+OR+gas+OR+energy)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Mining Journal",
+    "url": "https://news.google.com/rss/search?q=site:mining-journal.com+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Northern Miner",
+    "url": "https://www.northernminer.com/feed/"
+  },
+  {
+    "category": "Commodities",
+    "name": "Mining Weekly",
+    "url": "https://news.google.com/rss/search?q=site:miningweekly.com+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Mining Technology",
+    "url": "https://www.mining-technology.com/feed/"
+  },
+  {
+    "category": "Commodities",
+    "name": "Australian Mining",
+    "url": "https://www.australianmining.com.au/feed/"
+  },
+  {
+    "category": "Commodities",
+    "name": "Mine Web (SNL)",
+    "url": "https://news.google.com/rss/search?q=(\"mining+company\"+OR+\"mine+production\"+OR+\"mining+operations\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Resource World",
+    "url": "https://news.google.com/rss/search?q=(\"mining+project\"+OR+\"mineral+exploration\"+OR+\"mine+development\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Benchmark Mineral",
+    "url": "https://news.google.com/rss/search?q=(\"critical+minerals\"+OR+\"battery+metals\"+OR+lithium+OR+cobalt+OR+\"rare+earths\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Lithium Market",
+    "url": "https://news.google.com/rss/search?q=(lithium+price+OR+\"lithium+market\"+OR+\"lithium+supply\"+OR+spodumene+OR+LCE)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Cobalt Market",
+    "url": "https://news.google.com/rss/search?q=(cobalt+price+OR+\"cobalt+market\"+OR+\"DRC+cobalt\"+OR+\"battery+cobalt\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Rare Earths News",
+    "url": "https://news.google.com/rss/search?q=(\"rare+earth\"+OR+\"rare+earths\"+OR+\"REE\"+OR+neodymium+OR+praseodymium)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "EV Battery Supply",
+    "url": "https://news.google.com/rss/search?q=(\"EV+battery\"+OR+\"battery+supply+chain\"+OR+\"battery+materials\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "IEA Critical Minerals",
+    "url": "https://news.google.com/rss/search?q=site:iea.org+(minerals+OR+critical+OR+battery)+when:14d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Uranium Market",
+    "url": "https://news.google.com/rss/search?q=(uranium+price+OR+\"uranium+market\"+OR+U3O8+OR+nuclear+fuel)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "LME Metals",
+    "url": "https://news.google.com/rss/search?q=(LME+OR+\"London+Metal+Exchange\")+copper+OR+aluminum+OR+zinc+OR+nickel+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Copper Market",
+    "url": "https://news.google.com/rss/search?q=(copper+price+OR+\"copper+market\"+OR+\"copper+supply\"+OR+COMEX+copper)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Nickel News",
+    "url": "https://news.google.com/rss/search?q=(nickel+price+OR+\"nickel+market\"+OR+\"nickel+supply\"+OR+Indonesia+nickel)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Aluminum & Zinc",
+    "url": "https://news.google.com/rss/search?q=(aluminum+price+OR+aluminium+OR+zinc+price+OR+\"base+metals\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Iron Ore Market",
+    "url": "https://news.google.com/rss/search?q=(\"iron+ore\"+price+OR+\"iron+ore+market\"+OR+\"steel+raw+materials\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Metals Bulletin",
+    "url": "https://news.google.com/rss/search?q=(\"metals+market\"+OR+\"base+metals\"+OR+SHFE+OR+\"Shanghai+Futures\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "BHP News",
+    "url": "https://news.google.com/rss/search?q=BHP+(mining+OR+production+OR+results+OR+copper+OR+\"iron+ore\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Rio Tinto News",
+    "url": "https://news.google.com/rss/search?q=\"Rio+Tinto\"+(mining+OR+production+OR+results+OR+Pilbara)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Glencore & Vale",
+    "url": "https://news.google.com/rss/search?q=(Glencore+OR+Vale)+(mining+OR+production+OR+cobalt+OR+\"iron+ore\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Gold Majors",
+    "url": "https://news.google.com/rss/search?q=(Newmont+OR+Barrick+OR+AngloGold+OR+Agnico)+(gold+mine+OR+production+OR+results)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Freeport & Copper Miners",
+    "url": "https://news.google.com/rss/search?q=(Freeport+McMoRan+OR+Southern+Copper+OR+Teck+OR+Antofagasta)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodities",
+    "name": "Critical Mineral Companies",
+    "url": "https://news.google.com/rss/search?q=(Albemarle+OR+SQM+OR+\"MP+Materials\"+OR+Lynas+OR+Cameco)+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Shipping & Freight",
+    "url": "https://news.google.com/rss/search?q=(\"bulk+carrier\"+OR+\"dry+bulk\"+OR+\"commodity+shipping\"+OR+\"Port+Hedland\"+OR+\"Strait+of+Hormuz\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Trade Routes",
+    "url": "https://news.google.com/rss/search?q=(\"trade+route\"+OR+\"supply+chain\"+OR+\"commodity+export\"+OR+\"mineral+export\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "China Commodity Imports",
+    "url": "https://news.google.com/rss/search?q=(China+imports+copper+OR+iron+ore+OR+lithium+OR+cobalt+OR+\"rare+earth\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Port & Logistics",
+    "url": "https://news.google.com/rss/search?q=(\"iron+ore+port\"+OR+\"copper+port\"+OR+\"commodity+port\"+OR+\"mineral+logistics\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodity Regulation & ESG",
+    "name": "Mining Regulation",
+    "url": "https://news.google.com/rss/search?q=(\"mining+regulation\"+OR+\"mining+policy\"+OR+\"mining+permit\"+OR+\"mining+ban\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodity Regulation & ESG",
+    "name": "ESG in Mining",
+    "url": "https://news.google.com/rss/search?q=(\"mining+ESG\"+OR+\"responsible+mining\"+OR+\"mine+closure\"+OR+\"tailings\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodity Regulation & ESG",
+    "name": "Trade & Tariffs",
+    "url": "https://news.google.com/rss/search?q=(\"mineral+tariff\"+OR+\"metals+tariff\"+OR+\"critical+mineral+policy\"+OR+\"mining+export+ban\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodity Regulation & ESG",
+    "name": "Indonesia Nickel Policy",
+    "url": "https://news.google.com/rss/search?q=(Indonesia+nickel+OR+\"nickel+export\"+OR+\"nickel+ban\"+OR+\"nickel+processing\")+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Commodity Regulation & ESG",
+    "name": "China Mineral Policy",
+    "url": "https://news.google.com/rss/search?q=(China+\"rare+earth\"+OR+\"mineral+export\"+OR+\"critical+mineral\")+policy+OR+restriction+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seeking Alpha Metals",
+    "url": "https://news.google.com/rss/search?q=site:seekingalpha.com+(gold+OR+silver+OR+copper+OR+mining)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Commodity Futures",
+    "url": "https://news.google.com/rss/search?q=(COMEX+OR+NYMEX+OR+\"commodity+futures\"+OR+CME+commodities)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Live News & Headlines",
+    "name": "Reuters Energy",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+(oil+OR+gas+OR+energy+OR+OPEC+OR+pipeline+OR+LNG)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Live News & Headlines",
+    "name": "Bloomberg Energy",
+    "url": "https://news.google.com/rss/search?q=site:bloomberg.com+(oil+OR+gas+OR+energy+OR+pipeline+OR+LNG)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Live News & Headlines",
+    "name": "FT Energy",
+    "url": "https://news.google.com/rss/search?q=site:ft.com+(oil+OR+gas+OR+energy+OR+LNG+OR+OPEC)+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Live News & Headlines",
+    "name": "IEA News",
+    "url": "https://news.google.com/rss/search?q=site:iea.org+(oil+OR+gas+OR+energy)+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Live News & Headlines",
+    "name": "S&P Global Platts",
+    "url": "https://news.google.com/rss/search?q=site:spglobal.com+(oil+OR+gas+OR+LNG+OR+pipeline)+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "OPEC & Crude",
+    "url": "https://news.google.com/rss/search?q=(OPEC+OR+\"oil+price\"+OR+\"crude+oil\"+OR+WTI+OR+Brent+OR+\"oil+production\"+OR+\"oil+inventory\")+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Natural Gas & LNG",
+    "url": "https://news.google.com/rss/search?q=(\"natural+gas\"+OR+LNG+OR+\"gas+price\"+OR+\"Henry+Hub\"+OR+TTF+OR+JKM+OR+\"LNG+cargo\")+when:1d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Pipelines & Chokepoints",
+    "url": "https://news.google.com/rss/search?q=(pipeline+OR+Druzhba+OR+\"Nord+Stream\"+OR+TurkStream+OR+\"Strait+of+Hormuz\"+OR+\"Bab+el-Mandeb\"+OR+\"Suez+Canal\"+OR+\"Power+of+Siberia\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Energy Crisis & Shortages",
+    "url": "https://news.google.com/rss/search?q=(\"fuel+shortage\"+OR+\"gas+shortage\"+OR+\"diesel+shortage\"+OR+\"jet+fuel+shortage\"+OR+\"energy+crisis\"+OR+rationing+OR+\"petrol+shortage\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Refinery & Disruptions",
+    "url": "https://news.google.com/rss/search?q=(refinery+OR+\"refinery+outage\"+OR+\"force+majeure\"+OR+\"pipeline+sabotage\"+OR+\"pipeline+attack\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Energy Intel",
+    "url": "https://news.google.com/rss/search?q=(energy+commodities+OR+\"energy+market\"+OR+\"energy+prices\"+OR+\"energy+security\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Tanker & Shipping",
+    "url": "https://news.google.com/rss/search?q=(tanker+OR+VLCC+OR+Suezmax+OR+Aframax+OR+\"oil+shipping\"+OR+\"LNG+carrier\"+OR+\"shadow+fleet\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Strategic Chokepoints",
+    "url": "https://news.google.com/rss/search?q=(\"Strait+of+Hormuz\"+OR+\"Strait+of+Malacca\"+OR+\"Bab+el-Mandeb\"+OR+\"Suez+Canal\"+OR+\"Panama+Canal\"+OR+\"Turkish+Straits\"+OR+\"Danish+Straits\")+when:2d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Energy Sanctions",
+    "url": "https://news.google.com/rss/search?q=(\"oil+sanctions\"+OR+\"gas+sanctions\"+OR+\"price+cap\"+OR+\"energy+embargo\"+OR+\"LNG+sanctions\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Port & Terminal",
+    "url": "https://news.google.com/rss/search?q=(\"LNG+terminal\"+OR+\"crude+terminal\"+OR+\"oil+port\"+OR+\"Ras+Laffan\"+OR+\"Sabine+Pass\"+OR+\"Rotterdam+oil\")+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Defense One",
+    "url": "https://www.defenseone.com/rss/all/"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "The War Zone",
+    "url": "https://www.twz.com/feed"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Defense News",
+    "url": "https://www.defensenews.com/arc/outboundfeeds/rss/?outputType=xml"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Janes",
+    "url": "https://news.google.com/rss/search?q=site:janes.com+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Military Times",
+    "url": "https://www.militarytimes.com/arc/outboundfeeds/rss/?outputType=xml"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Task & Purpose",
+    "url": "https://taskandpurpose.com/feed/"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "USNI News",
+    "url": "https://news.google.com/rss/search?q=site:news.usni.org+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "gCaptain",
+    "url": "https://gcaptain.com/feed/"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Oryx OSINT",
+    "url": "https://www.oryxspioenkop.com/feeds/posts/default?alt=rss"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "UK MOD",
+    "url": "https://www.gov.uk/government/organisations/ministry-of-defence.atom"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "CSIS",
+    "url": "https://news.google.com/rss/search?q=site:csis.org&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Chatham House",
+    "url": "https://news.google.com/rss/search?q=site:chathamhouse.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "ECFR",
+    "url": "https://news.google.com/rss/search?q=site:ecfr.eu+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Middle East Institute",
+    "url": "https://news.google.com/rss/search?q=site:mei.edu+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Brookings",
+    "url": "https://news.google.com/rss/search?q=site:brookings.edu&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Carnegie",
+    "url": "https://news.google.com/rss/search?q=site:carnegieendowment.org&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "FAS",
+    "url": "https://news.google.com/rss/search?q=site:fas.org+nuclear+weapons+security&hl=en&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "NTI",
+    "url": "https://news.google.com/rss/search?q=site:nti.org+when:30d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "RUSI",
+    "url": "https://news.google.com/rss/search?q=site:rusi.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Wilson Center",
+    "url": "https://news.google.com/rss/search?q=site:wilsoncenter.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "GMF",
+    "url": "https://news.google.com/rss/search?q=site:gmfus.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Stimson Center",
+    "url": "https://www.stimson.org/feed/"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "CNAS",
+    "url": "https://news.google.com/rss/search?q=site:cnas.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Lowy Institute",
+    "url": "https://news.google.com/rss/search?q=site:lowyinstitute.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Arms Control Assn",
+    "url": "https://news.google.com/rss/search?q=site:armscontrol.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Bulletin of Atomic Scientists",
+    "url": "https://news.google.com/rss/search?q=site:thebulletin.org+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Bellingcat",
+    "url": "https://news.google.com/rss/search?q=site:bellingcat.com+when:30d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Ransomware.live",
+    "url": "https://www.ransomware.live/rss.xml"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "FAO News",
+    "url": "https://www.fao.org/feeds/fao-newsroom-rss"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "FAO GIEWS",
+    "url": "https://news.google.com/rss/search?q=site:fao.org+GIEWS+food+security+when:30d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "OCCRP",
+    "url": "https://www.occrp.org/en/feed"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "DFRLab",
+    "url": "https://dfrlab.org/feed/"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "Lighthouse Reports",
+    "url": "https://www.lighthousereports.com/feed/"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "The Sentry",
+    "url": "https://thesentry.org/feed/"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "GITOC",
+    "url": "https://globalinitiative.net/feed/"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "VSquare",
+    "url": "https://vsquare.org/feed/"
+  },
+  {
+    "category": "Investigative Journalism",
+    "name": "Correctiv",
+    "url": "https://correctiv.org/feed/"
+  },
+  {
+    "category": "Defense & Security",
+    "name": "EU ISS",
+    "url": "https://news.google.com/rss/search?q=site:iss.europa.eu+when:7d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "PitchBook News",
+    "url": "https://pitchbook.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "a16z Blog",
+    "url": "https://www.a16z.news/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "First Round Review",
+    "url": "https://review.firstround.com/articles/rss"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Sequoia Blog",
+    "url": "https://www.sequoiacap.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "NFX Essays",
+    "url": "https://www.nfx.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Paul Graham Essays",
+    "url": "https://www.aaronsw.com/2002/feeds/pgessays.rss"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Both Sides of Table",
+    "url": "https://bothsidesofthetable.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "EU Startups",
+    "url": "https://www.eu-startups.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Tech in Asia",
+    "url": "https://www.techinasia.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "KrASIA",
+    "url": "https://kr-asia.com/feed"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Disrupt Africa",
+    "url": "https://disrupt-africa.com/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "LAVCA (LATAM)",
+    "url": "https://lavca.org/feed/"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Contxto (LATAM)",
+    "url": "https://contxto.com/feed/"
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Cyber Incidents",
+    "url": "https://news.google.com/rss/search?q=cyber+attack+OR+data+breach+OR+ransomware+OR+hacking+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Technology",
+    "name": "Tom's Hardware",
+    "url": "https://www.tomshardware.com/feeds/all"
+  },
+  {
+    "category": "Technology",
+    "name": "SemiAnalysis",
+    "url": "https://www.semianalysis.com/feed"
+  },
+  {
+    "category": "Programming",
+    "name": "YC Launches",
+    "url": "https://hnrss.org/launches"
+  },
+  {
+    "category": "Programming",
+    "name": "Dev Events",
+    "url": "https://dev.events/rss.xml"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "YC News",
+    "url": "https://news.ycombinator.com/rss"
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Techstars Blog",
+    "url": "https://www.techstars.com/blog/feed/"
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Nikkei Asia",
+    "url": "https://news.google.com/rss/search?q=site:asia.nikkei.com+markets+when:3d&hl=en-US&gl=US&ceid=US:en"
+  },
+  {
+    "category": "Technology",
+    "name": "Wired",
+    "url": "https://www.wired.com/feed/rss"
   },
   {
     "category": "Technology",
@@ -29,11 +2873,6 @@
     "category": "Technology",
     "name": "Gizmodo",
     "url": "https://gizmodo.com/rss"
-  },
-  {
-    "category": "Technology",
-    "name": "VentureBeat",
-    "url": "https://venturebeat.com/feed/"
   },
   {
     "category": "Technology",
@@ -67,16 +2906,6 @@
   },
   {
     "category": "Technology",
-    "name": "MIT Technology Review",
-    "url": "https://www.technologyreview.com/feed/"
-  },
-  {
-    "category": "Technology",
-    "name": "ZDNet",
-    "url": "https://www.zdnet.com/news/rss.xml"
-  },
-  {
-    "category": "Technology",
     "name": "9to5Mac",
     "url": "https://9to5mac.com/feed/"
   },
@@ -94,11 +2923,6 @@
     "category": "Technology",
     "name": "MacRumors",
     "url": "https://feeds.macrumors.com/MacRumors-All"
-  },
-  {
-    "category": "Technology",
-    "name": "Tom's Hardware",
-    "url": "https://www.tomshardware.com/feeds/all"
   },
   {
     "category": "Technology",
@@ -132,11 +2956,6 @@
   },
   {
     "category": "World News",
-    "name": "Al Jazeera",
-    "url": "https://www.aljazeera.com/xml/rss/all.xml"
-  },
-  {
-    "category": "World News",
     "name": "Reuters World News",
     "url": "https://www.reutersagency.com/feed/%3Fbest-types%3Dworld-news%26post_type%3Dbest"
   },
@@ -147,28 +2966,13 @@
   },
   {
     "category": "World News",
-    "name": "The Guardian",
-    "url": "https://www.theguardian.com/world/rss"
-  },
-  {
-    "category": "World News",
     "name": "Associated Press",
     "url": "https://feeds.apnews.com/apnews/topnews"
   },
   {
     "category": "World News",
-    "name": "NPR News",
-    "url": "https://feeds.npr.org/1001/rss.xml"
-  },
-  {
-    "category": "World News",
     "name": "DW News",
     "url": "https://rss.dw.com/rdf/rss-en-all"
-  },
-  {
-    "category": "World News",
-    "name": "France 24",
-    "url": "https://www.france24.com/en/rss"
   },
   {
     "category": "World News",
@@ -187,11 +2991,6 @@
   },
   {
     "category": "Programming",
-    "name": "Hacker News",
-    "url": "https://hnrss.org/frontpage"
-  },
-  {
-    "category": "Programming",
     "name": "Flutter Blog",
     "url": "https://medium.com/feed/flutter"
   },
@@ -199,11 +2998,6 @@
     "category": "Programming",
     "name": "Dart Blog",
     "url": "https://medium.com/feed/dartlang"
-  },
-  {
-    "category": "Programming",
-    "name": "Dev.to",
-    "url": "https://dev.to/feed"
   },
   {
     "category": "Programming",
@@ -234,11 +3028,6 @@
     "category": "Programming",
     "name": "web.dev",
     "url": "https://web.dev/feed.xml"
-  },
-  {
-    "category": "Programming",
-    "name": "GitHub Blog",
-    "url": "https://github.blog/feed/"
   },
   {
     "category": "Programming",
@@ -274,16 +3063,6 @@
     "category": "Programming",
     "name": "JavaScript Weekly",
     "url": "https://javascriptweekly.com/rss/1a1oc1f6"
-  },
-  {
-    "category": "Programming",
-    "name": "Lobsters",
-    "url": "https://lobste.rs/rss"
-  },
-  {
-    "category": "Programming",
-    "name": "InfoQ",
-    "url": "https://feed.infoq.com/"
   },
   {
     "category": "Programming",
@@ -606,42 +3385,32 @@
     "url": "https://store.steampowered.com/feeds/news.xml"
   },
   {
-    "category": "Esports",
+    "category": "Gaming",
     "name": "ESPN Esports",
     "url": "https://www.espn.com/espn/rss/esports/news"
   },
   {
-    "category": "Esports",
-    "name": "Dot Esports",
-    "url": "https://dotesports.com/feed"
-  },
-  {
-    "category": "Esports",
-    "name": "Dexerto",
-    "url": "https://www.dexerto.com/feed/"
-  },
-  {
-    "category": "Esports",
+    "category": "Gaming",
     "name": "The Esports Observer",
     "url": "https://esportsobserver.com/feed/"
   },
   {
-    "category": "Esports",
+    "category": "Gaming",
     "name": "HLTV.org",
     "url": "https://www.hltv.org/rss/news"
   },
   {
-    "category": "Esports",
+    "category": "Gaming",
     "name": "Liquipedia News",
     "url": "https://liquipedia.net/commons/index.php?title=Special:NewPages&feed=rss"
   },
   {
-    "category": "Esports",
+    "category": "Gaming",
     "name": "Nerd Street",
     "url": "https://www.nerdstreet.com/news?format=rss"
   },
   {
-    "category": "Esports",
+    "category": "Gaming",
     "name": "ValorantZone",
     "url": "https://www.thespike.gg/feed"
   },
@@ -702,11 +3471,6 @@
   },
   {
     "category": "Science",
-    "name": "Science Daily",
-    "url": "https://www.sciencedaily.com/rss/all.xml"
-  },
-  {
-    "category": "Science",
     "name": "Scientific American",
     "url": "http://rss.sciam.com/ScientificAmerican-Global"
   },
@@ -724,11 +3488,6 @@
     "category": "Science",
     "name": "Nature News",
     "url": "https://www.nature.com/nature.rss"
-  },
-  {
-    "category": "Science",
-    "name": "New Scientist",
-    "url": "https://www.newscientist.com/feed/home/"
   },
   {
     "category": "Science",
@@ -831,22 +3590,22 @@
     "url": "https://comicbook.com/anime/rss/"
   },
   {
-    "category": "Manga",
+    "category": "Anime",
     "name": "Comic Natalie",
     "url": "https://natalie.mu/comic/feed/news"
   },
   {
-    "category": "Manga",
+    "category": "Anime",
     "name": "ComiXology Blog",
     "url": "https://blog.comixology.com/feed/"
   },
   {
-    "category": "Manga",
+    "category": "Anime",
     "name": "ICv2 Manga News",
     "url": "https://icv2.com/rss/manga"
   },
   {
-    "category": "Manga",
+    "category": "Anime",
     "name": "Baka-Updates Manga",
     "url": "https://www.mangaupdates.com/rss.php"
   },
@@ -991,37 +3750,22 @@
     "url": "https://news.mit.edu/rss/topic/artificial-intelligence2"
   },
   {
-    "category": "Finance & Crypto",
-    "name": "CoinDesk",
-    "url": "https://www.coindesk.com/arc/outboundfeeds/rss/"
-  },
-  {
-    "category": "Finance & Crypto",
-    "name": "CoinTelegraph",
-    "url": "https://cointelegraph.com/rss"
-  },
-  {
-    "category": "Finance & Crypto",
-    "name": "Decrypt",
-    "url": "https://decrypt.co/feed"
-  },
-  {
-    "category": "Finance & Crypto",
+    "category": "Finance & Markets",
     "name": "The Motley Fool",
     "url": "https://www.fool.com/feeds/index.aspx"
   },
   {
-    "category": "Finance & Crypto",
+    "category": "Finance & Markets",
     "name": "Investopedia",
     "url": "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline"
   },
   {
-    "category": "Finance & Crypto",
+    "category": "Finance & Markets",
     "name": "MarketWatch",
     "url": "https://feeds.marketwatch.com/marketwatch/topstories/"
   },
   {
-    "category": "Finance & Crypto",
+    "category": "Finance & Markets",
     "name": "Seeking Alpha",
     "url": "https://seekingalpha.com/feed.xml"
   },
@@ -1049,11 +3793,6 @@
     "category": "Health",
     "name": "NHS News",
     "url": "https://www.nhs.uk/news/rss.aspx"
-  },
-  {
-    "category": "Health",
-    "name": "WHO News",
-    "url": "https://www.who.int/rss-feeds/news-english.xml"
   },
   {
     "category": "Environment",
@@ -1311,117 +4050,97 @@
     "url": "https://www.highsnobiety.com/feed/"
   },
   {
-    "category": "Comics & Superhero",
-    "name": "CBR (Comic Book Resources)",
-    "url": "https://www.cbr.com/feed/"
-  },
-  {
-    "category": "Comics & Superhero",
+    "category": "Pop Culture",
     "name": "ComicBook.com",
     "url": "https://comicbook.com/rss/"
   },
   {
-    "category": "Comics & Superhero",
+    "category": "Pop Culture",
     "name": "Marvel.com News",
     "url": "https://www.marvel.com/articles/rss"
   },
   {
-    "category": "Comics & Superhero",
+    "category": "Pop Culture",
     "name": "DC Comics Blog",
     "url": "https://www.dc.com/blog/rss"
   },
   {
-    "category": "Comics & Superhero",
+    "category": "Pop Culture",
     "name": "Newsarama",
     "url": "https://www.gamesradar.com/comics/rss/"
   },
   {
-    "category": "Comics & Superhero",
+    "category": "Pop Culture",
     "name": "The Beat",
     "url": "https://www.comicsbeat.com/feed/"
   },
   {
-    "category": "Food",
-    "name": "Bon App\u00e9tit",
+    "category": "Lifestyle",
+    "name": "Bon Appétit",
     "url": "https://www.bonappetit.com/feed/rss"
   },
   {
-    "category": "Food",
+    "category": "Lifestyle",
     "name": "Serious Eats",
     "url": "https://www.seriouseats.com/feeds/all.rss.xml"
   },
   {
-    "category": "Food",
+    "category": "Lifestyle",
     "name": "Eater",
     "url": "https://www.eater.com/rss/index.xml"
   },
   {
-    "category": "Food",
+    "category": "Lifestyle",
     "name": "Food52",
     "url": "https://food52.com/blog.rss"
   },
   {
-    "category": "Food",
+    "category": "Lifestyle",
     "name": "The Kitchn",
     "url": "https://www.thekitchn.com/main.rss"
   },
   {
-    "category": "Food",
+    "category": "Lifestyle",
     "name": "Epicurious",
     "url": "https://www.epicurious.com/feed/news-and-trends/rss"
   },
   {
-    "category": "Cybersecurity",
-    "name": "Krebs on Security",
-    "url": "https://krebsonsecurity.com/feed/"
-  },
-  {
-    "category": "Cybersecurity",
+    "category": "Cybersecurity & Tech Policy",
     "name": "Threatpost",
     "url": "https://threatpost.com/feed/"
   },
   {
-    "category": "Cybersecurity",
-    "name": "The Hacker News",
-    "url": "https://feeds.feedburner.com/TheHackersNews"
-  },
-  {
-    "category": "Cybersecurity",
-    "name": "Dark Reading",
-    "url": "https://www.darkreading.com/rss.xml"
-  },
-  {
-    "category": "Cybersecurity",
+    "category": "Cybersecurity & Tech Policy",
     "name": "Schneier on Security",
     "url": "https://www.schneier.com/feed/atom/"
   },
   {
-    "category": "Cybersecurity",
+    "category": "Cybersecurity & Tech Policy",
     "name": "Bleeping Computer",
     "url": "https://www.bleepingcomputer.com/feed/"
   },
   {
-    "category": "Space",
+    "category": "Science",
     "name": "SpaceX News",
     "url": "https://www.spacex.com/updates/rss.xml"
   },
   {
-    "category": "Space",
+    "category": "Science",
     "name": "SpaceFlightNow",
     "url": "https://spaceflightnow.com/feed/"
   },
   {
-    "category": "Space",
+    "category": "Science",
     "name": "Spaceflight Insider",
     "url": "https://www.spaceflightinsider.com/feed/"
   },
   {
-    "category": "Space",
+    "category": "Science",
     "name": "Astronomy Magazine",
     "url": "https://astronomy.com/rss/news"
   },
   {
-    "category": "Space",
+    "category": "Science",
     "name": "Sky & Telescope",
     "url": "https://skyandtelescope.org/astronomy-news/feed/"
   },
@@ -1566,117 +4285,117 @@
     "url": "http://feeds.killeraces.com/wisebread"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "500px",
     "url": "https://iso.500px.com/feed/"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "500px Editors",
     "url": "https://500px.com/editors.rss"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Big Picture",
     "url": "https://www.bostonglobe.com/rss/bigpicture"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Canon Rumors",
     "url": "https://www.canonrumors.com/feed/"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Digital Photography School",
     "url": "https://feeds.feedburner.com/DigitalPhotographySchool"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Light Stalking",
     "url": "https://www.lightstalking.com/feed/"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Lightroom Killer Tips",
     "url": "https://lightroomkillertips.com/feed/"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "One Big Photo",
     "url": "http://feeds.feedburner.com/OneBigPhoto"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "PetaPixel",
     "url": "https://petapixel.com/feed/"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Strobist",
     "url": "http://feeds.feedburner.com/blogspot/WOBq"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "Stuck in Customs",
     "url": "https://stuckincustoms.com/feed/"
   },
   {
-    "category": "Photography",
+    "category": "Lifestyle",
     "name": "The Sartorialist",
     "url": "https://feeds.feedburner.com/TheSartorialist"
   },
   {
-    "category": "Travel",
+    "category": "Lifestyle",
     "name": "Atlas Obscura",
     "url": "https://www.atlasobscura.com/feeds/latest"
   },
   {
-    "category": "Travel",
+    "category": "Lifestyle",
     "name": "Live Life Travel",
     "url": "https://www.livelifetravel.world/feed/"
   },
   {
-    "category": "Travel",
+    "category": "Lifestyle",
     "name": "Lonely Planet Travel News",
     "url": "https://www.lonelyplanet.com/news/feed/atom/"
   },
   {
-    "category": "Travel",
+    "category": "Lifestyle",
     "name": "NYT Travel",
     "url": "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml"
   },
   {
-    "category": "Travel",
+    "category": "Lifestyle",
     "name": "Nomadic Matt's Travel Site",
     "url": "https://www.nomadicmatt.com/travel-blog/feed/"
   },
   {
-    "category": "Travel",
+    "category": "Lifestyle",
     "name": "The Guardian Travel",
     "url": "https://www.theguardian.com/uk/travel/rss"
   },
   {
-    "category": "Web Development",
+    "category": "Programming",
     "name": "Code Wall",
     "url": "https://www.codewall.co.uk/feed/"
   },
   {
-    "category": "Web Development",
+    "category": "Programming",
     "name": "David Walsh Blog",
     "url": "https://davidwalsh.name/feed"
   },
   {
-    "category": "Web Development",
+    "category": "Programming",
     "name": "Mozilla Hacks",
     "url": "https://hacks.mozilla.org/feed/"
   },
   {
-    "category": "Web Development",
+    "category": "Programming",
     "name": "Sink In",
     "url": "https://gosink.in/rss/"
   },
   {
-    "category": "Web Development",
+    "category": "Programming",
     "name": "Google Web Updates",
     "url": "https://developers.google.com/web/updates/rss.xml"
   },
@@ -1846,97 +4565,97 @@
     "url": "https://androidauthority.libsyn.com/rss"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Android - Buffer Resources",
     "url": "https://buffer.com/resources/android/rss/"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Android Developers (YouTube)",
     "url": "https://www.youtube.com/feeds/videos.xml?user=androiddevelopers"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Android Developers (Medium)",
     "url": "https://medium.com/feed/androiddevelopers"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Android Developers Backstage",
     "url": "http://feeds.feedburner.com/blogspot/androiddevelopersbackstage"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Android Developers Blog",
     "url": "http://feeds.feedburner.com/blogspot/hsDu"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Android Weekly Archive",
     "url": "https://us2.campaign-archive.com/feed?u=887caf4f48db76fd91e20a06d&id=4eb677ad19"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Instagram Engineering (Android)",
     "url": "https://instagram-engineering.com/feed/tagged/android"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "MindOrks",
     "url": "https://medium.com/feed/mindorks/tagged/android"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Dan Lew Codes",
     "url": "https://blog.danlew.net/rss/"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "r/androiddev",
     "url": "https://reddit.com/r/androiddev.rss"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Fragmented Podcast",
     "url": "https://feeds.simplecast.com/LpAGSLnY"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Handstand Sam",
     "url": "https://handstandsam.com/feed/"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Jake Wharton",
     "url": "https://jakewharton.com/atom.xml"
   },
   {
-    "category": "Android Development",
+    "category": "Programming",
     "name": "Kt. Academy",
     "url": "https://blog.kotlin-academy.com/feed"
   },
   {
-    "category": "Tennis",
+    "category": "Sports",
     "name": "Grand Slam Fantasy Tennis",
     "url": "http://www.grandslamfantasytennis.com/feed/?x=1"
   },
   {
-    "category": "Tennis",
+    "category": "Sports",
     "name": "ATP World Tour",
     "url": "https://www.atptour.com/en/media/rss-feed/xml-feed"
   },
   {
-    "category": "Tennis",
+    "category": "Sports",
     "name": "Reddit Tennis",
     "url": "https://www.reddit.com/r/tennis/.rss"
   },
   {
-    "category": "Tennis",
+    "category": "Sports",
     "name": "peRFect Tennis",
     "url": "https://www.perfect-tennis.com/feed/"
   },
   {
-    "category": "Tennis",
+    "category": "Sports",
     "name": "ESPN Tennis",
     "url": "https://www.espn.com/espn/rss/tennis/news"
   },
@@ -1976,103 +4695,98 @@
     "url": "https://feeds.feedburner.com/bigthink/main"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Steve Blank",
     "url": "http://steveblank.com/feed/"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "The singularity is nearer",
     "url": "https://geohot.github.io/blog/feed.xml"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Guy Kawasaki",
     "url": "http://guykawasaki.com/feed/"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Essays - Benedict Evans",
     "url": "http://ben-evans.com/benedictevans?format=rss"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "First Round Review",
     "url": "http://firstround.com/review/feed.xml"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Sam Altman",
     "url": "http://blog.samaltman.com/posts.atom"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Andrew Chen",
     "url": "http://andrewchen.co/feed/"
   },
   {
-    "category": "Startup",
-    "name": "Both Sides of the Table - Medium",
-    "url": "https://bothsidesofthetable.com/feed"
-  },
-  {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Both Sides of the Table",
     "url": "http://feeds.feedburner.com/BothSidesOfTheTable"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "OnStartups",
     "url": "http://feed.onstartups.com/onstartups"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "The Black Box of Product Management - Medium",
     "url": "https://medium.com/feed/the-black-box-of-product-management"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Product Life",
     "url": "https://productlife.to/feed"
   },
   {
-    "category": "Startup",
+    "category": "Startups & Venture Capital",
     "name": "Irrational Exuberance",
     "url": "https://lethain.com/feeds/"
   },
   {
-    "category": "Tech News",
+    "category": "Technology",
     "name": "SlashGear",
     "url": "http://feeds.slashgear.com/slashgear"
   },
   {
-    "category": "Tech News",
+    "category": "Technology",
     "name": "Tech in Asia",
     "url": "https://feeds2.feedburner.com/PennOlson"
   },
   {
-    "category": "Tech News",
+    "category": "Technology",
     "name": "Fast Company (Design)",
     "url": "http://www.fastcodesign.com/rss.xml"
   },
   {
-    "category": "Tech News",
-    "name": "Startups \u2013 TechCrunch",
+    "category": "Technology",
+    "name": "Startups – TechCrunch",
     "url": "https://techcrunch.com/startups/feed/"
   },
   {
-    "category": "Tech News",
+    "category": "Technology",
     "name": "Forbes - Leadership",
     "url": "https://www.forbes.com/leadership/feed/"
   },
   {
-    "category": "Tech News",
+    "category": "Technology",
     "name": "Forbes - Entrepreneurs",
     "url": "http://www.forbes.com/entrepreneurs/index.xml"
   },
   {
     "category": "Products & Ideas",
-    "name": "Product Hunt \u2014 The best new products, every day",
+    "name": "Product Hunt — The best new products, every day",
     "url": "http://www.producthunt.com/feed"
   },
   {
@@ -2082,296 +4796,291 @@
   },
   {
     "category": "Products & Ideas",
-    "name": "Hacker News: Launches",
-    "url": "https://hnrss.org/launches"
-  },
-  {
-    "category": "Products & Ideas",
     "name": "Sachin Rekhi's Blog",
     "url": "http://feeds.feedburner.com/sachinrekhiblog"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "The Pragmatic Engineer",
     "url": "https://blog.pragmaticengineer.com/rss/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "The Airtable Engineering Blog",
     "url": "https://medium.com/feed/airtable-eng"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Medium Engineering",
     "url": "https://medium.com/feed/medium-eng"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "The PayPal Technology Blog",
     "url": "https://medium.com/feed/paypal-engineering"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Pinterest Engineering Blog",
     "url": "https://medium.com/feed/pinterest-engineering"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Grab Tech",
     "url": "http://engineering.grab.com/feed.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Slack Engineering",
     "url": "https://slack.engineering/feed"
   },
   {
-    "category": "Engineering",
-    "name": "Engineering \u2013 The GitHub Blog",
+    "category": "Programming",
+    "name": "Engineering – The GitHub Blog",
     "url": "http://githubengineering.com/atom.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Atlassian Developer Blog",
     "url": "https://developer.atlassian.com/blog/feed.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Grokking Newsletter",
     "url": "http://newsletter.grokking.org/?format=rss"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "eBay Tech Blog",
     "url": "http://www.ebaytechblog.com/feed/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Spotify Engineering",
     "url": "http://labs.spotify.com/feed/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Twitter Engineering",
     "url": "https://blog.twitter.com/engineering/en_us/blog.rss"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Stripe Blog",
     "url": "https://stripe.com/blog/feed.rss"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "The Cloudflare Blog",
     "url": "https://blog.cloudflare.com/rss/"
   },
   {
-    "category": "Engineering",
-    "name": "Engineering \u2013 The Asana Blog",
+    "category": "Programming",
+    "name": "Engineering – The Asana Blog",
     "url": "https://blog.asana.com/category/eng/feed/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Canva Engineering Blog",
     "url": "https://engineering.canva.com/rss"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "The Airbnb Tech Blog",
     "url": "https://medium.com/feed/airbnb-engineering"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Dropbox Tech",
     "url": "https://dropbox.tech/feed"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "WePay Engineering Blog",
     "url": "https://wecode.wepay.com/feed.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Web Browser Engineering",
     "url": "https://browser.engineering/rss.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Spotify Engineering (Official)",
     "url": "https://engineering.atspotify.com/feed/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Mind the Product",
     "url": "https://www.mindtheproduct.com/feed/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Julia Evans",
     "url": "https://jvns.ca/atom.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Martin Kleppmann's blog",
     "url": "https://feeds.feedburner.com/martinkl?format=xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Dan Luu",
     "url": "https://danluu.com/atom.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Shopify Engineering",
     "url": "https://shopifyengineering.myshopify.com/blogs/engineering.atom"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Josh Comeau's blog",
     "url": "https://joshwcomeau.com/rss.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Uber Engineering Blog",
     "url": "https://www.uber.com/blog/engineering/rss/"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Flurries of latent creativity - Stripe CTO blog",
     "url": "https://blog.singleton.io/index.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Sophie Alpert",
     "url": "https://sophiebits.com/atom.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Amjad Masad",
     "url": "https://amasad.me/rss"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Signal Blog",
     "url": "https://signal.org/blog/rss.xml"
   },
   {
-    "category": "Engineering",
+    "category": "Programming",
     "name": "Nvidia Developer Blog",
     "url": "https://developer.nvidia.com/blog/feed"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Machine Learning Blog | ML@CMU",
     "url": "https://blog.ml.cmu.edu/feed/"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "DeepMind",
     "url": "https://deepmind.com/blog/feed/basic/"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Jay Alammar",
     "url": "https://jalammar.github.io/feed.xml"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Distill",
     "url": "http://distill.pub/rss.xml"
   },
   {
-    "category": "Machine Learning",
-    "name": "Lil\u2019Log",
+    "category": "AI & Machine Learning",
+    "name": "Lil’Log",
     "url": "https://lilianweng.github.io/lil-log/feed.xml"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "MIT News - Artificial Intelligence",
     "url": "http://news.mit.edu/rss/topic/artificial-intelligence2"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Sebastian Ruder",
     "url": "http://ruder.io/rss/index.rss"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "The Berkeley Artificial Intelligence Research Blog",
     "url": "http://bair.berkeley.edu/blog/feed.xml"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "DeepLearningAI",
     "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCcIXc5mJsHVYTZR1maL5l9w"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Eric Jang (Blogspot)",
     "url": "http://blog.evjang.com/feeds/posts/default?alt=rss"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "OpenAI",
     "url": "https://openai.com/news/engineering/rss.xml"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "The Gradient",
     "url": "https://thegradient.pub/rss/"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Magenta",
     "url": "http://magenta.tensorflow.org/feed.xml"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "NLP News",
     "url": "http://newsletter.ruder.io/?format=rss"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Towards Data Science",
     "url": "https://towardsdatascience.com/feed"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Unite.AI",
     "url": "https://www.unite.ai/feed/"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Grammarly Blog",
     "url": "https://www.grammarly.com/blog/feed/"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Eric Jang (Personal)",
     "url": "https://evjang.com/feed"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Amazon Science Homepage",
     "url": "https://www.amazon.science/index.rss"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Machine Learning (Reddit)",
     "url": "http://www.reddit.com/r/MachineLearning/.rss"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Yannic Kilcher",
     "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "Two Minute Papers",
     "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg"
   },
   {
-    "category": "Machine Learning",
+    "category": "AI & Machine Learning",
     "name": "PyTorch",
     "url": "https://pytorch.org/feed"
   },
@@ -2411,47 +5120,47 @@
     "url": "https://interaction-design.org/rss/site_news.xml"
   },
   {
-    "category": "Psychology",
+    "category": "Science",
     "name": "PsyBlog",
     "url": "http://feeds.feedburner.com/PsychologyBlog"
   },
   {
-    "category": "Psychology",
+    "category": "Science",
     "name": "Psychology Blog",
     "url": "http://www.all-about-psychology.com/psychology.xml"
   },
   {
-    "category": "Psychology",
+    "category": "Science",
     "name": "Psychology Headlines Around the World",
     "url": "http://www.socialpsychology.org/headlines.rss"
   },
   {
-    "category": "Psychology",
+    "category": "Science",
     "name": "Nautilus (Psychology)",
     "url": "https://nautil.us/rss/all"
   },
   {
-    "category": "Psychology",
+    "category": "Science",
     "name": "Freakonomics",
     "url": "http://freakonomics.blogs.nytimes.com/feed/"
   },
   {
-    "category": "Psychology",
+    "category": "Science",
     "name": "Psychology Today",
     "url": "https://www.psychologytoday.com/intl/rss.xml"
   },
   {
-    "category": "Neuroscience",
+    "category": "Science",
     "name": "Neuroscience News",
     "url": "http://neurosciencenews.com/feed/"
   },
   {
-    "category": "Neuroscience",
+    "category": "Science",
     "name": "Neuroscience News -- ScienceDaily",
     "url": "https://sciencedaily.com/rss/mind_brain/neuroscience.xml"
   },
   {
-    "category": "Neuroscience",
+    "category": "Science",
     "name": "SharpBrains",
     "url": "http://www.sharpbrains.com/feed/"
   },
@@ -2472,18 +5181,8 @@
   },
   {
     "category": "Science",
-    "name": "MIT News (Research)",
-    "url": "https://news.mit.edu/rss/research"
-  },
-  {
-    "category": "Science",
     "name": "ScienceAlert",
     "url": "https://www.sciencealert.com/rss"
-  },
-  {
-    "category": "Science",
-    "name": "Singularity Hub",
-    "url": "https://singularityhub.com/feed/"
   },
   {
     "category": "Science",
@@ -2491,62 +5190,62 @@
     "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJ4600a9wIfMPbYc60OQ"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Moz",
     "url": "http://feeds.feedburner.com/seomoz"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Content Marketing Institute",
     "url": "http://feeds.feedburner.com/cmi-content-marketing"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Neil Patel",
     "url": "http://feeds.feedburner.com/KISSmetrics"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "MarketingProfs",
     "url": "http://rss.marketingprofs.com/marketingprofs/daily"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Marketo Marketing blog",
     "url": "http://feeds.feedburner.com/modernb2bmarketing"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Quick Sprout",
     "url": "http://www.quicksprout.com/feed/"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Social Media Examiner",
     "url": "http://www.socialmediaexaminer.com/feed/"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "John Egan",
     "url": "http://jwegan.com/feed/rss/"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Convince and Convert",
     "url": "http://www.convinceandconvert.com/feed/"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Hubspot",
     "url": "http://blog.hubspot.com/CMS/UI/Modules/BizBlogger/rss.aspx?tabid=6307&moduleid=8441&maxcount=25"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Seth Godin's Blog",
     "url": "http://sethgodin.typepad.com/seths_blog/atom.xml"
   },
   {
-    "category": "Marketing",
+    "category": "Business",
     "name": "Backlinko",
     "url": "http://backlinko.com/feed"
   },
