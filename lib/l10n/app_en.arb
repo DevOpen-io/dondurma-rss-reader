@@ -380,5 +380,24 @@
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Tech, Sports, Finance…",
   "aboutApp": "About App",
-  "lastUpdated": "Last updated: June 2026"
+  "lastUpdated": "Last updated: June 2026",
+
+  "translateArticle": "Translate Article",
+  "translationSourceLang": "From",
+  "translationTargetLang": "To",
+  "translationTranslate": "Translate",
+  "translationClear": "Show Original",
+  "translationInProgress": "Translating…",
+  "translationError": "Translation failed. Please try again.",
+  "translationSwapLanguages": "Swap languages",
+  "translationNeedsDownload": "Language packs required to translate.",
+  "translationGoToDownload": "Download Language Packs",
+
+  "languagePacks": "Language Packs",
+  "languagePacksDesc": "Manage on-device translation models",
+  "languagePackDownload": "Download",
+  "languagePackDelete": "Delete",
+  "languagePackRequired": "Required",
+  "languagePackDownloading": "Downloading…",
+  "languagePackCheckingStatus": "Checking…"
 }

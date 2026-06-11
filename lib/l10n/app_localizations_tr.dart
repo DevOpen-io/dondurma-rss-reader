@@ -877,4 +877,55 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get lastUpdated => 'Son güncelleme: Haziran 2026';
+
+  @override
+  String get translateArticle => 'Makaleyi Çevir';
+
+  @override
+  String get translationSourceLang => 'Kaynak Dil';
+
+  @override
+  String get translationTargetLang => 'Hedef Dil';
+
+  @override
+  String get translationTranslate => 'Çevir';
+
+  @override
+  String get translationClear => 'Orijinali Göster';
+
+  @override
+  String get translationInProgress => 'Çeviriliyor…';
+
+  @override
+  String get translationError => 'Çeviri başarısız. Lütfen tekrar deneyin.';
+
+  @override
+  String get translationSwapLanguages => 'Dilleri değiştir';
+
+  @override
+  String get translationNeedsDownload => 'Çeviri için dil paketleri gerekiyor.';
+
+  @override
+  String get translationGoToDownload => 'Dil Paketlerini İndir';
+
+  @override
+  String get languagePacks => 'Dil Paketleri';
+
+  @override
+  String get languagePacksDesc => 'Cihazda çeviri modellerini yönet';
+
+  @override
+  String get languagePackDownload => 'İndir';
+
+  @override
+  String get languagePackDelete => 'Sil';
+
+  @override
+  String get languagePackRequired => 'Gerekli';
+
+  @override
+  String get languagePackDownloading => 'İndiriliyor…';
+
+  @override
+  String get languagePackCheckingStatus => 'Kontrol ediliyor…';
 }

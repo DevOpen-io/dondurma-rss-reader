@@ -1717,6 +1717,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last updated: June 2026'**
   String get lastUpdated;
+
+  /// No description provided for @translateArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate Article'**
+  String get translateArticle;
+
+  /// No description provided for @translationSourceLang.
+  ///
+  /// In en, this message translates to:
+  /// **'From'**
+  String get translationSourceLang;
+
+  /// No description provided for @translationTargetLang.
+  ///
+  /// In en, this message translates to:
+  /// **'To'**
+  String get translationTargetLang;
+
+  /// No description provided for @translationTranslate.
+  ///
+  /// In en, this message translates to:
+  /// **'Translate'**
+  String get translationTranslate;
+
+  /// No description provided for @translationClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Show Original'**
+  String get translationClear;
+
+  /// No description provided for @translationInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Translating…'**
+  String get translationInProgress;
+
+  /// No description provided for @translationError.
+  ///
+  /// In en, this message translates to:
+  /// **'Translation failed. Please try again.'**
+  String get translationError;
+
+  /// No description provided for @translationSwapLanguages.
+  ///
+  /// In en, this message translates to:
+  /// **'Swap languages'**
+  String get translationSwapLanguages;
+
+  /// No description provided for @translationNeedsDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Language packs required to translate.'**
+  String get translationNeedsDownload;
+
+  /// No description provided for @translationGoToDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download Language Packs'**
+  String get translationGoToDownload;
+
+  /// No description provided for @languagePacks.
+  ///
+  /// In en, this message translates to:
+  /// **'Language Packs'**
+  String get languagePacks;
+
+  /// No description provided for @languagePacksDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage on-device translation models'**
+  String get languagePacksDesc;
+
+  /// No description provided for @languagePackDownload.
+  ///
+  /// In en, this message translates to:
+  /// **'Download'**
+  String get languagePackDownload;
+
+  /// No description provided for @languagePackDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get languagePackDelete;
+
+  /// No description provided for @languagePackRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Required'**
+  String get languagePackRequired;
+
+  /// No description provided for @languagePackDownloading.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloading…'**
+  String get languagePackDownloading;
+
+  /// No description provided for @languagePackCheckingStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking…'**
+  String get languagePackCheckingStatus;
 }
 
 class _AppLocalizationsDelegate

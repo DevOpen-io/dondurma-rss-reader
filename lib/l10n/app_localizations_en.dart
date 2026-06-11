@@ -873,4 +873,56 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get lastUpdated => 'Last updated: June 2026';
+
+  @override
+  String get translateArticle => 'Translate Article';
+
+  @override
+  String get translationSourceLang => 'From';
+
+  @override
+  String get translationTargetLang => 'To';
+
+  @override
+  String get translationTranslate => 'Translate';
+
+  @override
+  String get translationClear => 'Show Original';
+
+  @override
+  String get translationInProgress => 'Translating…';
+
+  @override
+  String get translationError => 'Translation failed. Please try again.';
+
+  @override
+  String get translationSwapLanguages => 'Swap languages';
+
+  @override
+  String get translationNeedsDownload =>
+      'Language packs required to translate.';
+
+  @override
+  String get translationGoToDownload => 'Download Language Packs';
+
+  @override
+  String get languagePacks => 'Language Packs';
+
+  @override
+  String get languagePacksDesc => 'Manage on-device translation models';
+
+  @override
+  String get languagePackDownload => 'Download';
+
+  @override
+  String get languagePackDelete => 'Delete';
+
+  @override
+  String get languagePackRequired => 'Required';
+
+  @override
+  String get languagePackDownloading => 'Downloading…';
+
+  @override
+  String get languagePackCheckingStatus => 'Checking…';
 }

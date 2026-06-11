@@ -304,5 +304,24 @@
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Teknoloji, Spor, Finans…",
   "aboutApp": "Uygulama Hakkında",
-  "lastUpdated": "Son güncelleme: Haziran 2026"
+  "lastUpdated": "Son güncelleme: Haziran 2026",
+
+  "translateArticle": "Makaleyi Çevir",
+  "translationSourceLang": "Kaynak Dil",
+  "translationTargetLang": "Hedef Dil",
+  "translationTranslate": "Çevir",
+  "translationClear": "Orijinali Göster",
+  "translationInProgress": "Çeviriliyor…",
+  "translationError": "Çeviri başarısız. Lütfen tekrar deneyin.",
+  "translationSwapLanguages": "Dilleri değiştir",
+  "translationNeedsDownload": "Çeviri için dil paketleri gerekiyor.",
+  "translationGoToDownload": "Dil Paketlerini İndir",
+
+  "languagePacks": "Dil Paketleri",
+  "languagePacksDesc": "Cihazda çeviri modellerini yönet",
+  "languagePackDownload": "İndir",
+  "languagePackDelete": "Sil",
+  "languagePackRequired": "Gerekli",
+  "languagePackDownloading": "İndiriliyor…",
+  "languagePackCheckingStatus": "Kontrol ediliyor…"
 }

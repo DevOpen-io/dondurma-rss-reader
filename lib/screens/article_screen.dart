@@ -15,6 +15,7 @@ import '../widgets/article/article_circle_buttons.dart';
 import '../widgets/article/article_content_skeleton.dart';
 import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
+import '../widgets/article/article_translation_sheet.dart';
 import 'dart:math' as math;
 
 /// Full-screen article viewer with swipe navigation between articles.
@@ -130,6 +131,24 @@ class _ArticlePageState extends State<_ArticlePage> {
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.fullTextFailed)));
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Translation
+  // ---------------------------------------------------------------------------
+
+  void _showTranslationSheet(
+    BuildContext context,
+    ArticlePageProvider provider,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => ArticleTranslationSheet(provider: provider),
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -281,6 +300,15 @@ class _ArticlePageState extends State<_ArticlePage> {
                             )
                           : null,
                       tooltip: l10n.openInBrowser,
+                    ),
+                    // Translate article — toggle: tap again to restore original
+                    CircleActionButton(
+                      icon: Icons.translate_rounded,
+                      isActive: provider.isTranslated,
+                      onPressed: provider.isTranslated
+                          ? () => provider.clearTranslation()
+                          : () => _showTranslationSheet(context, provider),
+                      tooltip: l10n.translateArticle,
                     ),
                     // Share article
                     if (widget.item.link.isNotEmpty)
