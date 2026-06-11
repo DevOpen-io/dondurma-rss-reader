@@ -1634,6 +1634,24 @@ abstract class AppLocalizations {
   /// **'Talha Aksoy & Eren Gün'**
   String get developerInfoDesc;
 
+  /// No description provided for @tabGlobal.
+  ///
+  /// In en, this message translates to:
+  /// **'Global'**
+  String get tabGlobal;
+
+  /// No description provided for @tabTurkish.
+  ///
+  /// In en, this message translates to:
+  /// **'Turkish'**
+  String get tabTurkish;
+
+  /// No description provided for @categoriesSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Categories'**
+  String get categoriesSheetTitle;
+
   /// No description provided for @add.
   ///
   /// In en, this message translates to:

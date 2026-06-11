@@ -248,7 +248,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Categories',
+                  l10n.categoriesSheetTitle,
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -313,9 +313,9 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
             children: [
               TabBar(
                 controller: _tabController,
-                tabs: const [
-                  Tab(text: 'Global'),
-                  Tab(text: 'Türkçe'),
+                tabs: [
+                  Tab(text: l10n.tabGlobal),
+                  Tab(text: l10n.tabTurkish),
                 ],
               ),
               if (hasContent) ...[

@@ -830,6 +830,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get developerInfoDesc => 'Talha Aksoy & Eren Gün';
 
   @override
+  String get tabGlobal => 'Global';
+
+  @override
+  String get tabTurkish => 'Turkish';
+
+  @override
+  String get categoriesSheetTitle => 'Categories';
+
+  @override
   String get add => 'Add';
 
   @override

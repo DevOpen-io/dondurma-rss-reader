@@ -365,6 +365,10 @@
   "developerInfo": "Developed by DevOpen",
   "developerInfoDesc": "Talha Aksoy & Eren Gün",
 
+  "tabGlobal": "Global",
+  "tabTurkish": "Turkish",
+  "categoriesSheetTitle": "Categories",
+
   "add": "Add",
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Tech, Sports, Finance…",
