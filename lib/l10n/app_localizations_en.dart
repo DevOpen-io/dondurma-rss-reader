@@ -18,7 +18,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedsTab => 'Feeds';
 
   @override
-  String get foldersTab => 'Folders';
+  String get foldersTab => 'Categories';
 
   @override
   String get bookmarksTab => 'Bookmarks';
@@ -69,20 +69,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noBookmarks => 'No bookmarked articles yet.';
 
   @override
-  String get noFolders => 'No folders yet. Categories will appear here.';
+  String get noFolders =>
+      'No categories yet. Add a category to organize your feeds.';
 
   @override
-  String get renameFolder => 'Rename Folder';
+  String get renameFolder => 'Rename Category';
 
   @override
-  String get folderName => 'Folder Name';
+  String get folderName => 'Category Name';
 
   @override
-  String get deleteFolder => 'Delete Folder';
+  String get deleteFolder => 'Delete Category';
 
   @override
   String deleteFolderConfirm(String categoryName, int feedCount) {
-    return 'Are you sure you want to delete the folder \"$categoryName\"?\n\nThis will permanently remove all $feedCount RSS feeds inside it from your subscriptions.';
+    return 'Are you sure you want to delete the category \"$categoryName\"?\n\nThis will permanently remove all $feedCount RSS feeds inside it from your subscriptions.';
   }
 
   @override
@@ -466,26 +467,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get remove => 'Remove';
 
   @override
-  String get addFolder => 'Add Folder';
+  String get addFolder => 'Add Category';
 
   @override
-  String get newFolderName => 'New Folder Name';
+  String get newFolderName => 'New Category Name';
 
   @override
-  String get folderAlreadyExists => 'A folder with this name already exists.';
+  String get folderAlreadyExists => 'A category with this name already exists.';
 
   @override
-  String get pleaseEnterFolderName => 'Please enter a folder name';
+  String get pleaseEnterFolderName => 'Please enter a category name';
 
   @override
-  String get moveToFolder => 'Move to Folder';
+  String get moveToFolder => 'Move to Category';
 
   @override
   String get moveFeed => 'Move Feed';
 
   @override
   String feedMovedToFolder(String feedName, String folderName) {
-    return '\"$feedName\" moved to \"$folderName\"';
+    return '\"$feedName\" moved to \"$folderName\" category';
   }
 
   @override
@@ -598,7 +599,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get factoryResetConfirmDesc =>
-      'This will permanently erase all your feeds, folders, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.';
+      'This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.';
 
   @override
   String get factoryResetSuccess => 'All data and settings have been erased.';

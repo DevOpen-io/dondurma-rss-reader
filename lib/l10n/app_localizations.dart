@@ -119,7 +119,7 @@ abstract class AppLocalizations {
   /// No description provided for @foldersTab.
   ///
   /// In en, this message translates to:
-  /// **'Folders'**
+  /// **'Categories'**
   String get foldersTab;
 
   /// No description provided for @bookmarksTab.
@@ -215,31 +215,31 @@ abstract class AppLocalizations {
   /// No description provided for @noFolders.
   ///
   /// In en, this message translates to:
-  /// **'No folders yet. Categories will appear here.'**
+  /// **'No categories yet. Add a category to organize your feeds.'**
   String get noFolders;
 
   /// No description provided for @renameFolder.
   ///
   /// In en, this message translates to:
-  /// **'Rename Folder'**
+  /// **'Rename Category'**
   String get renameFolder;
 
   /// No description provided for @folderName.
   ///
   /// In en, this message translates to:
-  /// **'Folder Name'**
+  /// **'Category Name'**
   String get folderName;
 
   /// No description provided for @deleteFolder.
   ///
   /// In en, this message translates to:
-  /// **'Delete Folder'**
+  /// **'Delete Category'**
   String get deleteFolder;
 
   /// No description provided for @deleteFolderConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete the folder \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.'**
+  /// **'Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.'**
   String deleteFolderConfirm(String categoryName, int feedCount);
 
   /// No description provided for @deleteAll.
@@ -953,31 +953,31 @@ abstract class AppLocalizations {
   /// No description provided for @addFolder.
   ///
   /// In en, this message translates to:
-  /// **'Add Folder'**
+  /// **'Add Category'**
   String get addFolder;
 
   /// No description provided for @newFolderName.
   ///
   /// In en, this message translates to:
-  /// **'New Folder Name'**
+  /// **'New Category Name'**
   String get newFolderName;
 
   /// No description provided for @folderAlreadyExists.
   ///
   /// In en, this message translates to:
-  /// **'A folder with this name already exists.'**
+  /// **'A category with this name already exists.'**
   String get folderAlreadyExists;
 
   /// No description provided for @pleaseEnterFolderName.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a folder name'**
+  /// **'Please enter a category name'**
   String get pleaseEnterFolderName;
 
   /// No description provided for @moveToFolder.
   ///
   /// In en, this message translates to:
-  /// **'Move to Folder'**
+  /// **'Move to Category'**
   String get moveToFolder;
 
   /// No description provided for @moveFeed.
@@ -989,7 +989,7 @@ abstract class AppLocalizations {
   /// No description provided for @feedMovedToFolder.
   ///
   /// In en, this message translates to:
-  /// **'\"{feedName}\" moved to \"{folderName}\"'**
+  /// **'\"{feedName}\" moved to \"{folderName}\" category'**
   String feedMovedToFolder(String feedName, String folderName);
 
   /// No description provided for @notifications.
@@ -1199,7 +1199,7 @@ abstract class AppLocalizations {
   /// No description provided for @factoryResetConfirmDesc.
   ///
   /// In en, this message translates to:
-  /// **'This will permanently erase all your feeds, folders, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.'**
+  /// **'This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.'**
   String get factoryResetConfirmDesc;
 
   /// No description provided for @factoryResetSuccess.

@@ -18,7 +18,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedsTab => 'Haberler';
 
   @override
-  String get foldersTab => 'Klasörler';
+  String get foldersTab => 'Kategoriler';
 
   @override
   String get bookmarksTab => 'Yer İşaretleri';
@@ -50,7 +50,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String noFeedsInCategory(String category) {
-    return '$category klasöründe hiç haber kaynağı bulunamadı.';
+    return '$category kategorisinde hiç haber kaynağı bulunamadı.';
   }
 
   @override
@@ -70,20 +70,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get noBookmarks => 'Henüz yer işaretli makale yok.';
 
   @override
-  String get noFolders => 'Henüz klasör yok. Kategoriler burada görünecek.';
+  String get noFolders =>
+      'Henüz kategori yok. Kaynaklarınızı düzenlemek için bir kategori ekleyin.';
 
   @override
-  String get renameFolder => 'Klasörü Yeniden Adlandır';
+  String get renameFolder => 'Kategoriyi Yeniden Adlandır';
 
   @override
-  String get folderName => 'Klasör Adı';
+  String get folderName => 'Kategori Adı';
 
   @override
-  String get deleteFolder => 'Klasörü Sil';
+  String get deleteFolder => 'Kategoriyi Sil';
 
   @override
   String deleteFolderConfirm(String categoryName, int feedCount) {
-    return '\"$categoryName\" klasörünü silmek istediğinizden emin misiniz?\n\nBu işlem, içindeki $feedCount RSS kaynağını kalıcı olarak aboneliklerinizden kaldıracak.';
+    return '\"$categoryName\" kategorisini silmek istediğinizden emin misiniz?\n\nBu işlem, içindeki $feedCount RSS kaynağını kalıcı olarak aboneliklerinizden kaldıracak.';
   }
 
   @override
@@ -465,26 +466,26 @@ class AppLocalizationsTr extends AppLocalizations {
   String get remove => 'Kaldır';
 
   @override
-  String get addFolder => 'Klasör Ekle';
+  String get addFolder => 'Kategori Ekle';
 
   @override
-  String get newFolderName => 'Yeni Klasör Adı';
+  String get newFolderName => 'Yeni Kategori Adı';
 
   @override
-  String get folderAlreadyExists => 'Bu isimde bir klasör zaten mevcut.';
+  String get folderAlreadyExists => 'Bu isimde bir kategori zaten mevcut.';
 
   @override
-  String get pleaseEnterFolderName => 'Lütfen bir klasör adı girin';
+  String get pleaseEnterFolderName => 'Lütfen bir kategori adı girin';
 
   @override
-  String get moveToFolder => 'Klasöre Taşı';
+  String get moveToFolder => 'Kategoriye Taşı';
 
   @override
   String get moveFeed => 'Kaynağı Taşı';
 
   @override
   String feedMovedToFolder(String feedName, String folderName) {
-    return '\"$feedName\" \"$folderName\" klasörüne taşındı';
+    return '\"$feedName\" \"$folderName\" kategorisine taşındı';
   }
 
   @override
@@ -599,7 +600,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get factoryResetConfirmDesc =>
-      'Bu işlem takip ettiğiniz tüm haber kaynaklarını, klasörleri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.';
+      'Bu işlem takip ettiğiniz tüm haber kaynaklarını, kategorileri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.';
 
   @override
   String get factoryResetSuccess => 'Tüm veri ve ayarlar silindi.';

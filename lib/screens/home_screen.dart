@@ -12,8 +12,8 @@ import '../widgets/home/home_bottom_nav.dart';
 import '../widgets/home/home_search_history_panel.dart';
 import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_list_skeleton.dart';
-import '../widgets/home/add_folder_dialog.dart';
-import 'folders_screen.dart';
+import '../widgets/home/add_category_dialog.dart';
+import 'categories_screen.dart';
 import 'bookmarks_screen.dart';
 import 'settings_screen.dart';
 
@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (ctx) => const AddFolderDialog(),
+      builder: (ctx) => const AddCategoryDialog(),
     );
   }
 
@@ -421,7 +421,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             )
           : _selectedIndex == 1
-          ? const FoldersScreen()
+          ? const CategoriesScreen()
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),
@@ -500,7 +500,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                                 child: Icon(
                                   _selectedIndex == 0
-                                      ? Icons.rss_feed
+                                      ? Icons.add
                                       : Icons.create_new_folder_outlined,
                                   color: Theme.of(
                                     context,

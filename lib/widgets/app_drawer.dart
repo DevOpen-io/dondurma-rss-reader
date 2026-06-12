@@ -23,52 +23,62 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
 
     return Drawer(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: cs.surface,
+      elevation: 0,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadiusDirectional.horizontal(
+          end: Radius.circular(28),
+        ),
+      ),
       child: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Row(
                 children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: Image.asset(
-                      'assets/logo.ico',
-                      width: 28,
-                      height: 28,
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        'assets/logo.ico',
+                        width: 30,
+                        height: 30,
+                      ),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Text(
                     l10n.appName,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.onSurface,
+                    style: tt.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.3,
                     ),
                   ),
                 ],
               ),
-            ),
-            Divider(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.1),
             ),
             Expanded(
               child: Consumer2<FeedProvider, SubscriptionProvider>(
                 builder: (context, provider, subscriptionProvider, _) {
                   final categories = subscriptionProvider.categories.toList()..sort();
                   return ListView(
-                    padding: EdgeInsets.zero,
+                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                     children: [
                       _buildSectionHeader(context, l10n.categories),
                       _buildDrawerItem(
-                        icon: Icons.article,
+                        icon: Icons.article_outlined,
                         title: l10n.allNews,
-                        count: '${provider.items.length}',
+                        count: provider.items.length,
                         isSelected: provider.selectedCategory == null,
                         context: context,
                         onTap: () {
@@ -96,13 +106,6 @@ class AppDrawer extends StatelessWidget {
                         );
                       }),
 
-                      Divider(
-                        color: Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.1),
-                        height: 32,
-                      ),
-
                       if (categories.contains('Uncategorized')) ...[
                         _buildSectionHeader(context, l10n.uncategorized),
                         _buildExpandableCategoryItem(
@@ -116,12 +119,6 @@ class AppDrawer extends StatelessWidget {
                           provider: provider,
                           context: context,
                           isUncategorizedNode: true,
-                        ),
-                        Divider(
-                          color: Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.1),
-                          height: 32,
                         ),
                       ],
 
@@ -161,108 +158,16 @@ class AppDrawer extends StatelessWidget {
                           launchUrl(Uri(scheme: 'mailto', path: 'info@devopen.io'));
                         },
                       ),
-                      const SizedBox(height: 20),
                     ],
                   );
                 },
               ),
             ),
             Divider(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.1),
               height: 1,
+              color: cs.outlineVariant.withValues(alpha: 0.4),
             ),
-            AboutListTile(
-              icon: const Icon(Icons.info_outline),
-              applicationName: l10n.appName,
-              applicationIcon: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset('assets/logo.ico', width: 48, height: 48),
-              ),
-              applicationVersion: '1.0.0',
-              aboutBoxChildren: [
-                const SizedBox(height: 16),
-                Text(
-                  'Talha Aksoy & Eren Gün',
-                  style: TextStyle(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.6),
-                    fontSize: 13,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                InkWell(
-                  onTap: () {
-                    launchUrl(
-                      Uri.parse('mailto:info@devopen.io'),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 4.0,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.email_outlined,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'info@devopen.io',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: () {
-                    launchUrl(
-                      Uri.parse(
-                        'https://github.com/DevOpen-io/Dondurma-Rss-Reader',
-                      ),
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                      horizontal: 4.0,
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.code,
-                          size: 20,
-                          color: Theme.of(context).colorScheme.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'GitHub',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-              child: Text(l10n.aboutApp),
-            ),
+            _buildAboutTile(context, l10n),
           ],
         ),
       ),
@@ -271,20 +176,61 @@ class AppDrawer extends StatelessWidget {
 
   /// Section header label (e.g. "Categories", "Discover").
   Widget _buildSectionHeader(BuildContext context, String title) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.only(
-        left: 16.0,
-        right: 16.0,
-        top: 16.0,
-        bottom: 8.0,
-      ),
+      padding: const EdgeInsets.fromLTRB(12, 18, 12, 8),
       child: Text(
         title,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-          fontSize: 12.0,
-          fontWeight: FontWeight.bold,
-          letterSpacing: 1.2,
+        style: tt.labelSmall?.copyWith(
+          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.1,
+        ),
+      ),
+    );
+  }
+
+  /// Small rounded icon chip used as the leading element of drawer rows.
+  Widget _buildIconChip(
+    BuildContext context, {
+    required IconData icon,
+    required bool isSelected,
+  }) {
+    final cs = Theme.of(context).colorScheme;
+    return Container(
+      padding: const EdgeInsets.all(7),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? cs.primaryContainer
+            : cs.surfaceContainerHigh.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(
+        icon,
+        size: 17,
+        color: isSelected ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+      ),
+    );
+  }
+
+  /// Rounded count pill shown at the trailing edge of rows.
+  Widget _buildCountPill(BuildContext context, int count, bool isSelected) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: isSelected
+            ? cs.primary.withValues(alpha: 0.14)
+            : cs.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        '$count',
+        style: tt.labelSmall?.copyWith(
+          color: isSelected ? cs.primary : cs.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
         ),
       ),
     );
@@ -299,7 +245,8 @@ class AppDrawer extends StatelessWidget {
     required BuildContext context,
     bool isUncategorizedNode = false,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     final String targetCategory = isUncategorizedNode ? 'Uncategorized' : title;
     final bool isCategorySelected =
         provider.selectedCategory == targetCategory &&
@@ -310,29 +257,33 @@ class AppDrawer extends StatelessWidget {
         .length;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: Theme(
         data: Theme.of(context).copyWith(
           dividerColor: Colors.transparent, // Remove expansion lines
         ),
         child: ExpansionTile(
           initiallyExpanded: provider.selectedCategory == targetCategory,
+          tilePadding: const EdgeInsets.only(left: 10, right: 10),
+          childrenPadding: const EdgeInsets.only(left: 12, right: 8, bottom: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(14),
           ),
           backgroundColor: isCategorySelected
-              ? colorScheme.primary.withAlpha((0.05 * 255).toInt())
+              ? cs.primaryContainer.withValues(alpha: 0.22)
               : Colors.transparent,
           collapsedBackgroundColor: isCategorySelected
-              ? colorScheme.primary.withAlpha((0.1 * 255).toInt())
+              ? cs.primaryContainer.withValues(alpha: 0.35)
               : Colors.transparent,
-          leading: Icon(
-            categoryIcon,
-            size: 20,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          iconColor: cs.onSurfaceVariant,
+          collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
+          leading: _buildIconChip(
+            context,
+            icon: categoryIcon,
+            isSelected: isCategorySelected,
           ),
           title: GestureDetector(
             behavior: HitTestBehavior.opaque,
@@ -346,46 +297,21 @@ class AppDrawer extends StatelessWidget {
                 Expanded(
                   child: Text(
                     title,
-                    style: TextStyle(
+                    style: tt.bodyMedium?.copyWith(
                       color: isCategorySelected
-                          ? colorScheme.primary
-                          : Theme.of(
-                              context,
-                            ).colorScheme.onSurface.withValues(alpha: 0.7),
-                      fontWeight: isCategorySelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                          ? cs.primary
+                          : cs.onSurface.withValues(alpha: 0.8),
+                      fontWeight:
+                          isCategorySelected ? FontWeight.w700 : FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                if (count > 0)
-                  Container(
-                    margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isCategorySelected
-                          ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      count.toString(),
-                      style: TextStyle(
-                        color: isCategorySelected
-                            ? colorScheme.primary
-                            : Theme.of(
-                                context,
-                              ).colorScheme.onSurface.withValues(alpha: 0.5),
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
+                if (count > 0) ...[
+                  const SizedBox(width: 8),
+                  _buildCountPill(context, count, isCategorySelected),
+                ],
               ],
             ),
           ),
@@ -396,45 +322,69 @@ class AppDrawer extends StatelessWidget {
                 .length;
 
             return Padding(
-              padding: const EdgeInsets.only(left: 16.0, bottom: 2.0),
-              child: ListTile(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                title: Text(
-                  sub.name,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: isFeedSelected
-                        ? colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight: isFeedSelected
-                        ? FontWeight.bold
-                        : FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                trailing: feedCount > 0
-                    ? Text(
-                        feedCount.toString(),
-                        style: const TextStyle(
-                          color: Colors.grey,
-                          fontSize: 11,
+              padding: const EdgeInsets.only(left: 22.0, top: 2.0),
+              child: Material(
+                color: isFeedSelected
+                    ? cs.primary.withValues(alpha: 0.08)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(10),
+                  onTap: () {
+                    provider.selectFeed(sub.url);
+                    onFeedSelected?.call();
+                    context.pop();
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 9,
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 5,
+                          height: 5,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isFeedSelected
+                                ? cs.primary
+                                : cs.onSurfaceVariant.withValues(alpha: 0.35),
+                          ),
                         ),
-                      )
-                    : null,
-                selected: isFeedSelected,
-                selectedTileColor: colorScheme.primary.withAlpha(
-                  (0.05 * 255).toInt(),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            sub.name,
+                            style: tt.bodySmall?.copyWith(
+                              fontSize: 13,
+                              color: isFeedSelected
+                                  ? cs.primary
+                                  : cs.onSurface.withValues(alpha: 0.65),
+                              fontWeight: isFeedSelected
+                                  ? FontWeight.w700
+                                  : FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (feedCount > 0) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '$feedCount',
+                            style: tt.labelSmall?.copyWith(
+                              color: isFeedSelected
+                                  ? cs.primary
+                                  : cs.onSurfaceVariant.withValues(alpha: 0.7),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
-                onTap: () {
-                  provider.selectFeed(sub.url);
-                  onFeedSelected?.call();
-                  context.pop();
-                },
               ),
             );
           }).toList(),
@@ -447,61 +397,192 @@ class AppDrawer extends StatelessWidget {
   Widget _buildDrawerItem({
     required IconData icon,
     required String title,
-    String? count,
+    int? count,
     bool isSelected = false,
     required BuildContext context,
     required VoidCallback onTap,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
-      child: ListTile(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        leading: Icon(
-          icon,
-          color: isSelected
-              ? colorScheme.primary
-              : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-          size: 22,
-        ),
-        title: Text(
-          title,
-          style: TextStyle(
-            color: isSelected
-                ? colorScheme.primary
-                : Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.7),
-            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-          ),
-        ),
-        trailing: (count != null && count != '0')
-            ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? colorScheme.primary.withAlpha((0.2 * 255).toInt())
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  count,
-                  style: TextStyle(
-                    color: isSelected
-                        ? colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.5),
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+      padding: const EdgeInsets.symmetric(vertical: 2.0),
+      child: Material(
+        color: isSelected
+            ? cs.primaryContainer.withValues(alpha: 0.35)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: [
+                _buildIconChip(context, icon: icon, isSelected: isSelected),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: tt.bodyMedium?.copyWith(
+                      color: isSelected
+                          ? cs.primary
+                          : cs.onSurface.withValues(alpha: 0.8),
+                      fontWeight:
+                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
-              )
-            : null,
-        selected: isSelected,
-        selectedTileColor: colorScheme.primary.withAlpha((0.1 * 255).toInt()),
-        onTap: onTap,
+                if (count != null && count > 0) ...[
+                  const SizedBox(width: 8),
+                  _buildCountPill(context, count, isSelected),
+                ],
+              ],
+            ),
+          ),
+        ),
       ),
+    );
+  }
+
+  /// Footer "About" row opening the standard about dialog.
+  Widget _buildAboutTile(BuildContext context, AppLocalizations l10n) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 6, 12, 10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () => _showAboutDialog(context, l10n),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          child: Row(
+            children: [
+              _buildIconChip(
+                context,
+                icon: Icons.info_outline,
+                isSelected: false,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  l10n.aboutApp,
+                  style: tt.bodyMedium?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: cs.surfaceContainerHigh,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  'v1.0.0',
+                  style: tt.labelSmall?.copyWith(
+                    color: cs.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showAboutDialog(BuildContext context, AppLocalizations l10n) {
+    final cs = Theme.of(context).colorScheme;
+    showAboutDialog(
+      context: context,
+      applicationName: l10n.appName,
+      applicationIcon: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.asset('assets/logo.ico', width: 48, height: 48),
+      ),
+      applicationVersion: '1.0.0',
+      children: [
+        const SizedBox(height: 16),
+        Text(
+          'Talha Aksoy & Eren Gün',
+          style: TextStyle(
+            color: cs.onSurface.withValues(alpha: 0.6),
+            fontSize: 13,
+          ),
+        ),
+        const SizedBox(height: 12),
+        InkWell(
+          onTap: () {
+            launchUrl(
+              Uri.parse('mailto:info@devopen.io'),
+            );
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 4.0,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.email_outlined,
+                  size: 20,
+                  color: cs.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'info@devopen.io',
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        InkWell(
+          onTap: () {
+            launchUrl(
+              Uri.parse(
+                'https://github.com/DevOpen-io/Dondurma-Rss-Reader',
+              ),
+            );
+          },
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: 8.0,
+              horizontal: 4.0,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.code,
+                  size: 20,
+                  color: cs.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'GitHub',
+                  style: TextStyle(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

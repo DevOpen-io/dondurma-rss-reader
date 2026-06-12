@@ -13,8 +13,8 @@ import '../widgets/folders/folder_dialogs.dart';
 ///
 /// Supports adding/renaming/deleting categories, moving feeds between
 /// categories, editing feed details, and per-feed keyword exclusion.
-class FoldersScreen extends StatelessWidget {
-  const FoldersScreen({super.key});
+class CategoriesScreen extends StatelessWidget {
+  const CategoriesScreen({super.key});
 
   void _showEditCategoryDialog(BuildContext context, String currentCategory) {
     showDialog<void>(
@@ -342,7 +342,7 @@ class FoldersScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Add a folder to organize your feeds.',
+                'Add a category to organize your feeds.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(context)

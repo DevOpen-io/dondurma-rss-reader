@@ -5,7 +5,7 @@
   "appName": "Dondurma Rss Reader",
 
   "feedsTab": "Haberler",
-  "foldersTab": "Klasörler",
+  "foldersTab": "Kategoriler",
   "bookmarksTab": "Yer İşaretleri",
   "settingsTab": "Ayarlar",
 
@@ -16,7 +16,7 @@
   "older": "DAHA ESKİ",
   "subscribedOnly": "Yalnızca Abonelikler",
   "noFeedsFound": "Hiç haber kaynağı bulunamadı. + düğmesini kullanarak yeni bir kaynak ekleyin.",
-  "noFeedsInCategory": "{category} klasöründe hiç haber kaynağı bulunamadı.",
+  "noFeedsInCategory": "{category} kategorisinde hiç haber kaynağı bulunamadı.",
   "noFeedsMatchFilter": "Mevcut filtrenize uygun haber kaynağı yok.",
   "offlineBanner": "Çevrimdışısınız — önbelleğe alınmış makaleleri gösteriyor.",
   "loadMore": "Daha fazla yükle",
@@ -24,11 +24,11 @@
 
   "noBookmarks": "Henüz yer işaretli makale yok.",
 
-  "noFolders": "Henüz klasör yok. Kategoriler burada görünecek.",
-  "renameFolder": "Klasörü Yeniden Adlandır",
-  "folderName": "Klasör Adı",
-  "deleteFolder": "Klasörü Sil",
-  "deleteFolderConfirm": "\"{categoryName}\" klasörünü silmek istediğinizden emin misiniz?\n\nBu işlem, içindeki {feedCount} RSS kaynağını kalıcı olarak aboneliklerinizden kaldıracak.",
+  "noFolders": "Henüz kategori yok. Kaynaklarınızı düzenlemek için bir kategori ekleyin.",
+  "renameFolder": "Kategoriyi Yeniden Adlandır",
+  "folderName": "Kategori Adı",
+  "deleteFolder": "Kategoriyi Sil",
+  "deleteFolderConfirm": "\"{categoryName}\" kategorisini silmek istediğinizden emin misiniz?\n\nBu işlem, içindeki {feedCount} RSS kaynağını kalıcı olarak aboneliklerinizden kaldıracak.",
   "deleteAll": "Tümünü Sil",
 
   "editFeed": "Kaynağı Düzenle",
@@ -162,13 +162,13 @@
   "removeFeedConfirm": "\"{name}\" kaynağını takip etmeyi bırakmak istediğinizden emin misiniz?",
   "remove": "Kaldır",
 
-  "addFolder": "Klasör Ekle",
-  "newFolderName": "Yeni Klasör Adı",
-  "folderAlreadyExists": "Bu isimde bir klasör zaten mevcut.",
-  "pleaseEnterFolderName": "Lütfen bir klasör adı girin",
-  "moveToFolder": "Klasöre Taşı",
+  "addFolder": "Kategori Ekle",
+  "newFolderName": "Yeni Kategori Adı",
+  "folderAlreadyExists": "Bu isimde bir kategori zaten mevcut.",
+  "pleaseEnterFolderName": "Lütfen bir kategori adı girin",
+  "moveToFolder": "Kategoriye Taşı",
   "moveFeed": "Kaynağı Taşı",
-  "feedMovedToFolder": "\"{feedName}\" \"{folderName}\" klasörüne taşındı",
+  "feedMovedToFolder": "\"{feedName}\" \"{folderName}\" kategorisine taşındı",
 
   "notifications": "Bildirimler",
   "enableNotifications": "Bildirimleri Etkinleştir",
@@ -207,7 +207,7 @@
   "factoryReset": "Fabrika Ayarlarına Sıfırla",
   "factoryResetDesc": "Tüm verileri silin ve varsayılan ayarlara dönün",
   "factoryResetConfirmTitle": "Emin misiniz?",
-  "factoryResetConfirmDesc": "Bu işlem takip ettiğiniz tüm haber kaynaklarını, klasörleri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.",
+  "factoryResetConfirmDesc": "Bu işlem takip ettiğiniz tüm haber kaynaklarını, kategorileri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.",
   "factoryResetSuccess": "Tüm veri ve ayarlar silindi.",
 
   "browserMode": "Tarayıcı Modu",

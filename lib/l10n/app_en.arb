@@ -5,7 +5,7 @@
   "appName": "Dondurma Rss Reader",
 
   "feedsTab": "Feeds",
-  "foldersTab": "Folders",
+  "foldersTab": "Categories",
   "bookmarksTab": "Bookmarks",
   "settingsTab": "Settings",
 
@@ -29,11 +29,11 @@
 
   "noBookmarks": "No bookmarked articles yet.",
 
-  "noFolders": "No folders yet. Categories will appear here.",
-  "renameFolder": "Rename Folder",
-  "folderName": "Folder Name",
-  "deleteFolder": "Delete Folder",
-  "deleteFolderConfirm": "Are you sure you want to delete the folder \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.",
+  "noFolders": "No categories yet. Add a category to organize your feeds.",
+  "renameFolder": "Rename Category",
+  "folderName": "Category Name",
+  "deleteFolder": "Delete Category",
+  "deleteFolderConfirm": "Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.",
   "@deleteFolderConfirm": {
     "placeholders": {
       "categoryName": { "type": "String" },
@@ -211,13 +211,13 @@
   },
   "remove": "Remove",
 
-  "addFolder": "Add Folder",
-  "newFolderName": "New Folder Name",
-  "folderAlreadyExists": "A folder with this name already exists.",
-  "pleaseEnterFolderName": "Please enter a folder name",
-  "moveToFolder": "Move to Folder",
+  "addFolder": "Add Category",
+  "newFolderName": "New Category Name",
+  "folderAlreadyExists": "A category with this name already exists.",
+  "pleaseEnterFolderName": "Please enter a category name",
+  "moveToFolder": "Move to Category",
   "moveFeed": "Move Feed",
-  "feedMovedToFolder": "\"{feedName}\" moved to \"{folderName}\"",
+  "feedMovedToFolder": "\"{feedName}\" moved to \"{folderName}\" category",
   "@feedMovedToFolder": {
     "placeholders": {
       "feedName": { "type": "String" },
@@ -267,7 +267,7 @@
   "factoryReset": "Factory Reset",
   "factoryResetDesc": "Erase all data and restore default settings",
   "factoryResetConfirmTitle": "Are you sure?",
-  "factoryResetConfirmDesc": "This will permanently erase all your feeds, folders, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.",
+  "factoryResetConfirmDesc": "This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.",
   "factoryResetSuccess": "All data and settings have been erased.",
 
   "browserMode": "Browser Mode",

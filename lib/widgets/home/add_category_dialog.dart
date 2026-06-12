@@ -3,14 +3,14 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/subscription_provider.dart';
 
-class AddFolderDialog extends StatefulWidget {
-  const AddFolderDialog({super.key});
+class AddCategoryDialog extends StatefulWidget {
+  const AddCategoryDialog({super.key});
 
   @override
-  State<AddFolderDialog> createState() => _AddFolderDialogState();
+  State<AddCategoryDialog> createState() => _AddCategoryDialogState();
 }
 
-class _AddFolderDialogState extends State<AddFolderDialog> {
+class _AddCategoryDialogState extends State<AddCategoryDialog> {
   final _nameController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
