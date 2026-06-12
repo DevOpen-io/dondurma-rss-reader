@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart' show compute, listEquals;
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
@@ -18,6 +20,10 @@ import 'subscription_provider.dart';
 /// [BookmarkProvider] via `ChangeNotifierProxyProvider3` in `main.dart`.
 class FeedProvider extends ChangeNotifier {
   final FeedService _feedService = FeedService();
+
+  /// Max concurrent feed HTTP requests. Limits socket/memory pressure on
+  /// devices with constrained network stacks.
+  static const _fetchConcurrency = 5;
 
   List<FeedItem> _items = [];
   String? _selectedCategory;
@@ -129,19 +135,43 @@ class FeedProvider extends ChangeNotifier {
     BookmarkProvider book,
   ) {
     final bool isFirstUpdate = subscriptionProvider == null;
+
+    // Snapshot sync settings before overwrite to decide if timer needs reset.
+    final int prevInterval = settingsProvider?.cacheIntervalSeconds ?? -1;
+    final bool prevSync = settingsProvider?.syncBackground ?? false;
+
+    // Snapshot subscription URLs to detect actual feed-list changes.
+    final List<String> prevUrls =
+        subscriptionProvider?.subscriptions.map((s) => s.url).toList() ?? [];
+
     subscriptionProvider = sub;
     settingsProvider = set;
     bookmarkProvider = book;
 
     if (isFirstUpdate) {
       refreshAll();
-    } else {
-      // Re-filter items immediately if dependencies (like keywords) changed.
-      _invalidateFilterCache();
-      Future.microtask(() => notifyListeners());
+      _manageCacheTimer();
+      return;
     }
 
-    _manageCacheTimer();
+    // Rebuild filter output — cheap, O(n) walk already cached.
+    _invalidateFilterCache();
+    Future.microtask(() => notifyListeners());
+
+    // Only recreate the background sync timer when interval or toggle changes.
+    // Previously this always fired, resetting the countdown on every tap.
+    final bool timerSettingsChanged =
+        prevInterval != set.cacheIntervalSeconds ||
+        prevSync != set.syncBackground;
+    if (timerSettingsChanged) {
+      _manageCacheTimer();
+    }
+
+    // If subscriptions were added/removed, kick off a fresh fetch.
+    final List<String> currUrls = sub.subscriptions.map((s) => s.url).toList();
+    if (!listEquals(prevUrls, currUrls)) {
+      refreshAll();
+    }
   }
 
   void _manageCacheTimer() {
@@ -171,8 +201,10 @@ class FeedProvider extends ChangeNotifier {
     final String? cachedItemsData = _box.get('cachedItemsJson');
     if (cachedItemsData != null) {
       try {
-        final List<dynamic> jsonList = jsonDecode(cachedItemsData);
-        _items = jsonList.map((e) => FeedItem.fromJson(e)).toList();
+        // Decode JSON in a background isolate — large caches can be 500ms+ on
+        // main thread for users with many feeds.
+        final maps = await compute(_decodeCachedItems, cachedItemsData);
+        _items = maps.map(FeedItem.fromJson).toList();
         _cachedItemIds = _items.map((e) => e.id).toSet();
         _invalidateFilterCache();
         notifyListeners();
@@ -455,8 +487,8 @@ class FeedProvider extends ChangeNotifier {
   // Refresh & sync
   // ---------------------------------------------------------------------------
 
-  /// Fetches all subscribed feeds in parallel, merges bookmarks, sorts by date,
-  /// fires notifications for new articles, and persists the cache.
+  /// Fetches all subscribed feeds with bounded concurrency, merges bookmarks,
+  /// sorts by date, fires notifications for new articles, and persists cache.
   Future<void> refreshAll() async {
     if (subscriptionProvider == null) return;
 
@@ -465,20 +497,25 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
+    final subs = subscriptionProvider!.subscriptions;
 
-    final futures = subscriptionProvider!.subscriptions.map((sub) async {
+    // Rate-limit concurrent HTTP requests to avoid network/memory saturation.
+    // With 30+ feeds, unbounded Future.wait exhausts connection pools and causes
+    // TCP resets on constrained devices.
+    final semaphore = _Semaphore(_fetchConcurrency);
+    final futures = subs.map((sub) async {
+      await semaphore.acquire();
       try {
         return await _feedService.fetchFeed(sub.url, sub.category);
       } catch (e) {
         debugPrint('Error fetching feed ${sub.url}: $e');
         return <FeedItem>[];
+      } finally {
+        semaphore.release();
       }
     });
 
     final results = await Future.wait(futures);
-
-    // Capture old item IDs for notification diff
-    final oldItemIds = _items.map((e) => e.id).toSet();
 
     List<FeedItem> freshItems = [];
     for (final items in results) {
@@ -491,10 +528,13 @@ class FeedProvider extends ChangeNotifier {
 
     if (fetchedAnything) {
       // Merge bookmarks into the fresh list so they are always visible.
+      // Use a Set for O(1) lookup — avoids O(bookmarks × items) scan.
       if (bookmarkProvider != null) {
+        final freshIds = freshItems.map((i) => i.id).toSet();
         for (final saved in bookmarkProvider!.bookmarkedItems) {
-          if (!freshItems.any((item) => item.id == saved.id)) {
+          if (!freshIds.contains(saved.id)) {
             freshItems.add(saved);
+            freshIds.add(saved.id);
           }
         }
       }
@@ -509,9 +549,11 @@ class FeedProvider extends ChangeNotifier {
     } else {
       // Offline: keep existing _items but still ensure bookmarks are present.
       if (bookmarkProvider != null) {
+        final existingIds = _items.map((i) => i.id).toSet();
         for (final saved in bookmarkProvider!.bookmarkedItems) {
-          if (!_items.any((item) => item.id == saved.id)) {
+          if (!existingIds.contains(saved.id)) {
             _items.add(saved);
+            existingIds.add(saved.id);
           }
         }
       }
@@ -525,7 +567,7 @@ class FeedProvider extends ChangeNotifier {
 
     // Fire notifications for newly discovered items (skip the initial load).
     if (fetchedAnything && _hasLoadedOnce) {
-      _notifyNewArticles(oldItemIds, freshItems);
+      _notifyNewArticles(freshItems);
     }
     _hasLoadedOnce = true;
 
@@ -538,6 +580,8 @@ class FeedProvider extends ChangeNotifier {
     _lastSyncDuration = stopwatch.elapsed;
     _lastSyncTime = DateTime.now();
     _isSyncing = false;
+    // Notify debug screen that sync state + timestamps have updated.
+    notifyListeners();
   }
 
   // ---------------------------------------------------------------------------
@@ -550,7 +594,7 @@ class FeedProvider extends ChangeNotifier {
   /// service) so notifications are never duplicated across sessions or between
   /// the foreground timer and Workmanager. Only articles newer than 48 hours
   /// are eligible, and bursts are throttled to at most one per 15 minutes.
-  void _notifyNewArticles(Set<String> oldItemIds, List<FeedItem> freshItems) {
+  void _notifyNewArticles(List<FeedItem> freshItems) {
     if (settingsProvider == null || subscriptionProvider == null) return;
 
     // Rate limit: max 1 notification burst per 15 minutes in-app.
@@ -621,9 +665,10 @@ class FeedProvider extends ChangeNotifier {
     // and the next normal rebuild will pick it up, avoiding an unnecessary
     // full widget tree rebuild during a background write.
 
-    final String encodedData = jsonEncode(
-      itemsToCache.map((e) => e.toJson()).toList(),
-    );
+    // Encode JSON in a background isolate — avoids blocking scroll/animation
+    // while serializing potentially hundreds of items.
+    final maps = itemsToCache.map((e) => e.toJson()).toList();
+    final String encodedData = await compute(_encodeCachedItems, maps);
     await _box.put('cachedItemsJson', encodedData);
   }
 
@@ -658,6 +703,7 @@ class FeedProvider extends ChangeNotifier {
   @override
   void dispose() {
     _cacheTimer?.cancel();
+    _feedService.dispose();
     super.dispose();
   }
 }
@@ -669,4 +715,52 @@ class _DateGroups {
   final List<FeedItem> older;
 
   const _DateGroups(this.today, this.yesterday, this.older);
+}
+
+// ---------------------------------------------------------------------------
+// Isolate-safe top-level functions for compute()
+// ---------------------------------------------------------------------------
+
+/// Decodes a JSON string into a list of item maps (runs in background isolate).
+List<Map<String, dynamic>> _decodeCachedItems(String data) {
+  final list = jsonDecode(data) as List<dynamic>;
+  return list.cast<Map<String, dynamic>>();
+}
+
+/// Encodes a list of item maps to JSON string (runs in background isolate).
+String _encodeCachedItems(List<Map<String, dynamic>> maps) =>
+    jsonEncode(maps);
+
+// ---------------------------------------------------------------------------
+// Concurrency limiter
+// ---------------------------------------------------------------------------
+
+/// Simple semaphore that gates access to at most [maxCount] concurrent slots.
+///
+/// Used to limit parallel HTTP requests so the device's connection pool and
+/// memory aren't overwhelmed when many feeds are subscribed.
+class _Semaphore {
+  final int maxCount;
+  int _current = 0;
+  final Queue<Completer<void>> _waitQueue = Queue();
+
+  _Semaphore(this.maxCount);
+
+  Future<void> acquire() async {
+    if (_current < maxCount) {
+      _current++;
+      return;
+    }
+    final c = Completer<void>();
+    _waitQueue.add(c);
+    await c.future;
+  }
+
+  void release() {
+    if (_waitQueue.isNotEmpty) {
+      _waitQueue.removeFirst().complete();
+    } else {
+      _current--;
+    }
+  }
 }

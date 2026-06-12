@@ -12,6 +12,17 @@ import '../models/feed_item.dart';
 /// Attempts RSS parsing first; falls back to Atom if RSS fails.
 class FeedService {
   // ---------------------------------------------------------------------------
+  // Shared HTTP client — reuses connections (TCP keep-alive) across all feeds.
+  // One instance per FeedService lifetime; closed in FeedProvider.dispose().
+  // ---------------------------------------------------------------------------
+
+  final http.Client _client;
+
+  FeedService() : _client = http.Client();
+
+  void dispose() => _client.close();
+
+  // ---------------------------------------------------------------------------
   // HTTP header constants
   // ---------------------------------------------------------------------------
 
@@ -67,7 +78,7 @@ class FeedService {
   /// response cannot be parsed as either RSS or Atom.
   Future<List<FeedItem>> fetchFeed(String url, String category) async {
     try {
-      final response = await http
+      final response = await _client
           .get(
             Uri.parse(url),
             headers: {
@@ -113,12 +124,12 @@ class FeedService {
     final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
     return feed.items.map((item) {
-      String content = item.content?.value ?? item.description ?? '';
-      String description = _parseHtmlString(content);
-      List<String> images = _extractImages(content);
+      final content = item.content?.value ?? item.description ?? '';
+      // Parse HTML once; reuse the document for both description and images.
+      final parsed = _parseContent(content);
 
       // Try to get image from enclosure if not found in content
-      String? topImage = images.isNotEmpty ? images.first : null;
+      String? topImage = parsed.images.isNotEmpty ? parsed.images.first : null;
       if (topImage == null &&
           item.enclosure != null &&
           item.enclosure!.url != null) {
@@ -131,7 +142,7 @@ class FeedService {
         id: item.guid ?? item.link ?? DateTime.now().toIso8601String(),
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
-        description: description,
+        description: parsed.text,
         timeAgo: '',
         siteIcon: Icons.rss_feed,
         iconColor: const Color(0xFF00A3FF),
@@ -155,17 +166,18 @@ class FeedService {
     final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
     return feed.items.map((item) {
-      String content = item.content ?? item.summary ?? '';
-      String description = _parseHtmlString(content);
-      List<String> images = _extractImages(content);
+      final content = item.content ?? item.summary ?? '';
+      // Parse HTML once; reuse the document for both description and images.
+      final parsed = _parseContent(content);
 
       // YouTube uses <media:group><media:thumbnail url="...">
+      List<String> images = parsed.images;
       if (images.isEmpty &&
           item.media != null &&
           item.media!.thumbnails.isNotEmpty) {
         final url = item.media!.thumbnails.first.url;
         if (url != null && url.isNotEmpty) {
-          images.add(url);
+          images = [url];
         }
       }
 
@@ -182,7 +194,7 @@ class FeedService {
             (link.isNotEmpty ? link : DateTime.now().toIso8601String()),
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
-        description: description,
+        description: parsed.text,
         timeAgo: '',
         siteIcon: Icons.rss_feed,
         iconColor: const Color(0xFF00A3FF),
@@ -197,12 +209,19 @@ class FeedService {
     }).toList();
   }
 
-  /// Strips HTML tags and returns plain text for the short description.
-  String _parseHtmlString(String htmlString) {
+  /// Parses [htmlString] once and extracts both plain text and image URLs.
+  ///
+  /// Avoids re-parsing the same HTML twice (old code called parse() 3-4× per item).
+  _ParsedContent _parseContent(String htmlString) {
+    if (htmlString.isEmpty) return const _ParsedContent('', []);
     final document = parse(htmlString);
-    final String parsedString =
-        parse(document.body?.text ?? '').documentElement?.text ?? '';
-    return parsedString.replaceAll('\n', ' ').trim();
+    final text = (document.body?.text ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final images = document
+        .getElementsByTagName('img')
+        .map((img) => img.attributes['src'])
+        .whereType<String>()
+        .toList();
+    return _ParsedContent(text, images);
   }
 
   /// Decodes HTML entities (e.g. `&#8216;`) in feed titles and site names.
@@ -210,20 +229,6 @@ class FeedService {
     if (text.isEmpty) return text;
     final document = parse(text);
     return document.documentElement?.text ?? text;
-  }
-
-  /// Extracts all `<img>` `src` attributes from HTML content.
-  List<String> _extractImages(String htmlString) {
-    final List<String> imageUrls = [];
-    final document = parse(htmlString);
-    final images = document.getElementsByTagName('img');
-    for (final img in images) {
-      final src = img.attributes['src'];
-      if (src != null) {
-        imageUrls.add(src);
-      }
-    }
-    return imageUrls;
   }
 
   /// Parses dates from RSS/Atom feeds.
@@ -258,4 +263,11 @@ class FeedService {
 
     return null;
   }
+}
+
+/// Plain text + image list extracted from a single HTML parse.
+class _ParsedContent {
+  final String text;
+  final List<String> images;
+  const _ParsedContent(this.text, this.images);
 }

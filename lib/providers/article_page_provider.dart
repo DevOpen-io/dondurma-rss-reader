@@ -118,6 +118,11 @@ class ArticlePageProvider extends ChangeNotifier {
 
     final result = await _extractionService.extractFullText(item.link);
 
+    // Guard: provider may have been disposed while the HTTP request was in-flight
+    // (user popped the article page). Calling notifyListeners() on a disposed
+    // ChangeNotifier throws "Cannot use a disposed ChangeNotifier".
+    if (!hasListeners) return;
+
     _isLoadingFullText = false;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
@@ -489,7 +494,7 @@ class ArticlePageProvider extends ChangeNotifier {
       _isTranslating = false;
       _translationProgress = null;
       _cachedDisplayContent = null;
-      notifyListeners();
+      if (hasListeners) notifyListeners();
     }
   }
 
