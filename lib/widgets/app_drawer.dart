@@ -70,7 +70,10 @@ class AppDrawer extends StatelessWidget {
             Expanded(
               child: Consumer2<FeedProvider, SubscriptionProvider>(
                 builder: (context, provider, subscriptionProvider, _) {
-                  final categories = subscriptionProvider.categories.toList()..sort();
+                  final ordered = subscriptionProvider.categoriesOrdered;
+                  final nonUncategorized = ordered.where((c) => c != 'Uncategorized').toList();
+                  final hasUncategorized = ordered.contains('Uncategorized');
+
                   return ListView(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                     children: [
@@ -88,35 +91,55 @@ class AppDrawer extends StatelessWidget {
                         },
                       ),
 
-                      ...categories.where((c) => c != 'Uncategorized').map((
-                        category,
-                      ) {
-                        final feedSources = subscriptionProvider.subscriptions
-                            .where((sub) => sub.category == category)
-                            .toList();
+                      ReorderableListView(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        buildDefaultDragHandles: false,
+                        proxyDecorator: (child, index, animation) {
+                          return AnimatedBuilder(
+                            animation: animation,
+                            builder: (_, __) => Material(
+                              elevation: 8,
+                              borderRadius: BorderRadius.circular(14),
+                              color: Colors.transparent,
+                              shadowColor: cs.shadow.withValues(alpha: 0.3),
+                              child: child,
+                            ),
+                          );
+                        },
+                        onReorder: (oldIndex, newIndex) {
+                          if (newIndex > oldIndex) newIndex--;
+                          subscriptionProvider.reorderCategory(oldIndex, newIndex);
+                        },
+                        children: [
+                          for (int i = 0; i < nonUncategorized.length; i++)
+                            ReorderableDelayedDragStartListener(
+                              key: ValueKey(nonUncategorized[i]),
+                              index: i,
+                              child: _buildExpandableCategoryItem(
+                                categoryIcon: subscriptionProvider.getCategoryIcon(nonUncategorized[i]),
+                                title: nonUncategorized[i],
+                                feedSources: subscriptionProvider.subscriptions
+                                    .where((sub) => sub.category == nonUncategorized[i])
+                                    .toList(),
+                                provider: provider,
+                                subscriptionProvider: subscriptionProvider,
+                                context: context,
+                              ),
+                            ),
+                        ],
+                      ),
 
-                        return _buildExpandableCategoryItem(
-                          categoryIcon: subscriptionProvider.getCategoryIcon(
-                            category,
-                          ),
-                          title: category,
-                          feedSources: feedSources,
-                          provider: provider,
-                          context: context,
-                        );
-                      }),
-
-                      if (categories.contains('Uncategorized')) ...[
+                      if (hasUncategorized) ...[
                         _buildSectionHeader(context, l10n.uncategorized),
                         _buildExpandableCategoryItem(
-                          categoryIcon: subscriptionProvider.getCategoryIcon(
-                            'Uncategorized',
-                          ),
+                          categoryIcon: subscriptionProvider.getCategoryIcon('Uncategorized'),
                           title: l10n.randomBlogs,
                           feedSources: subscriptionProvider.subscriptions
                               .where((sub) => sub.category == 'Uncategorized')
                               .toList(),
                           provider: provider,
+                          subscriptionProvider: subscriptionProvider,
                           context: context,
                           isUncategorizedNode: true,
                         ),
@@ -242,6 +265,7 @@ class AppDrawer extends StatelessWidget {
     required String title,
     required List<FeedSubscription> feedSources,
     required FeedProvider provider,
+    required SubscriptionProvider subscriptionProvider,
     required BuildContext context,
     bool isUncategorizedNode = false,
   }) {
@@ -335,6 +359,7 @@ class AppDrawer extends StatelessWidget {
                     onFeedSelected?.call();
                     context.pop();
                   },
+                  onLongPress: () => _showDeleteFeedDialog(context, sub, subscriptionProvider),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -442,6 +467,41 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteFeedDialog(
+    BuildContext context,
+    FeedSubscription sub,
+    SubscriptionProvider subscriptionProvider,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(l10n.deleteFeed),
+        content: Text(l10n.deleteFeedConfirm(sub.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: cs.error,
+              foregroundColor: cs.onError,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              subscriptionProvider.removeFeed(sub.url);
+            },
+            child: Text(l10n.delete),
+          ),
+        ],
       ),
     );
   }

@@ -90,6 +90,7 @@ class SubscriptionProvider extends ChangeNotifier {
   List<FeedSubscription> _subscriptions = [];
   Set<String> _customCategories = {};
   Map<String, String> _categoryIcons = {};
+  List<String> _categoryOrder = [];
 
   /// All current feed subscriptions.
   List<FeedSubscription> get subscriptions => _subscriptions;
@@ -99,6 +100,26 @@ class SubscriptionProvider extends ChangeNotifier {
   Set<String> get categories {
     final fromSubs = _subscriptions.map((s) => s.category).toSet();
     return fromSubs.union(_customCategories);
+  }
+
+  /// Categories in user-defined order, with any new/unknown categories appended sorted.
+  List<String> get categoriesOrdered {
+    final all = categories;
+    final ordered = _categoryOrder.where(all.contains).toList();
+    final remaining = all.where((c) => !_categoryOrder.contains(c)).toList()..sort();
+    return [...ordered, ...remaining];
+  }
+
+  /// Reorders the non-Uncategorized category at [oldIndex] to [newIndex].
+  Future<void> reorderCategory(int oldIndex, int newIndex) async {
+    final ordered = categoriesOrdered.where((c) => c != 'Uncategorized').toList();
+    if (oldIndex < 0 || oldIndex >= ordered.length) return;
+    if (newIndex < 0 || newIndex > ordered.length) return;
+    final item = ordered.removeAt(oldIndex);
+    ordered.insert(newIndex, item);
+    _categoryOrder = ordered;
+    await _saveCategoryOrder();
+    notifyListeners();
   }
 
   /// Lazily cached reference to the `'feeds'` Hive box.
@@ -117,6 +138,12 @@ class SubscriptionProvider extends ChangeNotifier {
   void _loadSubscriptions() {
     final String? data = _box.get('subscriptions');
     bool iconsNeedSave = false;
+
+    // Load category order
+    final String? orderData = _box.get('category_order');
+    if (orderData != null) {
+      _categoryOrder = List<String>.from(jsonDecode(orderData));
+    }
 
     // Load custom categories
     final String? catData = _box.get('custom_categories');
@@ -179,6 +206,10 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> _saveCategoryIcons() async {
     final String data = jsonEncode(_categoryIcons);
     await _box.put('category_icons', data);
+  }
+
+  Future<void> _saveCategoryOrder() async {
+    await _box.put('category_order', jsonEncode(_categoryOrder));
   }
 
   IconData _resolveCategoryIcon(dynamic storedIcon) {
