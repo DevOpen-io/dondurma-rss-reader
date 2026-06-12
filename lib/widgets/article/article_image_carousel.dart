@@ -1,5 +1,6 @@
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../services/image_cache_service.dart';
 
 class ArticleImageCarousel extends StatefulWidget {
   final List<String> imageUrls;
@@ -48,7 +49,9 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
                   borderRadius: BorderRadius.circular(10),
                   child: CachedNetworkImage(
                     imageUrl: widget.imageUrls[index],
+                    cacheManager: ArticleCacheManager.instance,
                     memCacheWidth: 800,
+                    maxWidthDiskCache: 800,
                     fit: BoxFit.cover,
                     width: double.infinity,
                     errorWidget: (context, url, error) => Container(

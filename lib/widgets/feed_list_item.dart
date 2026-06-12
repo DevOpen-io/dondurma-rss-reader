@@ -8,6 +8,7 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
+import '../services/image_cache_service.dart';
 import '../providers/subscription_provider.dart';
 
 class FeedListItem extends StatefulWidget {
@@ -356,9 +357,12 @@ class _FeedItemThumbnail extends StatelessWidget {
             opacity: isRead ? 0.5 : 1.0,
             child: CachedNetworkImage(
               imageUrl: item.imageUrl!,
+              cacheManager: ThumbnailCacheManager.instance,
               width: 72,
               height: 72,
-              memCacheWidth: 216,
+              memCacheWidth: 150,
+              maxWidthDiskCache: 150,
+              maxHeightDiskCache: 150,
               fit: BoxFit.cover,
               errorWidget: (_, _, _) => Container(
                 width: 72,

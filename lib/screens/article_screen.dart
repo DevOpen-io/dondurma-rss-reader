@@ -16,6 +16,7 @@ import '../widgets/article/article_content_skeleton.dart';
 import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
 import '../widgets/article/article_translation_sheet.dart';
+import '../services/image_cache_service.dart';
 import 'dart:math' as math;
 
 /// Full-screen article viewer with swipe navigation between articles.
@@ -334,8 +335,10 @@ class _ArticlePageState extends State<_ArticlePage> {
                             children: [
                               CachedNetworkImage(
                                 imageUrl: widget.item.imageUrl!,
+                                cacheManager: ArticleCacheManager.instance,
                                 fit: BoxFit.cover,
                                 memCacheWidth: 900,
+                                maxWidthDiskCache: 900,
                                 errorWidget: (_, _, _) => Container(
                                   color: colorScheme.surfaceContainerHighest,
                                 ),
@@ -524,7 +527,10 @@ class _ArticlePageState extends State<_ArticlePage> {
                                       borderRadius: BorderRadius.circular(10),
                                       child: CachedNetworkImage(
                                         imageUrl: src,
+                                        cacheManager:
+                                            ArticleCacheManager.instance,
                                         memCacheWidth: 800,
+                                        maxWidthDiskCache: 800,
                                         fit: BoxFit.contain,
                                         errorWidget: (_, _, _) =>
                                             const SizedBox.shrink(),
