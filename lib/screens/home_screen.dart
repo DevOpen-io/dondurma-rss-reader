@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:provider/provider.dart';
-import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/feed_provider.dart';
@@ -73,117 +73,71 @@ class _HomeScreenState extends State<HomeScreen> {
     List<FeedItem> olderItems,
   ) {
     final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
     final bool hasAnyItems =
         todayItems.isNotEmpty ||
         yesterdayItems.isNotEmpty ||
         olderItems.isNotEmpty;
 
-    // Flatten items into a single list with headers
-    final List<Widget> listItems = [];
+    // Build a descriptor list — lightweight data objects, no widgets yet.
+    // FeedListItem widgets are constructed lazily inside itemBuilder when the
+    // row scrolls into view. This gives true virtualization equivalent to
+    // React Virtuoso: only visible rows are in the widget tree.
+    final List<_FeedListEntry> entries = [];
 
     if (todayItems.isNotEmpty) {
-      listItems.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: _buildSectionHeader(l10n.today),
-        ),
-      );
-      listItems.addAll(
-        todayItems.map(
-          (item) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: FeedListItem(item: item),
-          ),
-        ),
-      );
+      entries.add(_HeaderEntry(l10n.today));
+      for (final item in todayItems) { entries.add(_ItemEntry(item)); }
     }
-
     if (yesterdayItems.isNotEmpty) {
-      listItems.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: _buildSectionHeader(l10n.yesterday),
-        ),
-      );
-      listItems.addAll(
-        yesterdayItems.map(
-          (item) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: FeedListItem(item: item),
-          ),
-        ),
-      );
+      entries.add(_HeaderEntry(l10n.yesterday));
+      for (final item in yesterdayItems) { entries.add(_ItemEntry(item)); }
     }
-
     if (olderItems.isNotEmpty) {
-      listItems.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: _buildSectionHeader(l10n.older),
-        ),
-      );
-      listItems.addAll(
-        olderItems.map(
-          (item) => Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: FeedListItem(item: item),
-          ),
-        ),
-      );
+      entries.add(_HeaderEntry(l10n.older));
+      for (final item in olderItems) { entries.add(_ItemEntry(item)); }
     }
 
-    // Pagination footer
-    listItems.add(HomePaginationFooter(provider: provider));
+    entries.add(_WidgetEntry(HomePaginationFooter(provider: provider)));
 
-    // Empty states
     if (provider.items.isEmpty && !provider.isLoading) {
-      listItems.add(
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.rss_feed,
-                size: 56,
-                color: Theme.of(
-                  context,
-                ).colorScheme.onSurface.withValues(alpha: 0.2),
-              ),
-              const SizedBox(height: 16),
-              Text(
-                l10n.noFeedsFound,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.55),
-                  fontSize: 15,
+      entries.add(
+        _WidgetEntry(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.rss_feed, size: 56, color: cs.onSurface.withValues(alpha: 0.2)),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.noFeedsFound,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.55), fontSize: 15),
                 ),
-              ),
-              const SizedBox(height: 20),
-              FilledButton.icon(
-                onPressed: _showAddFeedDialog,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(l10n.semanticAddFeed),
-              ),
-            ],
+                const SizedBox(height: 20),
+                FilledButton.icon(
+                  onPressed: _showAddFeedDialog,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: Text(l10n.semanticAddFeed),
+                ),
+              ],
+            ),
           ),
         ),
       );
     } else if (!hasAnyItems && !provider.isLoading) {
-      listItems.add(
-        Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Center(
-            child: Text(
-              provider.selectedCategory != null
-                  ? l10n.noFeedsInCategory(provider.selectedCategory!)
-                  : l10n.noFeedsMatchFilter,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.5),
-                fontSize: 14,
+      entries.add(
+        _WidgetEntry(
+          Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Center(
+              child: Text(
+                provider.selectedCategory != null
+                    ? l10n.noFeedsInCategory(provider.selectedCategory!)
+                    : l10n.noFeedsMatchFilter,
+                textAlign: TextAlign.center,
+                style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 14),
               ),
             ),
           ),
@@ -191,8 +145,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    // Bottom padding
-    listItems.add(const SizedBox(height: 80));
+    entries.add(const _WidgetEntry(SizedBox(height: 80)));
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -205,7 +158,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 // ── Offline banner ─────────────────────────────────────────
                 if (provider.isOffline && provider.items.isNotEmpty)
                   Material(
-                    color: Theme.of(context).colorScheme.errorContainer,
+                    color: cs.errorContainer,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -213,23 +166,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            Icons.wifi_off,
-                            size: 16,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onErrorContainer,
-                          ),
+                          Icon(Icons.wifi_off, size: 16, color: cs.onErrorContainer),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               l10n.offlineBanner,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Theme.of(
-                                  context,
-                                ).colorScheme.onErrorContainer,
-                              ),
+                              style: TextStyle(fontSize: 13, color: cs.onErrorContainer),
                             ),
                           ),
                         ],
@@ -237,7 +179,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
 
-                // ── Feed list ──────────────────────────────────────────────
+                // ── Feed list — virtualized ────────────────────────────────
+                // itemBuilder is called only for visible rows. FeedListItem
+                // widgets for off-screen items are never constructed.
                 Expanded(
                   child: NotificationListener<ScrollNotification>(
                     onNotification: (ScrollNotification scrollInfo) {
@@ -251,13 +195,31 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                       return false;
                     },
-                    child: ScrollablePositionedList.builder(
+                    // ListView.builder: single viewport, true lazy rendering.
+                    // cacheExtent = 200px pre-renders ~2 items outside the
+                    // visible area so fast scrolling never shows blank frames.
+                    // ScrollablePositionedList used dual viewports internally
+                    // (anchor + main) even though we never used position-jump;
+                    // replaced to eliminate that overhead entirely.
+                    child: ListView.builder(
                       physics: const BouncingScrollPhysics(
                         parent: AlwaysScrollableScrollPhysics(),
                       ),
-                      itemCount: listItems.length,
+                      scrollCacheExtent: ScrollCacheExtent.pixels(200),
+                      itemCount: entries.length,
                       itemBuilder: (context, index) {
-                        return listItems[index];
+                        final entry = entries[index];
+                        return switch (entry) {
+                          _HeaderEntry(:final label) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: _buildSectionHeader(label),
+                            ),
+                          _ItemEntry(:final item) => Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: FeedListItem(item: item),
+                            ),
+                          _WidgetEntry(:final child) => child,
+                        };
                       },
                     ),
                   ),
@@ -589,5 +551,29 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Virtual list descriptors — lightweight data objects used to build the feed
+// list. Widgets are constructed by itemBuilder only when rows scroll into view.
+// ---------------------------------------------------------------------------
+
+sealed class _FeedListEntry {
+  const _FeedListEntry();
+}
+
+final class _HeaderEntry extends _FeedListEntry {
+  final String label;
+  const _HeaderEntry(this.label);
+}
+
+final class _ItemEntry extends _FeedListEntry {
+  final FeedItem item;
+  const _ItemEntry(this.item);
+}
+
+final class _WidgetEntry extends _FeedListEntry {
+  final Widget child;
+  const _WidgetEntry(this.child);
 }
 

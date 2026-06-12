@@ -91,43 +91,52 @@ class AppDrawer extends StatelessWidget {
                         },
                       ),
 
-                      ReorderableListView(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        buildDefaultDragHandles: false,
-                        proxyDecorator: (child, index, animation) {
-                          return AnimatedBuilder(
-                            animation: animation,
-                            builder: (_, __) => Material(
-                              elevation: 8,
-                              borderRadius: BorderRadius.circular(14),
-                              color: Colors.transparent,
-                              shadowColor: cs.shadow.withValues(alpha: 0.3),
-                              child: child,
-                            ),
-                          );
-                        },
-                        onReorder: (oldIndex, newIndex) {
-                          if (newIndex > oldIndex) newIndex--;
-                          subscriptionProvider.reorderCategory(oldIndex, newIndex);
-                        },
-                        children: [
-                          for (int i = 0; i < nonUncategorized.length; i++)
-                            ReorderableDelayedDragStartListener(
-                              key: ValueKey(nonUncategorized[i]),
-                              index: i,
-                              child: _buildExpandableCategoryItem(
-                                categoryIcon: subscriptionProvider.getCategoryIcon(nonUncategorized[i]),
-                                title: nonUncategorized[i],
-                                feedSources: subscriptionProvider.subscriptions
-                                    .where((sub) => sub.category == nonUncategorized[i])
-                                    .toList(),
-                                provider: provider,
-                                subscriptionProvider: subscriptionProvider,
-                                context: context,
+                      // Single Theme override for the entire reorderable list.
+                      // Previously each ExpansionTile had its own Theme.copyWith
+                      // which clones the full ThemeData on every rebuild for every
+                      // category — O(N) ThemeData copies per frame.
+                      Theme(
+                        data: Theme.of(context).copyWith(
+                          dividerColor: Colors.transparent,
+                        ),
+                        child: ReorderableListView(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          buildDefaultDragHandles: false,
+                          proxyDecorator: (child, index, animation) {
+                            return AnimatedBuilder(
+                              animation: animation,
+                              builder: (_, __) => Material(
+                                elevation: 8,
+                                borderRadius: BorderRadius.circular(14),
+                                color: Colors.transparent,
+                                shadowColor: cs.shadow.withValues(alpha: 0.3),
+                                child: child,
                               ),
-                            ),
-                        ],
+                            );
+                          },
+                          onReorder: (oldIndex, newIndex) {
+                            if (newIndex > oldIndex) newIndex--;
+                            subscriptionProvider.reorderCategory(oldIndex, newIndex);
+                          },
+                          children: [
+                            for (int i = 0; i < nonUncategorized.length; i++)
+                              ReorderableDelayedDragStartListener(
+                                key: ValueKey(nonUncategorized[i]),
+                                index: i,
+                                child: _buildExpandableCategoryItem(
+                                  categoryIcon: subscriptionProvider.getCategoryIcon(nonUncategorized[i]),
+                                  title: nonUncategorized[i],
+                                  feedSources: subscriptionProvider.subscriptions
+                                      .where((sub) => sub.category == nonUncategorized[i])
+                                      .toList(),
+                                  provider: provider,
+                                  subscriptionProvider: subscriptionProvider,
+                                  context: context,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
 
                       if (hasUncategorized) ...[
@@ -282,11 +291,7 @@ class AppDrawer extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: Theme(
-        data: Theme.of(context).copyWith(
-          dividerColor: Colors.transparent, // Remove expansion lines
-        ),
-        child: ExpansionTile(
+      child: ExpansionTile(
           initiallyExpanded: provider.selectedCategory == targetCategory,
           tilePadding: const EdgeInsets.only(left: 10, right: 10),
           childrenPadding: const EdgeInsets.only(left: 12, right: 8, bottom: 8),
@@ -414,7 +419,6 @@ class AppDrawer extends StatelessWidget {
             );
           }).toList(),
         ),
-      ),
     );
   }
 
