@@ -16,6 +16,7 @@ import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
 import 'services/background_fetch_service.dart';
 import 'services/notification_service.dart';
+import 'services/widget_update_service.dart';
 import 'models/feed_item.dart';
 
 /// Custom scroll behavior that uses iOS-style bouncing physics on all
@@ -41,6 +42,7 @@ void main() async {
   // Must be called before runApp so the isolate communication port is ready
   // for the foreground service task handler.
   FlutterForegroundTask.initCommunicationPort();
+  WidgetUpdateService.initialize();
   await Hive.initFlutter();
   await Hive.openBox('settings');
   await Hive.openBox('feeds');

@@ -9,6 +9,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
 import '../services/feed_service.dart';
 import '../services/notification_service.dart';
+import '../services/widget_update_service.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
 import 'subscription_provider.dart';
@@ -597,6 +598,10 @@ class FeedProvider extends ChangeNotifier {
     _isSyncing = false;
     // Notify debug screen that sync state + timestamps have updated.
     notifyListeners();
+
+    if (fetchedAnything) {
+      WidgetUpdateService.updateFeedWidgets(_items).ignore();
+    }
   }
 
   // ---------------------------------------------------------------------------

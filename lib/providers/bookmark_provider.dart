@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
+import '../services/widget_update_service.dart';
 
 /// Manages the user's bookmarked (saved) articles with Hive persistence.
 ///
@@ -69,8 +70,9 @@ class BookmarkProvider extends ChangeNotifier {
     }
 
     notifyListeners();
-    // Fire-and-forget: persist asynchronously without blocking the UI.
+    // Fire-and-forget: persist and update home screen widget.
     _saveBookmarkStates();
+    WidgetUpdateService.updateBookmarkWidget(_savedBookmarks).ignore();
   }
 
   /// Returns `true` if the article with [id] is bookmarked.
