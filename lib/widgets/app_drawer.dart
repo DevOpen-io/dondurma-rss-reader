@@ -9,6 +9,8 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../screens/what_is_rss_page.dart';
 import 'explore_feeds_dialog.dart';
+import 'folders/feed_action_sheet.dart';
+import 'folders/folder_dialogs.dart';
 
 /// Navigation drawer showing category-based feed filtering.
 ///
@@ -364,7 +366,7 @@ class AppDrawer extends StatelessWidget {
                     onFeedSelected?.call();
                     context.pop();
                   },
-                  onLongPress: () => _showDeleteFeedDialog(context, sub, subscriptionProvider),
+                  onLongPress: () => _showFeedActionSheet(context, sub),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 12,
@@ -475,17 +477,142 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  void _showDeleteFeedDialog(
-    BuildContext context,
-    FeedSubscription sub,
-    SubscriptionProvider subscriptionProvider,
-  ) {
+  void _showFeedActionSheet(BuildContext context, FeedSubscription sub) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => FeedActionSheet(
+        subUrl: sub.url,
+        onMove: () {
+          Navigator.of(ctx).pop();
+          _showMoveFeedDialog(context, sub);
+        },
+        onEdit: () {
+          Navigator.of(ctx).pop();
+          _showEditSubscriptionDialog(context, sub);
+        },
+        onDelete: () {
+          Navigator.of(ctx).pop();
+          _showDeleteConfirmation(context, sub);
+        },
+      ),
+    );
+  }
+
+  void _showMoveFeedDialog(BuildContext context, FeedSubscription sub) {
     final l10n = AppLocalizations.of(context);
-    final cs = Theme.of(context).colorScheme;
+    final subscriptionProvider = context.read<SubscriptionProvider>();
+    final allCategories =
+        subscriptionProvider.categories.where((c) => c != sub.category).toList()
+          ..sort();
+
+    if (allCategories.isEmpty) return;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetCtx) {
+        final cs = Theme.of(context).colorScheme;
+        final tt = Theme.of(context).textTheme;
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 36,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: cs.onSurface.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  l10n.moveToFolder,
+                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: cs.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: allCategories.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      indent: 16,
+                      color: cs.outline.withValues(alpha: 0.2),
+                    ),
+                    itemBuilder: (_, index) {
+                      final category = allCategories[index];
+                      return ListTile(
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        leading: Icon(
+                          subscriptionProvider.getCategoryIcon(category),
+                          size: 20,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        title: Text(category, style: tt.bodyMedium),
+                        trailing: Icon(
+                          Icons.chevron_right_rounded,
+                          size: 18,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        onTap: () {
+                          subscriptionProvider
+                              .moveFeedToCategory(sub.url, category)
+                              .then((_) {
+                                if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
+                                if (context.mounted) {
+                                  context.read<FeedProvider>().refreshAll();
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(l10n.feedMovedToFolder(sub.name, category)),
+                                    ),
+                                  );
+                                }
+                              });
+                        },
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => EditSubscriptionDialog(sub: sub),
+    );
+  }
+
+  void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
+    final l10n = AppLocalizations.of(context);
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(l10n.deleteFeed),
         content: Text(l10n.deleteFeedConfirm(sub.name)),
         actions: [
@@ -493,17 +620,20 @@ class AppDrawer extends StatelessWidget {
             onPressed: () => Navigator.of(ctx).pop(),
             child: Text(l10n.cancel),
           ),
-          FilledButton(
-            style: FilledButton.styleFrom(
-              backgroundColor: cs.error,
-              foregroundColor: cs.onError,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
             onPressed: () {
+              context.read<SubscriptionProvider>().removeFeed(sub.url).then((_) {
+                if (context.mounted) context.read<FeedProvider>().refreshAll();
+              });
               Navigator.of(ctx).pop();
-              subscriptionProvider.removeFeed(sub.url);
             },
-            child: Text(l10n.delete),
+            child: Text(
+              l10n.delete,
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
           ),
         ],
       ),
