@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_translation/google_mlkit_translation.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
 import '../models/feed_item.dart';
@@ -49,26 +48,6 @@ class ArticlePageProvider extends ChangeNotifier {
   int? _cachedReadingMinutes;
   int? get cachedReadingMinutes => _cachedReadingMinutes;
 
-  // ---------------------------------------------------------------------------
-  // Translation state
-  // ---------------------------------------------------------------------------
-
-  String? _translatedContent;
-  bool _isTranslating = false;
-  bool _translationNeedsDownload = false;
-  String? _translationError;
-  double? _translationProgress; // null = idle, 0.0–1.0 = in progress
-
-  // Stored so mode switches (short ↔ full text) can auto-re-translate.
-  TranslateLanguage? _lastFrom;
-  TranslateLanguage? _lastTo;
-
-  bool get isTranslated => _translatedContent != null;
-  bool get isTranslating => _isTranslating;
-  bool get translationNeedsDownload => _translationNeedsDownload;
-  String? get translationError => _translationError;
-  double? get translationProgress => _translationProgress;
-
   /// Reading progress (0.0 to 1.0). Uses [ValueNotifier] to avoid full
   /// rebuilds on every scroll tick.
   final ValueNotifier<double> readingProgress = ValueNotifier(0.0);
@@ -105,13 +84,10 @@ class ArticlePageProvider extends ChangeNotifier {
   Future<void> activateFullText() async {
     if (item.link.isEmpty) return;
 
-    final wasTranslated = _translatedContent != null;
-
     _fullTextActive = true;
     _isLoadingFullText = true;
     _fullTextFailed = false;
     _fullTextContent = null;
-    _translatedContent = null; // clear stale translation
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
     notifyListeners();
@@ -135,30 +111,16 @@ class ArticlePageProvider extends ChangeNotifier {
       _fullTextContent = null;
     }
     notifyListeners();
-
-    // Re-translate the new content if translation was active before the switch.
-    if (wasTranslated && _fullTextContent != null &&
-        _lastFrom != null && _lastTo != null) {
-      await translate(_lastFrom!, _lastTo!);
-    }
   }
 
   void deactivateFullText() {
-    final wasTranslated = _translatedContent != null;
-
     _fullTextActive = false;
     _isLoadingFullText = false;
     _fullTextContent = null;
     _fullTextFailed = false;
-    _translatedContent = null; // clear stale translation
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
     notifyListeners();
-
-    // Re-translate the short text if translation was active before the switch.
-    if (wasTranslated && _lastFrom != null && _lastTo != null) {
-      translate(_lastFrom!, _lastTo!); // fire-and-forget
-    }
   }
 
   void toggleFullText() {
@@ -194,12 +156,7 @@ class ArticlePageProvider extends ChangeNotifier {
   /// the item's content or description.
   String get rawContent => _fullTextContent ?? item.content ?? item.description;
 
-  /// Returns the preprocessed display content, computing & caching on first
-  /// access or after cache invalidation.
-  ///
-  /// Returns [_translatedContent] if a translation is active.
   String get displayContent {
-    if (_translatedContent != null) return _translatedContent!;
     _cachedDisplayContent ??= _preprocessHtml(rawContent);
     return _cachedDisplayContent!;
   }
@@ -431,159 +388,6 @@ class ArticlePageProvider extends ChangeNotifier {
     final imgs = node.getElementsByTagName('img');
     if (imgs.isNotEmpty) return imgs.first.attributes['src'];
     return null;
-  }
-
-  // ---------------------------------------------------------------------------
-  // Translation
-  // ---------------------------------------------------------------------------
-
-  /// Translates the article's plain-text content from [from] to [to].
-  ///
-  /// Downloads ML Kit language models on first use (cached by the OS after
-  /// that). Translation is chunked at 4 500 chars to stay within ML Kit's
-  /// per-call limit. Result is stored as simple `<p>` HTML for the Html
-  /// widget. Ephemeral — cleared on [dispose].
-  Future<void> translate(TranslateLanguage from, TranslateLanguage to) async {
-    _lastFrom = from;
-    _lastTo = to;
-    _isTranslating = true;
-    _translationNeedsDownload = false;
-    _translationError = null;
-    _translatedContent = null;
-    _translationProgress = 0.0;
-    _cachedDisplayContent = null;
-    notifyListeners();
-
-    OnDeviceTranslator? translator;
-    try {
-      // Check models — do NOT auto-download. If missing (or plugin unavailable
-      // on this platform), signal the UI to open the Language Packs manager.
-      final modelManager = OnDeviceTranslatorModelManager();
-      for (final lang in [from, to]) {
-        try {
-          final downloaded = await modelManager.isModelDownloaded(lang.bcpCode);
-          if (!downloaded) {
-            _translationNeedsDownload = true;
-            return;
-          }
-        } catch (_) {
-          _translationNeedsDownload = true;
-          return;
-        }
-      }
-
-      final preprocessed = _cachedDisplayContent ?? _preprocessHtml(rawContent);
-      if (preprocessed.trim().isEmpty) {
-        _translationError = 'empty';
-        return;
-      }
-
-      translator = OnDeviceTranslator(sourceLanguage: from, targetLanguage: to);
-      _translatedContent = await _translateHtmlPreservingStructure(
-        translator, preprocessed,
-        onProgress: (p) {
-          _translationProgress = p;
-          notifyListeners();
-        },
-      );
-    } catch (e) {
-      _translationError = e.toString();
-      debugPrint('Translation error: $e');
-    } finally {
-      translator?.close();
-      _isTranslating = false;
-      _translationProgress = null;
-      _cachedDisplayContent = null;
-      if (hasListeners) notifyListeners();
-    }
-  }
-
-  /// Resets the "needs download" flag so the translation sheet shows the
-  /// normal UI again after the user returns from the Language Packs manager.
-  void clearTranslationNeedsDownload() {
-    _translationNeedsDownload = false;
-    notifyListeners();
-  }
-
-  /// Clears the active translation, restoring original content.
-  /// Also clears the stored language pair so mode switches won't auto-retranslate.
-  void clearTranslation() {
-    _translatedContent = null;
-    _translationError = null;
-    _lastFrom = null;
-    _lastTo = null;
-    _cachedDisplayContent = null;
-    notifyListeners();
-  }
-
-  /// Tags whose text content should never be translated.
-  static const _noTranslateTags = {
-    'script', 'style', 'img', 'img-carousel', 'code', 'pre',
-  };
-
-  /// Walks [html], translates only text nodes, and returns reconstructed HTML
-  /// with all element structure (bold, images, carousels, etc.) intact.
-  Future<String> _translateHtmlPreservingStructure(
-    OnDeviceTranslator translator, String html,
-    {void Function(double)? onProgress}) async {
-    final doc = html_parser.parse(html);
-    final body = doc.body;
-    if (body == null) return html;
-
-    final nodes = <html_dom.Text>[];
-    _collectTextNodes(body, nodes);
-    if (nodes.isEmpty) return html;
-
-    final originals = nodes.map((n) => n.text.trim()).toList();
-    const sep = '\n\n';
-    final joined = originals.join(sep);
-
-    // Fast path: batch all text into one ML Kit call when small enough.
-    if (joined.length <= 4500) {
-      try {
-        final result = await translator.translateText(joined);
-        final parts = result.split(sep);
-        if (parts.length == originals.length) {
-          for (int i = 0; i < nodes.length; i++) {
-            _applyToNode(nodes[i], parts[i].trim());
-          }
-          onProgress?.call(1.0);
-          return body.innerHtml;
-        }
-      } catch (_) {}
-    }
-
-    // Fallback: translate each text node individually, reporting progress.
-    for (int i = 0; i < nodes.length; i++) {
-      final trimmed = nodes[i].text.trim();
-      if (trimmed.isNotEmpty) {
-        try {
-          final translated = await translator.translateText(trimmed);
-          _applyToNode(nodes[i], translated.trim());
-        } catch (_) {}
-      }
-      onProgress?.call((i + 1) / nodes.length);
-    }
-
-    return body.innerHtml;
-  }
-
-  void _collectTextNodes(html_dom.Element el, List<html_dom.Text> out) {
-    if (_noTranslateTags.contains(el.localName?.toLowerCase())) return;
-    for (final node in el.nodes) {
-      if (node is html_dom.Text && node.text.trim().isNotEmpty) {
-        out.add(node);
-      } else if (node is html_dom.Element) {
-        _collectTextNodes(node, out);
-      }
-    }
-  }
-
-  void _applyToNode(html_dom.Text node, String translated) {
-    final orig = node.text;
-    final leadLen = orig.length - orig.trimLeft().length;
-    final trailStart = orig.trimRight().length;
-    node.text = '${orig.substring(0, leadLen)}$translated${orig.substring(trailStart)}';
   }
 
   // ---------------------------------------------------------------------------

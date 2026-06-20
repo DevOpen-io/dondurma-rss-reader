@@ -12,7 +12,6 @@ import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_sheet.dart';
-import '../widgets/language_packs_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
@@ -409,32 +408,6 @@ class SettingsScreen extends StatelessWidget {
               ],
             ),
           ),
-        ),
-
-        SettingsSectionTitle(
-          title: l10n.languagePacks,
-          icon: Icons.translate_rounded,
-        ),
-        SettingsCard(
-          children: [
-            SettingsActionTile(
-              icon: Icons.translate_rounded,
-              title: l10n.languagePacks,
-              subtitle: l10n.languagePacksDesc,
-              trailing: Icon(
-                Icons.chevron_right_rounded,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-              onTap: () => showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                builder: (_) => const LanguagePacksSheet(),
-              ),
-            ),
-          ],
         ),
 
         SettingsSectionTitle(title: l10n.dataAndStorage, icon: Icons.storage_outlined),
