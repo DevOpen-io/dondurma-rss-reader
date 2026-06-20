@@ -106,7 +106,7 @@ class AppDrawer extends StatelessWidget {
                           proxyDecorator: (child, index, animation) {
                             return AnimatedBuilder(
                               animation: animation,
-                              builder: (_, __) => Material(
+                              builder: (_, _) => Material(
                                 elevation: 8,
                                 borderRadius: BorderRadius.circular(14),
                                 color: Colors.transparent,
@@ -115,7 +115,7 @@ class AppDrawer extends StatelessWidget {
                               ),
                             );
                           },
-                          onReorder: (oldIndex, newIndex) {
+                          onReorderItem: (oldIndex, newIndex) {
                             if (newIndex > oldIndex) newIndex--;
                             subscriptionProvider.reorderCategory(oldIndex, newIndex);
                           },
