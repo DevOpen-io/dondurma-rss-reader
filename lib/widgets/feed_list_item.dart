@@ -520,6 +520,7 @@ class _FeedItemContent extends StatelessWidget {
     final now = DateTime.now();
     final d = item.pubDate!;
     final diff = now.difference(d);
+    if (diff.isNegative || diff.inMinutes < 1) return 'now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';
     if (diff.inDays < 7) return '${diff.inDays}d';

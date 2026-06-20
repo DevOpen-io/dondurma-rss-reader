@@ -40,20 +40,16 @@ class FeedService {
   // Pre-compiled RFC 822 date format patterns (avoids re-creating per call)
   // ---------------------------------------------------------------------------
 
+  // Patterns WITHOUT timezone — tz offset is stripped and applied manually
+  // because intl's DateFormat parses but does NOT apply +HHMM offsets.
   static final List<DateFormat> _rfc822Patterns = [
-    // "Thu, 27 Feb 2026 12:00:00 +0000"
-    DateFormat('EEE, dd MMM yyyy HH:mm:ss Z', 'en_US'),
-    // "27 Feb 2026 12:00:00 +0000"  (no day-of-week)
-    DateFormat('dd MMM yyyy HH:mm:ss Z', 'en_US'),
-    // "Thu, 27 Feb 2026 12:00:00"  (no timezone)
     DateFormat('EEE, dd MMM yyyy HH:mm:ss', 'en_US'),
-    // "27 Feb 2026 12:00:00"
     DateFormat('dd MMM yyyy HH:mm:ss', 'en_US'),
-    // "Thu, 27 Feb 2026" (date only)
     DateFormat('EEE, dd MMM yyyy', 'en_US'),
-    // "27 Feb 2026"
     DateFormat('dd MMM yyyy', 'en_US'),
   ];
+
+  static final _tzOffsetRegex = RegExp(r'\s*([+-])(\d{2})(\d{2})\s*$');
 
   // ---------------------------------------------------------------------------
   // Timezone abbreviation → offset mapping for RFC 822 normalization
@@ -236,29 +232,39 @@ class FeedService {
   /// Supports:
   ///  - ISO 8601 (e.g. `2026-02-27T12:00:00Z`)
   ///  - RFC 822 / RFC 2822 (e.g. `Thu, 27 Feb 2026 12:00:00 GMT`)
-  ///  - Common variants with/without day-of-week or timezone abbreviations
   DateTime? _parseRssDate(String? dateStr) {
     if (dateStr == null || dateStr.trim().isEmpty) return null;
 
     final trimmed = dateStr.trim();
 
-    // 1. Try ISO 8601 first (Atom feeds typically use this)
+    // 1. ISO 8601 — DateTime.parse handles timezone correctly
     final iso = DateTime.tryParse(trimmed);
     if (iso != null) return iso;
 
-    // 2. Replace common timezone abbreviations with numeric offsets
+    // 2. Replace timezone abbreviations (GMT, EST…) with numeric offsets
     String normalized = trimmed;
     for (final entry in _timezoneReplacements.entries) {
       normalized = normalized.replaceAll(entry.key, entry.value);
     }
 
-    // 3. Try RFC 822 / RFC 2822 patterns (pre-compiled static instances)
+    // 3. Extract numeric tz offset and strip it before parsing.
+    //    intl's DateFormat reads but does NOT apply +HHMM offsets.
+    int offsetMinutes = 0;
+    final tzMatch = _tzOffsetRegex.firstMatch(normalized);
+    if (tzMatch != null) {
+      final sign = tzMatch.group(1) == '+' ? 1 : -1;
+      final h = int.parse(tzMatch.group(2)!);
+      final m = int.parse(tzMatch.group(3)!);
+      offsetMinutes = sign * (h * 60 + m);
+      normalized = normalized.substring(0, tzMatch.start).trim();
+    }
+
+    // 4. Parse datetime as UTC, then subtract the offset to get true UTC
     for (final format in _rfc822Patterns) {
       try {
-        return format.parse(normalized, true); // true = UTC
-      } catch (_) {
-        // Try next pattern
-      }
+        final dt = format.parse(normalized, true);
+        return dt.subtract(Duration(minutes: offsetMinutes));
+      } catch (_) {}
     }
 
     return null;
