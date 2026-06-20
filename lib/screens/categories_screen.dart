@@ -19,7 +19,8 @@ class CategoriesScreen extends StatelessWidget {
   void _showEditCategoryDialog(BuildContext context, String currentCategory) {
     showDialog<void>(
       context: context,
-      builder: (context) => EditCategoryDialog(currentCategory: currentCategory),
+      builder: (context) =>
+          EditCategoryDialog(currentCategory: currentCategory),
     );
   }
 
@@ -233,7 +234,9 @@ class CategoriesScreen extends StatelessWidget {
                     itemBuilder: (_, index) {
                       final category = allCategories[index];
                       return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         leading: Icon(
                           subscriptionProvider.getCategoryIcon(category),
                           size: 20,
@@ -257,7 +260,10 @@ class CategoriesScreen extends StatelessWidget {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(
-                                        l10n.feedMovedToFolder(sub.name, category),
+                                        l10n.feedMovedToFolder(
+                                          sub.name,
+                                          category,
+                                        ),
                                       ),
                                     ),
                                   );
@@ -327,28 +333,26 @@ class CategoriesScreen extends StatelessWidget {
               Icon(
                 Icons.folder_open_rounded,
                 size: 64,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.15),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.15),
               ),
               const SizedBox(height: 20),
               Text(
                 l10n.noFolders,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               Text(
                 'Add a category to organize your feeds.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 14,
                   height: 1.5,
                 ),
@@ -360,7 +364,7 @@ class CategoriesScreen extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 128),
       itemCount: sortedCategoryNames.length,
       itemBuilder: (context, index) {
         final categoryName = sortedCategoryNames[index];
@@ -371,7 +375,11 @@ class CategoriesScreen extends StatelessWidget {
           subscriptionProvider: subscriptionProvider,
           onIconTap: () => _showIconPicker(context, categoryName),
           onRename: () => _showEditCategoryDialog(context, categoryName),
-          onDelete: () => _showDeleteCategoryConfirmation(context, categoryName, subs.length),
+          onDelete: () => _showDeleteCategoryConfirmation(
+            context,
+            categoryName,
+            subs.length,
+          ),
           onFeedTap: (sub) => _showFeedActionSheet(context, sub),
         );
       },
@@ -441,7 +449,10 @@ class _CategorySection extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: cs.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(20),
@@ -453,7 +464,11 @@ class _CategorySection extends StatelessWidget {
                 ),
                 const SizedBox(width: 2),
                 PopupMenuButton<_CategoryAction>(
-                  icon: Icon(Icons.more_vert, size: 20, color: cs.onSurfaceVariant),
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: 20,
+                    color: cs.onSurfaceVariant,
+                  ),
                   onSelected: (action) {
                     if (action == _CategoryAction.rename) onRename();
                     if (action == _CategoryAction.delete) onDelete();
@@ -461,22 +476,26 @@ class _CategorySection extends StatelessWidget {
                   itemBuilder: (_) => [
                     PopupMenuItem(
                       value: _CategoryAction.rename,
-                      child: Row(children: [
-                        Icon(Icons.drive_file_rename_outline, size: 18),
-                        const SizedBox(width: 8),
-                        Text(AppLocalizations.of(context).renameFolder),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(Icons.drive_file_rename_outline, size: 18),
+                          const SizedBox(width: 8),
+                          Text(AppLocalizations.of(context).renameFolder),
+                        ],
+                      ),
                     ),
                     PopupMenuItem(
                       value: _CategoryAction.delete,
-                      child: Row(children: [
-                        Icon(Icons.delete_outline, size: 18, color: cs.error),
-                        const SizedBox(width: 8),
-                        Text(
-                          AppLocalizations.of(context).deleteFolder,
-                          style: TextStyle(color: cs.error),
-                        ),
-                      ]),
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete_outline, size: 18, color: cs.error),
+                          const SizedBox(width: 8),
+                          Text(
+                            AppLocalizations.of(context).deleteFolder,
+                            style: TextStyle(color: cs.error),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -487,7 +506,11 @@ class _CategorySection extends StatelessWidget {
             Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.5)),
             for (int i = 0; i < subs.length; i++) ...[
               if (i > 0)
-                Divider(height: 1, indent: 16, color: cs.outlineVariant.withValues(alpha: 0.3)),
+                Divider(
+                  height: 1,
+                  indent: 16,
+                  color: cs.outlineVariant.withValues(alpha: 0.3),
+                ),
               _FeedRow(sub: subs[i], onTap: () => onFeedTap(subs[i])),
             ],
           ],
@@ -575,4 +598,3 @@ class _FeedRow extends StatelessWidget {
     );
   }
 }
-
