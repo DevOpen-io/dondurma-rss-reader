@@ -90,6 +90,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deleteAll => 'Delete All';
 
   @override
+  String get markAllAsRead => 'Mark All as Read';
+
+  @override
   String get editFeed => 'Edit Feed';
 
   @override

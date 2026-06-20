@@ -248,6 +248,12 @@ abstract class AppLocalizations {
   /// **'Delete All'**
   String get deleteAll;
 
+  /// No description provided for @markAllAsRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark All as Read'**
+  String get markAllAsRead;
+
   /// No description provided for @editFeed.
   ///
   /// In en, this message translates to:

@@ -9,6 +9,7 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../screens/what_is_rss_page.dart';
 import 'explore_feeds_dialog.dart';
+import 'folders/category_action_sheet.dart';
 import 'folders/feed_action_sheet.dart';
 import 'folders/folder_dialogs.dart';
 
@@ -316,35 +317,62 @@ class AppDrawer extends StatelessWidget {
             icon: categoryIcon,
             isSelected: isCategorySelected,
           ),
-          title: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () {
-              provider.selectCategory(targetCategory);
-              onFeedSelected?.call();
-              context.pop();
-            },
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: tt.bodyMedium?.copyWith(
-                      color: isCategorySelected
-                          ? cs.primary
-                          : cs.onSurface.withValues(alpha: 0.8),
-                      fontWeight:
-                          isCategorySelected ? FontWeight.w700 : FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+          title: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () {
+                    provider.selectCategory(targetCategory);
+                    onFeedSelected?.call();
+                    context.pop();
+                  },
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: tt.bodyMedium?.copyWith(
+                            color: isCategorySelected
+                                ? cs.primary
+                                : cs.onSurface.withValues(alpha: 0.8),
+                            fontWeight: isCategorySelected
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (count > 0) ...[
+                        const SizedBox(width: 8),
+                        _buildCountPill(context, count, isCategorySelected),
+                      ],
+                    ],
                   ),
                 ),
-                if (count > 0) ...[
-                  const SizedBox(width: 8),
-                  _buildCountPill(context, count, isCategorySelected),
-                ],
+              ),
+              if (!isUncategorizedNode) ...[
+                const SizedBox(width: 4),
+                GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => _showCategoryActionSheet(
+                    context,
+                    targetCategory,
+                    subscriptionProvider.getCategoryIcon(targetCategory),
+                    feedSources.length,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                    child: Icon(
+                      Icons.more_vert,
+                      size: 18,
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                    ),
+                  ),
+                ),
               ],
-            ),
+            ],
           ),
           children: feedSources.map((sub) {
             final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
@@ -473,6 +501,79 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  void _showCategoryActionSheet(
+    BuildContext context,
+    String category,
+    IconData categoryIcon,
+    int feedCount,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) => CategoryActionSheet(
+        category: category,
+        categoryIcon: categoryIcon,
+        onMarkAllRead: () {
+          Navigator.of(ctx).pop();
+          context.read<FeedProvider>().markAllInCategoryAsRead(category);
+        },
+        onRename: () {
+          Navigator.of(ctx).pop();
+          showDialog<void>(
+            context: context,
+            builder: (_) => EditCategoryDialog(currentCategory: category),
+          );
+        },
+        onDelete: () {
+          Navigator.of(ctx).pop();
+          _showDeleteCategoryConfirmation(context, category, feedCount);
+        },
+      ),
+    );
+  }
+
+  void _showDeleteCategoryConfirmation(
+    BuildContext context,
+    String category,
+    int feedCount,
+  ) {
+    final l10n = AppLocalizations.of(context);
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(l10n.deleteFolder),
+        content: Text(l10n.deleteFolderConfirm(category, feedCount)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: Text(l10n.cancel),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () {
+              context
+                  .read<SubscriptionProvider>()
+                  .removeCategory(category)
+                  .then((_) {
+                if (context.mounted) context.read<FeedProvider>().refreshAll();
+              });
+              Navigator.of(ctx).pop();
+            },
+            child: Text(
+              l10n.delete,
+              style: TextStyle(color: Theme.of(context).colorScheme.onError),
+            ),
+          ),
+        ],
       ),
     );
   }

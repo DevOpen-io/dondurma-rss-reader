@@ -41,6 +41,7 @@
     }
   },
   "deleteAll": "Delete All",
+  "markAllAsRead": "Mark All as Read",
 
   "editFeed": "Edit Feed",
   "feedName": "Feed Name",

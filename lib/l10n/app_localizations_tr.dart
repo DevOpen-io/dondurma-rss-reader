@@ -91,6 +91,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get deleteAll => 'Tümünü Sil';
 
   @override
+  String get markAllAsRead => 'Tümünü Okundu İşaretle';
+
+  @override
   String get editFeed => 'Kaynağı Düzenle';
 
   @override

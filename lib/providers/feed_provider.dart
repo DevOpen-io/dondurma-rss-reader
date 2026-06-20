@@ -471,6 +471,21 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  /// Marks all articles in [category] as read in one atomic operation.
+  Future<void> markAllInCategoryAsRead(String category) async {
+    final ids = _items
+        .where((i) => i.category == category)
+        .map((i) => i.id)
+        .toSet();
+    if (ids.isEmpty) return;
+    final hadUnread = ids.any((id) => !_readItemIds.contains(id));
+    if (!hadUnread) return;
+    _readItemIds.addAll(ids);
+    _invalidateFilterCache();
+    notifyListeners();
+    await _saveReadStates();
+  }
+
   /// Toggles the read/unread state of an article.
   Future<void> toggleReadStatus(String id) async {
     if (_readItemIds.contains(id)) {
