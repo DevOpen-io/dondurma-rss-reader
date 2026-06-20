@@ -2,13 +2,12 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:workmanager/workmanager.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
-import '../services/background_fetch_service.dart';
+import '../services/background_fetch_service.dart' show runBgFetch;
 
 /// Hidden debug screen accessible by long-pressing the app version tile in
 /// Settings. Displays Hive box sizes, background sync status, and data metrics.
@@ -25,14 +24,10 @@ class _DebugScreenState extends State<DebugScreen> {
   Future<void> _triggerBgFetch() async {
     setState(() => _triggering = true);
     try {
-      await Workmanager().registerOneOffTask(
-        'debug_bg_fetch_${DateTime.now().millisecondsSinceEpoch}',
-        bgFetchTaskName,
-        constraints: Constraints(networkType: NetworkType.connected),
-      );
+      await runBgFetch();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Background task queued')),
+          const SnackBar(content: Text('Background fetch completed')),
         );
       }
     } finally {
