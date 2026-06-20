@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:file_picker/file_picker.dart';
+import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart';
@@ -166,25 +166,14 @@ class OpmlService {
   /// Returns an empty list if the user cancels or the file is invalid.
   Future<List<FeedSubscription>> importOpml() async {
     try {
-      final result = await FilePicker.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['opml', 'xml'],
-        withData: true,
+      const typeGroup = XTypeGroup(
+        label: 'OPML',
+        extensions: ['opml', 'xml'],
       );
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+      if (file == null) return [];
 
-      if (result == null || result.files.isEmpty) return [];
-
-      final file = result.files.first;
-      String content;
-
-      if (file.bytes != null) {
-        content = String.fromCharCodes(file.bytes!);
-      } else if (file.path != null) {
-        content = await File(file.path!).readAsString();
-      } else {
-        return [];
-      }
-
+      final content = await file.readAsString();
       return parseOpml(content);
     } catch (_) {
       return [];
