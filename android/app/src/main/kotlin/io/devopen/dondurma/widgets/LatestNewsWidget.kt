@@ -1,13 +1,11 @@
 package io.devopen.dondurma.widgets
 
-import android.app.PendingIntent
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
-import android.view.View
+import android.net.Uri
 import android.widget.RemoteViews
-import io.devopen.dondurma.MainActivity
 import io.devopen.dondurma.R
 import org.json.JSONArray
 
@@ -18,42 +16,31 @@ class LatestNewsWidgetReceiver : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray
     ) {
-        val views = buildViews(context)
-        appWidgetIds.forEach { appWidgetManager.updateAppWidget(it, views) }
+        appWidgetIds.forEach { id ->
+            appWidgetManager.updateAppWidget(id, buildViews(context, id))
+            appWidgetManager.notifyAppWidgetViewDataChanged(id, R.id.widget_list)
+        }
     }
 
-    private fun buildViews(context: Context): RemoteViews {
+    private fun buildViews(context: Context, appWidgetId: Int): RemoteViews {
         val prefs = context.getSharedPreferences("HomeWidgetPreferences", Context.MODE_PRIVATE)
         val json = prefs.getString("widget_latest", null)
 
         val views = RemoteViews(context.packageName, R.layout.widget_latest_news)
+        views.setOnClickPendingIntent(R.id.widget_root, openAppIntent(context, 0))
 
-        val pi = openAppIntent(context, 0)
-        views.setOnClickPendingIntent(R.id.widget_root, pi)
+        val count = runCatching { JSONArray(json).length() }.getOrDefault(0)
+        views.setTextViewText(R.id.header_count, "$count")
 
-        val itemIds = listOf(R.id.item_1, R.id.item_2, R.id.item_3, R.id.item_4, R.id.item_5)
-        val titleIds = listOf(R.id.title_1, R.id.title_2, R.id.title_3, R.id.title_4, R.id.title_5)
-        val timeIds = listOf(R.id.time_1, R.id.time_2, R.id.time_3, R.id.time_4, R.id.time_5)
-
-        itemIds.forEach { views.setViewVisibility(it, View.GONE) }
-
-        if (json != null) {
-            runCatching {
-                val arr = JSONArray(json)
-                val count = minOf(arr.length(), 5)
-                views.setTextViewText(R.id.header_count, "$count")
-                for (i in 0 until count) {
-                    val a = arr.getJSONObject(i)
-                    views.setViewVisibility(itemIds[i], View.VISIBLE)
-                    views.setTextViewText(titleIds[i], a.optString("title"))
-                    views.setTextViewText(timeIds[i], a.optString("timeAgo"))
-                    val id = a.optString("id")
-                    if (id.isNotEmpty()) {
-                        views.setOnClickPendingIntent(itemIds[i], articleClickIntent(context, id))
-                    }
-                }
-            }
+        val serviceIntent = Intent(context, WidgetListService::class.java).apply {
+            putExtra(EXTRA_WIDGET_TYPE, TYPE_LATEST)
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId)
+            // Unique data Uri so each widget instance gets its own factory.
+            data = Uri.parse(toUri(Intent.URI_INTENT_SCHEME))
         }
+        views.setRemoteAdapter(R.id.widget_list, serviceIntent)
+        views.setEmptyView(R.id.widget_list, R.id.empty_view)
+        views.setPendingIntentTemplate(R.id.widget_list, articleClickTemplate(context, appWidgetId))
 
         return views
     }

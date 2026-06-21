@@ -16,7 +16,7 @@ class WidgetUpdateService {
     _initialized = true;
   }
 
-  /// Updates the feed-based widgets (Latest, Trending, Category).
+  /// Updates the feed-based widgets (Latest, Category).
   static Future<void> updateFeedWidgets(List<FeedItem> allItems) async {
     if (!_initialized) initialize();
     try {
@@ -29,17 +29,12 @@ class WidgetUpdateService {
 
       await Future.wait([
         _saveLatest(sorted),
-        _saveTrending(sorted),
         _saveCategory(sorted),
       ]);
       await Future.wait([
         HomeWidget.updateWidget(
           androidName: 'widgets.LatestNewsWidgetReceiver',
           iOSName: 'LatestNewsWidget',
-        ),
-        HomeWidget.updateWidget(
-          androidName: 'widgets.TrendingWidgetReceiver',
-          iOSName: 'TrendingWidget',
         ),
         HomeWidget.updateWidget(
           androidName: 'widgets.CategoryWidgetReceiver',
@@ -51,46 +46,12 @@ class WidgetUpdateService {
     }
   }
 
-  /// Updates the Read Later (bookmarks) widget.
-  static Future<void> updateBookmarkWidget(List<FeedItem> bookmarked) async {
-    if (!_initialized) initialize();
-    try {
-      final items = bookmarked.take(5).map(_toMap).toList();
-      await HomeWidget.saveWidgetData<String>(
-        'widget_bookmarks',
-        jsonEncode(items),
-      );
-      await HomeWidget.updateWidget(
-        androidName: 'widgets.ReadLaterWidgetReceiver',
-        iOSName: 'ReadLaterWidget',
-      );
-    } catch (e) {
-      debugPrint('WidgetUpdateService.updateBookmarkWidget: $e');
-    }
-  }
-
   static Future<void> _saveLatest(List<FeedItem> sorted) async {
-    final items = sorted.take(5).map(_toMap).toList();
+    final items = sorted.take(50).map(_toMap).toList();
     await HomeWidget.saveWidgetData<String>(
       'widget_latest',
       jsonEncode(items),
     );
-  }
-
-  static Future<void> _saveTrending(List<FeedItem> sorted) async {
-    if (sorted.isEmpty) return;
-    final t = sorted.first;
-    final desc = t.description.length > 120
-        ? '${t.description.substring(0, 120)}...'
-        : t.description;
-    await HomeWidget.saveWidgetData<String>('widget_trending', jsonEncode({
-      'id': t.id,
-      'title': t.title,
-      'siteName': t.siteName,
-      'description': desc,
-      'link': t.link,
-      'timeAgo': _formatTime(t.pubDate),
-    }));
   }
 
   /// Writes per-category article buckets so the native category widget can
@@ -101,7 +62,7 @@ class WidgetUpdateService {
     for (final item in sorted) {
       if (item.category == 'Uncategorized') continue;
       final bucket = byCategory.putIfAbsent(item.category, () => []);
-      if (bucket.length < 5) bucket.add(_toMap(item));
+      if (bucket.length < 50) bucket.add(_toMap(item));
     }
     if (byCategory.isEmpty) return;
     await HomeWidget.saveWidgetData<String>(

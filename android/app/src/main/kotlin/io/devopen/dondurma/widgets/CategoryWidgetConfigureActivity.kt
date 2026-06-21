@@ -13,6 +13,7 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
+import io.devopen.dondurma.R
 import org.json.JSONArray
 
 /// Configuration screen shown when the user drops a Category widget onto the
@@ -135,6 +136,7 @@ class CategoryWidgetConfigureActivity : Activity() {
             appWidgetId,
             CategoryWidgetReceiver.buildCategoryViews(this, appWidgetId)
         )
+        manager.notifyAppWidgetViewDataChanged(appWidgetId, R.id.widget_list)
 
         setResult(
             RESULT_OK,

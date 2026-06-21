@@ -12,13 +12,6 @@ private struct ArticleEntry: Identifiable {
     let timeAgo: String
 }
 
-private struct TrendingEntry {
-    let title: String
-    let siteName: String
-    let description: String
-    let timeAgo: String
-}
-
 private func loadArticles(key: String) -> [ArticleEntry] {
     guard
         let defaults = UserDefaults(suiteName: appGroupId),
@@ -34,22 +27,6 @@ private func loadArticles(key: String) -> [ArticleEntry] {
             timeAgo: $0["timeAgo"] ?? ""
         )
     }
-}
-
-private func loadTrending() -> TrendingEntry? {
-    guard
-        let defaults = UserDefaults(suiteName: appGroupId),
-        let json = defaults.string(forKey: "widget_trending"),
-        let data = json.data(using: .utf8),
-        let obj = try? JSONSerialization.jsonObject(with: data) as? [String: String]
-    else { return nil }
-
-    return TrendingEntry(
-        title: obj["title"] ?? "",
-        siteName: obj["siteName"] ?? "",
-        description: obj["description"] ?? "",
-        timeAgo: obj["timeAgo"] ?? ""
-    )
 }
 
 private func loadCategory() -> (name: String, articles: [ArticleEntry]) {
@@ -119,7 +96,7 @@ private struct ArticleListBody: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ForEach(Array(articles.prefix(5).enumerated()), id: \.offset) { idx, article in
+            ForEach(Array(articles.enumerated()), id: \.offset) { idx, article in
                 if idx > 0 {
                     Divider().background(Color.white.opacity(0.1)).padding(.vertical, 3)
                 }
@@ -172,7 +149,7 @@ struct LatestNewsWidget: Widget {
         }
         .configurationDisplayName("Son Eklenenler")
         .description("En yeni haberleri ana ekranınızda görün.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
 
@@ -184,6 +161,8 @@ struct LatestNewsWidgetView: View {
         switch family {
         case .systemSmall: return 2
         case .systemMedium: return 3
+        case .systemLarge: return 6
+        case .systemExtraLarge: return 12
         default: return 5
         }
     }
@@ -199,101 +178,6 @@ struct LatestNewsWidgetView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 ArticleListBody(articles: Array(entry.articles.prefix(visibleCount)))
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-// MARK: - Trending Widget
-
-struct TrendingEntry2: TimelineEntry {
-    let date: Date
-    let item: TrendingEntry?
-}
-
-struct TrendingProvider: TimelineProvider {
-    func placeholder(in context: Context) -> TrendingEntry2 {
-        TrendingEntry2(date: .now, item: TrendingEntry(
-            title: "Yapay Zeka 2024'te Nasıl Değişti?",
-            siteName: "Teknoloji Haberleri",
-            description: "Bu yıl yapay zeka alanında yaşanan gelişmeler tüm sektörleri derinden etkiledi...",
-            timeAgo: "3h"
-        ))
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (TrendingEntry2) -> Void) {
-        completion(TrendingEntry2(date: .now, item: loadTrending()))
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<TrendingEntry2>) -> Void) {
-        let entry = TrendingEntry2(date: .now, item: loadTrending())
-        completion(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(30 * 60))))
-    }
-}
-
-struct TrendingWidget: Widget {
-    let kind = "TrendingWidget"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: TrendingProvider()) { entry in
-            TrendingWidgetView(entry: entry)
-                .containerBackground(WidgetBackground(), for: .widget)
-        }
-        .configurationDisplayName("Öne Çıkan")
-        .description("Günün öne çıkan haberini ana ekranınızda görün.")
-        .supportedFamilies([.systemMedium, .systemLarge])
-    }
-}
-
-struct TrendingWidgetView: View {
-    let entry: TrendingEntry2
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            WidgetHeader(title: "Öne Çıkan")
-                .padding(.bottom, 10)
-
-            if let item = entry.item {
-                Text(item.title)
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundColor(.white)
-                    .lineLimit(4)
-                    .lineSpacing(2)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .layoutPriority(2)
-
-                if !item.description.isEmpty {
-                    Text(item.description)
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.6))
-                        .lineLimit(3)
-                        .lineSpacing(2)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.top, 6)
-                        .layoutPriority(1)
-                }
-
-                Spacer()
-                Divider().background(Color.white.opacity(0.1)).padding(.vertical, 6)
-
-                HStack {
-                    Text(item.siteName)
-                        .font(.system(size: 10))
-                        .foregroundColor(Color(hex: "12A8FF").opacity(0.65))
-                    Spacer()
-                    if !item.timeAgo.isEmpty {
-                        Text(item.timeAgo)
-                            .font(.system(size: 10))
-                            .foregroundColor(Color(hex: "12A8FF").opacity(0.5))
-                    }
-                }
-            } else {
-                Text("Henüz haber yok")
-                    .font(.system(size: 11))
-                    .foregroundColor(.white.opacity(0.4))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .padding(14)
@@ -339,7 +223,7 @@ struct CategoryWidget: Widget {
         }
         .configurationDisplayName("Kategoriye Özel")
         .description("En popüler kategorinizdeki haberleri görün.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
+        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge, .systemExtraLarge])
     }
 }
 
@@ -351,6 +235,8 @@ struct CategoryWidgetView: View {
         switch family {
         case .systemSmall: return 2
         case .systemMedium: return 3
+        case .systemLarge: return 6
+        case .systemExtraLarge: return 12
         default: return 5
         }
     }
@@ -373,108 +259,13 @@ struct CategoryWidgetView: View {
     }
 }
 
-// MARK: - Read Later Widget
-
-struct ReadLaterEntry: TimelineEntry {
-    let date: Date
-    let articles: [ArticleEntry]
-}
-
-struct ReadLaterProvider: TimelineProvider {
-    func placeholder(in context: Context) -> ReadLaterEntry {
-        ReadLaterEntry(date: .now, articles: [
-            ArticleEntry(title: "Makale başlığı bir", siteName: "Kaynak", timeAgo: "3h"),
-            ArticleEntry(title: "Makale başlığı iki", siteName: "Kaynak 2", timeAgo: "1d"),
-        ])
-    }
-
-    func getSnapshot(in context: Context, completion: @escaping (ReadLaterEntry) -> Void) {
-        completion(ReadLaterEntry(date: .now, articles: loadArticles(key: "widget_bookmarks")))
-    }
-
-    func getTimeline(in context: Context, completion: @escaping (Timeline<ReadLaterEntry>) -> Void) {
-        let entry = ReadLaterEntry(date: .now, articles: loadArticles(key: "widget_bookmarks"))
-        completion(Timeline(entries: [entry], policy: .after(.now.addingTimeInterval(30 * 60))))
-    }
-}
-
-struct ReadLaterWidget: Widget {
-    let kind = "ReadLaterWidget"
-
-    var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: ReadLaterProvider()) { entry in
-            ReadLaterWidgetView(entry: entry)
-                .containerBackground(WidgetBackground(), for: .widget)
-        }
-        .configurationDisplayName("Daha Sonra Oku")
-        .description("Kaydettiğiniz makaleleri ana ekranınızda görün.")
-        .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
-    }
-}
-
-struct ReadLaterWidgetView: View {
-    let entry: ReadLaterEntry
-    @Environment(\.widgetFamily) var family
-
-    var visibleCount: Int {
-        switch family {
-        case .systemSmall: return 2
-        case .systemMedium: return 3
-        default: return 5
-        }
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            WidgetHeader(title: "Daha Sonra Oku", badge: entry.articles.isEmpty ? nil : "\(entry.articles.count)")
-                .padding(.bottom, 8)
-            if entry.articles.isEmpty {
-                VStack(spacing: 4) {
-                    Text("Kaydedilen makale yok")
-                        .font(.system(size: 11))
-                        .foregroundColor(.white.opacity(0.4))
-                    Text("Makaleleri yer imlerine ekleyin")
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.25))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(entry.articles.prefix(visibleCount).enumerated()), id: \.offset) { idx, article in
-                        if idx > 0 {
-                            Divider().background(Color.white.opacity(0.1)).padding(.vertical, 3)
-                        }
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(article.title)
-                                .font(.system(size: 11))
-                                .foregroundColor(.white.opacity(0.9))
-                                .lineLimit(1)
-                            let sub = [article.siteName, article.timeAgo].filter { !$0.isEmpty }.joined(separator: " · ")
-                            if !sub.isEmpty {
-                                Text(sub)
-                                    .font(.system(size: 9))
-                                    .foregroundColor(Color(hex: "12A8FF").opacity(0.55))
-                            }
-                        }
-                        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                    }
-                }
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
 // MARK: - Widget Bundle
 
 @main
 struct DondurmaWidgetBundle: WidgetBundle {
     var body: some Widget {
         LatestNewsWidget()
-        TrendingWidget()
         CategoryWidget()
-        ReadLaterWidget()
     }
 }
 
