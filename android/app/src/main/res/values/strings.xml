@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="widget_latest_news_desc">Son haberleri ana ekranınızda görün</string>
+    <string name="widget_trending_desc">Öne çıkan haberi ana ekranınızda görün</string>
+    <string name="widget_category_desc">Kategori haberlerini ana ekranınızda görün</string>
+    <string name="widget_read_later_desc">Daha sonra okuyacağınız haberleri görün</string>
+</resources>

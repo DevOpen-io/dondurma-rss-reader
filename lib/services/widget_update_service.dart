@@ -34,15 +34,15 @@ class WidgetUpdateService {
       ]);
       await Future.wait([
         HomeWidget.updateWidget(
-          androidName: 'LatestNewsWidgetReceiver',
+          androidName: 'widgets.LatestNewsWidgetReceiver',
           iOSName: 'LatestNewsWidget',
         ),
         HomeWidget.updateWidget(
-          androidName: 'TrendingWidgetReceiver',
+          androidName: 'widgets.TrendingWidgetReceiver',
           iOSName: 'TrendingWidget',
         ),
         HomeWidget.updateWidget(
-          androidName: 'CategoryWidgetReceiver',
+          androidName: 'widgets.CategoryWidgetReceiver',
           iOSName: 'CategoryWidget',
         ),
       ]);
@@ -61,7 +61,7 @@ class WidgetUpdateService {
         jsonEncode(items),
       );
       await HomeWidget.updateWidget(
-        androidName: 'ReadLaterWidgetReceiver',
+        androidName: 'widgets.ReadLaterWidgetReceiver',
         iOSName: 'ReadLaterWidget',
       );
     } catch (e) {
