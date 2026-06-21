@@ -44,6 +44,10 @@ class ReadLaterWidgetReceiver : AppWidgetProvider() {
                     val source = a.optString("siteName")
                     val time = a.optString("timeAgo")
                     views.setTextViewText(sourceIds[i], if (time.isNotEmpty()) "$source · $time" else source)
+                    val id = a.optString("id")
+                    if (id.isNotEmpty()) {
+                        views.setOnClickPendingIntent(itemIds[i], articleClickIntent(context, id))
+                    }
                 }
             }
         }

@@ -6,6 +6,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:adblocker_webview/adblocker_webview.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
+import 'package:home_widget/home_widget.dart';
 import 'l10n/app_localizations.dart';
 import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
@@ -64,6 +65,15 @@ void main() async {
     } catch (e) {
       debugPrint('Failed to navigate from notification tap: $e');
     }
+  });
+
+  // Home screen widget tap → open the tapped article inside the app.
+  HomeWidget.widgetClicked.listen(_openArticleFromWidget);
+  HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
+    if (uri == null) return;
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _openArticleFromWidget(uri),
+    );
   });
 
   _initForegroundTask();
@@ -190,6 +200,44 @@ Future<void> _migrateHiveBoxes() async {
   }
 
   await settingsBox.put('_boxesMigrated', true);
+}
+
+/// Opens the article referenced by a home-widget launch [uri]
+/// (`homewidget://article?id=<id>`) by looking the item up in the local cache.
+void _openArticleFromWidget(Uri? uri) {
+  final id = uri?.queryParameters['id'];
+  if (id == null || id.isEmpty) return;
+  final item = _findCachedItemById(id);
+  if (item == null) return;
+  appRouter.push(
+    '/article',
+    extra: {
+      'items': [item],
+      'initialIndex': 0,
+    },
+  );
+}
+
+/// Searches the feed and bookmark caches for an item with [id].
+FeedItem? _findCachedItemById(String id) {
+  const sources = [
+    ('feeds', 'cachedItemsJson'),
+    ('bookmarks', 'bookmarkedItemsJson'),
+  ];
+  for (final (boxName, key) in sources) {
+    final raw = Hive.box(boxName).get(key) as String?;
+    if (raw == null) continue;
+    try {
+      final list = jsonDecode(raw) as List<dynamic>;
+      for (final entry in list) {
+        final map = entry as Map<String, dynamic>;
+        if (map['id'] == id) return FeedItem.fromJson(map);
+      }
+    } catch (e) {
+      debugPrint('Widget article lookup failed in $boxName: $e');
+    }
+  }
+  return null;
 }
 
 /// Root widget that wires theme, locale, and router configuration.

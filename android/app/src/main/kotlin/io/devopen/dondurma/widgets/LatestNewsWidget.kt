@@ -47,6 +47,10 @@ class LatestNewsWidgetReceiver : AppWidgetProvider() {
                     views.setViewVisibility(itemIds[i], View.VISIBLE)
                     views.setTextViewText(titleIds[i], a.optString("title"))
                     views.setTextViewText(timeIds[i], a.optString("timeAgo"))
+                    val id = a.optString("id")
+                    if (id.isNotEmpty()) {
+                        views.setOnClickPendingIntent(itemIds[i], articleClickIntent(context, id))
+                    }
                 }
             }
         }

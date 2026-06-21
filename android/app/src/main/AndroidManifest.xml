@@ -25,6 +25,11 @@
               android:name="io.flutter.embedding.android.NormalTheme"
               android:resource="@style/NormalTheme"
               />
+            <!-- Disable Flutter auto deep-linking so home_widget launch URIs
+                 (homewidget://) don't hijack GoRouter; we navigate manually. -->
+            <meta-data
+              android:name="flutter_deeplinking_enabled"
+              android:value="false" />
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
@@ -74,6 +79,15 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/widget_category_info"/>
         </receiver>
+
+        <activity
+            android:name=".widgets.CategoryWidgetConfigureActivity"
+            android:exported="true"
+            android:theme="@android:style/Theme.Material.Dialog.NoActionBar">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE"/>
+            </intent-filter>
+        </activity>
 
         <receiver
             android:name=".widgets.ReadLaterWidgetReceiver"

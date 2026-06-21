@@ -84,6 +84,7 @@ class WidgetUpdateService {
         ? '${t.description.substring(0, 120)}...'
         : t.description;
     await HomeWidget.saveWidgetData<String>('widget_trending', jsonEncode({
+      'id': t.id,
       'title': t.title,
       'siteName': t.siteName,
       'description': desc,
@@ -92,26 +93,29 @@ class WidgetUpdateService {
     }));
   }
 
+  /// Writes per-category article buckets so the native category widget can
+  /// render whichever category the user picked at configuration time.
   static Future<void> _saveCategory(List<FeedItem> sorted) async {
     if (sorted.isEmpty) return;
-    final counts = <String, int>{};
+    final byCategory = <String, List<Map<String, String>>>{};
     for (final item in sorted) {
-      if (item.category != 'Uncategorized') {
-        counts[item.category] = (counts[item.category] ?? 0) + 1;
-      }
+      if (item.category == 'Uncategorized') continue;
+      final bucket = byCategory.putIfAbsent(item.category, () => []);
+      if (bucket.length < 5) bucket.add(_toMap(item));
     }
-    if (counts.isEmpty) return;
-    final topCat =
-        counts.entries.reduce((a, b) => a.value >= b.value ? a : b).key;
-    final catItems =
-        sorted.where((i) => i.category == topCat).take(5).map(_toMap).toList();
-    await HomeWidget.saveWidgetData<String>('widget_category', jsonEncode({
-      'name': topCat,
-      'articles': catItems,
-    }));
+    if (byCategory.isEmpty) return;
+    await HomeWidget.saveWidgetData<String>(
+      'widget_category_list',
+      jsonEncode(byCategory.keys.toList()),
+    );
+    await HomeWidget.saveWidgetData<String>(
+      'widget_category_data',
+      jsonEncode(byCategory),
+    );
   }
 
   static Map<String, String> _toMap(FeedItem item) => {
+    'id': item.id,
     'title': item.title,
     'siteName': item.siteName,
     'timeAgo': _formatTime(item.pubDate),

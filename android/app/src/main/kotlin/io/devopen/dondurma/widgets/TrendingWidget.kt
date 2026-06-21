@@ -31,6 +31,10 @@ class TrendingWidgetReceiver : AppWidgetProvider() {
         if (json != null) {
             runCatching {
                 val obj = JSONObject(json)
+                val id = obj.optString("id")
+                if (id.isNotEmpty()) {
+                    views.setOnClickPendingIntent(R.id.widget_root, articleClickIntent(context, id))
+                }
                 views.setTextViewText(R.id.trending_title, obj.optString("title"))
                 views.setTextViewText(R.id.trending_description, obj.optString("description"))
                 val source = obj.optString("siteName")

@@ -12,4 +12,5 @@
     android:updatePeriodMillis="1800000"
     android:initialLayout="@layout/widget_category"
     android:previewLayout="@layout/widget_category"
+    android:configure="io.devopen.dondurma.widgets.CategoryWidgetConfigureActivity"
     android:widgetCategory="home_screen"/>
