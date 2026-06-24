@@ -175,6 +175,44 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  /// Minimum gap between an app-resume refresh and the previous sync.
+  static const Duration resumeRefreshThrottle = Duration(seconds: 60);
+
+  /// Pure decision for [maybeRefreshOnResume] — extracted for unit testing.
+  ///
+  /// Returns `true` only when dependencies are wired, no sync is in flight, and
+  /// either no sync has happened yet or the last one is older than
+  /// [resumeRefreshThrottle].
+  static bool shouldRefreshOnResume({
+    required bool hasDependencies,
+    required bool isSyncing,
+    required DateTime? lastSyncTime,
+    required DateTime now,
+  }) {
+    if (!hasDependencies) return false;
+    if (isSyncing) return false;
+    if (lastSyncTime != null &&
+        now.difference(lastSyncTime) < resumeRefreshThrottle) {
+      return false;
+    }
+    return true;
+  }
+
+  /// Refreshes feeds when the app returns to the foreground, unless a sync
+  /// completed very recently. Keeps notification-tap / cold-resume launches
+  /// showing current news without spamming fetches on rapid app switches.
+  Future<void> maybeRefreshOnResume() async {
+    if (!shouldRefreshOnResume(
+      hasDependencies: subscriptionProvider != null,
+      isSyncing: _isSyncing,
+      lastSyncTime: _lastSyncTime,
+      now: DateTime.now(),
+    )) {
+      return;
+    }
+    await refreshAll();
+  }
+
   void _manageCacheTimer() {
     _cacheTimer?.cancel();
     _cacheTimer = null;

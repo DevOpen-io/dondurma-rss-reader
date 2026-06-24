@@ -1,6 +1,9 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:workmanager/workmanager.dart';
+
+import '../services/background_fetch_service.dart';
 
 /// Manages global application settings with Hive persistence.
 ///
@@ -202,6 +205,13 @@ class SettingsProvider extends ChangeNotifier {
     _syncBackground = value;
     notifyListeners();
     await _box.put('syncBackground', value);
+    // Reflect the toggle in the OS scheduler immediately so disabling stops
+    // background fetches without requiring an app restart.
+    if (value) {
+      await registerBgFetch();
+    } else {
+      await Workmanager().cancelByUniqueName('rss_bg_fetch');
+    }
   }
 
   /// Updates the app locale and persists the language code.

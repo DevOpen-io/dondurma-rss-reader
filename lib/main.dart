@@ -5,8 +5,8 @@ import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:adblocker_webview/adblocker_webview.dart';
-import 'package:flutter_foreground_task/flutter_foreground_task.dart';
-import 'package:home_widget/home_widget.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:home_widget/home_widget.dart' hide callbackDispatcher;
 import 'l10n/app_localizations.dart';
 import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
@@ -40,9 +40,6 @@ class PremiumScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Must be called before runApp so the isolate communication port is ready
-  // for the foreground service task handler.
-  FlutterForegroundTask.initCommunicationPort();
   WidgetUpdateService.initialize();
   await Hive.initFlutter();
   await Hive.openBox('settings');
@@ -76,7 +73,7 @@ void main() async {
     );
   });
 
-  _initForegroundTask();
+  await _initBackgroundFetch();
 
   // Ağır işleri arka plana fırlatıyoruz
   _initHeavyServicesInBackground();
@@ -104,39 +101,18 @@ void main() async {
   );
 }
 
-void _initForegroundTask() {
-  FlutterForegroundTask.init(
-    androidNotificationOptions: AndroidNotificationOptions(
-      channelId: 'rss_bg_sync',
-      channelName: 'RSS Background Sync',
-      channelDescription: 'Checks for new articles in the background',
-      channelImportance: NotificationChannelImportance.LOW,
-      priority: NotificationPriority.LOW,
-      enableVibration: false,
-      playSound: false,
-    ),
-    iosNotificationOptions: const IOSNotificationOptions(
-      showNotification: false,
-      playSound: false,
-    ),
-    foregroundTaskOptions: ForegroundTaskOptions(
-      eventAction: ForegroundTaskEventAction.repeat(15 * 60 * 1000),
-      autoRunOnBoot: true,
-      allowWakeLock: true,
-      allowWifiLock: true,
-    ),
-  );
-}
+/// Initializes WorkManager and schedules the periodic background fetch when
+/// background sync is enabled. Unlike the previous foreground service, this
+/// shows NO persistent notification while it runs.
+Future<void> _initBackgroundFetch() async {
+  await Workmanager().initialize(callbackDispatcher);
 
-Future<void> _startForegroundTaskService() async {
-  final result = await FlutterForegroundTask.startService(
-    serviceId: 256,
-    notificationTitle: 'Dondurma RSS',
-    notificationText: 'Checking for new articles...',
-    callback: startCallback,
-  );
-  if (result is ServiceRequestFailure) {
-    debugPrint('[FG] startService: ${result.error}');
+  final bool syncEnabled =
+      Hive.box('settings').get('syncBackground', defaultValue: true);
+  if (syncEnabled) {
+    await registerBgFetch();
+  } else {
+    await Workmanager().cancelByUniqueName('rss_bg_fetch');
   }
 }
 
@@ -144,10 +120,6 @@ void _initHeavyServicesInBackground() {
   NotificationService.instance.requestPermission().catchError((e) {
     debugPrint('Notification permission error: $e');
     return false;
-  });
-
-  _startForegroundTaskService().catchError((e) {
-    debugPrint('FG task start error: $e');
   });
 
   AdBlockerWebviewController.instance
@@ -241,8 +213,35 @@ FeedItem? _findCachedItemById(String id) {
 }
 
 /// Root widget that wires theme, locale, and router configuration.
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When the app returns to the foreground (e.g. opened from a notification
+    // or the launcher after backgrounding), pull fresh feeds so the user sees
+    // current news instead of the stale cache. Throttled inside the provider.
+    if (state == AppLifecycleState.resumed) {
+      context.read<FeedProvider>().maybeRefreshOnResume();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
