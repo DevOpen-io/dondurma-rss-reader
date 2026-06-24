@@ -38,22 +38,32 @@
             android:textSize="10sp"/>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/empty_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center"
-        android:text="Bu kategoride haber yok"
-        android:textColor="#66FFFFFF"
-        android:textSize="11sp"/>
-
-    <ListView
-        android:id="@+id/widget_list"
+    <!-- List + empty overlap in a FrameLayout so the ListView always gets the
+         full remaining height. A match_parent empty view placed as a plain
+         LinearLayout sibling steals the weighted list's space on some launchers,
+         collapsing it to 0px (list renders blank despite holding items). -->
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"
-        android:divider="#1AFFFFFF"
-        android:dividerHeight="0.5dp"
-        android:scrollbars="none"/>
+        android:layout_weight="1">
+
+        <ListView
+            android:id="@+id/widget_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:divider="#1AFFFFFF"
+            android:dividerHeight="0.5dp"
+            android:scrollbars="none"/>
+
+        <TextView
+            android:id="@+id/empty_view"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:text="Bu kategoride haber yok"
+            android:textColor="#66FFFFFF"
+            android:textSize="11sp"/>
+
+    </FrameLayout>
 
 </LinearLayout>

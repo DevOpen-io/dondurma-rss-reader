@@ -41,7 +41,7 @@
         <!-- Home screen widgets -->
         <service
             android:name=".widgets.WidgetListService"
-            android:permission="android.permission.BIND_REMOTE_VIEWS"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
             android:exported="false" />
 
         <receiver
