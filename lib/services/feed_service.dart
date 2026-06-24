@@ -22,6 +22,33 @@ class FeedService {
 
   void dispose() => _client.close();
 
+  /// Max items kept per feed. Some feeds expose large archives (hundreds of
+  /// entries); keeping only the most recent slice bounds memory, the unread
+  /// counts, and the size of the merged in-memory list.
+  static const int maxItemsPerFeed = 50;
+
+  /// Returns at most [maxItemsPerFeed] most-recent items. Sorts by descending
+  /// publication date only when the cap is exceeded — feeds are conventionally
+  /// reverse-chronological, but that is not guaranteed.
+  static List<FeedItem> capItems(List<FeedItem> items) {
+    if (items.length <= maxItemsPerFeed) return items;
+    final sorted = items.toList()
+      ..sort((a, b) {
+        if (a.pubDate == null && b.pubDate == null) return 0;
+        if (a.pubDate == null) return 1;
+        if (b.pubDate == null) return -1;
+        return b.pubDate!.compareTo(a.pubDate!);
+      });
+    return sorted.take(maxItemsPerFeed).toList();
+  }
+
+  /// Stable synthetic ID for feed items exposing neither a guid nor a link.
+  /// Derived from feed URL + title + raw date so the same article keeps the same
+  /// ID across fetches. Using `DateTime.now()` here would mint a fresh ID every
+  /// refresh, breaking read-state tracking and re-triggering notifications.
+  static String fallbackId(String feedUrl, String? title, String? rawDate) =>
+      'gen:$feedUrl#${title ?? ''}#${rawDate ?? ''}';
+
   // ---------------------------------------------------------------------------
   // HTTP header constants
   // ---------------------------------------------------------------------------
@@ -70,20 +97,39 @@ class FeedService {
 
   /// Fetches and parses the feed at [url], tagging each item with [category].
   ///
-  /// Returns a list of [FeedItem]s. Throws if the HTTP request fails or the
-  /// response cannot be parsed as either RSS or Atom.
-  Future<List<FeedItem>> fetchFeed(String url, String category) async {
+  /// When [etag] or [lastModified] from a previous fetch are supplied, the
+  /// request is made conditional (`If-None-Match` / `If-Modified-Since`). A
+  /// `304 Not Modified` returns a [FeedFetchResult.notModified] with no body to
+  /// parse, so unchanged feeds cost almost nothing on every refresh cycle.
+  ///
+  /// Throws if the HTTP request fails or the response cannot be parsed as either
+  /// RSS or Atom.
+  Future<FeedFetchResult> fetchFeed(
+    String url,
+    String category, {
+    String? etag,
+    String? lastModified,
+  }) async {
     try {
+      final headers = <String, String>{
+        'User-Agent': _userAgent,
+        'Accept': _acceptHeader,
+        'Accept-Language': 'en-US,en;q=0.9',
+      };
+      if (etag != null) headers['If-None-Match'] = etag;
+      if (lastModified != null) headers['If-Modified-Since'] = lastModified;
+
       final response = await _client
-          .get(
-            Uri.parse(url),
-            headers: {
-              'User-Agent': _userAgent,
-              'Accept': _acceptHeader,
-              'Accept-Language': 'en-US,en;q=0.9',
-            },
-          )
+          .get(Uri.parse(url), headers: headers)
           .timeout(const Duration(seconds: 10));
+
+      // Content unchanged since the validators we sent — no body returned.
+      if (response.statusCode == 304) {
+        return FeedFetchResult.notModified(
+          etag: etag,
+          lastModified: lastModified,
+        );
+      }
       if (response.statusCode != 200) {
         throw Exception(
           'Failed to load RSS feed (Status: ${response.statusCode})',
@@ -97,18 +143,27 @@ class FeedService {
         bodyString = response.body;
       }
 
+      final newEtag = response.headers['etag'];
+      final newLastModified = response.headers['last-modified'];
+
+      List<FeedItem> items;
       try {
         final rssFeed = RssFeed.parse(bodyString);
-        return _mapRssItems(rssFeed, category, url);
+        items = capItems(_mapRssItems(rssFeed, category, url));
       } catch (e) {
         // Try parsing as Atom if RSS parsing fails
         try {
           final atomFeed = AtomFeed.parse(bodyString);
-          return _mapAtomItems(atomFeed, category, url);
+          items = capItems(_mapAtomItems(atomFeed, category, url));
         } catch (e2) {
           throw Exception('Failed to parse RSS/Atom feed: $e2');
         }
       }
+      return FeedFetchResult(
+        items: items,
+        etag: newEtag,
+        lastModified: newLastModified,
+      );
     } catch (e) {
       debugPrint('Error fetching feed $url: $e');
       throw Exception('Could not fetch or parse feed.');
@@ -135,7 +190,7 @@ class FeedService {
       }
 
       return FeedItem(
-        id: item.guid ?? item.link ?? DateTime.now().toIso8601String(),
+        id: item.guid ?? item.link ?? fallbackId(sourceUrl, item.title, item.pubDate),
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: parsed.text,
@@ -187,7 +242,9 @@ class FeedService {
       return FeedItem(
         id:
             item.id ??
-            (link.isNotEmpty ? link : DateTime.now().toIso8601String()),
+            (link.isNotEmpty
+                ? link
+                : fallbackId(sourceUrl, item.title, item.updated ?? item.published)),
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: parsed.text,
@@ -269,6 +326,34 @@ class FeedService {
 
     return null;
   }
+}
+
+/// Outcome of a single [FeedService.fetchFeed] call.
+///
+/// Carries HTTP cache validators (ETag / Last-Modified) so the next request can
+/// be made conditional and an unchanged feed can short-circuit with [notModified].
+class FeedFetchResult {
+  /// Parsed items. Empty when [notModified] (the caller reuses its own copy).
+  final List<FeedItem> items;
+
+  /// Validators echoed back for persistence. For a 304 these are the same ones
+  /// that were sent; for a 200 they come from the fresh response (may be null).
+  final String? etag;
+  final String? lastModified;
+
+  /// True when the server returned `304 Not Modified`.
+  final bool notModified;
+
+  const FeedFetchResult({
+    this.items = const [],
+    this.etag,
+    this.lastModified,
+    this.notModified = false,
+  });
+
+  const FeedFetchResult.notModified({this.etag, this.lastModified})
+    : items = const [],
+      notModified = true;
 }
 
 /// Plain text + image list extracted from a single HTML parse.

@@ -115,7 +115,8 @@ Future<void> runBgFetch() async {
     final results = await Future.wait(
       subscriptions.map((sub) async {
         try {
-          return await feedService.fetchFeed(sub.url, sub.category);
+          final result = await feedService.fetchFeed(sub.url, sub.category);
+          return result.items;
         } catch (_) {
           return <FeedItem>[];
         }

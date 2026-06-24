@@ -67,6 +67,11 @@ class FeedProvider extends ChangeNotifier {
   bool _isSyncing = false;
   bool get isSyncing => _isSyncing;
 
+  /// Set when a refresh is requested while one is already running. The in-flight
+  /// [refreshAll] runs exactly one more pass when it finishes, so overlapping
+  /// triggers collapse into a single trailing refresh instead of stacking.
+  bool _refreshQueued = false;
+
   // Dependencies that need to be updated via ProxyProvider
   SubscriptionProvider? subscriptionProvider;
   SettingsProvider? settingsProvider;
@@ -81,11 +86,21 @@ class FeedProvider extends ChangeNotifier {
 
   List<FeedItem>? _filteredItemsCache;
 
+  /// Memoized unread tallies powering the drawer badges. Rebuilt lazily from
+  /// [_items] + [_readItemIds] and invalidated alongside the filter cache, so
+  /// the drawer no longer rescans every item for every category/feed row on
+  /// each rebuild. `null` means "needs rebuild".
+  Map<String, int>? _unreadByCategory;
+  Map<String, int>? _unreadByFeed;
+  int _unreadTotal = 0;
+
   /// Invalidates the cached filtered list. Must be called before
   /// [notifyListeners] whenever any filter input changes.
   void _invalidateFilterCache() {
     _filteredItemsCache = null;
     _dateGroupsCache = null;
+    _unreadByCategory = null;
+    _unreadByFeed = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -213,6 +228,18 @@ class FeedProvider extends ChangeNotifier {
     await refreshAll();
   }
 
+  /// Pure decision for the periodic sync timer — skip a tick when a sync
+  /// (manual, app-resume, or a previous tick) already completed within the last
+  /// [intervalSeconds], so off-cycle refreshes don't get doubled by the timer.
+  static bool shouldRunPeriodicSync({
+    required DateTime? lastSyncTime,
+    required DateTime now,
+    required int intervalSeconds,
+  }) {
+    if (lastSyncTime == null) return true;
+    return now.difference(lastSyncTime).inSeconds >= intervalSeconds;
+  }
+
   void _manageCacheTimer() {
     _cacheTimer?.cancel();
     _cacheTimer = null;
@@ -222,6 +249,13 @@ class FeedProvider extends ChangeNotifier {
 
     if (interval > 0 && syncEnabled) {
       _cacheTimer = Timer.periodic(Duration(seconds: interval), (timer) {
+        if (!shouldRunPeriodicSync(
+          lastSyncTime: _lastSyncTime,
+          now: DateTime.now(),
+          intervalSeconds: interval,
+        )) {
+          return;
+        }
         refreshAll();
       });
     }
@@ -255,6 +289,25 @@ class FeedProvider extends ChangeNotifier {
 
   Future<void> _saveReadStates() async {
     await _box.put('readItemIds', _readItemIds.toList());
+  }
+
+  /// Loads persisted per-feed HTTP cache validators (ETag / Last-Modified),
+  /// stored as a JSON object `{ feedUrl: {etag, lastModified} }`. Returns an
+  /// empty map when absent or corrupt — a missing validator just means the next
+  /// fetch is unconditional.
+  Map<String, dynamic> _loadFeedValidators() {
+    final raw = _box.get('feedValidators');
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) return decoded.cast<String, dynamic>();
+      } catch (_) {}
+    }
+    return {};
+  }
+
+  void _saveFeedValidators(Map<String, dynamic> validators) {
+    _box.put('feedValidators', jsonEncode(validators));
   }
 
   // ---------------------------------------------------------------------------
@@ -502,12 +555,29 @@ class FeedProvider extends ChangeNotifier {
 
   /// Number of unread items, optionally scoped to a [category] or [feedUrl].
   /// Used by the drawer to show unread badges next to categories and feeds.
+  /// Backed by memoized tallies — a single O(n) pass amortized across all rows.
   int unreadCount({String? category, String? feedUrl}) {
-    return _items.where((i) {
-      if (category != null && i.category != category) return false;
-      if (feedUrl != null && i.feedUrl != feedUrl) return false;
-      return !_readItemIds.contains(i.id);
-    }).length;
+    if (_unreadByCategory == null) _rebuildUnreadCounts();
+    if (feedUrl != null) return _unreadByFeed![feedUrl] ?? 0;
+    if (category != null) return _unreadByCategory![category] ?? 0;
+    return _unreadTotal;
+  }
+
+  /// Single-pass rebuild of the unread tallies. Cached until the next
+  /// [_invalidateFilterCache] (read-state change, fetch, or filter change).
+  void _rebuildUnreadCounts() {
+    final byCategory = <String, int>{};
+    final byFeed = <String, int>{};
+    int total = 0;
+    for (final item in _items) {
+      if (_readItemIds.contains(item.id)) continue;
+      total++;
+      byCategory[item.category] = (byCategory[item.category] ?? 0) + 1;
+      byFeed[item.feedUrl] = (byFeed[item.feedUrl] ?? 0) + 1;
+    }
+    _unreadByCategory = byCategory;
+    _unreadByFeed = byFeed;
+    _unreadTotal = total;
   }
 
   /// Marks an article as read (no-op if already read).
@@ -556,12 +626,51 @@ class FeedProvider extends ChangeNotifier {
   Future<void> refreshAll() async {
     if (subscriptionProvider == null) return;
 
+    // Coalesce overlapping refreshes. The periodic timer, app-resume, and
+    // subscription-change triggers can all fire close together; without this a
+    // second full-feed fetch storm would run in parallel, doubling HTTP load.
+    // Instead, record that one more pass is needed and let the in-flight call
+    // run it when it finishes.
+    if (_isSyncing) {
+      _refreshQueued = true;
+      return;
+    }
+
     _isSyncing = true;
+    try {
+      await _performRefresh();
+    } finally {
+      // Always clear the guard, even if a fetch/persist step throws — otherwise
+      // the provider would deadlock and never refresh again.
+      _isSyncing = false;
+    }
+
+    if (_refreshQueued) {
+      _refreshQueued = false;
+      await refreshAll();
+    }
+  }
+
+  /// Internal single-pass refresh. Always invoke through [refreshAll], which
+  /// owns the `_isSyncing` guard and trailing-refresh coalescing.
+  Future<void> _performRefresh() async {
     _isLoading = true;
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
     final subs = subscriptionProvider!.subscriptions;
+
+    // HTTP cache validators (ETag / Last-Modified) per feed URL, persisted so
+    // each refresh issues conditional GETs and unchanged feeds short-circuit
+    // with a 304 instead of re-downloading and re-parsing every cycle.
+    final validators = _loadFeedValidators();
+
+    // Snapshot current items per feed so a 304 — or a transient error — reuses
+    // the feed's existing articles instead of dropping them this cycle.
+    final existingByFeed = <String, List<FeedItem>>{};
+    for (final it in _items) {
+      (existingByFeed[it.feedUrl] ??= []).add(it);
+    }
 
     // Rate-limit concurrent HTTP requests to avoid network/memory saturation.
     // With 30+ feeds, unbounded Future.wait exhausts connection pools and causes
@@ -569,29 +678,70 @@ class FeedProvider extends ChangeNotifier {
     final semaphore = _Semaphore(_fetchConcurrency);
     final futures = subs.map((sub) async {
       await semaphore.acquire();
+      final v = validators[sub.url];
       try {
-        return await _feedService.fetchFeed(sub.url, sub.category);
+        final result = await _feedService.fetchFeed(
+          sub.url,
+          sub.category,
+          etag: v?['etag'] as String?,
+          lastModified: v?['lastModified'] as String?,
+        );
+        return (
+          url: sub.url,
+          items: result.notModified
+              ? (existingByFeed[sub.url] ?? const <FeedItem>[])
+              : result.items,
+          succeeded: true,
+          fresh: !result.notModified,
+          etag: result.etag,
+          lastModified: result.lastModified,
+        );
       } catch (e) {
         debugPrint('Error fetching feed ${sub.url}: $e');
-        return <FeedItem>[];
+        // Transient failure: keep the feed's existing items so one error doesn't
+        // blank it out, and leave its validators untouched.
+        return (
+          url: sub.url,
+          items: existingByFeed[sub.url] ?? const <FeedItem>[],
+          succeeded: false,
+          fresh: false,
+          etag: null as String?,
+          lastModified: null as String?,
+        );
       } finally {
         semaphore.release();
       }
     });
 
-    final results = await Future.wait(futures);
+    final outcomes = await Future.wait(futures);
 
-    List<FeedItem> freshItems = [];
-    for (final items in results) {
-      freshItems.addAll(items);
+    // online: reached the network on at least one feed (200 or 304).
+    // anyFreshBody: at least one feed returned a 200 body → content changed, so
+    // it's worth re-sorting, persisting, notifying, and updating widgets.
+    bool online = false;
+    bool anyFreshBody = false;
+    final List<FeedItem> freshItems = [];
+    final newValidators = Map<String, dynamic>.from(validators);
+    for (final o in outcomes) {
+      freshItems.addAll(o.items);
+      if (o.succeeded) online = true;
+      if (o.fresh) {
+        anyFreshBody = true;
+        if (o.etag != null || o.lastModified != null) {
+          newValidators[o.url] = {
+            'etag': o.etag,
+            'lastModified': o.lastModified,
+          };
+        } else {
+          // Server offered no validators — force a full fetch next time.
+          newValidators.remove(o.url);
+        }
+      }
     }
+    _saveFeedValidators(newValidators);
 
-    // If every single fetch failed (e.g. device is offline), keep the
-    // previously loaded items so cached articles remain visible.
-    final bool fetchedAnything = freshItems.isNotEmpty;
-
-    if (fetchedAnything) {
-      // Merge bookmarks into the fresh list so they are always visible.
+    if (online) {
+      // Merge bookmarks into the list so they are always visible.
       // Use a Set for O(1) lookup — avoids O(bookmarks × items) scan.
       if (bookmarkProvider != null) {
         final freshIds = freshItems.map((i) => i.id).toSet();
@@ -624,30 +774,30 @@ class FeedProvider extends ChangeNotifier {
       debugPrint('FeedProvider: all fetches failed — showing cached items.');
     }
 
-    _isOffline = !fetchedAnything;
+    _isOffline = !online;
     _isLoading = false;
     _invalidateFilterCache();
     notifyListeners();
 
-    // Fire notifications for newly discovered items (skip the initial load).
-    if (fetchedAnything && _hasLoadedOnce) {
+    // Fire notifications for newly discovered items (skip the initial load and
+    // 304-only cycles where nothing changed).
+    if (anyFreshBody && _hasLoadedOnce) {
       _notifyNewArticles(freshItems);
     }
     _hasLoadedOnce = true;
 
-    // Only persist a new cache snapshot when we actually fetched fresh data.
-    if (fetchedAnything) {
+    // Only persist a new cache snapshot when a feed actually returned new data.
+    if (anyFreshBody) {
       await _saveCachedItems();
     }
 
     stopwatch.stop();
     _lastSyncDuration = stopwatch.elapsed;
     _lastSyncTime = DateTime.now();
-    _isSyncing = false;
     // Notify debug screen that sync state + timestamps have updated.
     notifyListeners();
 
-    if (fetchedAnything) {
+    if (anyFreshBody) {
       WidgetUpdateService.updateFeedWidgets(_items).ignore();
     }
   }
