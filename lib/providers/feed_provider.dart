@@ -500,6 +500,16 @@ class FeedProvider extends ChangeNotifier {
   /// Whether the article with [id] has been read.
   bool isRead(String id) => _readItemIds.contains(id);
 
+  /// Number of unread items, optionally scoped to a [category] or [feedUrl].
+  /// Used by the drawer to show unread badges next to categories and feeds.
+  int unreadCount({String? category, String? feedUrl}) {
+    return _items.where((i) {
+      if (category != null && i.category != category) return false;
+      if (feedUrl != null && i.feedUrl != feedUrl) return false;
+      return !_readItemIds.contains(i.id);
+    }).length;
+  }
+
   /// Marks an article as read (no-op if already read).
   Future<void> markAsRead(String id) async {
     if (!_readItemIds.contains(id)) {

@@ -84,7 +84,7 @@ class AppDrawer extends StatelessWidget {
                       _buildDrawerItem(
                         icon: Icons.article_outlined,
                         title: l10n.allNews,
-                        count: provider.items.length,
+                        count: provider.unreadCount(),
                         isSelected: provider.selectedCategory == null,
                         context: context,
                         onTap: () {
@@ -288,9 +288,7 @@ class AppDrawer extends StatelessWidget {
         provider.selectedCategory == targetCategory &&
         provider.selectedFeedUrl == null;
 
-    final count = provider.items
-        .where((item) => item.category == targetCategory)
-        .length;
+    final count = provider.unreadCount(category: targetCategory);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
@@ -376,9 +374,7 @@ class AppDrawer extends StatelessWidget {
           ),
           children: feedSources.map((sub) {
             final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
-            final feedCount = provider.items
-                .where((item) => item.feedUrl == sub.url)
-                .length;
+            final feedCount = provider.unreadCount(feedUrl: sub.url);
 
             return Padding(
               padding: const EdgeInsets.only(left: 22.0, top: 2.0),
