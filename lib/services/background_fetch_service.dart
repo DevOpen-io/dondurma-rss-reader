@@ -161,6 +161,11 @@ Future<void> runBgFetch() async {
     debugPrint('[BG] ${newItems.length} new items, sending notification');
     if (newItems.isEmpty) return;
 
+    // Sort newest-first so the notification headline and its tap target are the
+    // most recent article — `allItems` arrives in feed-iteration order, not by
+    // date, so `.first` would otherwise be an arbitrary new item.
+    newItems.sort((a, b) => b.pubDate!.compareTo(a.pubDate!));
+
     final latestJson = jsonEncode(newItems.first.toJson());
     await NotificationService.instance.showNewArticlesNotification(
       newItems: newItems,

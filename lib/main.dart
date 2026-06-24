@@ -235,11 +235,17 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When the app returns to the foreground (e.g. opened from a notification
-    // or the launcher after backgrounding), pull fresh feeds so the user sees
-    // current news instead of the stale cache. Throttled inside the provider.
+    final feed = context.read<FeedProvider>();
     if (state == AppLifecycleState.resumed) {
-      context.read<FeedProvider>().maybeRefreshOnResume();
+      // Back in the foreground (launcher or notification tap): restart the
+      // auto-refresh timer and pull fresh feeds so the user sees current news
+      // instead of the stale cache. The refresh is throttled in the provider.
+      feed.resumeAutoRefresh();
+      feed.maybeRefreshOnResume();
+    } else if (state == AppLifecycleState.paused) {
+      // Backgrounded: stop the foreground polling loop so it doesn't drain
+      // battery/data while away — WorkManager handles background fetching.
+      feed.pauseAutoRefresh();
     }
   }
 

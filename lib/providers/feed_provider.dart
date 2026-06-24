@@ -261,6 +261,21 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  /// Stops the foreground auto-refresh timer. Called when the app is
+  /// backgrounded so the polling loop doesn't keep firing HTTP requests (and
+  /// draining battery/data) while the isolate is still alive but the user is
+  /// away — WorkManager handles fetching in the background instead.
+  void pauseAutoRefresh() {
+    _cacheTimer?.cancel();
+    _cacheTimer = null;
+  }
+
+  /// Restarts the foreground auto-refresh timer (subject to the user's sync
+  /// settings) when the app returns to the foreground.
+  void resumeAutoRefresh() {
+    _manageCacheTimer();
+  }
+
   // ---------------------------------------------------------------------------
   // State persistence
   // ---------------------------------------------------------------------------
