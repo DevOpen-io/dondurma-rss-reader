@@ -127,7 +127,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get addFeedSubtitle =>
-      'Abone olmak için bir web sitesi URL\'si yapıştırın';
+      'Abone olmak için kaynak (RSS) adresini yapıştırın';
 
   @override
   String useSuggestedName(String name) {
@@ -163,11 +163,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get saveFeed => 'Kaynağı Kaydet';
-
-  @override
-  String errorAddingFeed(String error) {
-    return 'Kaynak ekleme hatası: $error';
-  }
 
   @override
   String get feedAlreadyExists => 'Bu kaynak zaten mevcut.';
@@ -265,7 +260,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get autoRefreshFeedsDesc =>
-      'Arka planda haberlerin ne sıklıkla senkronize edileceği';
+      'Uygulama açıkken kaynakların yenilenme sıklığı';
 
   @override
   String get thirtySeconds => '30 Saniye';
@@ -286,10 +281,11 @@ class AppLocalizationsTr extends AppLocalizations {
   String get cacheClearedSuccess => 'Önbellek başarıyla temizlendi.';
 
   @override
-  String get syncBackground => 'Arka Plan Senkronizasyonu';
+  String get syncBackground => 'Otomatik Senkronizasyon';
 
   @override
-  String get syncBackgroundDesc => 'Uygulama açıkken yeni makaleleri getir';
+  String get syncBackgroundDesc =>
+      'Yeni makaleleri uygulamada ve arka planda otomatik getir';
 
   @override
   String get exportSubscriptions => 'Abonelikleri Dışa Aktar (OPML)';
@@ -334,12 +330,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get versionDesc => 'Dondurma Rss Reader güncel derlemesi';
-
-  @override
-  String get rateTheApp => 'Uygulamayı Puanla';
-
-  @override
-  String get rateTheAppDesc => 'App Store\'da geliştirmeyi destekleyin';
 
   @override
   String get displayAndReadability => 'Görünüm ve Okunabilirlik';
@@ -789,12 +779,11 @@ class AppLocalizationsTr extends AppLocalizations {
       'Birçok blog ve haber sitesinin ana sayfasında veya alt bilgisinde belirli bir RSS simgesi bulunur.';
 
   @override
-  String get whatIsRssMethod2Title =>
-      'Sadece Web Sitesi Bağlantısını Yapıştırın';
+  String get whatIsRssMethod2Title => 'Kaynak Adresini Yapıştırın';
 
   @override
   String get whatIsRssMethod2Desc =>
-      'Çoğu zaman tam RSS bağlantısına bile ihtiyacınız yoktur. Bu uygulamada \'Kaynak Ekle\' düğmesine dokunduğunuzda, normal web sitesi adresini (örn. \'verge.com\' veya \'techcrunch.com\') yapıştırmanız yeterlidir. Uygulama otomatik olarak sizin için gizli RSS akışını bulmaya çalışacaktır!';
+      '\'Kaynak Ekle\' düğmesine dokunduğunuzda sitenin RSS adresini yapıştırın. Çoğu site, web adresinin sonuna /feed veya /rss ekler (örn. techcrunch.com/feed). Nereden başlayacağınızdan emin değilseniz Önerilen Kaynaklar bölümüne göz atın.';
 
   @override
   String get whatIsRssMethod3Title => 'Önerilen Akışları Kullanın';
@@ -932,4 +921,28 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get languagePackCheckingStatus => 'Kontrol ediliyor…';
+
+  @override
+  String get bookmarksSwipeHint =>
+      'Herhangi bir makaleyi sola kaydırarak buraya kaydedebilirsiniz.';
+
+  @override
+  String get readSwipeHint =>
+      'İpucu: bir makaleyi sağa kaydırarak okundu veya okunmadı olarak işaretleyebilirsiniz.';
+
+  @override
+  String get retry => 'Tekrar Dene';
+
+  @override
+  String get feedAddError =>
+      'Bu adreste RSS kaynağı bulunamadı. Adresi kontrol edin: çoğu kaynak adresi /feed veya /rss ile biter.';
+
+  @override
+  String get clearFilters => 'Tüm makaleleri göster';
+
+  @override
+  String get thirtyMinutes => '30 Dakika';
+
+  @override
+  String get semanticCategoryOptions => 'Kategori seçenekleri';
 }

@@ -6,6 +6,7 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../utils/app_snackbar.dart';
 
 /// Full-screen page that displays a curated list of suggested RSS feeds,
 /// fetched from a remote JSON endpoint.
@@ -198,14 +199,12 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     await subscriptionProvider.addFeed(url, name, category);
     if (context.mounted) feedProvider.refreshAll();
 
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l10n.addedSubscription(name)),
-        behavior: SnackBarBehavior.floating,
-        action: SnackBarAction(
-          label: l10n.undo,
-          onPressed: () => subscriptionProvider.removeFeed(url),
-        ),
+    showAppSnackBar(
+      messenger,
+      l10n.addedSubscription(name),
+      action: SnackBarAction(
+        label: l10n.undo,
+        onPressed: () => subscriptionProvider.removeFeed(url),
       ),
     );
   }

@@ -77,6 +77,7 @@ No algorithms. No tracking. Just your feeds, your way.
 - **Image Caching** — Optimized network image loading with persistent cache for articles & thumbnails
 - **Skeleton Shimmer Loading** — Beautiful loading states that mirror the actual content layout
 - **Pagination** — Date-based sections (Today / Yesterday / Older) with load-more support
+- **Isolate-Powered Parsing** — RSS/Atom parsing and full-text extraction run in background isolates, keeping the UI jank-free during sync
 
 ### 🚀 Onboarding Flow
 - **Interactive Onboarding** 🍦 — Multi-step onboarding experience featuring suggested Turkish & Global feeds grouped by categories with background blobs animation to kickstart the feed collection.
@@ -147,6 +148,8 @@ lib/
 │   └── app_theme.dart         # FlexColorScheme + Material 3 config
 ├── router/
 │   └── app_router.dart        # GoRouter declarative routing
+├── utils/
+│   └── app_snackbar.dart      # Snackbar helper (4s auto-dismiss, replace-not-queue)
 └── l10n/                      # Localization (EN & TR)
 ```
 
@@ -285,6 +288,7 @@ Algoritma yok. Takip yok. Sadece sizin akışlarınız, sizin kurallarınız.
 - **Görsel Önbellekleme** — Makaleler ve küçük resimler için kalıcı önbellekle optimize edilmiş görsel yükleme
 - **İskelet Yükleme Animasyonu** — İçerik düzenini yansıtan güzel yükleme durumları
 - **Sayfalama** — Tarih bazlı bölümler (Bugün / Dün / Daha Eski) ve daha fazla yükleme desteği
+- **Isolate Destekli Ayrıştırma** — RSS/Atom ayrıştırma ve tam metin çıkarma arka plan isolate'larında çalışır; senkronizasyon sırasında arayüz takılmaz
 
 ### 🚀 Başlangıç Rehberi (Onboarding)
 - **Etkileşimli Tanıtım** 🍦 — Uygulamaya başlarken dinamik blob animasyonlu, Türkçe ve İngilizce önerilen akışları kategori bazlı seçerek hızlıca abone olmanızı sağlayan onboarding akışı.
@@ -355,6 +359,8 @@ lib/
 │   └── app_theme.dart         # FlexColorScheme + Material 3 yapılandırma
 ├── router/
 │   └── app_router.dart        # GoRouter deklaratif yönlendirme
+├── utils/
+│   └── app_snackbar.dart      # Snackbar yardımcısı (4sn otomatik kapanma, kuyruk yerine değiştirme)
 └── l10n/                      # Yerelleştirme (EN & TR)
 ```
 

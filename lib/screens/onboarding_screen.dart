@@ -322,6 +322,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               _selectedGlobal.add(cat);
                             }
                           }),
+                          onRetry: () {
+                            setState(() {
+                              _loadingGlobal = true;
+                              _errorGlobal = false;
+                            });
+                            _loadGlobalFeeds();
+                          },
                           l10n: l10n,
                           colorScheme: colorScheme,
                         ),
@@ -337,6 +344,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                               _selectedTr.add(cat);
                             }
                           }),
+                          onRetry: () {
+                            setState(() {
+                              _loadingTr = true;
+                              _errorTr = false;
+                            });
+                            _loadTrFeeds();
+                          },
                           l10n: l10n,
                           colorScheme: colorScheme,
                         ),
@@ -362,6 +376,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     required bool error,
     required Set<String> selected,
     required void Function(String) onToggle,
+    required VoidCallback onRetry,
     required AppLocalizations l10n,
     required ColorScheme colorScheme,
   }) {
@@ -387,6 +402,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 style: TextStyle(
                   color: colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.tonal(
+                onPressed: onRetry,
+                child: Text(l10n.retry),
               ),
             ],
           ),
@@ -478,6 +498,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     : Text(l10n.onboardingContinue),
               ),
             ),
+          if (!_bothError) ...[
+            const SizedBox(height: 4),
+            TextButton(
+              onPressed: _isSubmitting ? null : _skip,
+              child: Text(l10n.onboardingSkip),
+            ),
+          ],
         ],
       ),
     );

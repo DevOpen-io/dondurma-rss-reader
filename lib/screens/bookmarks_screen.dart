@@ -40,7 +40,7 @@ class BookmarksScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Swipe left on any article to save it here.',
+                l10n.bookmarksSwipeHint,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: Theme.of(

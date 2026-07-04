@@ -1,14 +1,11 @@
 {
   "@@locale": "en",
-
   "appTitle": "RSS Reader",
   "appName": "Dondurma Rss Reader",
-
   "feedsTab": "Feeds",
   "foldersTab": "Categories",
   "bookmarksTab": "Bookmarks",
   "settingsTab": "Settings",
-
   "myFeeds": "My Feeds",
   "searchFeeds": "Search feeds...",
   "today": "TODAY",
@@ -19,16 +16,16 @@
   "noFeedsInCategory": "No feeds found in {category}.",
   "@noFeedsInCategory": {
     "placeholders": {
-      "category": { "type": "String" }
+      "category": {
+        "type": "String"
+      }
     }
   },
   "noFeedsMatchFilter": "No feeds match your current filter.",
   "offlineBanner": "You're offline — showing cached articles.",
   "loadMore": "Load more",
   "allCaughtUp": "You're all caught up ✓",
-
   "noBookmarks": "No bookmarked articles yet.",
-
   "noFolders": "No categories yet. Add a category to organize your feeds.",
   "renameFolder": "Rename Category",
   "folderName": "Category Name",
@@ -36,13 +33,16 @@
   "deleteFolderConfirm": "Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.",
   "@deleteFolderConfirm": {
     "placeholders": {
-      "categoryName": { "type": "String" },
-      "feedCount": { "type": "int" }
+      "categoryName": {
+        "type": "String"
+      },
+      "feedCount": {
+        "type": "int"
+      }
     }
   },
   "deleteAll": "Delete All",
   "markAllAsRead": "Mark All as Read",
-
   "editFeed": "Edit Feed",
   "feedName": "Feed Name",
   "feedUrl": "Feed URL",
@@ -50,21 +50,23 @@
   "deleteFeedConfirm": "Are you sure you want to completely remove \"{feedName}\" from your subscriptions?",
   "@deleteFeedConfirm": {
     "placeholders": {
-      "feedName": { "type": "String" }
+      "feedName": {
+        "type": "String"
+      }
     }
   },
-
   "cancel": "Cancel",
   "save": "Save",
   "delete": "Delete",
   "reset": "Reset",
-
   "addRssFeed": "Add RSS Feed",
-  "addFeedSubtitle": "Paste a website URL to subscribe",
+  "addFeedSubtitle": "Paste a feed address to subscribe",
   "useSuggestedName": "Use \"{name}\" as name",
   "@useSuggestedName": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "addingFeed": "Adding…",
@@ -77,14 +79,7 @@
   "pleaseEnterValidUrl": "Please enter a valid URL",
   "pleaseEnterName": "Please enter a name",
   "saveFeed": "Save Feed",
-  "errorAddingFeed": "Error adding feed: {error}",
-  "@errorAddingFeed": {
-    "placeholders": {
-      "error": { "type": "String" }
-    }
-  },
   "feedAlreadyExists": "Feed already exists.",
-
   "categories": "CATEGORIES",
   "allNews": "All News",
   "uncategorized": "UNCATEGORIZED",
@@ -95,14 +90,15 @@
   "@whatIsRss": {
     "description": "Label for the What is RSS section in the drawer"
   },
-
   "all": "All",
   "noFeedsInThisCategory": "No feeds in this category",
   "addSubscription": "Add Subscription",
   "addSubscriptionConfirm": "Do you want to add \"{name}\" to your feed list?",
   "@addSubscriptionConfirm": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "addSource": "Subscribe",
@@ -111,33 +107,33 @@
   "addedSubscription": "Added {name} to your subscriptions!",
   "@addedSubscription": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "suggestedFeedsWarning": "Warning: Some RSS sources may be broken or no longer work.",
   "errorLoadingSuggestedFeeds": "Could not load suggested feeds. Please try again later.",
-
   "general": "General",
   "theme": "Theme",
   "language": "Language",
   "changeAppLanguage": "Change the app language",
   "english": "English",
   "turkish": "Türkçe",
-
   "dataAndStorage": "Data & Storage",
   "offlineCacheLimit": "Offline Cache Limit",
   "offlineCacheLimitDesc": "Recent articles kept for offline reading",
   "none": "None",
   "autoRefreshFeeds": "Auto Refresh Feeds",
-  "autoRefreshFeedsDesc": "How often feeds sync in background",
+  "autoRefreshFeedsDesc": "How often feeds refresh while the app is open",
   "thirtySeconds": "30 Seconds",
   "oneMinute": "1 Minute",
   "fiveMinutes": "5 Minutes",
   "clearCache": "Clear Cache",
   "clearCacheDesc": "Remove downloaded articles to free up space",
   "cacheClearedSuccess": "Cache cleared successfully.",
-  "syncBackground": "Sync Background",
-  "syncBackgroundDesc": "Fetch new articles while app is open",
+  "syncBackground": "Automatic Sync",
+  "syncBackgroundDesc": "Automatically fetch new articles in the app and in the background",
   "exportSubscriptions": "Export Subscriptions (OPML)",
   "exportSubscriptionsDesc": "Backup your feeds to a file",
   "noSubscriptionsToExport": "No subscriptions to export.",
@@ -149,17 +145,15 @@
   "importedFeeds": "Imported {count} new feed{count, plural, =1{} other{s}}.",
   "@importedFeeds": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "allFeedsExist": "All feeds already exist — nothing new imported.",
-
   "about": "About",
   "version": "Version",
   "versionDesc": "Current build of Dondurma Rss Reader",
-  "rateTheApp": "Rate the App",
-  "rateTheAppDesc": "Support the development on the App Store",
-
   "displayAndReadability": "Display & Readability",
   "fontSize": "Font Size",
   "fontSizeSmall": "Small",
@@ -175,7 +169,6 @@
   "lineSpacingTight": "Tight",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Relaxed",
-
   "contentFiltering": "Content Filtering",
   "globalExcludedKeywords": "Global Excluded Keywords",
   "globalExcludedKeywordsDesc": "Hide articles containing these words across all feeds",
@@ -184,34 +177,31 @@
   "commaSeparated": "Comma separated",
   "addKeyword": "Add Keyword",
   "noKeywordsAdded": "No keywords added yet.",
-
   "openInBrowser": "Open in Browser",
   "shareArticle": "Share Article",
   "readOnOriginalWebpage": "Read on Original Webpage",
   "invalidUrlFormat": "Invalid URL format",
-
   "close": "Close",
   "openInExternalBrowser": "Open in External Browser",
   "back": "Back",
   "forward": "Forward",
   "refresh": "Refresh",
-
   "brightness": "Brightness",
   "brightnessSystem": "System",
   "brightnessLight": "Light",
   "brightnessDark": "Dark",
-
   "manageFeeds": "Manage Feeds",
   "noFeedsSubscribed": "No feeds subscribed.\nAdd one from the Home Screen.",
   "removeFeed": "Remove Feed",
   "removeFeedConfirm": "Are you sure you want to stop following \"{name}\"?",
   "@removeFeedConfirm": {
     "placeholders": {
-      "name": { "type": "String" }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "remove": "Remove",
-
   "addFolder": "Add Category",
   "newFolderName": "New Category Name",
   "folderAlreadyExists": "A category with this name already exists.",
@@ -221,11 +211,14 @@
   "feedMovedToFolder": "\"{feedName}\" moved to \"{folderName}\" category",
   "@feedMovedToFolder": {
     "placeholders": {
-      "feedName": { "type": "String" },
-      "folderName": { "type": "String" }
+      "feedName": {
+        "type": "String"
+      },
+      "folderName": {
+        "type": "String"
+      }
     }
   },
-
   "notifications": "Notifications",
   "enableNotifications": "Enable Notifications",
   "enableNotificationsDesc": "Get notified about new articles",
@@ -242,13 +235,14 @@
   "newArticlesNotification": "{count} new articles",
   "@newArticlesNotification": {
     "placeholders": {
-      "count": { "type": "int" }
+      "count": {
+        "type": "int"
+      }
     }
   },
   "feedNotifications": "Feed Notifications",
   "notificationsNotSupported": "Notifications are not supported on this platform",
   "notificationsSupportedPlatforms": "Supported platforms: Android, iOS",
-
   "fullTextExtraction": "Full-Text Mode",
   "fullTextExtractionDesc": "Fetch full content from the original webpage",
   "fullTextLoading": "Loading full article…",
@@ -258,33 +252,26 @@
   "readingModeLabel": "Reading mode",
   "modeShort": "Summary",
   "modeFull": "Full Article",
-
   "searchHistory": "Search History",
   "clearSearchHistory": "Clear Search History",
   "clearSearchHistoryDesc": "Remove all saved search queries",
   "searchHistoryCleared": "Search history cleared.",
   "recentSearches": "Recent Searches",
-
   "factoryReset": "Factory Reset",
   "factoryResetDesc": "Erase all data and restore default settings",
   "factoryResetConfirmTitle": "Are you sure?",
   "factoryResetConfirmDesc": "This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.",
   "factoryResetSuccess": "All data and settings have been erased.",
-
   "browserMode": "Browser Mode",
   "browserModeDesc": "Choose how links open",
   "browserBuiltin": "Built-in Browser",
   "browserExternal": "External Browser",
   "browserSystem": "System In-App Browser",
   "browserSystemMobileOnly": "System In-App Browser is only available on mobile devices (Android & iOS)",
-
   "adBlocker": "Ad Blocker",
   "adBlockerDesc": "Block ads and trackers in the in-app browser",
-
   "webviewDarkMode": "In-App Browser Dark Mode",
   "webviewDarkModeDesc": "Apply dark mode to articles viewed inside the app",
-
-
   "semanticToggleRead": "Toggle read status",
   "semanticToggleBookmark": "Toggle bookmark",
   "semanticMarkAsRead": "Mark as read",
@@ -296,7 +283,9 @@
   "semanticOpenArticle": "Open article: {title}",
   "@semanticOpenArticle": {
     "placeholders": {
-      "title": { "type": "String" }
+      "title": {
+        "type": "String"
+      }
     }
   },
   "semanticFilterUnread": "Filter unread articles",
@@ -305,7 +294,6 @@
   "semanticCloseSearch": "Close search",
   "semanticAddFeed": "Add new feed",
   "semanticOfflineCached": "Available offline",
-
   "debugScreen": "Debug Console",
   "debugScreenDesc": "Internal diagnostics and storage metrics",
   "syncStatus": "Sync Status",
@@ -325,33 +313,37 @@
   "bookmarkedArticles": "Bookmarked Articles",
   "subscribedFeeds": "Subscribed Feeds",
   "backgroundSync": "Background Sync",
-
   "estimatedReadTime": "{minutes} min read",
   "@estimatedReadTime": {
     "placeholders": {
-      "minutes": { "type": "int" }
+      "minutes": {
+        "type": "int"
+      }
     }
   },
   "lessThanOneMinRead": "Less than 1 min read",
   "articlePosition": "{current} of {total}",
   "@articlePosition": {
     "placeholders": {
-      "current": { "type": "int" },
-      "total": { "type": "int" }
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
     }
   },
   "semanticNextArticle": "Next article",
   "semanticPreviousArticle": "Previous article",
   "semanticReadingProgress": "Reading progress",
-
   "whatIsRssTitle1": "Your Personal Newspaper",
   "whatIsRssDesc1": "Think of RSS like a personalized newspaper delivery system. Instead of visiting 10 different websites every day to check for new articles, you just give this app the website's \"RSS address\".\n\nWhenever the website publishes something new, it automatically arrives here in your feed. No algorithms deciding what you see, no distractions, and no overflowing email inboxes.",
   "whatIsRssTitle2": "How to find new RSS feeds?",
   "whatIsRssDesc2": "Finding feeds is easier than you might think. Here are the most common ways to find them:",
   "whatIsRssMethod1Title": "Look for the Icon",
   "whatIsRssMethod1Desc": "Many blogs and news sites have a specific RSS icon on their homepage or in their footer.",
-  "whatIsRssMethod2Title": "Just Paste the Website Link",
-  "whatIsRssMethod2Desc": "Often, you don't even need the exact RSS link. When you tap 'Add Feed' in this app, just paste the regular website address (like 'verge.com' or 'techcrunch.com'). The app will automatically try to find the hidden RSS feed for you!",
+  "whatIsRssMethod2Title": "Paste the Feed Address",
+  "whatIsRssMethod2Desc": "When you tap 'Add Feed', paste the site's RSS address. Most sites use their web address plus /feed or /rss (like techcrunch.com/feed). Not sure where to start? Browse Suggested Feeds instead.",
   "whatIsRssMethod3Title": "Use Suggested Feeds",
   "whatIsRssMethod3Desc": "Not sure where to start? Check out our 'Suggested Feeds' section in the menu to browse curated lists of great content separated by category.",
   "gotItLetsRead": "Got it, let's read!",
@@ -365,24 +357,20 @@
   "openSourceLicensesDesc": "Third-party libraries used in this app",
   "developerInfo": "Developed by DevOpen",
   "developerInfoDesc": "Talha Aksoy & Eren Gün",
-
   "tabGlobal": "Global",
   "tabTurkish": "Turkish",
   "categoriesSheetTitle": "Categories",
-
   "onboardingTitle": "Pick Your Interests",
   "onboardingSubtitle": "Choose the categories you want to follow. We'll add the top feeds to get you started.",
   "onboardingContinue": "Get Started",
   "onboardingExploreHint": "You can discover more sources anytime in Suggested Feeds.",
   "onboardingLoadError": "Couldn't load categories. Check your connection and try again.",
   "onboardingSkip": "Skip for now",
-
   "add": "Add",
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Tech, Sports, Finance…",
   "aboutApp": "About App",
   "lastUpdated": "Last updated: June 2026",
-
   "translateArticle": "Translate Article",
   "translationSourceLang": "From",
   "translationTargetLang": "To",
@@ -393,12 +381,18 @@
   "translationSwapLanguages": "Swap languages",
   "translationNeedsDownload": "Language packs required to translate.",
   "translationGoToDownload": "Download Language Packs",
-
   "languagePacks": "Language Packs",
   "languagePacksDesc": "Manage on-device translation models",
   "languagePackDownload": "Download",
   "languagePackDelete": "Delete",
   "languagePackRequired": "Required",
   "languagePackDownloading": "Downloading…",
-  "languagePackCheckingStatus": "Checking…"
+  "languagePackCheckingStatus": "Checking…",
+  "bookmarksSwipeHint": "Swipe left on any article to save it here.",
+  "readSwipeHint": "Tip: swipe an article right to mark it as read or unread.",
+  "retry": "Try Again",
+  "feedAddError": "Couldn't find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.",
+  "clearFilters": "Show all articles",
+  "thirtyMinutes": "30 Minutes",
+  "semanticCategoryOptions": "Category options"
 }

@@ -317,7 +317,7 @@ abstract class AppLocalizations {
   /// No description provided for @addFeedSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Paste a website URL to subscribe'**
+  /// **'Paste a feed address to subscribe'**
   String get addFeedSubtitle;
 
   /// No description provided for @useSuggestedName.
@@ -385,12 +385,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save Feed'**
   String get saveFeed;
-
-  /// No description provided for @errorAddingFeed.
-  ///
-  /// In en, this message translates to:
-  /// **'Error adding feed: {error}'**
-  String errorAddingFeed(String error);
 
   /// No description provided for @feedAlreadyExists.
   ///
@@ -569,7 +563,7 @@ abstract class AppLocalizations {
   /// No description provided for @autoRefreshFeedsDesc.
   ///
   /// In en, this message translates to:
-  /// **'How often feeds sync in background'**
+  /// **'How often feeds refresh while the app is open'**
   String get autoRefreshFeedsDesc;
 
   /// No description provided for @thirtySeconds.
@@ -611,13 +605,13 @@ abstract class AppLocalizations {
   /// No description provided for @syncBackground.
   ///
   /// In en, this message translates to:
-  /// **'Sync Background'**
+  /// **'Automatic Sync'**
   String get syncBackground;
 
   /// No description provided for @syncBackgroundDesc.
   ///
   /// In en, this message translates to:
-  /// **'Fetch new articles while app is open'**
+  /// **'Automatically fetch new articles in the app and in the background'**
   String get syncBackgroundDesc;
 
   /// No description provided for @exportSubscriptions.
@@ -697,18 +691,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Current build of Dondurma Rss Reader'**
   String get versionDesc;
-
-  /// No description provided for @rateTheApp.
-  ///
-  /// In en, this message translates to:
-  /// **'Rate the App'**
-  String get rateTheApp;
-
-  /// No description provided for @rateTheAppDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Support the development on the App Store'**
-  String get rateTheAppDesc;
 
   /// No description provided for @displayAndReadability.
   ///
@@ -1553,13 +1535,13 @@ abstract class AppLocalizations {
   /// No description provided for @whatIsRssMethod2Title.
   ///
   /// In en, this message translates to:
-  /// **'Just Paste the Website Link'**
+  /// **'Paste the Feed Address'**
   String get whatIsRssMethod2Title;
 
   /// No description provided for @whatIsRssMethod2Desc.
   ///
   /// In en, this message translates to:
-  /// **'Often, you don\'t even need the exact RSS link. When you tap \'Add Feed\' in this app, just paste the regular website address (like \'verge.com\' or \'techcrunch.com\'). The app will automatically try to find the hidden RSS feed for you!'**
+  /// **'When you tap \'Add Feed\', paste the site\'s RSS address. Most sites use their web address plus /feed or /rss (like techcrunch.com/feed). Not sure where to start? Browse Suggested Feeds instead.'**
   String get whatIsRssMethod2Desc;
 
   /// No description provided for @whatIsRssMethod3Title.
@@ -1825,6 +1807,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Checking…'**
   String get languagePackCheckingStatus;
+
+  /// No description provided for @bookmarksSwipeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Swipe left on any article to save it here.'**
+  String get bookmarksSwipeHint;
+
+  /// No description provided for @readSwipeHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Tip: swipe an article right to mark it as read or unread.'**
+  String get readSwipeHint;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
+  String get retry;
+
+  /// No description provided for @feedAddError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.'**
+  String get feedAddError;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Show all articles'**
+  String get clearFilters;
+
+  /// No description provided for @thirtyMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'30 Minutes'**
+  String get thirtyMinutes;
+
+  /// No description provided for @semanticCategoryOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Category options'**
+  String get semanticCategoryOptions;
 }
 
 class _AppLocalizationsDelegate

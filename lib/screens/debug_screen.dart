@@ -8,6 +8,7 @@ import '../providers/bookmark_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../providers/settings_provider.dart';
 import '../services/background_fetch_service.dart' show runBgFetch;
+import '../utils/app_snackbar.dart';
 
 /// Hidden debug screen accessible by long-pressing the app version tile in
 /// Settings. Displays Hive box sizes, background sync status, and data metrics.
@@ -26,8 +27,9 @@ class _DebugScreenState extends State<DebugScreen> {
     try {
       await runBgFetch();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Background fetch completed')),
+        showAppSnackBar(
+          ScaffoldMessenger.of(context),
+          'Background fetch completed',
         );
       }
     } finally {

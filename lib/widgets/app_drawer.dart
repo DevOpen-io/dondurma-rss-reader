@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -8,6 +9,7 @@ import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../screens/what_is_rss_page.dart';
+import '../utils/app_snackbar.dart';
 import 'explore_feeds_dialog.dart';
 import 'folders/category_action_sheet.dart';
 import 'folders/feed_action_sheet.dart';
@@ -352,20 +354,28 @@ class AppDrawer extends StatelessWidget {
               ),
               if (!isUncategorizedNode) ...[
                 const SizedBox(width: 4),
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _showCategoryActionSheet(
-                    context,
-                    targetCategory,
-                    subscriptionProvider.getCategoryIcon(targetCategory),
-                    feedSources.length,
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-                    child: Icon(
-                      Icons.more_vert,
-                      size: 18,
-                      color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                Semantics(
+                  label: AppLocalizations.of(context).semanticCategoryOptions,
+                  button: true,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () => _showCategoryActionSheet(
+                      context,
+                      targetCategory,
+                      subscriptionProvider.getCategoryIcon(targetCategory),
+                      feedSources.length,
+                    ),
+                    // 40x40 hit target (visual icon unchanged at 18px).
+                    child: SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: Center(
+                        child: Icon(
+                          Icons.more_vert,
+                          size: 18,
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -673,10 +683,14 @@ class AppDrawer extends StatelessWidget {
                                 if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
                                 if (context.mounted) {
                                   context.read<FeedProvider>().refreshAll();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(l10n.feedMovedToFolder(sub.name, category)),
-                                    ),
+                                  // Close the drawer first — the snackbar
+                                  // renders below it and would be hidden.
+                                  final messenger =
+                                      ScaffoldMessenger.of(context);
+                                  Navigator.of(context).pop();
+                                  showAppSnackBar(
+                                    messenger,
+                                    l10n.feedMovedToFolder(sub.name, category),
                                   );
                                 }
                               });
@@ -772,11 +786,14 @@ class AppDrawer extends StatelessWidget {
                   color: cs.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Text(
-                  'v1.0.0',
-                  style: tt.labelSmall?.copyWith(
-                    color: cs.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
+                child: FutureBuilder<PackageInfo>(
+                  future: PackageInfo.fromPlatform(),
+                  builder: (context, snap) => Text(
+                    snap.hasData ? 'v${snap.data!.version}' : '',
+                    style: tt.labelSmall?.copyWith(
+                      color: cs.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
               ),
@@ -787,7 +804,12 @@ class AppDrawer extends StatelessWidget {
     );
   }
 
-  void _showAboutDialog(BuildContext context, AppLocalizations l10n) {
+  Future<void> _showAboutDialog(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) async {
+    final info = await PackageInfo.fromPlatform();
+    if (!context.mounted) return;
     final cs = Theme.of(context).colorScheme;
     showAboutDialog(
       context: context,
@@ -796,7 +818,7 @@ class AppDrawer extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
         child: Image.asset('assets/logo.ico', width: 48, height: 48),
       ),
-      applicationVersion: '1.0.0',
+      applicationVersion: info.version,
       children: [
         const SizedBox(height: 16),
         Text(

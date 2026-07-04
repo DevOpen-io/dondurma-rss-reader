@@ -327,24 +327,19 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         if (context.mounted) context.pop();
       } else {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.feedAlreadyExists)),
-          );
-          setState(() => _isLoading = false);
+          // Inline error — a snackbar would render behind this bottom sheet.
+          setState(() {
+            _isLoading = false;
+            _urlValidationError = l10n.feedAlreadyExists;
+          });
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              l10n.errorAddingFeed(
-                e.toString().replaceAll('Exception: ', ''),
-              ),
-            ),
-          ),
-        );
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _urlValidationError = l10n.feedAddError;
+        });
       }
     }
   }

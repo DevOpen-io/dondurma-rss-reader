@@ -383,25 +383,30 @@ class _FeedItemThumbnail extends StatelessWidget {
             ),
           ),
         ),
+        // Offsets compensate the 10px hit-area padding so the 24px chip stays
+        // visually at bottom/right 4 while the tap target grows to 44x44.
         Positioned(
-          bottom: 4,
-          right: 4,
+          bottom: -6,
+          right: -6,
           child: GestureDetector(
             onTap: () => context.read<BookmarkProvider>().toggleBookmark(item),
             behavior: HitTestBehavior.opaque,
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                color: colorScheme.surface.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Icon(
-                isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                size: 14,
-                color: isBookmarked
-                    ? colorScheme.primary
-                    : colorScheme.onSurface.withValues(alpha: 0.6),
+            child: Padding(
+              padding: const EdgeInsets.all(10),
+              child: Container(
+                width: 24,
+                height: 24,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(
+                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                  size: 14,
+                  color: isBookmarked
+                      ? colorScheme.primary
+                      : colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
               ),
             ),
           ),

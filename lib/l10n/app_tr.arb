@@ -1,14 +1,11 @@
 {
   "@@locale": "tr",
-
   "appTitle": "RSS Okuyucu",
   "appName": "Dondurma Rss Reader",
-
   "feedsTab": "Haberler",
   "foldersTab": "Kategoriler",
   "bookmarksTab": "Yer İşaretleri",
   "settingsTab": "Ayarlar",
-
   "myFeeds": "Haber Kaynaklarım",
   "searchFeeds": "Haber kaynakları ara...",
   "today": "BUGÜN",
@@ -21,9 +18,7 @@
   "offlineBanner": "Çevrimdışısınız — önbelleğe alınmış makaleleri gösteriyor.",
   "loadMore": "Daha fazla yükle",
   "allCaughtUp": "Tüm haberleri okudunuz ✓",
-
   "noBookmarks": "Henüz yer işaretli makale yok.",
-
   "noFolders": "Henüz kategori yok. Kaynaklarınızı düzenlemek için bir kategori ekleyin.",
   "renameFolder": "Kategoriyi Yeniden Adlandır",
   "folderName": "Kategori Adı",
@@ -31,20 +26,17 @@
   "deleteFolderConfirm": "\"{categoryName}\" kategorisini silmek istediğinizden emin misiniz?\n\nBu işlem, içindeki {feedCount} RSS kaynağını kalıcı olarak aboneliklerinizden kaldıracak.",
   "deleteAll": "Tümünü Sil",
   "markAllAsRead": "Tümünü Okundu İşaretle",
-
   "editFeed": "Kaynağı Düzenle",
   "feedName": "Kaynak Adı",
   "feedUrl": "Kaynak URL'si",
   "deleteFeed": "Kaynağı Sil",
   "deleteFeedConfirm": "\"{feedName}\" kaynağını aboneliklerinizden tamamen kaldırmak istediğinizden emin misiniz?",
-
   "cancel": "İptal",
   "save": "Kaydet",
   "delete": "Sil",
   "reset": "Sıfırla",
-
   "addRssFeed": "RSS Kaynağı Ekle",
-  "addFeedSubtitle": "Abone olmak için bir web sitesi URL'si yapıştırın",
+  "addFeedSubtitle": "Abone olmak için kaynak (RSS) adresini yapıştırın",
   "useSuggestedName": "\"{name}\" adını kullan",
   "addingFeed": "Ekleniyor…",
   "feedUrlLabel": "Kaynak URL'si",
@@ -56,9 +48,7 @@
   "pleaseEnterValidUrl": "Lütfen geçerli bir URL girin",
   "pleaseEnterName": "Lütfen bir ad girin",
   "saveFeed": "Kaynağı Kaydet",
-  "errorAddingFeed": "Kaynak ekleme hatası: {error}",
   "feedAlreadyExists": "Bu kaynak zaten mevcut.",
-
   "categories": "KATEGORİLER",
   "allNews": "Tüm Haberler",
   "uncategorized": "KATEGORİSİZ",
@@ -66,7 +56,6 @@
   "discover": "KEŞFET",
   "suggestedFeeds": "Önerilen Kaynaklar",
   "whatIsRss": "RSS Nedir?",
-
   "all": "Tümü",
   "noFeedsInThisCategory": "Bu kategoride kaynak yok",
   "addSubscription": "Abonelik Ekle",
@@ -77,28 +66,26 @@
   "addedSubscription": "{name} aboneliğinize eklendi!",
   "suggestedFeedsWarning": "Uyarı: Bazı RSS kaynakları bozulmuş veya artık çalışmıyor olabilir.",
   "errorLoadingSuggestedFeeds": "Önerilen kaynaklar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
-
   "general": "Genel",
   "theme": "Tema",
   "language": "Dil",
   "changeAppLanguage": "Uygulama dilini değiştirin",
   "english": "English",
   "turkish": "Türkçe",
-
   "dataAndStorage": "Veri ve Depolama",
   "offlineCacheLimit": "Önbellek Sınırı",
   "offlineCacheLimitDesc": "Çevrimdışı okuma için saklanan son makaleler",
   "none": "Yok",
   "autoRefreshFeeds": "Otomatik Yenileme",
-  "autoRefreshFeedsDesc": "Arka planda haberlerin ne sıklıkla senkronize edileceği",
+  "autoRefreshFeedsDesc": "Uygulama açıkken kaynakların yenilenme sıklığı",
   "thirtySeconds": "30 Saniye",
   "oneMinute": "1 Dakika",
   "fiveMinutes": "5 Dakika",
   "clearCache": "Önbelleği Temizle",
   "clearCacheDesc": "Alan açmak için indirilen makaleleri kaldır",
   "cacheClearedSuccess": "Önbellek başarıyla temizlendi.",
-  "syncBackground": "Arka Plan Senkronizasyonu",
-  "syncBackgroundDesc": "Uygulama açıkken yeni makaleleri getir",
+  "syncBackground": "Otomatik Senkronizasyon",
+  "syncBackgroundDesc": "Yeni makaleleri uygulamada ve arka planda otomatik getir",
   "exportSubscriptions": "Abonelikleri Dışa Aktar (OPML)",
   "exportSubscriptionsDesc": "Kaynaklarınızı bir dosyaya yedekleyin",
   "noSubscriptionsToExport": "Dışa aktarılacak abonelik yok.",
@@ -109,13 +96,9 @@
   "noFeedsFoundOrCancelled": "Kaynak bulunamadı veya içe aktarma iptal edildi.",
   "importedFeeds": "{count} yeni kaynak içe aktarıldı.",
   "allFeedsExist": "Tüm kaynaklar zaten mevcut — içe aktarılacak yeni kaynak yok.",
-
   "about": "Hakkında",
   "version": "Sürüm",
   "versionDesc": "Dondurma Rss Reader güncel derlemesi",
-  "rateTheApp": "Uygulamayı Puanla",
-  "rateTheAppDesc": "App Store'da geliştirmeyi destekleyin",
-
   "displayAndReadability": "Görünüm ve Okunabilirlik",
   "fontSize": "Yazı Tipi Boyutu",
   "fontSizeSmall": "Küçük",
@@ -131,7 +114,6 @@
   "lineSpacingTight": "Dar",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Geniş",
-
   "contentFiltering": "İçerik Filtreleme",
   "globalExcludedKeywords": "Genel Hariç Tutulan Kelimeler",
   "globalExcludedKeywordsDesc": "Tüm kaynaklarda bu kelimeleri içeren makaleleri gizle",
@@ -140,29 +122,24 @@
   "commaSeparated": "Virgülle ayırın",
   "addKeyword": "Kelime Ekle",
   "noKeywordsAdded": "Henüz kelime eklenmedi.",
-
   "openInBrowser": "Tarayıcıda Aç",
   "shareArticle": "Makaleyi Paylaş",
   "readOnOriginalWebpage": "Orijinal Web Sitesinde Oku",
   "invalidUrlFormat": "Geçersiz URL biçimi",
-
   "close": "Kapat",
   "openInExternalBrowser": "Harici Tarayıcıda Aç",
   "back": "Geri",
   "forward": "İleri",
   "refresh": "Yenile",
-
   "brightness": "Parlaklık",
   "brightnessSystem": "Sistem",
   "brightnessLight": "Açık",
   "brightnessDark": "Koyu",
-
   "manageFeeds": "Kaynakları Yönet",
   "noFeedsSubscribed": "Abone olunan kaynak yok.\nAna Ekrandan bir tane ekleyin.",
   "removeFeed": "Kaynağı Kaldır",
   "removeFeedConfirm": "\"{name}\" kaynağını takip etmeyi bırakmak istediğinizden emin misiniz?",
   "remove": "Kaldır",
-
   "addFolder": "Kategori Ekle",
   "newFolderName": "Yeni Kategori Adı",
   "folderAlreadyExists": "Bu isimde bir kategori zaten mevcut.",
@@ -170,7 +147,6 @@
   "moveToFolder": "Kategoriye Taşı",
   "moveFeed": "Kaynağı Taşı",
   "feedMovedToFolder": "\"{feedName}\" \"{folderName}\" kategorisine taşındı",
-
   "notifications": "Bildirimler",
   "enableNotifications": "Bildirimleri Etkinleştir",
   "enableNotificationsDesc": "Yeni makaleler hakkında bildirim al",
@@ -188,7 +164,6 @@
   "feedNotifications": "Kaynak Bildirimleri",
   "notificationsNotSupported": "Bu platformda bildirimler desteklenmiyor",
   "notificationsSupportedPlatforms": "Desteklenen platformlar: Android, iOS",
-
   "readingModeLabel": "Okuma modu",
   "modeShort": "Özet",
   "modeFull": "Tam Makale",
@@ -198,33 +173,26 @@
   "fullTextFailed": "Tam içerik yüklenemedi. Akış özeti gösteriliyor.",
   "fullTextToggle": "Tam Metin",
   "shortTextMode": "Kısa Metin Modu",
-
   "searchHistory": "Arama Geçmişi",
   "clearSearchHistory": "Arama Geçmişini Temizle",
   "clearSearchHistoryDesc": "Kaydedilen tüm arama sorgularını kaldır",
   "searchHistoryCleared": "Arama geçmişi temizlendi.",
   "recentSearches": "Son Aramalar",
-
   "factoryReset": "Fabrika Ayarlarına Sıfırla",
   "factoryResetDesc": "Tüm verileri silin ve varsayılan ayarlara dönün",
   "factoryResetConfirmTitle": "Emin misiniz?",
   "factoryResetConfirmDesc": "Bu işlem takip ettiğiniz tüm haber kaynaklarını, kategorileri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.",
   "factoryResetSuccess": "Tüm veri ve ayarlar silindi.",
-
   "browserMode": "Tarayıcı Modu",
   "browserModeDesc": "Bağlantıların nasıl açılacağını seçin",
   "browserBuiltin": "Dahili Tarayıcı",
   "browserExternal": "Harici Tarayıcı",
   "browserSystem": "Sistem Uygulama İçi Tarayıcı",
   "browserSystemMobileOnly": "Sistem uygulama içi tarayıcı yalnızca mobil cihazlarda (Android ve iOS) kullanılabilir",
-
   "adBlocker": "Reklam Engelleyici",
   "adBlockerDesc": "Uygulama içi tarayıcıda reklamları ve izleyicileri engelle",
-
   "webviewDarkMode": "Uygulama İçi Tarayıcı Karanlık Modu",
   "webviewDarkModeDesc": "Uygulama içindeki makalelerde karanlık modu uygula",
-
-
   "semanticToggleRead": "Okundu durumunu değiştir",
   "semanticToggleBookmark": "Yer işaretini değiştir",
   "semanticMarkAsRead": "Okundu olarak işaretle",
@@ -240,7 +208,6 @@
   "semanticCloseSearch": "Aramayı kapat",
   "semanticAddFeed": "Yeni kaynak ekle",
   "semanticOfflineCached": "Çevrimdışı kullanılabilir",
-
   "debugScreen": "Hata Ayıklama Konsolu",
   "debugScreenDesc": "Dahili tanılama ve depolama metrikleri",
   "syncStatus": "Senkronizasyon Durumu",
@@ -260,22 +227,20 @@
   "bookmarkedArticles": "Yer İşaretli Makaleler",
   "subscribedFeeds": "Abone Olunan Kaynaklar",
   "backgroundSync": "Arka Plan Senkronizasyonu",
-
   "estimatedReadTime": "{minutes} dk okuma",
   "lessThanOneMinRead": "1 dk'dan kısa okuma",
   "articlePosition": "{current} / {total}",
   "semanticNextArticle": "Sonraki makale",
   "semanticPreviousArticle": "Önceki makale",
   "semanticReadingProgress": "Okuma ilerlemesi",
-
   "whatIsRssTitle1": "Kişisel Gazeteniz",
   "whatIsRssDesc1": "RSS'i, size özel bir gazete dağıtım sistemi gibi düşünün. Her gün yeni makaleler olup olmadığını kontrol etmek için 10 farklı web sitesini dolaşmak yerine, bu uygulamaya sitenin \"RSS adresini\" verirsiniz.\n\nWeb sitesi yeni bir şey yayınladığında, buradaki akışınıza otomatik olarak ulaşır. Neyi göreceğinize karar veren algoritmalar yok, dikkat dağıtıcı unsurlar yok ve dolup taşan e-posta kutuları yok.",
   "whatIsRssTitle2": "Yeni RSS akışları nasıl bulunur?",
   "whatIsRssDesc2": "Akışları bulmak tahmin ettiğinizden daha kolaydır. İşte onları bulmanın en yaygın yolları:",
   "whatIsRssMethod1Title": "Simgeyi Arayın",
   "whatIsRssMethod1Desc": "Birçok blog ve haber sitesinin ana sayfasında veya alt bilgisinde belirli bir RSS simgesi bulunur.",
-  "whatIsRssMethod2Title": "Sadece Web Sitesi Bağlantısını Yapıştırın",
-  "whatIsRssMethod2Desc": "Çoğu zaman tam RSS bağlantısına bile ihtiyacınız yoktur. Bu uygulamada 'Kaynak Ekle' düğmesine dokunduğunuzda, normal web sitesi adresini (örn. 'verge.com' veya 'techcrunch.com') yapıştırmanız yeterlidir. Uygulama otomatik olarak sizin için gizli RSS akışını bulmaya çalışacaktır!",
+  "whatIsRssMethod2Title": "Kaynak Adresini Yapıştırın",
+  "whatIsRssMethod2Desc": "'Kaynak Ekle' düğmesine dokunduğunuzda sitenin RSS adresini yapıştırın. Çoğu site, web adresinin sonuna /feed veya /rss ekler (örn. techcrunch.com/feed). Nereden başlayacağınızdan emin değilseniz Önerilen Kaynaklar bölümüne göz atın.",
   "whatIsRssMethod3Title": "Önerilen Akışları Kullanın",
   "whatIsRssMethod3Desc": "Nereden başlayacağınızdan emin değil misiniz? Kategoriye göre ayrılmış özel kürate edilmiş harika içerik listelerine göz atmak için menüdeki 'Önerilen Akışlar' bölümünü inceleyin.",
   "gotItLetsRead": "Anladım, hadi okuyalım!",
@@ -289,24 +254,20 @@
   "openSourceLicensesDesc": "Bu uygulamada kullanılan üçüncü taraf kütüphaneler",
   "developerInfo": "DevOpen tarafından geliştirildi",
   "developerInfoDesc": "Talha Aksoy & Eren Gün",
-
   "tabGlobal": "Global",
   "tabTurkish": "Türkçe",
   "categoriesSheetTitle": "Kategoriler",
-
   "onboardingTitle": "İlgi Alanlarını Seç",
   "onboardingSubtitle": "Takip etmek istediğin kategorileri seç. En popüler kaynakları sana ekleyelim.",
   "onboardingContinue": "Başlayalım",
   "onboardingExploreHint": "Önerilen Kaynaklar'da istediğin zaman daha fazlasını keşfedebilirsin.",
   "onboardingLoadError": "Kategoriler yüklenemedi. Bağlantını kontrol edip tekrar dene.",
   "onboardingSkip": "Şimdilik atla",
-
   "add": "Ekle",
   "siteNameHint": "TechCrunch, BBC News…",
   "folderNameHint": "Teknoloji, Spor, Finans…",
   "aboutApp": "Uygulama Hakkında",
   "lastUpdated": "Son güncelleme: Haziran 2026",
-
   "translateArticle": "Makaleyi Çevir",
   "translationSourceLang": "Kaynak Dil",
   "translationTargetLang": "Hedef Dil",
@@ -317,12 +278,18 @@
   "translationSwapLanguages": "Dilleri değiştir",
   "translationNeedsDownload": "Çeviri için dil paketleri gerekiyor.",
   "translationGoToDownload": "Dil Paketlerini İndir",
-
   "languagePacks": "Dil Paketleri",
   "languagePacksDesc": "Cihazda çeviri modellerini yönet",
   "languagePackDownload": "İndir",
   "languagePackDelete": "Sil",
   "languagePackRequired": "Gerekli",
   "languagePackDownloading": "İndiriliyor…",
-  "languagePackCheckingStatus": "Kontrol ediliyor…"
+  "languagePackCheckingStatus": "Kontrol ediliyor…",
+  "bookmarksSwipeHint": "Herhangi bir makaleyi sola kaydırarak buraya kaydedebilirsiniz.",
+  "readSwipeHint": "İpucu: bir makaleyi sağa kaydırarak okundu veya okunmadı olarak işaretleyebilirsiniz.",
+  "retry": "Tekrar Dene",
+  "feedAddError": "Bu adreste RSS kaynağı bulunamadı. Adresi kontrol edin: çoğu kaynak adresi /feed veya /rss ile biter.",
+  "clearFilters": "Tüm makaleleri göster",
+  "thirtyMinutes": "30 Dakika",
+  "semanticCategoryOptions": "Kategori seçenekleri"
 }

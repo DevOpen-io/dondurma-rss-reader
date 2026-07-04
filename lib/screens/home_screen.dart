@@ -131,14 +131,43 @@ class _HomeScreenState extends State<HomeScreen> {
         _WidgetEntry(
           Padding(
             padding: const EdgeInsets.all(32.0),
-            child: Center(
-              child: Text(
-                provider.selectedCategory != null
-                    ? l10n.noFeedsInCategory(provider.selectedCategory!)
-                    : l10n.noFeedsMatchFilter,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 14),
-              ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  provider.selectedCategory != null
+                      ? l10n.noFeedsInCategory(provider.selectedCategory!)
+                      : l10n.noFeedsMatchFilter,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 14),
+                ),
+                if (provider.showUnreadOnly ||
+                    provider.searchQuery.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: () {
+                      _searchController.clear();
+                      provider.setSearchQuery('');
+                      if (provider.showUnreadOnly) {
+                        provider.toggleShowUnreadOnly();
+                      }
+                    },
+                    child: Text(l10n.clearFilters),
+                  ),
+                ],
+                if (provider.showUnreadOnly) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    l10n.readSwipeHint,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                      fontSize: 13,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ],
             ),
           ),
         ),

@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../utils/app_snackbar.dart';
 import '../widgets/folders/feed_action_sheet.dart';
 import '../widgets/folders/folder_dialogs.dart';
 
@@ -257,14 +258,11 @@ class CategoriesScreen extends StatelessWidget {
                                 }
                                 if (context.mounted) {
                                   context.read<FeedProvider>().refreshAll();
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        l10n.feedMovedToFolder(
-                                          sub.name,
-                                          category,
-                                        ),
-                                      ),
+                                  showAppSnackBar(
+                                    ScaffoldMessenger.of(context),
+                                    l10n.feedMovedToFolder(
+                                      sub.name,
+                                      category,
                                     ),
                                   );
                                 }

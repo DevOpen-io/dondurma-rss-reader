@@ -125,7 +125,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addRssFeed => 'Add RSS Feed';
 
   @override
-  String get addFeedSubtitle => 'Paste a website URL to subscribe';
+  String get addFeedSubtitle => 'Paste a feed address to subscribe';
 
   @override
   String useSuggestedName(String name) {
@@ -161,11 +161,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get saveFeed => 'Save Feed';
-
-  @override
-  String errorAddingFeed(String error) {
-    return 'Error adding feed: $error';
-  }
 
   @override
   String get feedAlreadyExists => 'Feed already exists.';
@@ -262,7 +257,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get autoRefreshFeeds => 'Auto Refresh Feeds';
 
   @override
-  String get autoRefreshFeedsDesc => 'How often feeds sync in background';
+  String get autoRefreshFeedsDesc =>
+      'How often feeds refresh while the app is open';
 
   @override
   String get thirtySeconds => '30 Seconds';
@@ -283,10 +279,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get cacheClearedSuccess => 'Cache cleared successfully.';
 
   @override
-  String get syncBackground => 'Sync Background';
+  String get syncBackground => 'Automatic Sync';
 
   @override
-  String get syncBackgroundDesc => 'Fetch new articles while app is open';
+  String get syncBackgroundDesc =>
+      'Automatically fetch new articles in the app and in the background';
 
   @override
   String get exportSubscriptions => 'Export Subscriptions (OPML)';
@@ -335,12 +332,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get versionDesc => 'Current build of Dondurma Rss Reader';
-
-  @override
-  String get rateTheApp => 'Rate the App';
-
-  @override
-  String get rateTheAppDesc => 'Support the development on the App Store';
 
   @override
   String get displayAndReadability => 'Display & Readability';
@@ -787,11 +778,11 @@ class AppLocalizationsEn extends AppLocalizations {
       'Many blogs and news sites have a specific RSS icon on their homepage or in their footer.';
 
   @override
-  String get whatIsRssMethod2Title => 'Just Paste the Website Link';
+  String get whatIsRssMethod2Title => 'Paste the Feed Address';
 
   @override
   String get whatIsRssMethod2Desc =>
-      'Often, you don\'t even need the exact RSS link. When you tap \'Add Feed\' in this app, just paste the regular website address (like \'verge.com\' or \'techcrunch.com\'). The app will automatically try to find the hidden RSS feed for you!';
+      'When you tap \'Add Feed\', paste the site\'s RSS address. Most sites use their web address plus /feed or /rss (like techcrunch.com/feed). Not sure where to start? Browse Suggested Feeds instead.';
 
   @override
   String get whatIsRssMethod3Title => 'Use Suggested Feeds';
@@ -929,4 +920,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get languagePackCheckingStatus => 'Checking…';
+
+  @override
+  String get bookmarksSwipeHint => 'Swipe left on any article to save it here.';
+
+  @override
+  String get readSwipeHint =>
+      'Tip: swipe an article right to mark it as read or unread.';
+
+  @override
+  String get retry => 'Try Again';
+
+  @override
+  String get feedAddError =>
+      'Couldn\'t find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.';
+
+  @override
+  String get clearFilters => 'Show all articles';
+
+  @override
+  String get thirtyMinutes => '30 Minutes';
+
+  @override
+  String get semanticCategoryOptions => 'Category options';
 }

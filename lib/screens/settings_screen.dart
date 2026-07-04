@@ -10,6 +10,7 @@ import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
+import '../utils/app_snackbar.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
@@ -434,13 +435,14 @@ class SettingsScreen extends StatelessWidget {
               icon: Icons.timer_outlined,
               title: l10n.autoRefreshFeeds,
               subtitle: l10n.autoRefreshFeedsDesc,
-              value: [30, 60, 300].contains(settings.cacheIntervalSeconds)
+              value: [30, 60, 300, 1800].contains(settings.cacheIntervalSeconds)
                   ? settings.cacheIntervalSeconds
                   : 30,
               items: [
                 DropdownMenuItem(value: 30, child: Text(l10n.thirtySeconds)),
                 DropdownMenuItem(value: 60, child: Text(l10n.oneMinute)),
                 DropdownMenuItem(value: 300, child: Text(l10n.fiveMinutes)),
+                DropdownMenuItem(value: 1800, child: Text(l10n.thirtyMinutes)),
               ],
               onChanged: (v) =>
                   context.read<SettingsProvider>().setCacheIntervalSeconds(v!),
@@ -468,8 +470,9 @@ class SettingsScreen extends StatelessWidget {
               onTap: () async {
                 await context.read<FeedProvider>().clearCache();
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.cacheClearedSuccess)),
+                  showAppSnackBar(
+                    ScaffoldMessenger.of(context),
+                    l10n.cacheClearedSuccess,
                   );
                 }
               },
@@ -483,8 +486,9 @@ class SettingsScreen extends StatelessWidget {
               onTap: () async {
                 await context.read<SettingsProvider>().clearSearchHistory();
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.searchHistoryCleared)),
+                  showAppSnackBar(
+                    ScaffoldMessenger.of(context),
+                    l10n.searchHistoryCleared,
                   );
                 }
               },
@@ -517,20 +521,18 @@ class SettingsScreen extends StatelessWidget {
                     .subscriptions;
                 if (subscriptions.isEmpty) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.noSubscriptionsToExport)),
+                    showAppSnackBar(
+                      ScaffoldMessenger.of(context),
+                      l10n.noSubscriptionsToExport,
                     );
                   }
                   return;
                 }
                 final success = await OpmlService().exportOpml(subscriptions);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        success ? l10n.exportSuccess : l10n.exportFailed,
-                      ),
-                    ),
+                  showAppSnackBar(
+                    ScaffoldMessenger.of(context),
+                    success ? l10n.exportSuccess : l10n.exportFailed,
                   );
                 }
               },
@@ -548,8 +550,9 @@ class SettingsScreen extends StatelessWidget {
                 final imported = await OpmlService().importOpml();
                 if (imported.isEmpty) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(l10n.noFeedsFoundOrCancelled)),
+                    showAppSnackBar(
+                      ScaffoldMessenger.of(context),
+                      l10n.noFeedsFoundOrCancelled,
                     );
                   }
                   return;
@@ -559,14 +562,9 @@ class SettingsScreen extends StatelessWidget {
                     .read<SubscriptionProvider>()
                     .importFeeds(imported);
                 if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        added > 0
-                            ? l10n.importedFeeds(added)
-                            : l10n.allFeedsExist,
-                      ),
-                    ),
+                  showAppSnackBar(
+                    ScaffoldMessenger.of(context),
+                    added > 0 ? l10n.importedFeeds(added) : l10n.allFeedsExist,
                   );
                 }
               },
@@ -626,17 +624,6 @@ class SettingsScreen extends StatelessWidget {
                 launchUrl(Uri.parse('mailto:info@devopen.io'));
               },
             ),
-            const SettingsTileDivider(),
-            SettingsActionTile(
-              icon: Icons.star_outline_rounded,
-              title: l10n.rateTheApp,
-              subtitle: l10n.rateTheAppDesc,
-              trailing: Icon(
-                Icons.chevron_right_rounded,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
-              onTap: () {},
-            ),
           ],
         ),
 
@@ -685,11 +672,13 @@ class SettingsScreen extends StatelessWidget {
                 Icons.chevron_right_rounded,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
-              onTap: () {
+              onTap: () async {
+                final info = await PackageInfo.fromPlatform();
+                if (!context.mounted) return;
                 showLicensePage(
                   context: context,
                   applicationName: l10n.appName,
-                  applicationVersion: '1.0.0',
+                  applicationVersion: info.version,
                   applicationIcon: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ClipRRect(
