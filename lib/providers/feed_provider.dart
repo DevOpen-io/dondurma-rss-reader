@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show compute, listEquals;
+import 'package:flutter/foundation.dart' show compute, listEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
@@ -86,6 +86,40 @@ class FeedProvider extends ChangeNotifier {
 
   List<FeedItem>? _filteredItemsCache;
 
+  // Snapshots of the upstream inputs that actually feed the filter pipeline.
+  // Compared in [update] so unrelated upstream changes (theme, search history,
+  // quiet hours…) don't invalidate the cache and rebuild the whole feed list.
+  List<String>? _lastGlobalKeywords;
+  Map<String, List<String>>? _lastFeedKeywords;
+  Set<String>? _lastBookmarkIds;
+
+  /// Pure comparison of the filter-relevant upstream inputs — extracted for
+  /// unit testing. Returns `true` when the filtered list must be recomputed:
+  /// no previous snapshot yet, or global keywords, per-feed keywords, or the
+  /// bookmark ID set differ.
+  static bool filterInputsChanged({
+    required List<String>? prevGlobalKeywords,
+    required List<String> nextGlobalKeywords,
+    required Map<String, List<String>>? prevFeedKeywords,
+    required Map<String, List<String>> nextFeedKeywords,
+    required Set<String>? prevBookmarkIds,
+    required Set<String> nextBookmarkIds,
+  }) {
+    if (prevGlobalKeywords == null ||
+        prevFeedKeywords == null ||
+        prevBookmarkIds == null) {
+      return true;
+    }
+    if (!listEquals(prevGlobalKeywords, nextGlobalKeywords)) return true;
+    if (!setEquals(prevBookmarkIds, nextBookmarkIds)) return true;
+    if (prevFeedKeywords.length != nextFeedKeywords.length) return true;
+    for (final entry in nextFeedKeywords.entries) {
+      final prev = prevFeedKeywords[entry.key];
+      if (prev == null || !listEquals(prev, entry.value)) return true;
+    }
+    return false;
+  }
+
   /// Memoized unread tallies powering the drawer badges. Rebuilt lazily from
   /// [_items] + [_readItemIds] and invalidated alongside the filter cache, so
   /// the drawer no longer rescans every item for every category/feed row on
@@ -164,15 +198,39 @@ class FeedProvider extends ChangeNotifier {
     settingsProvider = set;
     bookmarkProvider = book;
 
+    // Snapshot the filter-relevant inputs and compare against the previous
+    // update, so theme/search-history/quiet-hours changes don't trigger a
+    // full refilter + feed-list rebuild.
+    final nextGlobalKeywords = List<String>.of(set.globalExcludedKeywords);
+    final nextFeedKeywords = <String, List<String>>{
+      for (final s in sub.subscriptions)
+        if (s.excludedKeywords.isNotEmpty)
+          s.url: List<String>.of(s.excludedKeywords),
+    };
+    final nextBookmarkIds = Set<String>.of(book.bookmarkedItemIds);
+    final inputsChanged = filterInputsChanged(
+      prevGlobalKeywords: _lastGlobalKeywords,
+      nextGlobalKeywords: nextGlobalKeywords,
+      prevFeedKeywords: _lastFeedKeywords,
+      nextFeedKeywords: nextFeedKeywords,
+      prevBookmarkIds: _lastBookmarkIds,
+      nextBookmarkIds: nextBookmarkIds,
+    );
+    _lastGlobalKeywords = nextGlobalKeywords;
+    _lastFeedKeywords = nextFeedKeywords;
+    _lastBookmarkIds = nextBookmarkIds;
+
     if (isFirstUpdate) {
       refreshAll();
       _manageCacheTimer();
       return;
     }
 
-    // Rebuild filter output — cheap, O(n) walk already cached.
-    _invalidateFilterCache();
-    Future.microtask(() => notifyListeners());
+    if (inputsChanged) {
+      // Rebuild filter output — cheap, O(n) walk already cached.
+      _invalidateFilterCache();
+      Future.microtask(() => notifyListeners());
+    }
 
     // Only recreate the background sync timer when interval or toggle changes.
     // Previously this always fired, resetting the countdown on every tap.

@@ -26,28 +26,26 @@ class BookmarksScreen extends StatelessWidget {
               Icon(
                 Icons.bookmark_border_rounded,
                 size: 64,
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.15),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.15),
               ),
               const SizedBox(height: 20),
               Text(
                 l10n.noBookmarks,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 8),
               Text(
                 'Swipe left on any article to save it here.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.5),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurface.withValues(alpha: 0.5),
                   fontSize: 14,
                   height: 1.5,
                 ),
@@ -59,7 +57,12 @@ class BookmarksScreen extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+      padding: const EdgeInsets.only(
+        top: 16.0,
+        left: 16.0,
+        right: 16.0,
+        bottom: 120.0,
+      ),
       itemCount: bookmarkedItems.length,
       itemBuilder: (context, index) {
         return FeedListItem(item: bookmarkedItems[index]);

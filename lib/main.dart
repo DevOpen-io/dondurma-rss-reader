@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:flex_color_scheme/flex_color_scheme.dart' show FlexScheme;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -251,16 +252,23 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final settingsProvider = context.watch<SettingsProvider>();
+    // Watch only the three settings MaterialApp actually uses, so unrelated
+    // settings changes (search history, quiet hours…) don't rebuild the app
+    // root and re-run theme construction.
+    final flexScheme =
+        context.select<SettingsProvider, FlexScheme>((s) => s.flexScheme);
+    final themeMode =
+        context.select<SettingsProvider, ThemeMode>((s) => s.themeMode);
+    final locale = context.select<SettingsProvider, Locale>((s) => s.locale);
 
     return MaterialApp.router(
       onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppThemeBuilder.light(settingsProvider.flexScheme),
-      darkTheme: AppThemeBuilder.dark(settingsProvider.flexScheme),
-      themeMode: settingsProvider.themeMode,
+      theme: AppThemeBuilder.light(flexScheme),
+      darkTheme: AppThemeBuilder.dark(flexScheme),
+      themeMode: themeMode,
       scrollBehavior: const PremiumScrollBehavior(),
-      locale: settingsProvider.locale,
+      locale: locale,
       supportedLocales: const [Locale('en'), Locale('tr')],
       localizationsDelegates: const [
         AppLocalizations.delegate,

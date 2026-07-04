@@ -3,6 +3,8 @@ import 'package:dart_rss/dart_rss.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:intl/intl.dart';
 import 'dart:convert';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
 
@@ -136,29 +138,16 @@ class FeedService {
         );
       }
 
-      String bodyString;
-      try {
-        bodyString = utf8.decode(response.bodyBytes, allowMalformed: true);
-      } catch (e) {
-        bodyString = response.body;
-      }
-
       final newEtag = response.headers['etag'];
       final newLastModified = response.headers['last-modified'];
 
-      List<FeedItem> items;
-      try {
-        final rssFeed = RssFeed.parse(bodyString);
-        items = capItems(_mapRssItems(rssFeed, category, url));
-      } catch (e) {
-        // Try parsing as Atom if RSS parsing fails
-        try {
-          final atomFeed = AtomFeed.parse(bodyString);
-          items = capItems(_mapAtomItems(atomFeed, category, url));
-        } catch (e2) {
-          throw Exception('Failed to parse RSS/Atom feed: $e2');
-        }
-      }
+      // Decode + XML parse + per-item HTML parse in a background isolate —
+      // with many feeds this work caused jank on the main thread during sync.
+      final items = await compute(parseFeedBody, (
+        bodyBytes: response.bodyBytes,
+        category: category,
+        url: url,
+      ));
       return FeedFetchResult(
         items: items,
         etag: newEtag,
@@ -170,8 +159,32 @@ class FeedService {
     }
   }
 
+  /// Decodes and parses a raw feed body into capped [FeedItem]s.
+  ///
+  /// Static and side-effect free so it can run in a background isolate via
+  /// [compute]. Attempts RSS first, then falls back to Atom.
+  static List<FeedItem> parseFeedBody(
+    ({Uint8List bodyBytes, String category, String url}) request,
+  ) {
+    final bodyString = utf8.decode(request.bodyBytes, allowMalformed: true);
+
+    try {
+      final rssFeed = RssFeed.parse(bodyString);
+      return capItems(_mapRssItems(rssFeed, request.category, request.url));
+    } catch (e) {
+      // Try parsing as Atom if RSS parsing fails
+      try {
+        final atomFeed = AtomFeed.parse(bodyString);
+        return capItems(_mapAtomItems(atomFeed, request.category, request.url));
+      } catch (e2) {
+        throw Exception('Failed to parse RSS/Atom feed: $e2');
+      }
+    }
+  }
+
   /// Maps RSS feed items to the universal [FeedItem] model.
-  List<FeedItem> _mapRssItems(RssFeed feed, String category, String sourceUrl) {
+  static List<FeedItem> _mapRssItems(
+      RssFeed feed, String category, String sourceUrl) {
     final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
     return feed.items.map((item) {
@@ -209,7 +222,7 @@ class FeedService {
   }
 
   /// Maps Atom feed entries to the universal [FeedItem] model.
-  List<FeedItem> _mapAtomItems(
+  static List<FeedItem> _mapAtomItems(
     AtomFeed feed,
     String category,
     String sourceUrl,
@@ -265,7 +278,7 @@ class FeedService {
   /// Parses [htmlString] once and extracts both plain text and image URLs.
   ///
   /// Avoids re-parsing the same HTML twice (old code called parse() 3-4× per item).
-  _ParsedContent _parseContent(String htmlString) {
+  static _ParsedContent _parseContent(String htmlString) {
     if (htmlString.isEmpty) return const _ParsedContent('', []);
     final document = parse(htmlString);
     final text = (document.body?.text ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
@@ -278,8 +291,9 @@ class FeedService {
   }
 
   /// Decodes HTML entities (e.g. `&#8216;`) in feed titles and site names.
-  String _decodeHtmlEntities(String text) {
-    if (text.isEmpty) return text;
+  static String _decodeHtmlEntities(String text) {
+    // Fast path: no '&' means no entities — skip the full HTML parse.
+    if (text.isEmpty || !text.contains('&')) return text;
     final document = parse(text);
     return document.documentElement?.text ?? text;
   }
@@ -289,7 +303,7 @@ class FeedService {
   /// Supports:
   ///  - ISO 8601 (e.g. `2026-02-27T12:00:00Z`)
   ///  - RFC 822 / RFC 2822 (e.g. `Thu, 27 Feb 2026 12:00:00 GMT`)
-  DateTime? _parseRssDate(String? dateStr) {
+  static DateTime? _parseRssDate(String? dateStr) {
     if (dateStr == null || dateStr.trim().isEmpty) return null;
 
     final trimmed = dateStr.trim();

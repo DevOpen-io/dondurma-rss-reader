@@ -47,7 +47,6 @@ No algorithms. No tracking. Just your feeds, your way.
 - **Reading Progress Tracking** — Resume reading right where you left off
 - **Estimated Reading Time** — Know how long an article will take before diving in
 - **Search & Search History** — Find articles quickly with persistent search suggestions
-- **On-Device Translation** 🌐 — Translate articles locally using Google ML Kit. Supports offline translation by downloading language packages, preserving HTML tags, formatting, and carousels.
 
 ### 🎨 Theming & Customization
 - **10 Color Schemes** — Material, Blue, Indigo, Deep Purple, Sakura, Red, Teal, Green, Amber, and Outer Space — powered by [FlexColorScheme](https://pub.dev/packages/flex_color_scheme)
@@ -102,7 +101,7 @@ lib/
 │   ├── subscription_provider.dart # Feed subscriptions & categories
 │   ├── bookmark_provider.dart     # Saved articles persistence
 │   ├── settings_provider.dart     # Theme, locale, sync, notification prefs
-│   └── article_page_provider.dart # Per-article scroll, reading state & ML Kit translations
+│   └── article_page_provider.dart # Per-article scroll and reading state management
 ├── services/                  # Business logic services
 │   ├── feed_service.dart              # HTTP fetch + RSS/Atom parsing
 │   ├── full_text_extraction_service.dart  # Heuristic content extraction
@@ -128,13 +127,11 @@ lib/
 │   ├── add_feed_dialog.dart       # Feed subscription dialog
 │   ├── explore_feeds_dialog.dart  # Feed discovery page
 │   ├── keyword_input_sheet.dart   # Keyword filter bottom sheet
-│   ├── language_packs_sheet.dart  # Translation language pack download sheet
 │   ├── article/                   # Article-specific widgets
 │   │   ├── article_circle_buttons.dart
 │   │   ├── article_content_skeleton.dart
 │   │   ├── article_image_carousel.dart
-│   │   ├── article_reading_mode_toggle.dart
-│   │   └── article_translation_sheet.dart # On-device translation interface
+│   │   └── article_reading_mode_toggle.dart
 │   ├── folders/                   # Folder-specific widgets
 │   │   ├── feed_action_sheet.dart
 │   │   └── folder_dialogs.dart
@@ -168,7 +165,6 @@ lib/
 | **WebView** | webview_flutter + adblocker_webview |
 | **Notifications** | flutter_local_notifications |
 | **Background Work** | workmanager |
-| **Translation** | google_mlkit_translation (Google ML Kit On-Device Translation) |
 | **Skeleton Loading** | skeletonizer |
 | **XML** | xml (for OPML) |
 | **Sharing** | share_plus, url_launcher |
@@ -259,7 +255,6 @@ Algoritma yok. Takip yok. Sadece sizin akışlarınız, sizin kurallarınız.
 - **Okuma İlerlemesi Takibi** — Kaldığınız yerden okumaya devam edin
 - **Tahmini Okuma Süresi** — Makaleye başlamadan önce ne kadar süreceğini bilin
 - **Arama ve Arama Geçmişi** — Kalıcı arama önerileriyle makaleleri hızla bulun
-- **Cihaz İçi Çeviri** 🌐 — Google ML Kit kullanarak makaleleri yerel olarak çevirin. Dil paketlerini cihazınıza indirerek internet olmadan çeviri desteği sağlar; bu sırada HTML yapısını, biçimlendirmeleri ve görselleri korur.
 
 ### 🎨 Tema ve Özelleştirme
 - **10 Renk Şeması** — Material, Blue, Indigo, Deep Purple, Sakura, Red, Teal, Green, Amber ve Outer Space — [FlexColorScheme](https://pub.dev/packages/flex_color_scheme) ile
@@ -314,7 +309,7 @@ lib/
 │   ├── subscription_provider.dart # Akış abonelikleri ve kategoriler
 │   ├── bookmark_provider.dart     # Kaydedilmiş makalelerin kalıcılığı
 │   ├── settings_provider.dart     # Tema, dil, senkronizasyon, bildirim ayarları
-│   └── article_page_provider.dart # Her makale için kaydırma, okuma durumu ve ML Kit çeviri yönetimi
+│   └── article_page_provider.dart # Her makale için kaydırma ve okuma durumu yönetimi
 ├── services/                  # İş mantığı servisleri
 │   ├── feed_service.dart              # HTTP istekleri + RSS/Atom ayrıştırma
 │   ├── full_text_extraction_service.dart  # Sezgisel içerik çıkarma
@@ -340,13 +335,11 @@ lib/
 │   ├── add_feed_dialog.dart       # Akış abonelik diyaloğu
 │   ├── explore_feeds_dialog.dart  # Akış keşif sayfası
 │   ├── keyword_input_sheet.dart   # Anahtar kelime filtre bottom sheet
-│   ├── language_packs_sheet.dart  # Çeviri dil paketleri indirme paneli
 │   ├── article/                   # Makale bileşenleri
 │   │   ├── article_circle_buttons.dart
 │   │   ├── article_content_skeleton.dart
 │   │   ├── article_image_carousel.dart
-│   │   ├── article_reading_mode_toggle.dart
-│   │   └── article_translation_sheet.dart # Cihaz içi çeviri paneli
+│   │   └── article_reading_mode_toggle.dart
 │   ├── folders/                   # Klasör bileşenleri
 │   │   ├── feed_action_sheet.dart
 │   │   └── folder_dialogs.dart
@@ -380,7 +373,6 @@ lib/
 | **WebView** | webview_flutter + adblocker_webview |
 | **Bildirimler** | flutter_local_notifications |
 | **Arka Plan İşleri** | workmanager |
-| **Çeviri** | google_mlkit_translation (Google ML Kit Cihaz İçi Çeviri) |
 | **İskelet Yükleme** | skeletonizer |
 | **XML** | xml (OPML için) |
 | **Paylaşım** | share_plus, url_launcher |
