@@ -25,12 +25,6 @@
   },
   {
     "category": "Bilim ve İnovasyon",
-    "name": "Bilim ve Gelecek",
-    "url": "https://bilimvegelecek.com.tr/index.php/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Bilim ve İnovasyon",
     "name": "Bilimoloji",
     "url": "https://www.bilimoloji.com/feed/",
     "popularity": 6
@@ -39,12 +33,6 @@
     "category": "Bilim ve İnovasyon",
     "name": "Bilimup",
     "url": "https://www.bilimup.com/rss.xml",
-    "popularity": 6
-  },
-  {
-    "category": "Bilim ve İnovasyon",
-    "name": "DijitalX",
-    "url": "https://www.dijitalx.com/feed/",
     "popularity": 6
   },
   {
@@ -91,12 +79,6 @@
   },
   {
     "category": "Bilim ve İnovasyon",
-    "name": "Kozmik Anafor",
-    "url": "https://www.kozmikanafor.com/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Bilim ve İnovasyon",
     "name": "Matematiksel",
     "url": "https://www.matematiksel.org/feed",
     "popularity": 6
@@ -115,14 +97,26 @@
   },
   {
     "category": "Bilim ve İnovasyon",
-    "name": "Popular Science",
-    "url": "https://popsci.com.tr/feed/",
+    "name": "Bilim.org",
+    "url": "https://www.bilim.org/feed",
     "popularity": 6
   },
   {
     "category": "Bilim ve İnovasyon",
-    "name": "Sarkaç",
-    "url": "https://sarkac.org/feed/",
+    "name": "Bilim Kahramanları",
+    "url": "https://news.google.com/rss/search?q=bilim+teknoloji+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 6
+  },
+  {
+    "category": "Bilim ve İnovasyon",
+    "name": "Fizikist",
+    "url": "https://www.fizikist.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Bilim ve İnovasyon",
+    "name": "Bilim Haberleri (Google)",
+    "url": "https://news.google.com/rss/search?q=bilim+haberleri+keşif&hl=tr&gl=TR&ceid=TR:tr",
     "popularity": 6
   },
   {
@@ -133,20 +127,8 @@
   },
   {
     "category": "Teknoloji",
-    "name": "Beetekno",
-    "url": "https://www.beetekno.com/feed/posts",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
     "name": "Campaign Türkiye",
     "url": "https://www.campaigntr.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "CHIP Online",
-    "url": "https://www.chip.com.tr/rss",
     "popularity": 7
   },
   {
@@ -159,18 +141,6 @@
     "category": "Teknoloji",
     "name": "Dijitaliyidir",
     "url": "https://dijitaliyidir.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "Digital Report",
-    "url": "https://digitalreport.com.tr/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "Donanım Haber",
-    "url": "https://www.donanimhaber.com/rss/tum/",
     "popularity": 7
   },
   {
@@ -195,12 +165,6 @@
     "category": "Teknoloji",
     "name": "Hangisi Alınmalı",
     "url": "https://hangisialinmali.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "Hardware Plus",
-    "url": "https://hwp.com.tr/feed",
     "popularity": 7
   },
   {
@@ -231,12 +195,6 @@
     "category": "Teknoloji",
     "name": "Megabayt Bilgisayar",
     "url": "https://www.megabayt.com/rss/categorynews/bilgisayar",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "Megabayt Bilim ve Teknoloji",
-    "url": "https://www.megabayt.com/rss/categorynews/bilim-ve-teknoloji",
     "popularity": 7
   },
   {
@@ -319,12 +277,6 @@
   },
   {
     "category": "Teknoloji",
-    "name": "Technopat",
-    "url": "https://www.technopat.net/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
     "name": "TechTurco",
     "url": "https://www.techturco.com/rss",
     "popularity": 7
@@ -337,20 +289,8 @@
   },
   {
     "category": "Teknoloji",
-    "name": "TeknoBurada",
-    "url": "https://www.teknoburada.net/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
     "name": "Teknodiot",
     "url": "https://teknodiot.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "Teknolojioku",
-    "url": "https://www.teknolojioku.com/export/rss",
     "popularity": 7
   },
   {
@@ -367,12 +307,6 @@
   },
   {
     "category": "Teknoloji",
-    "name": "Türk İnternet",
-    "url": "https://turk-internet.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
     "name": "Upcorn",
     "url": "https://upcorn.co/feed/",
     "popularity": 7
@@ -381,12 +315,6 @@
     "category": "Teknoloji",
     "name": "VoiceTekno",
     "url": "https://voicetekno.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Teknoloji",
-    "name": "Webmasto",
-    "url": "https://webmasto.com/feed",
     "popularity": 7
   },
   {
@@ -411,6 +339,30 @@
     "category": "Teknoloji",
     "name": "Webrazzi Yapay Zeka",
     "url": "https://webrazzi.com/kategori/yapay-zeka/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Teknoloji",
+    "name": "TechInside",
+    "url": "https://techinside.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Teknoloji",
+    "name": "TeknoSeyir",
+    "url": "https://news.google.com/rss/search?q=site:teknoseyir.com&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 7
+  },
+  {
+    "category": "Teknoloji",
+    "name": "Teknoloji (Google)",
+    "url": "https://news.google.com/rss/search?q=teknoloji+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 7
+  },
+  {
+    "category": "Teknoloji",
+    "name": "Teknoloji Haberleri (Google)",
+    "url": "https://news.google.com/rss/search?q=teknoloji+haberleri+son+dakika+2025&hl=tr&gl=TR&ceid=TR:tr",
     "popularity": 7
   },
   {
@@ -439,20 +391,8 @@
   },
   {
     "category": "Eğlence ve Medya",
-    "name": "Beyaz Perde",
-    "url": "https://www.beyazperde.com/rss/haberler.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
     "name": "Bigumigu",
     "url": "https://bigumigu.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
-    "name": "Bilimkurgu Kulübü",
-    "url": "https://www.bilimkurgukulubu.com/feed/",
     "popularity": 8
   },
   {
@@ -523,12 +463,6 @@
   },
   {
     "category": "Eğlence ve Medya",
-    "name": "Megabayt Dizi-sinema",
-    "url": "https://www.megabayt.com/rss/categorynews/dizi-sinema",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
     "name": "Megabayt Oyun",
     "url": "https://www.megabayt.com/rss/categorynews/oyun",
     "popularity": 8
@@ -537,12 +471,6 @@
     "category": "Eğlence ve Medya",
     "name": "Megabayt Sinema",
     "url": "https://www.megabayt.com/rss/categorynews/sinema",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
-    "name": "Megabayt Televizyon",
-    "url": "https://www.megabayt.com/rss/categorynews/televizyon",
     "popularity": 8
   },
   {
@@ -577,12 +505,6 @@
   },
   {
     "category": "Eğlence ve Medya",
-    "name": "Oyungezer",
-    "url": "https://oyungezer.com.tr/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
     "name": "Öteki Sinema",
     "url": "https://www.otekisinema.com/feed/",
     "popularity": 8
@@ -607,20 +529,32 @@
   },
   {
     "category": "Eğlence ve Medya",
-    "name": "Tourens",
-    "url": "https://tourens.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
-    "name": "Turkmmo",
-    "url": "https://www.turkmmo.com/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Eğlence ve Medya",
     "name": "Turuncu Levye",
     "url": "https://www.turunculevye.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Eğlence ve Medya",
+    "name": "Eğlence Haberleri (Google)",
+    "url": "https://news.google.com/rss/search?q=eğlence+magazin+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Eğlence ve Medya",
+    "name": "Magazin (Google)",
+    "url": "https://news.google.com/rss/search?q=magazin+haberleri+ünlü&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Eğlence ve Medya",
+    "name": "Hürriyet Magazin",
+    "url": "https://www.hurriyet.com.tr/rss/magazin",
+    "popularity": 8
+  },
+  {
+    "category": "Eğlence ve Medya",
+    "name": "Posta Magazin",
+    "url": "https://www.posta.com.tr/rss/magazin.xml",
     "popularity": 8
   },
   {
@@ -673,12 +607,6 @@
   },
   {
     "category": "Kültür ve Sanat",
-    "name": "Bir Baba Indie",
-    "url": "https://www.birbabaindie.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
     "name": "Cafrande",
     "url": "https://www.cafrande.org/feed/",
     "popularity": 8
@@ -687,18 +615,6 @@
     "category": "Kültür ve Sanat",
     "name": "Cazkolik",
     "url": "https://cazkolik.com/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Çekiçle Felsefe",
-    "url": "https://cekiclefelsefe.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "DeliKasap",
-    "url": "https://www.delikasap.org/feed/",
     "popularity": 8
   },
   {
@@ -717,12 +633,6 @@
     "category": "Kültür ve Sanat",
     "name": "Edebiyat Haber",
     "url": "https://www.edebiyathaber.net/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Eventmag",
-    "url": "https://eventmag.co/feed/",
     "popularity": 8
   },
   {
@@ -775,18 +685,6 @@
   },
   {
     "category": "Kültür ve Sanat",
-    "name": "Manifold",
-    "url": "https://manifold.press/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Mesail",
-    "url": "https://www.mesail.org/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
     "name": "Megabayt Kültür Sanat",
     "url": "https://www.megabayt.com/rss/categorynews/kultur-sanat",
     "popularity": 8
@@ -799,12 +697,6 @@
   },
   {
     "category": "Kültür ve Sanat",
-    "name": "Mürekkep Haber",
-    "url": "https://www.murekkephaber.com/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
     "name": "Nouvart",
     "url": "https://www.nouvart.net/feed/",
     "popularity": 8
@@ -813,30 +705,6 @@
     "category": "Kültür ve Sanat",
     "name": "Öncül",
     "url": "https://onculanalitikfelsefe.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Play Tuşu",
-    "url": "https://playtusu.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Rotka",
-    "url": "https://www.rotka.org/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Sosyal Bilimler",
-    "url": "https://www.sosyalbilimler.org/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Kültür ve Sanat",
-    "name": "Tarihistan",
-    "url": "https://www.tarihistan.org/rss",
     "popularity": 8
   },
   {
@@ -858,6 +726,24 @@
     "popularity": 8
   },
   {
+    "category": "Kültür ve Sanat",
+    "name": "Arter",
+    "url": "https://news.google.com/rss/search?q=site:arter.org.tr+etkinlik&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Kültür ve Sanat",
+    "name": "Kültür Sanat (Google)",
+    "url": "https://news.google.com/rss/search?q=kültür+sanat+sergi+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Kültür ve Sanat",
+    "name": "Radikal Kültür",
+    "url": "https://news.google.com/rss/search?q=kültür+sanat+edebiyat+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
     "category": "Spor",
     "name": "A Spor",
     "url": "https://www.aspor.com.tr/rss/anasayfa.xml",
@@ -865,20 +751,8 @@
   },
   {
     "category": "Spor",
-    "name": "AjansSpor",
-    "url": "https://ajansspor.com/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
     "name": "Basket Dergisi",
     "url": "https://basketdergisi.com/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Duhuliye",
-    "url": "https://www.duhuliye.com/rss",
     "popularity": 8
   },
   {
@@ -939,12 +813,6 @@
     "category": "Spor",
     "name": "Fotospor",
     "url": "https://www.fotospor.com/feed/rss_sondakika.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Futboo",
-    "url": "https://www.futboo.com/rss.xml",
     "popularity": 8
   },
   {
@@ -1015,56 +883,8 @@
   },
   {
     "category": "Spor",
-    "name": "Orta Çizgi",
-    "url": "https://ortacizgi.com/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
     "name": "Sabah Spor",
     "url": "https://www.sabah.com.tr/rss/spor.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü 2024 Paris Olimpiyatları",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-2024-paris-olimpiyatlari",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü Basketbol",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-basketbol",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü Diğer Sporlar",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-diger-sporlar",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü Dünyadan Futbol",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-dunyadan-spor",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü Futbol",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-futbol",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü Spor",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-spor",
-    "popularity": 8
-  },
-  {
-    "category": "Spor",
-    "name": "Sözcü Voleybol",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-voleybol",
     "popularity": 8
   },
   {
@@ -1074,15 +894,39 @@
     "popularity": 8
   },
   {
-    "category": "Dünya Haberleri",
-    "name": "10Haber",
-    "url": "https://10haber.net/feed/",
-    "popularity": 9
+    "category": "Spor",
+    "name": "Spor Haberleri (Google)",
+    "url": "https://news.google.com/rss/search?q=spor+haberleri+futbol+basketbol&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Spor",
+    "name": "Spor (Google)",
+    "url": "https://news.google.com/rss/search?q=spor+haberleri+son+dakika&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Spor",
+    "name": "Maçkolik",
+    "url": "https://news.google.com/rss/search?q=site:mackolik.com&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 8
+  },
+  {
+    "category": "Spor",
+    "name": "Hürriyet Spor",
+    "url": "https://www.hurriyet.com.tr/rss/spor",
+    "popularity": 8
+  },
+  {
+    "category": "Spor",
+    "name": "Milliyet Spor",
+    "url": "https://www.milliyet.com.tr/rss/spor.xml",
+    "popularity": 8
   },
   {
     "category": "Dünya Haberleri",
-    "name": "ABC Haber",
-    "url": "https://abcgazetesi.com.tr/rss",
+    "name": "10Haber",
+    "url": "https://10haber.net/feed/",
     "popularity": 9
   },
   {
@@ -1101,12 +945,6 @@
     "category": "Dünya Haberleri",
     "name": "Akşam",
     "url": "https://www.aksam.com.tr/rss/rss.asp",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Al Ain Türkçe",
-    "url": "https://tr.al-ain.com/feed",
     "popularity": 9
   },
   {
@@ -1141,12 +979,6 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Aykırı",
-    "url": "https://www.aykiri.com.tr/rss.xml",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Ayandon",
     "url": "https://www.ayandon.com.tr/rss.xml",
     "popularity": 9
@@ -1161,12 +993,6 @@
     "category": "Dünya Haberleri",
     "name": "Bengütürk",
     "url": "https://www.benguturk.com/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Beyaz Gazete",
-    "url": "https://beyazgazete.com/rss/guncel.xml",
     "popularity": 9
   },
   {
@@ -1219,12 +1045,6 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Diken",
-    "url": "https://www.diken.com.tr/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Diriliş Postası",
     "url": "https://www.dirilispostasi.com/rss",
     "popularity": 9
@@ -1243,20 +1063,8 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "dikGAZETE",
-    "url": "https://www.dikgazete.com/xml/rss.xml",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Doğru Haber",
     "url": "https://dogruhaber.com.tr/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Dokuz8 Haber",
-    "url": "https://www.dokuz8haber.net/rss",
     "popularity": 9
   },
   {
@@ -1291,50 +1099,14 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Ekol TV",
-    "url": "https://www.ekoltv.com.tr/service/rss.php",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "En Son Haber",
-    "url": "https://www.ensonhaber.com/rss/ensonhaber.xml",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Evrensel",
-    "url": "https://www.evrensel.net/rss/haber.xml",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "F5 Haber",
-    "url": "https://www.f5haber.com/export/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Fayn",
     "url": "https://www.fayn.press/rss/",
     "popularity": 9
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Gazete Duvar",
-    "url": "https://www.gazeteduvar.com.tr/export/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Gazete Emek",
     "url": "https://www.gazeteemek.net/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Gazete.net",
-    "url": "https://gazete.net/rss",
     "popularity": 9
   },
   {
@@ -1369,12 +1141,6 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Haber 3",
-    "url": "https://www.haber3.com/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Haber 7",
     "url": "https://i12.haber7.net/sondakika/newsstand/latest.xml",
     "popularity": 9
@@ -1393,38 +1159,8 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Haber Global",
-    "url": "https://haberglobal.com.tr/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Habertürk",
     "url": "https://www.haberturk.com/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Haberet",
-    "url": "https://www.haberet.com/export/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Halk TV",
-    "url": "https://halktv.com.tr/service/rss.php",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Haberport",
-    "url": "https://www.haberport.com/rss/latest-posts",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Haberiniz",
-    "url": "https://haberiniz.com.tr/feed/",
     "popularity": 9
   },
   {
@@ -1465,12 +1201,6 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "İnternet Haber",
-    "url": "https://www.internethaber.com/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "İstiklal",
     "url": "https://www.istiklal.com.tr/service/rss.php",
     "popularity": 9
@@ -1479,12 +1209,6 @@
     "category": "Dünya Haberleri",
     "name": "İşin Detayı",
     "url": "https://www.isindetayi.com/rss/gundem",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "İşçi Haber",
-    "url": "https://www.iscihaber.net/rss/news",
     "popularity": 9
   },
   {
@@ -1519,32 +1243,8 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Kısa Dalga",
-    "url": "https://kisadalga.net/service/rss.php",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Korkusuz",
-    "url": "https://www.korkusuz.com.tr/feeds/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "KRT TV",
-    "url": "https://www.krttv.com.tr/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Lotus News",
     "url": "https://www.lotusnews.com.tr/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Medya Gazete",
-    "url": "https://www.medyagazete.com/rss/genel-0",
     "popularity": 9
   },
   {
@@ -1561,20 +1261,8 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Milli Gazete",
-    "url": "https://www.milligazete.com.tr/rss",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Mynet",
     "url": "https://www.mynet.com/haber/rss/sondakika",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Muhalif",
-    "url": "https://www.muhalif.com.tr/rss/genel-0",
     "popularity": 9
   },
   {
@@ -1591,20 +1279,8 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "OdaTV",
-    "url": "https://www.odatv.com/rss.xml",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Perspektif",
     "url": "https://www.perspektif.online/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Polemik Haber",
-    "url": "https://www.polemikhaber.com/rss",
     "popularity": 9
   },
   {
@@ -1623,102 +1299,6 @@
     "category": "Dünya Haberleri",
     "name": "Serbestiyet",
     "url": "https://serbestiyet.com/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-sozcu",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Astroloji",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-astroloji",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Bilim ve Teknoloji",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-bilim-teknoloji",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Eğitim",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-egitim",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Gündem",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-gundem",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Günün İçinden",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-gunun-icinden",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Hayat",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-hayat",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü İlan",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-ilan",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Kültür Sanat",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-kultur-sanat",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Magazin",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-magazin",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Otomotiv",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-otomotiv",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Resmi İlanlar",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-resmi-ilanlar",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Sağlık",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-saglik",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Son Dakika",
-    "url": "https://www.sozcu.com.tr/feeds-son-dakika",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Yazarlar",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-yazar",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Sözcü Yaşam",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-yasam",
     "popularity": 9
   },
   {
@@ -1765,20 +1345,8 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Timeturk",
-    "url": "https://www.timeturk.com/rss/",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Türkiye Gazetesi",
     "url": "https://www.turkiyegazetesi.com.tr/feed",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Türkgün",
-    "url": "https://www.turkgun.com/rss/news",
     "popularity": 9
   },
   {
@@ -1809,12 +1377,6 @@
     "category": "Dünya Haberleri",
     "name": "Ulusal Post",
     "url": "https://www.ulusalpost.com/service/rss.php",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
-    "name": "Uyan32",
-    "url": "https://www.uyan32.com/rss",
     "popularity": 9
   },
   {
@@ -1861,12 +1423,6 @@
   },
   {
     "category": "Dünya Haberleri",
-    "name": "Yeşil Gazete",
-    "url": "https://yesilgazete.org/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Dünya Haberleri",
     "name": "Yurt Gazetesi",
     "url": "https://www.yurtgazetesi.com.tr/service/rss.php",
     "popularity": 9
@@ -1878,6 +1434,54 @@
     "popularity": 9
   },
   {
+    "category": "Dünya Haberleri",
+    "name": "DW Türkçe",
+    "url": "https://rss.dw.com/xml/rss-tur-all",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "Euronews Türkçe",
+    "url": "https://tr.euronews.com/rss",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "TRT World",
+    "url": "https://news.google.com/rss/search?q=TRT+World+haber&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "Dünya Haberleri (Google)",
+    "url": "https://news.google.com/rss/search?q=dünya+haberleri+son+dakika&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "France24 Türkçe",
+    "url": "https://news.google.com/rss/search?q=site:france24.com+tr&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "Hürriyet Dünya",
+    "url": "https://www.hurriyet.com.tr/rss/dunya",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "NTV Dünya",
+    "url": "https://www.ntv.com.tr/dunya.rss",
+    "popularity": 9
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "Milliyet Dünya",
+    "url": "https://www.milliyet.com.tr/rss/dunya.xml",
+    "popularity": 9
+  },
+  {
     "category": "Savunma ve Güvenlik",
     "name": "C4 Defence",
     "url": "https://www.c4defence.com/tr/feed/",
@@ -1885,26 +1489,8 @@
   },
   {
     "category": "Savunma ve Güvenlik",
-    "name": "DefenceTurk",
-    "url": "https://www.defenceturk.net/feed",
-    "popularity": 3
-  },
-  {
-    "category": "Savunma ve Güvenlik",
     "name": "Mavi Savunma",
     "url": "https://mavisavunma.com/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Savunma ve Güvenlik",
-    "name": "Sanayi Gazetesi",
-    "url": "https://sanayigazetesi.com.tr/kategori/savunma-haberleri/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Savunma ve Güvenlik",
-    "name": "Savunma Sanayi Gazetesi",
-    "url": "https://savunmasanayigazetesi.com.tr/feed/",
     "popularity": 3
   },
   {
@@ -1920,6 +1506,30 @@
     "popularity": 3
   },
   {
+    "category": "Savunma ve Güvenlik",
+    "name": "Siber Bülten",
+    "url": "https://siberbulten.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "Savunma (Google)",
+    "url": "https://news.google.com/rss/search?q=savunma+sanayii+güvenlik+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "Savunma TR (Google)",
+    "url": "https://news.google.com/rss/search?q=savunma+haberleri+askeri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "Güvenlik (Google)",
+    "url": "https://news.google.com/rss/search?q=güvenlik+haberleri+emniyet&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
     "category": "Finans ve Piyasalar",
     "name": "Bloomberg HT",
     "url": "https://www.bloomberght.com/rss",
@@ -1927,20 +1537,8 @@
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Bigpara",
-    "url": "https://bigpara.hurriyet.com.tr/rss/",
-    "popularity": 5
-  },
-  {
-    "category": "Finans ve Piyasalar",
     "name": "CNBC-e",
     "url": "https://www.cnbce.com/rss",
-    "popularity": 5
-  },
-  {
-    "category": "Finans ve Piyasalar",
-    "name": "Döviz",
-    "url": "https://www.doviz.com/news/rss",
     "popularity": 5
   },
   {
@@ -2029,50 +1627,50 @@
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Sözcü Borsa",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-borsa",
+    "name": "Uzmancoin",
+    "url": "https://uzmancoin.com/feed/",
     "popularity": 5
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Sözcü Ekonomi",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-ekonomi",
+    "name": "Koin Bülteni",
+    "url": "https://koinbulteni.com/feed",
     "popularity": 5
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Sözcü Emlak",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-emlak",
+    "name": "Bloomberg HT Ekonomi",
+    "url": "http://www.bloomberght.com/rss",
     "popularity": 5
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Sözcü Emtia",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-emtia",
+    "name": "Dünya Gazetesi",
+    "url": "https://www.dunya.com/rss",
     "popularity": 5
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Sözcü Finans",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-finans",
+    "name": "Finans Gündem",
+    "url": "https://www.finansgundem.com/rss",
     "popularity": 5
   },
   {
     "category": "Finans ve Piyasalar",
-    "name": "Sözcü Kripto",
-    "url": "https://www.sozcu.com.tr/feeds-rss-category-kripto",
+    "name": "Finans (Google)",
+    "url": "https://news.google.com/rss/search?q=finans+piyasa+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 5
+  },
+  {
+    "category": "Finans ve Piyasalar",
+    "name": "Hürriyet Ekonomi",
+    "url": "https://www.hurriyet.com.tr/rss/ekonomi",
     "popularity": 5
   },
   {
     "category": "İş Dünyası ve Girişimcilik",
     "name": "Borsanın Gündemi",
     "url": "https://www.borsaningundemi.com/rss",
-    "popularity": 5
-  },
-  {
-    "category": "İş Dünyası ve Girişimcilik",
-    "name": "Capital",
-    "url": "https://www.capital.com.tr/rss/all",
     "popularity": 5
   },
   {
@@ -2149,12 +1747,6 @@
   },
   {
     "category": "İş Dünyası ve Girişimcilik",
-    "name": "Midas",
-    "url": "https://www.getmidas.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "İş Dünyası ve Girişimcilik",
     "name": "Mynet Finans",
     "url": "https://www.mynet.com/rss/publisher-finans.rss",
     "popularity": 5
@@ -2172,6 +1764,24 @@
     "popularity": 5
   },
   {
+    "category": "İş Dünyası ve Girişimcilik",
+    "name": "Ekonomist",
+    "url": "https://www.ekonomist.com.tr/rss",
+    "popularity": 5
+  },
+  {
+    "category": "İş Dünyası ve Girişimcilik",
+    "name": "Para Dergisi",
+    "url": "https://news.google.com/rss/search?q=site:para.com.tr&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 5
+  },
+  {
+    "category": "İş Dünyası ve Girişimcilik",
+    "name": "İş Dünyası (Google)",
+    "url": "https://news.google.com/rss/search?q=iş+girişim+startup+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 5
+  },
+  {
     "category": "Sağlık ve Yaşam",
     "name": "Anne Kaz",
     "url": "https://www.annekaz.com/feed",
@@ -2185,18 +1795,6 @@
   },
   {
     "category": "Sağlık ve Yaşam",
-    "name": "Elle Türkiye",
-    "url": "https://www.elle.com.tr/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Sağlık ve Yaşam",
-    "name": "Elele",
-    "url": "https://www.elele.com.tr/export/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Sağlık ve Yaşam",
     "name": "İşin Detayı Gastronomi",
     "url": "https://www.isindetayi.com/rss/gastronomi",
     "popularity": 7
@@ -2205,12 +1803,6 @@
     "category": "Sağlık ve Yaşam",
     "name": "Gardırop Magazin",
     "url": "https://www.gardiropmagazin.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Sağlık ve Yaşam",
-    "name": "Güzellik Yayında",
-    "url": "https://guzellikyayinda.com/feed/",
     "popularity": 7
   },
   {
@@ -2257,12 +1849,6 @@
   },
   {
     "category": "Sağlık ve Yaşam",
-    "name": "Marie Claire",
-    "url": "https://www.marieclaire.com.tr/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Sağlık ve Yaşam",
     "name": "Megabayt Aksesuar",
     "url": "https://www.megabayt.com/rss/categorynews/aksesuar",
     "popularity": 7
@@ -2271,18 +1857,6 @@
     "category": "Sağlık ve Yaşam",
     "name": "Megabayt Eğitim",
     "url": "https://www.megabayt.com/rss/categorynews/egitim",
-    "popularity": 7
-  },
-  {
-    "category": "Sağlık ve Yaşam",
-    "name": "Megabayt İnceleme",
-    "url": "https://www.megabayt.com/rss/categorynews/inceleme",
-    "popularity": 7
-  },
-  {
-    "category": "Sağlık ve Yaşam",
-    "name": "Megabayt Magazin",
-    "url": "https://www.megabayt.com/rss/categorynews/magazin",
     "popularity": 7
   },
   {
@@ -2352,51 +1926,21 @@
     "popularity": 7
   },
   {
-    "category": "Finans ve Piyasalar",
-    "name": "Uzmancoin",
-    "url": "https://uzmancoin.com/feed/",
-    "popularity": 5
+    "category": "Sağlık ve Yaşam",
+    "name": "Sağlık (Google)",
+    "url": "https://news.google.com/rss/search?q=sağlık+beslenme+haberleri&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 7
   },
   {
-    "category": "Finans ve Piyasalar",
-    "name": "Koin Bülteni",
-    "url": "https://koinbulteni.com/feed",
-    "popularity": 5
+    "category": "Sağlık ve Yaşam",
+    "name": "Diyetisyen",
+    "url": "https://news.google.com/rss/search?q=diyet+sağlıklı+yaşam+beslenme&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 7
   },
   {
-    "category": "Savunma ve Güvenlik",
-    "name": "Siber Bülten",
-    "url": "https://siberbulten.com/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Savunma ve Güvenlik",
-    "name": "BGA Security",
-    "url": "https://www.bgasecurity.com/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Finans ve Piyasalar",
-    "name": "Borsa Gündem Halka Arz",
-    "url": "https://www.borsagundem.com/rss/kategori/halka-arz",
-    "popularity": 5
-  },
-  {
-    "name": "Euronews Türkçe",
-    "url": "https://tr.euronews.com/rss?format=xml",
-    "category": "Dünya Haberleri",
-    "popularity": 9
-  },
-  {
-    "name": "DW Türkçe",
-    "url": "https://rss.dw.com/xml/rss-tur-all",
-    "category": "Dünya Haberleri",
-    "popularity": 9
-  },
-  {
-    "name": "Bloomberg HT Ekonomi",
-    "url": "http://www.bloomberght.com/rss",
-    "category": "Finans ve Piyasalar",
-    "popularity": 5
+    "category": "Sağlık ve Yaşam",
+    "name": "Sabah Sağlık",
+    "url": "https://www.sabah.com.tr/rss/saglik.xml",
+    "popularity": 7
   }
 ]
