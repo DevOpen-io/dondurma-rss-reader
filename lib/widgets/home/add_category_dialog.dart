@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
@@ -29,8 +31,9 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
       _serverError = null;
     });
     final name = _nameController.text.trim();
-    final success =
-        await context.read<SubscriptionProvider>().addCategory(name);
+    final success = await context.read<SubscriptionProvider>().addCategory(
+      name,
+    );
     if (!mounted) return;
     if (success) {
       Navigator.of(context).pop();
@@ -52,7 +55,13 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
     return Form(
       key: _formKey,
       child: Padding(
-        padding: EdgeInsets.only(bottom: keyboardHeight),
+        // max(keyboard, nav bar) — edge-to-edge bottom inset, see filter sheet.
+        padding: EdgeInsets.only(
+          bottom: math.max(
+            keyboardHeight,
+            MediaQuery.viewPaddingOf(context).bottom,
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -193,7 +202,10 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                               color: cs.onPrimary,
                             ),
                           )
-                        : const Icon(Icons.create_new_folder_outlined, size: 18),
+                        : const Icon(
+                            Icons.create_new_folder_outlined,
+                            size: 18,
+                          ),
                     label: Text(l10n.save),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(

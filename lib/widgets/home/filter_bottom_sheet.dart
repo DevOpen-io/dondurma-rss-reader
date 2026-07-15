@@ -58,7 +58,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         maxHeight: MediaQuery.sizeOf(context).height * 0.7,
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+        // Bottom system inset: edge-to-edge puts the nav bar on top of the
+        // sheet; useSafeArea only shields the top/sides.
+        padding: EdgeInsets.fromLTRB(
+          24,
+          0,
+          24,
+          24 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,

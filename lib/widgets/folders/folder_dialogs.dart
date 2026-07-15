@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -45,10 +47,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
         autofocus: true,
       ),
       actions: [
-        TextButton(
-          onPressed: () => context.pop(),
-          child: Text(l10n.cancel),
-        ),
+        TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
         ElevatedButton(
           onPressed: () {
             final newName = _controller.text.trim();
@@ -125,7 +124,13 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
     );
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      // max(keyboard, nav bar) — edge-to-edge bottom inset, see filter sheet.
+      padding: EdgeInsets.only(
+        bottom: math.max(
+          MediaQuery.viewInsetsOf(context).bottom,
+          MediaQuery.viewPaddingOf(context).bottom,
+        ),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -151,7 +156,11 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                     color: cs.primaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.edit_rounded, color: cs.onPrimaryContainer, size: 18),
+                  child: Icon(
+                    Icons.edit_rounded,
+                    color: cs.onPrimaryContainer,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -160,11 +169,15 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                     children: [
                       Text(
                         l10n.editFeed,
-                        style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                        style: tt.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       Text(
                         widget.sub.name,
-                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        style: tt.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -195,7 +208,11 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                     textInputAction: TextInputAction.next,
                     style: const TextStyle(fontSize: 15),
                     decoration: fieldDecoration.copyWith(
-                      prefixIcon: Icon(Icons.title_rounded, color: cs.onSurfaceVariant, size: 20),
+                      prefixIcon: Icon(
+                        Icons.title_rounded,
+                        color: cs.onSurfaceVariant,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -214,7 +231,11 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                     textInputAction: TextInputAction.done,
                     style: const TextStyle(fontSize: 15),
                     decoration: fieldDecoration.copyWith(
-                      prefixIcon: Icon(Icons.link_rounded, color: cs.onSurfaceVariant, size: 20),
+                      prefixIcon: Icon(
+                        Icons.link_rounded,
+                        color: cs.onSurfaceVariant,
+                        size: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -232,7 +253,9 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                       context: context,
                       isScrollControlled: true,
                       shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(24),
+                        ),
                       ),
                       builder: (ctx) => KeywordInputSheet(
                         title: l10n.excludedKeywords,
@@ -243,37 +266,55 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                     ),
                     borderRadius: BorderRadius.circular(12),
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
                       decoration: BoxDecoration(
                         color: cs.surfaceContainerHigh,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.filter_alt_off_outlined, size: 20, color: cs.onSurfaceVariant),
+                          Icon(
+                            Icons.filter_alt_off_outlined,
+                            size: 20,
+                            color: cs.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               _keywords.isEmpty
                                   ? l10n.excludedKeywords
                                   : '${l10n.excludedKeywords} (${_keywords.length})',
-                              style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                              style: tt.bodyMedium?.copyWith(
+                                color: cs.onSurface,
+                              ),
                             ),
                           ),
                           if (_keywords.isNotEmpty)
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
                               decoration: BoxDecoration(
                                 color: cs.primaryContainer,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Text(
                                 '${_keywords.length}',
-                                style: tt.labelSmall?.copyWith(color: cs.onPrimaryContainer),
+                                style: tt.labelSmall?.copyWith(
+                                  color: cs.onPrimaryContainer,
+                                ),
                               ),
                             )
                           else
-                            Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant),
+                            Icon(
+                              Icons.chevron_right_rounded,
+                              size: 18,
+                              color: cs.onSurfaceVariant,
+                            ),
                         ],
                       ),
                     ),
@@ -288,7 +329,9 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
             decoration: BoxDecoration(
               color: cs.surface,
               border: Border(
-                top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
+                top: BorderSide(
+                  color: cs.outlineVariant.withValues(alpha: 0.4),
+                ),
               ),
             ),
             child: Row(
@@ -297,7 +340,10 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                   onPressed: () => context.pop(),
                   style: TextButton.styleFrom(
                     foregroundColor: cs.onSurfaceVariant,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                   ),
                   child: Text(l10n.cancel),
                 ),
@@ -326,7 +372,10 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                   icon: const Icon(Icons.check_rounded, size: 18),
                   label: Text(l10n.save),
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

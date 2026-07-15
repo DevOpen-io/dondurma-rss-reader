@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 
@@ -62,7 +64,13 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
 
     return Padding(
-      padding: EdgeInsets.only(bottom: keyboardHeight),
+      // max(keyboard, nav bar) — edge-to-edge bottom inset, see filter sheet.
+      padding: EdgeInsets.only(
+        bottom: math.max(
+          keyboardHeight,
+          MediaQuery.viewPaddingOf(context).bottom,
+        ),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -134,8 +142,7 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Focus(
-                      onFocusChange: (f) =>
-                          setState(() => _fieldFocused = f),
+                      onFocusChange: (f) => setState(() => _fieldFocused = f),
                       child: TextField(
                         controller: _controller,
                         textInputAction: TextInputAction.done,

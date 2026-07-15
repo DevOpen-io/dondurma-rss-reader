@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -66,14 +68,15 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void _openCategorySheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final categories = context
-        .read<SubscriptionProvider>()
-        .subscriptions
-        .map((s) => s.category)
-        .where((c) => c != 'Uncategorized' && c.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort();
+    final categories =
+        context
+            .read<SubscriptionProvider>()
+            .subscriptions
+            .map((s) => s.category)
+            .where((c) => c != 'Uncategorized' && c.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort();
 
     showModalBottomSheet<void>(
       context: context,
@@ -130,7 +133,12 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     return Form(
       key: _formKey,
       child: Padding(
-        padding: EdgeInsets.only(bottom: keyboardHeight),
+        padding: EdgeInsets.only(
+          bottom: math.max(
+            keyboardHeight,
+            MediaQuery.viewPaddingOf(context).bottom,
+          ),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -239,7 +247,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return l10n.pleaseEnterName;
+                        if (v == null || v.trim().isEmpty)
+                          return l10n.pleaseEnterName;
                         return null;
                       },
                     ),
@@ -579,11 +588,18 @@ class _CategorySheetState extends State<_CategorySheet> {
     final theme = Theme.of(context);
 
     return Padding(
+      // max(keyboard, nav bar): the keyboard sits above the nav bar, so when
+      // it is open its inset already clears both; when closed the edge-to-edge
+      // nav bar inset must be kept.
       padding: EdgeInsets.fromLTRB(
         20,
         12,
         20,
-        MediaQuery.viewInsetsOf(context).bottom + 28,
+        math.max(
+              MediaQuery.viewInsetsOf(context).bottom,
+              MediaQuery.viewPaddingOf(context).bottom,
+            ) +
+            28,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -653,9 +669,7 @@ class _CategorySheetState extends State<_CategorySheet> {
                       vertical: 9,
                     ),
                     decoration: BoxDecoration(
-                      color: selected
-                          ? cs.primary
-                          : cs.surfaceContainerHighest,
+                      color: selected ? cs.primary : cs.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(
@@ -732,15 +746,12 @@ class _CategorySheetState extends State<_CategorySheet> {
                 Icon(
                   Icons.drive_file_rename_outline_rounded,
                   size: 18,
-                  color: _newFieldFocused
-                      ? cs.primary
-                      : cs.onSurfaceVariant,
+                  color: _newFieldFocused ? cs.primary : cs.onSurfaceVariant,
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Focus(
-                    onFocusChange: (f) =>
-                        setState(() => _newFieldFocused = f),
+                    onFocusChange: (f) => setState(() => _newFieldFocused = f),
                     child: TextField(
                       controller: _newCatController,
                       autofocus: widget.categories.isEmpty,
