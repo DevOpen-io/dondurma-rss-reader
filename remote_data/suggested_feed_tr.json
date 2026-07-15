@@ -1942,5 +1942,125 @@
     "name": "Sabah Sağlık",
     "url": "https://www.sabah.com.tr/rss/saglik.xml",
     "popularity": 7
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "Takvim",
+    "url": "https://www.takvim.com.tr/rss/guncel.xml",
+    "popularity": 9
+  },
+  {
+    "category": "Finans ve Piyasalar",
+    "name": "Sabah Ekonomi",
+    "url": "https://www.sabah.com.tr/rss/ekonomi.xml",
+    "popularity": 5
+  },
+  {
+    "category": "Teknoloji",
+    "name": "Yeni Şafak Teknoloji",
+    "url": "https://www.yenisafak.com/rss?xml=teknoloji",
+    "popularity": 7
+  },
+  {
+    "category": "Spor",
+    "name": "Takvim Spor",
+    "url": "https://www.takvim.com.tr/rss/spor.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Teknoloji",
+    "name": "Sabah Teknoloji",
+    "url": "https://www.sabah.com.tr/rss/teknoloji.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Bilim ve İnovasyon",
+    "name": "NASA Türkçe",
+    "url": "https://news.google.com/rss/search?q=NASA+space+astronomy+when:3d&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 6
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "TRT Savunma",
+    "url": "https://news.google.com/rss/search?q=site:trthaber.com+savunma+when:3d&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
+    "category": "Sağlık ve Yaşam",
+    "name": "NTV Sağlık",
+    "url": "https://www.ntv.com.tr/saglik.rss",
+    "popularity": 7
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "Anadolu Ajansı Savunma",
+    "url": "https://news.google.com/rss/search?q=site:aa.com.tr+savunma+when:3d&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
+    "category": "Teknoloji",
+    "name": "TeknoHaber",
+    "url": "https://www.teknolojihaber.net/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Dünya Haberleri",
+    "name": "Milliyet",
+    "url": "https://www.milliyet.com.tr/rss/rssNew/gundemRss.xml",
+    "popularity": 9
+  },
+  {
+    "category": "Finans ve Piyasalar",
+    "name": "Borsa Gündem",
+    "url": "https://www.borsagundem.com/rss",
+    "popularity": 5
+  },
+  {
+    "category": "İş Dünyası ve Girişimcilik",
+    "name": "TOBB Haber",
+    "url": "https://www.tobb.org.tr/Sayfalar/RssFeeder.php?List=Haberler",
+    "popularity": 5
+  },
+  {
+    "category": "Eğlence ve Medya",
+    "name": "Fragtist",
+    "url": "https://fragtist.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Teknoloji",
+    "name": "BT Haber",
+    "url": "https://www.bthaber.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "MSB Haber",
+    "url": "https://news.google.com/rss/search?q=site:msb.gov.tr+when:7d&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
+    "category": "Savunma ve Güvenlik",
+    "name": "Savunma Sanayii",
+    "url": "https://news.google.com/rss/search?q=site:ssb.gov.tr+when:7d&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 3
+  },
+  {
+    "category": "Sağlık ve Yaşam",
+    "name": "Sağlık Bakanlığı",
+    "url": "https://news.google.com/rss/search?q=site:saglik.gov.tr+when:7d&hl=tr&gl=TR&ceid=TR:tr",
+    "popularity": 7
+  },
+  {
+    "category": "Teknoloji",
+    "name": "Mynet Teknoloji",
+    "url": "https://www.mynet.com/haber/rss/kategori/teknoloji/",
+    "popularity": 7
+  },
+  {
+    "category": "Sağlık ve Yaşam",
+    "name": "Sabah Yaşam",
+    "url": "https://www.sabah.com.tr/rss/yasam.xml",
+    "popularity": 7
   }
 ]
