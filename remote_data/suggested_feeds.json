@@ -5680,5 +5680,485 @@
     "name": "HBR.org",
     "url": "http://feeds.harvardbusiness.org/harvardbusiness/",
     "popularity": 9
+  },
+  {
+    "category": "US News",
+    "name": "LA Times",
+    "url": "https://www.latimes.com/local/rss2.0.xml",
+    "popularity": 8
+  },
+  {
+    "category": "US News",
+    "name": "New York Times US",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Middle East News",
+    "name": "New Arab",
+    "url": "https://www.newarab.com/rss",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "The Times of India",
+    "url": "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "The Guardian Europe",
+    "url": "https://www.theguardian.com/world/eu/rss",
+    "popularity": 8
+  },
+  {
+    "category": "US News",
+    "name": "Washington Post",
+    "url": "https://feeds.washingtonpost.com/rss/national",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "FAZ",
+    "url": "https://www.faz.net/rss/aktuell/",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "The Telegraph",
+    "url": "https://www.telegraph.co.uk/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "Il Sole 24 Ore",
+    "url": "https://www.ilsole24ore.com/rss/homepage.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Technology",
+    "name": "Electrek",
+    "url": "https://electrek.co/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Europe News",
+    "name": "The Irish Times",
+    "url": "https://www.irishtimes.com/cmlink/news-1.1319192",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Synced AI",
+    "url": "https://syncedreview.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Europe News",
+    "name": "Dennik N",
+    "url": "https://dennikn.sk/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Technology",
+    "name": "Verge Circuit Breaker",
+    "url": "https://www.theverge.com/rss/circuit-breaker/index.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "FT Markets",
+    "url": "https://www.ft.com/markets?format=rss",
+    "popularity": 5
+  },
+  {
+    "category": "Technology",
+    "name": "iMore",
+    "url": "https://www.imore.com/rss.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Wall Street Journal Markets",
+    "url": "https://feeds.a.dj.com/rss/RSSMarketsMain.xml",
+    "popularity": 5
+  },
+  {
+    "category": "Technology",
+    "name": "Android Central",
+    "url": "https://www.androidcentral.com/rss.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Government & Official",
+    "name": "NASA",
+    "url": "https://www.nasa.gov/news-release/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Science",
+    "name": "PNAS",
+    "url": "https://www.pnas.org/action/showFeed?type=etoc&feed=rss&jc=pnas",
+    "popularity": 7
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "The Economist Finance",
+    "url": "https://www.economist.com/finance-and-economics/rss.xml",
+    "popularity": 5
+  },
+  {
+    "category": "Technology",
+    "name": "Windows Central",
+    "url": "https://www.windowscentral.com/rss.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Middle East News",
+    "name": "Daily Sabah",
+    "url": "https://www.dailysabah.com/rssFeed/main",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Towards AI",
+    "url": "https://towardsai.net/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Europe News",
+    "name": "The Local (Europe)",
+    "url": "https://feeds.thelocal.com/rss/eu",
+    "popularity": 8
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Mashable",
+    "url": "https://mashable.com/feeds/rss/all",
+    "popularity": 8
+  },
+  {
+    "category": "Sports",
+    "name": "MLB",
+    "url": "https://www.mlb.com/feeds/news/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "NASA Image of the Day",
+    "url": "https://www.nasa.gov/rss/dyn/image_of_the_day.rss",
+    "popularity": 7
+  },
+  {
+    "category": "Gaming",
+    "name": "The Gamer",
+    "url": "https://www.thegamer.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "McKinsey",
+    "url": "https://www.mckinsey.com/insights/rss",
+    "popularity": 7
+  },
+  {
+    "category": "Design",
+    "name": "Creative Boom",
+    "url": "https://www.creativeboom.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Anime",
+    "name": "Otaku USA",
+    "url": "https://otakuusamagazine.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Dazed Digital",
+    "url": "https://www.dazeddigital.com/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Condé Nast Traveler",
+    "url": "https://www.cntraveler.com/feed/rss",
+    "popularity": 7
+  },
+  {
+    "category": "Learning",
+    "name": "James Clear",
+    "url": "https://jamesclear.com/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Learning",
+    "name": "Wait But Why",
+    "url": "https://waitbutwhy.com/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Vice",
+    "url": "https://www.vice.com/en/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Environment",
+    "name": "Yale Environment 360",
+    "url": "https://e360.yale.edu/feed.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Air & Space Forces",
+    "url": "https://www.airandspaceforces.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Learning",
+    "name": "Brain Pickings",
+    "url": "https://www.themarginalian.org/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Commodities",
+    "name": "Metal Bulletin",
+    "url": "https://news.google.com/rss/search?q=site:metalbulletin.com+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Programming",
+    "name": "Ruby Weekly",
+    "url": "https://rubyweekly.com/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Go Weekly",
+    "url": "https://golangweekly.com/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "S&P Global Energy",
+    "url": "https://news.google.com/rss/search?q=site:spglobal.com+energy+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Node Weekly",
+    "url": "https://nodeweekly.com/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "React Status",
+    "url": "https://react.statuscode.com/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Technology",
+    "name": "Mashable Tech",
+    "url": "https://mashable.com/feeds/rss/tech",
+    "popularity": 7
+  },
+  {
+    "category": "World News",
+    "name": "Straits Times",
+    "url": "https://www.straitstimes.com/news/world/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "US News",
+    "name": "US News",
+    "url": "https://www.usnews.com/rss/news",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "Wired Science",
+    "url": "https://www.wired.com/feed/category/science/latest/rss",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Smithsonian",
+    "url": "https://www.smithsonianmag.com/rss/latest_articles/",
+    "popularity": 7
+  },
+  {
+    "category": "US News",
+    "name": "New York Post",
+    "url": "https://nypost.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "South Korea Yonhap",
+    "url": "https://en.yna.co.kr/RSS/news.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Technology",
+    "name": "Digital Trends",
+    "url": "https://www.digitaltrends.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Sports",
+    "name": "BBC Sport Football",
+    "url": "https://feeds.bbci.co.uk/sport/football/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Sports",
+    "name": "BBC Sport F1",
+    "url": "https://feeds.bbci.co.uk/sport/formula1/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Sports",
+    "name": "BBC Sport Cricket",
+    "url": "https://feeds.bbci.co.uk/sport/cricket/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "South China Morning Post",
+    "url": "https://www.scmp.com/rss/91/feed",
+    "popularity": 8
+  },
+  {
+    "category": "Sports",
+    "name": "BBC Sport Tennis",
+    "url": "https://feeds.bbci.co.uk/sport/tennis/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "The Local France",
+    "url": "https://feeds.thelocal.com/rss/fr",
+    "popularity": 8
+  },
+  {
+    "category": "Pop Culture",
+    "name": "Boing Boing",
+    "url": "https://boingboing.net/feed",
+    "popularity": 8
+  },
+  {
+    "category": "Africa News",
+    "name": "Punch Nigeria",
+    "url": "https://punchng.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "The Local Spain",
+    "url": "https://feeds.thelocal.com/rss/es",
+    "popularity": 8
+  },
+  {
+    "category": "Movies & TV",
+    "name": "ComingSoon.net",
+    "url": "https://www.comingsoon.net/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Environment",
+    "name": "ENSIA",
+    "url": "https://ensia.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "Reuters Business",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+business+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Europe News",
+    "name": "The Local Italy",
+    "url": "https://feeds.thelocal.com/rss/it",
+    "popularity": 8
+  },
+  {
+    "category": "Personal Finance",
+    "name": "The Simple Dollar",
+    "url": "https://www.thesimpledollar.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Learning",
+    "name": "Freakonomics",
+    "url": "https://freakonomics.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Bureau of Labor Statistics",
+    "url": "https://www.bls.gov/feed/bls_latest.rss",
+    "popularity": 5
+  },
+  {
+    "category": "Pop Culture",
+    "name": "The Daily Dot",
+    "url": "https://www.dailydot.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Live News & Headlines",
+    "name": "Google News World",
+    "url": "https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNRGx1YlY4U0FtVnVHZ0pWVXlnQVAB?hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "The Record",
+    "url": "https://therecord.media/feed",
+    "popularity": 3
+  },
+  {
+    "category": "Music",
+    "name": "FACT Magazine",
+    "url": "https://factmag.com/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Gaming",
+    "name": "RPGamer",
+    "url": "https://rpgamer.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Europe News",
+    "name": "The Local Germany",
+    "url": "https://feeds.thelocal.com/rss/de",
+    "popularity": 8
+  },
+  {
+    "category": "Cloud & Infrastructure Outages",
+    "name": "AWS Blog",
+    "url": "https://aws.amazon.com/blogs/aws/feed/",
+    "popularity": 1
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Army Times",
+    "url": "https://www.armytimes.com/arc/outboundfeeds/rss/",
+    "popularity": 3
+  },
+  {
+    "category": "Environment",
+    "name": "Climate Home News",
+    "url": "https://www.climatechangenews.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Bored Panda",
+    "url": "https://www.boredpanda.com/feed/",
+    "popularity": 7
   }
 ]
