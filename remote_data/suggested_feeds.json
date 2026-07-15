@@ -30,6 +30,72 @@
     "popularity": 9
   },
   {
+    "category": "World News",
+    "name": "BBC News",
+    "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "NYT World News",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "CNN Top Stories",
+    "url": "http://rss.cnn.com/rss/edition.rss",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "DW News",
+    "url": "https://rss.dw.com/rdf/rss-en-all",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "The Independent",
+    "url": "https://www.independent.co.uk/news/world/rss",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "Washington Post World",
+    "url": "https://feeds.washingtonpost.com/rss/world",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "NPR World",
+    "url": "https://feeds.npr.org/1004/rss.xml",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "ABC News International",
+    "url": "https://news.google.com/rss/search?q=site:abcnews.go.com+international&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "World News (Google)",
+    "url": "https://news.google.com/rss/search?q=world+news+today&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "The Conversation",
+    "url": "https://theconversation.com/articles.atom",
+    "popularity": 9
+  },
+  {
+    "category": "World News",
+    "name": "PRI World",
+    "url": "https://news.google.com/rss/search?q=site:pri.org+world&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
+  },
+  {
     "category": "US News",
     "name": "Reuters US",
     "url": "https://news.google.com/rss/search?q=site:reuters.com+US&hl=en-US&gl=US&ceid=US:en",
@@ -93,6 +159,12 @@
     "category": "US News",
     "name": "Fox News",
     "url": "https://moxie.foxnews.com/google-publisher/us.xml",
+    "popularity": 8
+  },
+  {
+    "category": "US News",
+    "name": "US News (Google)",
+    "url": "https://news.google.com/rss/search?q=US+news+today&hl=en-US&gl=US&ceid=US:en",
     "popularity": 8
   },
   {
@@ -253,12 +325,6 @@
   },
   {
     "category": "Europe News",
-    "name": "Repubblica",
-    "url": "https://www.repubblica.it/rss/homepage/rss2.0.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Europe News",
     "name": "NOS Nieuws",
     "url": "https://feeds.nos.nl/nosnieuwsalgemeen",
     "popularity": 8
@@ -289,12 +355,6 @@
   },
   {
     "category": "Europe News",
-    "name": "Svenska Dagbladet",
-    "url": "https://www.svd.se/feed/articles.rss",
-    "popularity": 8
-  },
-  {
-    "category": "Europe News",
     "name": "BBC Turkce",
     "url": "https://feeds.bbci.co.uk/turkce/rss.xml",
     "popularity": 8
@@ -309,12 +369,6 @@
     "category": "Europe News",
     "name": "Hurriyet",
     "url": "https://www.hurriyet.com.tr/rss/anasayfa",
-    "popularity": 8
-  },
-  {
-    "category": "Europe News",
-    "name": "TVN24",
-    "url": "https://tvn24.pl/swiat.xml",
     "popularity": 8
   },
   {
@@ -375,12 +429,6 @@
     "category": "Europe News",
     "name": "ATV",
     "url": "https://www.atv.hu/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Europe News",
-    "name": "N1 Croatia",
-    "url": "https://n1info.hr/feed/",
     "popularity": 8
   },
   {
@@ -480,6 +528,24 @@
     "popularity": 8
   },
   {
+    "category": "Europe News",
+    "name": "The Local Europe",
+    "url": "https://www.thelocal.com/feeds/rss.php",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "Euronews",
+    "url": "https://www.euronews.com/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Europe News",
+    "name": "EU News (Google)",
+    "url": "https://news.google.com/rss/search?q=European+Union+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
+  },
+  {
     "category": "Middle East News",
     "name": "BBC Middle East",
     "url": "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
@@ -501,12 +567,6 @@
     "category": "Middle East News",
     "name": "Al Arabiya [en]",
     "url": "https://news.google.com/rss/search?q=site:english.alarabiya.net+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 8
-  },
-  {
-    "category": "Middle East News",
-    "name": "Al Arabiya [ar]",
-    "url": "https://www.alarabiya.net/tools/mrss/?cat=main",
     "popularity": 8
   },
   {
@@ -583,20 +643,20 @@
   },
   {
     "category": "Middle East News",
-    "name": "Asharq Business",
-    "url": "https://asharqbusiness.com/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Middle East News",
-    "name": "Asharq News",
-    "url": "https://asharq.com/snapchat/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Middle East News",
     "name": "Rudaw",
     "url": "https://news.google.com/rss/search?q=site:rudaw.net+when:7d&hl=en&gl=US&ceid=US:en",
+    "popularity": 8
+  },
+  {
+    "category": "Middle East News",
+    "name": "Middle East News (Google)",
+    "url": "https://news.google.com/rss/search?q=Middle+East+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
+  },
+  {
+    "category": "Middle East News",
+    "name": "Jordan Times",
+    "url": "https://news.google.com/rss/search?q=site:jordantimes.com&hl=en-US&gl=JO&ceid=JO:en",
     "popularity": 8
   },
   {
@@ -621,6 +681,180 @@
     "category": "Technology",
     "name": "MIT Tech Review",
     "url": "https://www.technologyreview.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "TechCrunch",
+    "url": "https://techcrunch.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "ZDNet",
+    "url": "https://www.zdnet.com/news/rss.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "TechMeme",
+    "url": "https://www.techmeme.com/feed.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Engadget",
+    "url": "https://www.engadget.com/rss.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Fast Company",
+    "url": "https://feeds.feedburner.com/fastcompany/headlines",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Tom's Hardware",
+    "url": "https://www.tomshardware.com/feeds.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "SemiAnalysis",
+    "url": "https://news.google.com/rss/search?q=site:semianalysis.com+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Semiconductor News",
+    "url": "https://news.google.com/rss/search?q=semiconductor+OR+chip+OR+TSMC+OR+NVIDIA+OR+Intel+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "InfoQ",
+    "url": "https://feed.infoq.com/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "The New Stack",
+    "url": "https://thenewstack.io/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Wired",
+    "url": "https://www.wired.com/feed/rss",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "CNET",
+    "url": "https://www.cnet.com/rss/news/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "TechRadar",
+    "url": "https://www.techradar.com/rss",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Mashable",
+    "url": "https://mashable.com/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "How-To Geek",
+    "url": "https://www.howtogeek.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Phoronix",
+    "url": "https://www.phoronix.com/rss.php",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "OMG! Ubuntu",
+    "url": "https://www.omgubuntu.co.uk/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "9to5Mac",
+    "url": "https://9to5mac.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "9to5Google",
+    "url": "https://9to5google.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Android Authority",
+    "url": "https://www.androidauthority.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "MacRumors",
+    "url": "https://feeds.macrumors.com/MacRumors-All",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "SlashDot",
+    "url": "http://rss.slashdot.org/Slashdot/slashdotMain",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "The Register",
+    "url": "https://www.theregister.com/headlines.atom",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "ReadWrite",
+    "url": "https://readwrite.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Tech in Asia",
+    "url": "https://feeds2.feedburner.com/PennOlson",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "AnandTech",
+    "url": "https://news.google.com/rss/search?q=site:anandtech.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Technology News (Google)",
+    "url": "https://news.google.com/rss/search?q=technology+news+latest&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "The Information",
+    "url": "https://news.google.com/rss/search?q=site:theinformation.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Technology",
+    "name": "Tech News (Google)",
+    "url": "https://news.google.com/rss/search?q=tech+news+latest+gadgets&hl=en-US&gl=US&ceid=US:en",
     "popularity": 7
   },
   {
@@ -654,6 +888,192 @@
     "popularity": 4
   },
   {
+    "category": "AI & Machine Learning",
+    "name": "ArXiv ML",
+    "url": "https://export.arxiv.org/rss/cs.LG",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI Weekly",
+    "url": "https://news.google.com/rss/search?q=\"artificial+intelligence\"+OR+\"machine+learning\"+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Anthropic News",
+    "url": "https://news.google.com/rss/search?q=Anthropic+Claude+AI+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "OpenAI News",
+    "url": "https://news.google.com/rss/search?q=OpenAI+ChatGPT+GPT-4+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "OpenAI Blog",
+    "url": "https://openai.com/blog/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Google AI Blog",
+    "url": "https://blog.google/technology/ai/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "DeepMind Blog",
+    "url": "https://deepmind.google/blog/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Hugging Face Blog",
+    "url": "https://huggingface.co/blog/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Import AI (Jack Clark)",
+    "url": "https://importai.substack.com/feed",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI Alignment Forum",
+    "url": "https://www.alignmentforum.org/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Machine Learning Blog | ML@CMU",
+    "url": "https://blog.ml.cmu.edu/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "DeepMind",
+    "url": "https://deepmind.com/blog/feed/basic/",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Jay Alammar",
+    "url": "https://jalammar.github.io/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Distill",
+    "url": "http://distill.pub/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Lil’Log",
+    "url": "https://lilianweng.github.io/lil-log/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "The Berkeley Artificial Intelligence Research Blog",
+    "url": "http://bair.berkeley.edu/blog/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "DeepLearningAI",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCcIXc5mJsHVYTZR1maL5l9w",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Eric Jang (Blogspot)",
+    "url": "http://blog.evjang.com/feeds/posts/default?alt=rss",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "The Gradient",
+    "url": "https://thegradient.pub/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Magenta",
+    "url": "http://magenta.tensorflow.org/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Grammarly Blog",
+    "url": "https://www.grammarly.com/blog/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Eric Jang (Personal)",
+    "url": "https://evjang.com/feed",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Amazon Science Homepage",
+    "url": "https://www.amazon.science/index.rss",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Yannic Kilcher",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Two Minute Papers",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI News (Google)",
+    "url": "https://news.google.com/rss/search?q=artificial+intelligence+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "NVIDIA Blog",
+    "url": "https://blogs.nvidia.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Anthropic Research",
+    "url": "https://news.google.com/rss/search?q=site:anthropic.com+research&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI News (VentureBeat)",
+    "url": "https://news.google.com/rss/search?q=site:venturebeat.com+AI&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Distill.pub",
+    "url": "https://distill.pub/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Machine Learning Mastery",
+    "url": "https://machinelearningmastery.com/feed/",
+    "popularity": 4
+  },
+  {
     "category": "Finance & Markets",
     "name": "CNBC",
     "url": "https://www.cnbc.com/id/100003114/device/rss/rss.html",
@@ -681,6 +1101,234 @@
     "category": "Finance & Markets",
     "name": "Reuters Business",
     "url": "https://news.google.com/rss/search?q=site:reuters.com+business+markets&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "IPO News",
+    "url": "https://news.google.com/rss/search?q=(IPO+OR+\"initial+public+offering\"+OR+SPAC)+tech+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Renaissance IPO",
+    "url": "https://news.google.com/rss/search?q=site:renaissancecapital.com+IPO+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Tech IPO News",
+    "url": "https://news.google.com/rss/search?q=tech+IPO+OR+\"tech+company\"+IPO+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "SEC Filings",
+    "url": "https://news.google.com/rss/search?q=(S-1+OR+\"IPO+filing\"+OR+\"SEC+filing\")+startup+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "VC News",
+    "url": "https://news.google.com/rss/search?q=(\"Series+A\"+OR+\"Series+B\"+OR+\"Series+C\"+OR+\"funding+round\"+OR+\"venture+capital\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seed & Pre-Seed",
+    "url": "https://news.google.com/rss/search?q=(\"seed+round\"+OR+\"pre-seed\"+OR+\"angel+round\"+OR+\"seed+funding\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Startup Funding",
+    "url": "https://news.google.com/rss/search?q=(\"startup+funding\"+OR+\"raised+funding\"+OR+\"raised+$\"+OR+\"funding+announced\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "CNBC Tech",
+    "url": "https://www.cnbc.com/id/19854910/device/rss/rss.html",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "MarketWatch Tech",
+    "url": "https://news.google.com/rss/search?q=site:marketwatch.com+technology+markets+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seeking Alpha Tech",
+    "url": "https://seekingalpha.com/market_currents.xml",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Reuters Markets",
+    "url": "https://news.google.com/rss/search?q=site:reuters.com+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Bloomberg Markets",
+    "url": "https://news.google.com/rss/search?q=site:bloomberg.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Investing.com News",
+    "url": "https://news.google.com/rss/search?q=site:investing.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Forex News",
+    "url": "https://news.google.com/rss/search?q=(\"forex\"+OR+\"currency\"+OR+\"FX+market\")+trading+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Dollar Watch",
+    "url": "https://news.google.com/rss/search?q=(\"dollar+index\"+OR+DXY+OR+\"US+dollar\"+OR+\"euro+dollar\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Central Bank Rates",
+    "url": "https://news.google.com/rss/search?q=(\"central+bank\"+OR+\"interest+rate\"+OR+\"rate+decision\"+OR+\"monetary+policy\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Bond Market",
+    "url": "https://news.google.com/rss/search?q=(\"bond+market\"+OR+\"treasury+yields\"+OR+\"bond+yields\"+OR+\"fixed+income\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Treasury Watch",
+    "url": "https://news.google.com/rss/search?q=(\"US+Treasury\"+OR+\"Treasury+auction\"+OR+\"10-year+yield\"+OR+\"2-year+yield\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Corporate Bonds",
+    "url": "https://news.google.com/rss/search?q=(\"corporate+bond\"+OR+\"high+yield\"+OR+\"investment+grade\"+OR+\"credit+spread\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Earnings Reports",
+    "url": "https://news.google.com/rss/search?q=(\"earnings+report\"+OR+\"quarterly+earnings\"+OR+\"revenue+beat\"+OR+\"earnings+miss\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "M&A News",
+    "url": "https://news.google.com/rss/search?q=(\"merger\"+OR+\"acquisition\"+OR+\"takeover+bid\"+OR+\"buyout\")+billion+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Fintech News",
+    "url": "https://news.google.com/rss/search?q=(fintech+OR+\"payment+technology\"+OR+\"neobank\"+OR+\"digital+banking\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Trading Tech",
+    "url": "https://news.google.com/rss/search?q=(\"algorithmic+trading\"+OR+\"trading+platform\"+OR+\"quantitative+finance\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Blockchain Finance",
+    "url": "https://news.google.com/rss/search?q=(\"blockchain+finance\"+OR+\"tokenization\"+OR+\"digital+securities\"+OR+CBDC)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Hedge Fund News",
+    "url": "https://news.google.com/rss/search?q=(\"hedge+fund\"+OR+\"Bridgewater\"+OR+\"Citadel\"+OR+\"Renaissance\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Private Equity",
+    "url": "https://news.google.com/rss/search?q=(\"private+equity\"+OR+Blackstone+OR+KKR+OR+Apollo+OR+Carlyle)+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Sovereign Wealth",
+    "url": "https://news.google.com/rss/search?q=(\"sovereign+wealth+fund\"+OR+\"pension+fund\"+OR+\"institutional+investor\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Market Outlook",
+    "url": "https://news.google.com/rss/search?q=(\"market+outlook\"+OR+\"stock+market+forecast\"+OR+\"bull+market\"+OR+\"bear+market\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Risk & Volatility",
+    "url": "https://news.google.com/rss/search?q=(VIX+OR+\"market+volatility\"+OR+\"risk+off\"+OR+\"market+correction\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Bank Research",
+    "url": "https://news.google.com/rss/search?q=(\"Goldman+Sachs\"+OR+\"JPMorgan\"+OR+\"Morgan+Stanley\")+forecast+OR+outlook+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seeking Alpha Metals",
+    "url": "https://news.google.com/rss/search?q=site:seekingalpha.com+(gold+OR+silver+OR+copper+OR+mining)+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Commodity Futures",
+    "url": "https://news.google.com/rss/search?q=(COMEX+OR+NYMEX+OR+\"commodity+futures\"+OR+CME+commodities)+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Nikkei Asia",
+    "url": "https://news.google.com/rss/search?q=site:asia.nikkei.com+markets+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "The Motley Fool",
+    "url": "https://www.fool.com/feeds/index.aspx",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Seeking Alpha",
+    "url": "https://seekingalpha.com/feed.xml",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Zero Hedge",
+    "url": "https://feeds.feedburner.com/zerohedge/feed",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "Barron's",
+    "url": "https://news.google.com/rss/search?q=site:barrons.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Finance & Markets",
+    "name": "MarketWatch Top Stories",
+    "url": "https://feeds.content.dowjones.io/public/rss/mw_topstories",
     "popularity": 5
   },
   {
@@ -745,14 +1393,20 @@
   },
   {
     "category": "Government & Official",
-    "name": "UN News",
-    "url": "https://news.un.org/feed/subscribe/en/news/all/rss.xml",
+    "name": "GOV.UK",
+    "url": "https://www.gov.uk/search/news-and-communications.atom",
     "popularity": 4
   },
   {
     "category": "Government & Official",
-    "name": "CISA",
-    "url": "https://www.cisa.gov/cybersecurity-advisories/all.xml",
+    "name": "US Congress",
+    "url": "https://news.google.com/rss/search?q=site:congress.gov&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Government & Official",
+    "name": "European Commission",
+    "url": "https://ec.europa.eu/commission/presscorner/api/rss",
     "popularity": 4
   },
   {
@@ -774,15 +1428,21 @@
     "popularity": 4
   },
   {
-    "category": "Think Tanks & Research",
-    "name": "Foreign Policy",
-    "url": "https://foreignpolicy.com/feed/",
-    "popularity": 3
+    "category": "Layoffs Tracker",
+    "name": "Layoffs (Google)",
+    "url": "https://news.google.com/rss/search?q=tech+layoffs+2025&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Layoffs Tracker",
+    "name": "TrueUp Layoffs",
+    "url": "https://news.google.com/rss/search?q=site:trueup.io+layoffs&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
   },
   {
     "category": "Think Tanks & Research",
-    "name": "Atlantic Council",
-    "url": "https://www.atlanticcouncil.org/feed/",
+    "name": "Foreign Policy",
+    "url": "https://foreignpolicy.com/feed/",
     "popularity": 3
   },
   {
@@ -817,32 +1477,134 @@
   },
   {
     "category": "Think Tanks & Research",
-    "name": "War on the Rocks",
-    "url": "https://warontherocks.com/feed",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Responsible Statecraft",
-    "url": "https://responsiblestatecraft.org/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
     "name": "RUSI",
     "url": "https://news.google.com/rss/search?q=site:rusi.org+when:3d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 3
   },
   {
     "category": "Think Tanks & Research",
-    "name": "FPRI",
-    "url": "https://www.fpri.org/feed/",
+    "name": "Brookings Tech",
+    "url": "https://news.google.com/rss/search?q=site:brookings.edu+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 3
   },
   {
     "category": "Think Tanks & Research",
-    "name": "Jamestown",
-    "url": "https://jamestown.org/feed/",
+    "name": "CSIS Tech",
+    "url": "https://news.google.com/rss/search?q=site:csis.org+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "MIT Tech Policy",
+    "url": "https://news.google.com/rss/search?q=%22Tech+Policy+Press%22&hl=en&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Stanford HAI",
+    "url": "https://news.google.com/rss/search?q=site:hai.stanford.edu+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "AI Now Institute",
+    "url": "https://news.google.com/rss/search?q=%22AI+Now+Institute%22&hl=en&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "OECD Digital",
+    "url": "https://news.google.com/rss/search?q=site:oecd.org+digital+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "EU Tech Policy",
+    "url": "https://news.google.com/rss/search?q=(\"EU+tech+policy\"+OR+\"European+digital\"+OR+Bruegel+tech)+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Chatham House Tech",
+    "url": "https://news.google.com/rss/search?q=site:chathamhouse.org+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "ISEAS (Singapore)",
+    "url": "https://news.google.com/rss/search?q=site:iseas.edu.sg+technology+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "ORF Tech (India)",
+    "url": "https://news.google.com/rss/search?q=(India+tech+policy+OR+ORF+technology+OR+\"Observer+Research+Foundation\"+tech)+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "RIETI (Japan)",
+    "url": "https://news.google.com/rss/search?q=site:rieti.go.jp+technology+when:30d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Asia Pacific Tech",
+    "url": "https://news.google.com/rss/search?q=(\"Asia+Pacific\"+tech+policy+OR+\"Lowy+Institute\"+technology)+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "China Tech Analysis",
+    "url": "https://news.google.com/rss/search?q=(\"China+tech+strategy\"+OR+\"Chinese+AI\"+OR+\"China+semiconductor\")+analysis+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "DigiChina",
+    "url": "https://news.google.com/rss/search?q=DigiChina+Stanford+China+technology&hl=en&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "FAS",
+    "url": "https://news.google.com/rss/search?q=site:fas.org+nuclear+weapons+security&hl=en&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "NTI",
+    "url": "https://news.google.com/rss/search?q=site:nti.org+when:30d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Wilson Center",
+    "url": "https://news.google.com/rss/search?q=site:wilsoncenter.org+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "GMF",
+    "url": "https://news.google.com/rss/search?q=site:gmfus.org+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "CNAS",
+    "url": "https://news.google.com/rss/search?q=site:cnas.org+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "Lowy Institute",
+    "url": "https://news.google.com/rss/search?q=site:lowyinstitute.org+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Think Tanks & Research",
+    "name": "RAND Corporation",
+    "url": "https://www.rand.org/blog.xml",
     "popularity": 3
   },
   {
@@ -870,6 +1632,18 @@
     "popularity": 2
   },
   {
+    "category": "Crisis Watch",
+    "name": "Crisis Group",
+    "url": "https://news.google.com/rss/search?q=site:crisisgroup.org&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
+  },
+  {
+    "category": "Crisis Watch",
+    "name": "Crisis Group News (Google)",
+    "url": "https://news.google.com/rss/search?q=crisis+conflict+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
+  },
+  {
     "category": "Africa News",
     "name": "Africa News",
     "url": "https://news.google.com/rss/search?q=(Africa+OR+Nigeria+OR+Kenya+OR+\"South+Africa\"+OR+Ethiopia)+when:2d&hl=en-US&gl=US&ceid=US:en",
@@ -883,20 +1657,8 @@
   },
   {
     "category": "Africa News",
-    "name": "News24",
-    "url": "https://feeds.news24.com/articles/news24/TopStories/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Africa News",
     "name": "BBC Africa",
     "url": "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Africa News",
-    "name": "Jeune Afrique",
-    "url": "https://www.jeuneafrique.com/feed/",
     "popularity": 8
   },
   {
@@ -948,6 +1710,18 @@
     "popularity": 8
   },
   {
+    "category": "Africa News",
+    "name": "Africa News (Google)",
+    "url": "https://news.google.com/rss/search?q=Africa+news+today&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
+  },
+  {
+    "category": "Africa News",
+    "name": "AllAfrica",
+    "url": "https://allafrica.com/tools/headlines/rdf/latest/headlines.rdf",
+    "popularity": 8
+  },
+  {
     "category": "Latin America News",
     "name": "Latin America",
     "url": "https://news.google.com/rss/search?q=(Brazil+OR+Mexico+OR+Argentina+OR+Venezuela+OR+Colombia)+when:2d&hl=en-US&gl=US&ceid=US:en",
@@ -973,12 +1747,6 @@
   },
   {
     "category": "Latin America News",
-    "name": "Clarín",
-    "url": "https://www.clarin.com/rss/lo-ultimo/",
-    "popularity": 8
-  },
-  {
-    "category": "Latin America News",
     "name": "O Globo",
     "url": "https://news.google.com/rss/search?q=site:oglobo.globo.com+when:1d&hl=pt-BR&gl=BR&ceid=BR:pt-419",
     "popularity": 8
@@ -997,20 +1765,8 @@
   },
   {
     "category": "Latin America News",
-    "name": "El Tiempo",
-    "url": "https://www.eltiempo.com/rss/mundo_latinoamerica.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Latin America News",
     "name": "La Silla Vacía",
     "url": "https://www.lasillavacia.com/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Latin America News",
-    "name": "Primicias",
-    "url": "https://www.primicias.ec/feed/",
     "popularity": 8
   },
   {
@@ -1023,12 +1779,6 @@
     "category": "Latin America News",
     "name": "El Universo",
     "url": "https://www.eluniverso.com/arc/outboundfeeds/rss/category/noticias/?outputType=xml",
-    "popularity": 8
-  },
-  {
-    "category": "Latin America News",
-    "name": "Mexico News Daily",
-    "url": "https://mexiconewsdaily.com/feed/",
     "popularity": 8
   },
   {
@@ -1053,6 +1803,24 @@
     "category": "Latin America News",
     "name": "France 24 LatAm",
     "url": "https://www.france24.com/en/americas/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Latin America News",
+    "name": "MercoPress",
+    "url": "https://en.mercopress.com/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Latin America News",
+    "name": "Latin America Reports",
+    "url": "https://news.google.com/rss/search?q=Latin+America+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
+  },
+  {
+    "category": "Latin America News",
+    "name": "Buenos Aires Times",
+    "url": "https://news.google.com/rss/search?q=site:batimes.com.ar&hl=en-US&gl=US&ceid=US:en",
     "popularity": 8
   },
   {
@@ -1195,12 +1963,6 @@
   },
   {
     "category": "Asia-Pacific News",
-    "name": "Tuoi Tre News",
-    "url": "https://tuoitrenews.vn/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Asia-Pacific News",
     "name": "Yonhap News",
     "url": "https://www.yonhapnewstv.co.kr/browse/feed/",
     "popularity": 8
@@ -1230,6 +1992,18 @@
     "popularity": 8
   },
   {
+    "category": "Asia-Pacific News",
+    "name": "Asia Times",
+    "url": "https://asiatimes.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Asia-Pacific News",
+    "name": "Straits Times Asia",
+    "url": "https://news.google.com/rss/search?q=site:straitstimes.com+asia&hl=en-US&gl=SG&ceid=SG:en",
+    "popularity": 8
+  },
+  {
     "category": "Energy & Infrastructure",
     "name": "Oil & Gas",
     "url": "https://news.google.com/rss/search?q=(oil+price+OR+OPEC+OR+\"natural+gas\"+OR+pipeline+OR+LNG)+when:2d&hl=en-US&gl=US&ceid=US:en",
@@ -1254,69 +2028,69 @@
     "popularity": 4
   },
   {
-    "category": "Technology",
-    "name": "TechCrunch",
-    "url": "https://techcrunch.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "ZDNet",
-    "url": "https://www.zdnet.com/news/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "TechMeme",
-    "url": "https://www.techmeme.com/feed.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Engadget",
-    "url": "https://www.engadget.com/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Fast Company",
-    "url": "https://feeds.feedburner.com/fastcompany/headlines",
-    "popularity": 7
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "AI News",
-    "url": "https://news.google.com/rss/search?q=(OpenAI+OR+Anthropic+OR+Google+AI+OR+\"large+language+model\"+OR+ChatGPT+OR+Claude+OR+\"AI+model\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "category": "Energy & Infrastructure",
+    "name": "OilPrice.com",
+    "url": "https://oilprice.com/rss/main",
     "popularity": 4
   },
   {
-    "category": "AI & Machine Learning",
-    "name": "MIT Research",
-    "url": "https://news.mit.edu/rss/research",
+    "category": "Energy & Infrastructure",
+    "name": "OPEC News",
+    "url": "https://news.google.com/rss/search?q=(OPEC+OR+\"oil+price\"+OR+\"crude+oil\"+OR+WTI+OR+Brent+OR+\"oil+production\")+when:1d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 4
   },
   {
-    "category": "AI & Machine Learning",
-    "name": "ArXiv ML",
-    "url": "https://export.arxiv.org/rss/cs.LG",
+    "category": "Energy & Infrastructure",
+    "name": "Natural Gas News",
+    "url": "https://news.google.com/rss/search?q=(\"natural+gas\"+OR+LNG+OR+\"gas+price\"+OR+\"Henry+Hub\")+when:1d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 4
   },
   {
-    "category": "AI & Machine Learning",
-    "name": "AI Weekly",
-    "url": "https://news.google.com/rss/search?q=\"artificial+intelligence\"+OR+\"machine+learning\"+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "category": "Energy & Infrastructure",
+    "name": "Energy Intel",
+    "url": "https://news.google.com/rss/search?q=(energy+commodities+OR+\"energy+market\"+OR+\"energy+prices\")+when:2d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 4
   },
   {
-    "category": "AI & Machine Learning",
-    "name": "Anthropic News",
-    "url": "https://news.google.com/rss/search?q=Anthropic+Claude+AI+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "category": "Energy & Infrastructure",
+    "name": "OPEC & Crude",
+    "url": "https://news.google.com/rss/search?q=(OPEC+OR+\"oil+price\"+OR+\"crude+oil\"+OR+WTI+OR+Brent+OR+\"oil+production\"+OR+\"oil+inventory\")+when:1d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 4
   },
   {
-    "category": "AI & Machine Learning",
-    "name": "OpenAI News",
-    "url": "https://news.google.com/rss/search?q=OpenAI+ChatGPT+GPT-4+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "category": "Energy & Infrastructure",
+    "name": "Natural Gas & LNG",
+    "url": "https://news.google.com/rss/search?q=(\"natural+gas\"+OR+LNG+OR+\"gas+price\"+OR+\"Henry+Hub\"+OR+TTF+OR+JKM+OR+\"LNG+cargo\")+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Pipelines & Chokepoints",
+    "url": "https://news.google.com/rss/search?q=(pipeline+OR+Druzhba+OR+\"Nord+Stream\"+OR+TurkStream+OR+\"Strait+of+Hormuz\"+OR+\"Bab+el-Mandeb\"+OR+\"Suez+Canal\"+OR+\"Power+of+Siberia\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Energy Crisis & Shortages",
+    "url": "https://news.google.com/rss/search?q=(\"fuel+shortage\"+OR+\"gas+shortage\"+OR+\"diesel+shortage\"+OR+\"jet+fuel+shortage\"+OR+\"energy+crisis\"+OR+rationing+OR+\"petrol+shortage\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Refinery & Disruptions",
+    "url": "https://news.google.com/rss/search?q=(refinery+OR+\"refinery+outage\"+OR+\"force+majeure\"+OR+\"pipeline+sabotage\"+OR+\"pipeline+attack\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Utility Dive",
+    "url": "https://www.utilitydive.com/feeds/news/",
+    "popularity": 4
+  },
+  {
+    "category": "Energy & Infrastructure",
+    "name": "Energy Monitor",
+    "url": "https://news.google.com/rss/search?q=site:energy-monitor.com&hl=en-US&gl=US&ceid=US:en",
     "popularity": 4
   },
   {
@@ -1329,12 +2103,6 @@
     "category": "Startups & Venture Capital",
     "name": "VentureBeat",
     "url": "https://venturebeat.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Crunchbase News",
-    "url": "https://news.crunchbase.com/feed/",
     "popularity": 5
   },
   {
@@ -1371,12 +2139,6 @@
     "category": "Startups & Venture Capital",
     "name": "PitchBook News",
     "url": "https://news.google.com/rss/search?q=site:pitchbook.com+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "CB Insights",
-    "url": "https://www.cbinsights.com/research/feed/",
     "popularity": 5
   },
   {
@@ -1626,6 +2388,156 @@
     "popularity": 5
   },
   {
+    "category": "Startups & Venture Capital",
+    "name": "Unicorn News",
+    "url": "https://news.google.com/rss/search?q=(\"unicorn+startup\"+OR+\"unicorn+valuation\"+OR+\"$1+billion+valuation\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "CB Insights Unicorn",
+    "url": "https://news.google.com/rss/search?q=site:cbinsights.com+unicorn+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Decacorn News",
+    "url": "https://news.google.com/rss/search?q=(\"decacorn\"+OR+\"$10+billion+valuation\"+OR+\"$10B+valuation\")+startup+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "New Unicorns",
+    "url": "https://news.google.com/rss/search?q=(\"becomes+unicorn\"+OR+\"joins+unicorn\"+OR+\"reaches+unicorn\"+OR+\"achieved+unicorn\")+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Techstars News",
+    "url": "https://news.google.com/rss/search?q=Techstars+accelerator+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "500 Global News",
+    "url": "https://news.google.com/rss/search?q=\"500+Global\"+OR+\"500+Startups\"+accelerator+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Demo Day News",
+    "url": "https://news.google.com/rss/search?q=(\"demo+day\"+OR+\"YC+batch\"+OR+\"accelerator+batch\")+startup+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Startup School",
+    "url": "https://news.google.com/rss/search?q=\"Startup+School\"+OR+\"YC+Startup+School\"+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "First Round Review",
+    "url": "https://review.firstround.com/articles/rss",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Disrupt Africa",
+    "url": "https://disrupt-africa.com/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "YC News",
+    "url": "https://news.ycombinator.com/rss",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Steve Blank",
+    "url": "http://steveblank.com/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "The singularity is nearer",
+    "url": "https://geohot.github.io/blog/feed.xml",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Guy Kawasaki",
+    "url": "http://guykawasaki.com/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Essays - Benedict Evans",
+    "url": "http://ben-evans.com/benedictevans?format=rss",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Sam Altman",
+    "url": "http://blog.samaltman.com/posts.atom",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Andrew Chen",
+    "url": "http://andrewchen.co/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Both Sides of the Table",
+    "url": "http://feeds.feedburner.com/BothSidesOfTheTable",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "The Black Box of Product Management - Medium",
+    "url": "https://medium.com/feed/the-black-box-of-product-management",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Product Life",
+    "url": "https://productlife.to/feed",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Irrational Exuberance",
+    "url": "https://lethain.com/feeds/",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Startup News (Google)",
+    "url": "https://news.google.com/rss/search?q=startup+funding+venture+capital&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "AngelList Blog",
+    "url": "https://news.google.com/rss/search?q=site:angel.co+blog&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Indie Hackers",
+    "url": "https://news.google.com/rss/search?q=site:indiehackers.com+post&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Startups & Venture Capital",
+    "name": "Startup (Google)",
+    "url": "https://news.google.com/rss/search?q=startup+funding+news+seed&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
     "category": "Open Source & Dev Trends",
     "name": "GitHub Blog",
     "url": "https://github.blog/feed/",
@@ -1662,51 +2574,39 @@
     "popularity": 2
   },
   {
-    "category": "Finance & Markets",
-    "name": "IPO News",
-    "url": "https://news.google.com/rss/search?q=(IPO+OR+\"initial+public+offering\"+OR+SPAC)+tech+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Open Source & Dev Trends",
+    "name": "OpenSource.com",
+    "url": "https://opensource.com/feed",
+    "popularity": 2
   },
   {
-    "category": "Finance & Markets",
-    "name": "Renaissance IPO",
-    "url": "https://news.google.com/rss/search?q=site:renaissancecapital.com+IPO+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Open Source & Dev Trends",
+    "name": "LWN.net",
+    "url": "https://lwn.net/headlines/rss",
+    "popularity": 2
   },
   {
-    "category": "Finance & Markets",
-    "name": "Tech IPO News",
-    "url": "https://news.google.com/rss/search?q=tech+IPO+OR+\"tech+company\"+IPO+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Open Source & Dev Trends",
+    "name": "Fossbytes",
+    "url": "https://fossbytes.com/feed/",
+    "popularity": 2
   },
   {
-    "category": "Finance & Markets",
-    "name": "SEC Filings",
-    "url": "https://news.google.com/rss/search?q=(S-1+OR+\"IPO+filing\"+OR+\"SEC+filing\")+startup+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "VC News",
-    "url": "https://news.google.com/rss/search?q=(\"Series+A\"+OR+\"Series+B\"+OR+\"Series+C\"+OR+\"funding+round\"+OR+\"venture+capital\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Seed & Pre-Seed",
-    "url": "https://news.google.com/rss/search?q=(\"seed+round\"+OR+\"pre-seed\"+OR+\"angel+round\"+OR+\"seed+funding\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Startup Funding",
-    "url": "https://news.google.com/rss/search?q=(\"startup+funding\"+OR+\"raised+funding\"+OR+\"raised+$\"+OR+\"funding+announced\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Open Source & Dev Trends",
+    "name": "Hacker News (Open Source)",
+    "url": "https://news.google.com/rss/search?q=open+source+software&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
   },
   {
     "category": "Product Launches",
     "name": "Product Hunt",
     "url": "https://www.producthunt.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Product Launches",
+    "name": "TechCrunch Products",
+    "url": "https://news.google.com/rss/search?q=site:techcrunch.com+product+launch&hl=en-US&gl=US&ceid=US:en",
     "popularity": 6
   },
   {
@@ -1719,6 +2619,18 @@
     "category": "Cloud & Infrastructure Outages",
     "name": "Cloud Outages",
     "url": "https://news.google.com/rss/search?q=(Azure+OR+GCP+OR+Cloudflare+OR+Slack+OR+GitHub)+outage+OR+down+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Cloud & Infrastructure Outages",
+    "name": "Google Cloud Status",
+    "url": "https://status.cloud.google.com/en/feed.atom",
+    "popularity": 1
+  },
+  {
+    "category": "Cloud & Infrastructure Outages",
+    "name": "Cloudflare Status",
+    "url": "https://www.cloudflarestatus.com/history.rss",
     "popularity": 1
   },
   {
@@ -1743,6 +2655,60 @@
     "category": "Cybersecurity & Tech Policy",
     "name": "Schneier",
     "url": "https://www.schneier.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Ransomware.live",
+    "url": "https://www.ransomware.live/rss.xml",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Cyber Incidents",
+    "url": "https://news.google.com/rss/search?q=cyber+attack+OR+data+breach+OR+ransomware+OR+hacking+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Threatpost",
+    "url": "https://threatpost.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Schneier on Security",
+    "url": "https://www.schneier.com/feed/atom/",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Recorded Future",
+    "url": "https://www.recordedfuture.com/feed",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "SANS ISC",
+    "url": "https://isc.sans.edu/rssfeed.xml",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "CSO Online",
+    "url": "https://www.csoonline.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "CyberScoop",
+    "url": "https://cyberscoop.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Cybersecurity News (Google)",
+    "url": "https://news.google.com/rss/search?q=cybersecurity+tech+policy+news&hl=en-US&gl=US&ceid=US:en",
     "popularity": 3
   },
   {
@@ -1806,148 +2772,16 @@
     "popularity": 2
   },
   {
-    "category": "Think Tanks & Research",
-    "name": "Brookings Tech",
-    "url": "https://news.google.com/rss/search?q=site:brookings.edu+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
+    "category": "AI Policy & Regulation",
+    "name": "AI Policy (Google)",
+    "url": "https://news.google.com/rss/search?q=AI+policy+regulation&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
   },
   {
-    "category": "Think Tanks & Research",
-    "name": "CSIS Tech",
-    "url": "https://news.google.com/rss/search?q=site:csis.org+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "MIT Tech Policy",
-    "url": "https://news.google.com/rss/search?q=%22Tech+Policy+Press%22&hl=en&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Stanford HAI",
-    "url": "https://news.google.com/rss/search?q=site:hai.stanford.edu+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "AI Now Institute",
-    "url": "https://news.google.com/rss/search?q=%22AI+Now+Institute%22&hl=en&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "OECD Digital",
-    "url": "https://news.google.com/rss/search?q=site:oecd.org+digital+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "EU Tech Policy",
-    "url": "https://news.google.com/rss/search?q=(\"EU+tech+policy\"+OR+\"European+digital\"+OR+Bruegel+tech)+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Chatham House Tech",
-    "url": "https://news.google.com/rss/search?q=site:chathamhouse.org+technology+OR+AI+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "ISEAS (Singapore)",
-    "url": "https://news.google.com/rss/search?q=site:iseas.edu.sg+technology+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "ORF Tech (India)",
-    "url": "https://news.google.com/rss/search?q=(India+tech+policy+OR+ORF+technology+OR+\"Observer+Research+Foundation\"+tech)+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "RIETI (Japan)",
-    "url": "https://news.google.com/rss/search?q=site:rieti.go.jp+technology+when:30d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Asia Pacific Tech",
-    "url": "https://news.google.com/rss/search?q=(\"Asia+Pacific\"+tech+policy+OR+\"Lowy+Institute\"+technology)+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "China Tech Analysis",
-    "url": "https://news.google.com/rss/search?q=(\"China+tech+strategy\"+OR+\"Chinese+AI\"+OR+\"China+semiconductor\")+analysis+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "DigiChina",
-    "url": "https://news.google.com/rss/search?q=DigiChina+Stanford+China+technology&hl=en&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "CNBC Tech",
-    "url": "https://www.cnbc.com/id/19854910/device/rss/rss.html",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "MarketWatch Tech",
-    "url": "https://news.google.com/rss/search?q=site:marketwatch.com+technology+markets+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Yahoo Finance",
-    "url": "https://finance.yahoo.com/rss/topstories",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Seeking Alpha Tech",
-    "url": "https://seekingalpha.com/market_currents.xml",
-    "popularity": 5
-  },
-  {
-    "category": "Technology",
-    "name": "Tom's Hardware",
-    "url": "https://www.tomshardware.com/feeds.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "SemiAnalysis",
-    "url": "https://news.google.com/rss/search?q=site:semianalysis.com+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Semiconductor News",
-    "url": "https://news.google.com/rss/search?q=semiconductor+OR+chip+OR+TSMC+OR+NVIDIA+OR+Intel+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "InfoQ",
-    "url": "https://feed.infoq.com/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "The New Stack",
-    "url": "https://thenewstack.io/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "DevOps.com",
-    "url": "https://devops.com/feed/",
-    "popularity": 7
+    "category": "AI Policy & Regulation",
+    "name": "Brookings AI",
+    "url": "https://news.google.com/rss/search?q=site:brookings.edu+AI+policy&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
   },
   {
     "category": "Programming",
@@ -1957,69 +2791,531 @@
   },
   {
     "category": "Programming",
-    "name": "Lobsters",
-    "url": "https://lobste.rs/rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
     "name": "Changelog",
     "url": "https://changelog.com/feed",
     "popularity": 4
   },
   {
-    "category": "Layoffs Tracker",
-    "name": "Layoffs.fyi",
-    "url": "https://news.google.com/rss/search?q=tech+layoffs+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "category": "Programming",
+    "name": "YC Launches",
+    "url": "https://hnrss.org/launches",
     "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Unicorn News",
-    "url": "https://news.google.com/rss/search?q=(\"unicorn+startup\"+OR+\"unicorn+valuation\"+OR+\"$1+billion+valuation\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "Flutter Blog",
+    "url": "https://medium.com/feed/flutter",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "CB Insights Unicorn",
-    "url": "https://news.google.com/rss/search?q=site:cbinsights.com+unicorn+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "Dart Blog",
+    "url": "https://medium.com/feed/dartlang",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Decacorn News",
-    "url": "https://news.google.com/rss/search?q=(\"decacorn\"+OR+\"$10+billion+valuation\"+OR+\"$10B+valuation\")+startup+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "Reddit Programming",
+    "url": "https://www.reddit.com/r/programming/.rss",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "New Unicorns",
-    "url": "https://news.google.com/rss/search?q=(\"becomes+unicorn\"+OR+\"joins+unicorn\"+OR+\"reaches+unicorn\"+OR+\"achieved+unicorn\")+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "Microsoft Dev Blog",
+    "url": "https://devblogs.microsoft.com/feed/",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Techstars News",
-    "url": "https://news.google.com/rss/search?q=Techstars+accelerator+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "React Official Blog",
+    "url": "https://react.dev/rss.xml",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "500 Global News",
-    "url": "https://news.google.com/rss/search?q=\"500+Global\"+OR+\"500+Startups\"+accelerator+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "Next.js Blog",
+    "url": "https://nextjs.org/feed.xml",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Demo Day News",
-    "url": "https://news.google.com/rss/search?q=(\"demo+day\"+OR+\"YC+batch\"+OR+\"accelerator+batch\")+startup+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "Rust Blog",
+    "url": "https://blog.rust-lang.org/feed.xml",
+    "popularity": 4
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Startup School",
-    "url": "https://news.google.com/rss/search?q=\"Startup+School\"+OR+\"YC+Startup+School\"+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Programming",
+    "name": "web.dev",
+    "url": "https://web.dev/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Stack Overflow Blog",
+    "url": "https://stackoverflow.blog/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Python Official Blog",
+    "url": "https://blog.python.org/feeds/posts/default",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Go Blog",
+    "url": "https://go.dev/blog/feed.atom",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Node.js Blog",
+    "url": "https://nodejs.org/en/feed/blog.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Vue.js Blog",
+    "url": "https://blog.vuejs.org/feed.rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "CSS Weekly",
+    "url": "https://css-weekly.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "JavaScript Weekly",
+    "url": "https://javascriptweekly.com/rss/1a1oc1f6",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Martin Fowler",
+    "url": "https://martinfowler.com/feed.atom",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "TypeScript Blog",
+    "url": "https://devblogs.microsoft.com/typescript/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Kotlin Blog",
+    "url": "https://blog.jetbrains.com/kotlin/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Swift Blog (Apple)",
+    "url": "https://www.swift.org/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Ruby on Rails Blog",
+    "url": "https://rubyonrails.org/feed/releases.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "PHP Blog",
+    "url": "https://www.php.net/feed.atom",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Java Blog (Oracle)",
+    "url": "https://blogs.oracle.com/java/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Svelte Blog",
+    "url": "https://svelte.dev/blog/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Deno Blog",
+    "url": "https://deno.com/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Bun Blog",
+    "url": "https://bun.sh/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Zig Blog",
+    "url": "https://ziglang.org/news/index.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "JetBrains Blog",
+    "url": "https://blog.jetbrains.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Kubernetes Blog",
+    "url": "https://kubernetes.io/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "HashiCorp Blog",
+    "url": "https://www.hashicorp.com/blog/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "David Walsh Blog",
+    "url": "https://davidwalsh.name/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Sink In",
+    "url": "https://gosink.in/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Better Programming",
+    "url": "https://medium.com/feed/better-programming",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Code as Craft",
+    "url": "https://codeascraft.com/feed/atom/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "CodeNewbie Podcast",
+    "url": "http://feeds.codenewbie.org/cnpodcast.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Coding Horror",
+    "url": "https://feeds.feedburner.com/codinghorror",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Overreacted",
+    "url": "https://overreacted.io/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Developer Tea",
+    "url": "https://feeds.simplecast.com/dLRotFGk",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "FLOSS Weekly",
+    "url": "https://feeds.twit.tv/floss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Facebook Engineering",
+    "url": "https://engineering.fb.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "GitLab Blog",
+    "url": "https://about.gitlab.com/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Google Developers Blog",
+    "url": "http://feeds.feedburner.com/GDBcode",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "HackerNoon",
+    "url": "https://medium.com/feed/hackernoon",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Hanselminutes",
+    "url": "https://feeds.simplecast.com/gvtxUiIf",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Java, SQL and jOOQ",
+    "url": "https://blog.jooq.org/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Joel on Software",
+    "url": "https://www.joelonsoftware.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Netflix TechBlog",
+    "url": "https://netflixtechblog.com/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Overflow",
+    "url": "https://buffer.com/resources/overflow/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Software Engineering Daily Podcast",
+    "url": "https://softwareengineeringdaily.com/category/podcast/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Android Developers (YouTube)",
+    "url": "https://www.youtube.com/feeds/videos.xml?user=androiddevelopers",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Android Developers (Medium)",
+    "url": "https://medium.com/feed/androiddevelopers",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Android Developers Backstage",
+    "url": "http://feeds.feedburner.com/blogspot/androiddevelopersbackstage",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Android Developers Blog",
+    "url": "http://feeds.feedburner.com/blogspot/hsDu",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "MindOrks",
+    "url": "https://medium.com/feed/mindorks/tagged/android",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Dan Lew Codes",
+    "url": "https://blog.danlew.net/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "r/androiddev",
+    "url": "https://reddit.com/r/androiddev.rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Fragmented Podcast",
+    "url": "https://feeds.simplecast.com/LpAGSLnY",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Handstand Sam",
+    "url": "https://handstandsam.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Jake Wharton",
+    "url": "https://jakewharton.com/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "The Pragmatic Engineer",
+    "url": "https://blog.pragmaticengineer.com/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "The Airtable Engineering Blog",
+    "url": "https://medium.com/feed/airtable-eng",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Medium Engineering",
+    "url": "https://medium.com/feed/medium-eng",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "The PayPal Technology Blog",
+    "url": "https://medium.com/feed/paypal-engineering",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Pinterest Engineering Blog",
+    "url": "https://medium.com/feed/pinterest-engineering",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Grab Tech",
+    "url": "http://engineering.grab.com/feed.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Slack Engineering",
+    "url": "https://slack.engineering/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Engineering – The GitHub Blog",
+    "url": "http://githubengineering.com/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "eBay Tech Blog",
+    "url": "http://www.ebaytechblog.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Stripe Blog",
+    "url": "https://stripe.com/blog/feed.rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "The Cloudflare Blog",
+    "url": "https://blog.cloudflare.com/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "The Airbnb Tech Blog",
+    "url": "https://medium.com/feed/airbnb-engineering",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Dropbox Tech",
+    "url": "https://dropbox.tech/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Web Browser Engineering",
+    "url": "https://browser.engineering/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Spotify Engineering (Official)",
+    "url": "https://engineering.atspotify.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Julia Evans",
+    "url": "https://jvns.ca/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Martin Kleppmann's blog",
+    "url": "https://feeds.feedburner.com/martinkl?format=xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Dan Luu",
+    "url": "https://danluu.com/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Josh Comeau's blog",
+    "url": "https://joshwcomeau.com/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Flurries of latent creativity - Stripe CTO blog",
+    "url": "https://blog.singleton.io/index.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Sophie Alpert",
+    "url": "https://sophiebits.com/atom.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Amjad Masad",
+    "url": "https://amasad.me/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Signal Blog",
+    "url": "https://signal.org/blog/rss.xml",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Nvidia Developer Blog",
+    "url": "https://developer.nvidia.com/blog/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Programming (Google)",
+    "url": "https://news.google.com/rss/search?q=programming+software+development&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "CodePen Blog",
+    "url": "https://news.google.com/rss/search?q=site:codepen.io+blog&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "DZone",
+    "url": "https://feeds.dzone.com/home",
+    "popularity": 4
+  },
+  {
+    "category": "Programming",
+    "name": "Baeldung",
+    "url": "https://www.baeldung.com/feed",
+    "popularity": 4
   },
   {
     "category": "Podcasts",
@@ -2106,58 +3402,16 @@
     "popularity": 6
   },
   {
-    "category": "Finance & Markets",
-    "name": "Reuters Markets",
-    "url": "https://news.google.com/rss/search?q=site:reuters.com+markets+stocks+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Podcasts",
+    "name": "Podcast News (Google)",
+    "url": "https://news.google.com/rss/search?q=podcast+news+launch&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
   },
   {
-    "category": "Finance & Markets",
-    "name": "Bloomberg Markets",
-    "url": "https://news.google.com/rss/search?q=site:bloomberg.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Investing.com News",
-    "url": "https://news.google.com/rss/search?q=site:investing.com+markets+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Forex News",
-    "url": "https://news.google.com/rss/search?q=(\"forex\"+OR+\"currency\"+OR+\"FX+market\")+trading+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Dollar Watch",
-    "url": "https://news.google.com/rss/search?q=(\"dollar+index\"+OR+DXY+OR+\"US+dollar\"+OR+\"euro+dollar\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Central Bank Rates",
-    "url": "https://news.google.com/rss/search?q=(\"central+bank\"+OR+\"interest+rate\"+OR+\"rate+decision\"+OR+\"monetary+policy\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Bond Market",
-    "url": "https://news.google.com/rss/search?q=(\"bond+market\"+OR+\"treasury+yields\"+OR+\"bond+yields\"+OR+\"fixed+income\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Treasury Watch",
-    "url": "https://news.google.com/rss/search?q=(\"US+Treasury\"+OR+\"Treasury+auction\"+OR+\"10-year+yield\"+OR+\"2-year+yield\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Corporate Bonds",
-    "url": "https://news.google.com/rss/search?q=(\"corporate+bond\"+OR+\"high+yield\"+OR+\"investment+grade\"+OR+\"credit+spread\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Podcasts",
+    "name": "Podcast Industry (Google)",
+    "url": "https://news.google.com/rss/search?q=podcast+industry+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
   },
   {
     "category": "Commodities",
@@ -2184,465 +3438,9 @@
     "popularity": 2
   },
   {
-    "category": "Crypto & Digital Assets",
-    "name": "CoinDesk",
-    "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Cointelegraph",
-    "url": "https://cointelegraph.com/rss",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "The Block",
-    "url": "https://news.google.com/rss/search?q=site:theblock.co+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Crypto News",
-    "url": "https://news.google.com/rss/search?q=(bitcoin+OR+ethereum+OR+crypto+OR+\"digital+assets\")+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "DeFi News",
-    "url": "https://news.google.com/rss/search?q=(DeFi+OR+\"decentralized+finance\"+OR+DEX+OR+\"yield+farming\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Decrypt",
-    "url": "https://decrypt.co/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "The Defiant",
-    "url": "https://thedefiant.io/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Bitcoin Magazine",
-    "url": "https://bitcoinmagazine.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "DL News",
-    "url": "https://news.google.com/rss/search?q=site:dlnews.com+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "CryptoSlate",
-    "url": "https://cryptoslate.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Unchained",
-    "url": "https://unchainedcrypto.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Wu Blockchain",
-    "url": "https://news.google.com/rss/search?q=site:wublockchain.com+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Messari",
-    "url": "https://news.google.com/rss/search?q=site:messari.io+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Bloomberg Crypto",
-    "url": "https://news.google.com/rss/search?q=bloomberg+crypto+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Reuters Crypto",
-    "url": "https://news.google.com/rss/search?q=reuters+crypto+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "NFT News",
-    "url": "https://news.google.com/rss/search?q=(NFT+OR+\"non-fungible\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Crypto & Digital Assets",
-    "name": "Stablecoin Policy",
-    "url": "https://news.google.com/rss/search?q=(stablecoin+regulation+OR+\"stablecoin+bill\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Central Bank Watch",
-    "name": "ECB Watch",
-    "url": "https://news.google.com/rss/search?q=(\"European+Central+Bank\"+OR+ECB+OR+Lagarde)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Central Bank Watch",
-    "name": "BoJ Watch",
-    "url": "https://news.google.com/rss/search?q=(\"Bank+of+Japan\"+OR+BoJ)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Central Bank Watch",
-    "name": "BoE Watch",
-    "url": "https://news.google.com/rss/search?q=(\"Bank+of+England\"+OR+BoE)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Central Bank Watch",
-    "name": "PBoC Watch",
-    "url": "https://news.google.com/rss/search?q=(\"People%27s+Bank+of+China\"+OR+PBoC+OR+PBOC)+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Central Bank Watch",
-    "name": "Global Central Banks",
-    "url": "https://news.google.com/rss/search?q=(\"rate+hike\"+OR+\"rate+cut\"+OR+\"interest+rate+decision\")+central+bank+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Economic Data & Indicators",
-    "name": "Economic Data",
-    "url": "https://news.google.com/rss/search?q=(CPI+OR+inflation+OR+GDP+OR+\"jobs+report\"+OR+\"nonfarm+payrolls\"+OR+PMI)+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Economic Data & Indicators",
-    "name": "Trade & Tariffs",
-    "url": "https://news.google.com/rss/search?q=(tariff+OR+\"trade+war\"+OR+\"trade+deficit\"+OR+sanctions)+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Economic Data & Indicators",
-    "name": "Housing Market",
-    "url": "https://news.google.com/rss/search?q=(\"housing+market\"+OR+\"home+prices\"+OR+\"mortgage+rates\"+OR+REIT)+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "IPO News",
-    "url": "https://news.google.com/rss/search?q=(IPO+OR+\"initial+public+offering\"+OR+SPAC+OR+\"direct+listing\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Earnings Reports",
-    "url": "https://news.google.com/rss/search?q=(\"earnings+report\"+OR+\"quarterly+earnings\"+OR+\"revenue+beat\"+OR+\"earnings+miss\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "M&A News",
-    "url": "https://news.google.com/rss/search?q=(\"merger\"+OR+\"acquisition\"+OR+\"takeover+bid\"+OR+\"buyout\")+billion+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Derivatives & Options",
-    "name": "Options Market",
-    "url": "https://news.google.com/rss/search?q=(\"options+market\"+OR+\"options+trading\"+OR+\"put+call+ratio\"+OR+VIX)+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 0
-  },
-  {
-    "category": "Derivatives & Options",
-    "name": "Futures Trading",
-    "url": "https://news.google.com/rss/search?q=(\"futures+trading\"+OR+\"S%26P+500+futures\"+OR+\"Nasdaq+futures\")+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 0
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Fintech News",
-    "url": "https://news.google.com/rss/search?q=(fintech+OR+\"payment+technology\"+OR+\"neobank\"+OR+\"digital+banking\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Trading Tech",
-    "url": "https://news.google.com/rss/search?q=(\"algorithmic+trading\"+OR+\"trading+platform\"+OR+\"quantitative+finance\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Blockchain Finance",
-    "url": "https://news.google.com/rss/search?q=(\"blockchain+finance\"+OR+\"tokenization\"+OR+\"digital+securities\"+OR+CBDC)+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Financial Regulation",
-    "name": "Financial Regulation",
-    "url": "https://news.google.com/rss/search?q=(SEC+OR+CFTC+OR+FINRA+OR+FCA)+regulation+OR+enforcement+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Financial Regulation",
-    "name": "Banking Rules",
-    "url": "https://news.google.com/rss/search?q=(Basel+OR+\"capital+requirements\"+OR+\"banking+regulation\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Financial Regulation",
-    "name": "Crypto Regulation",
-    "url": "https://news.google.com/rss/search?q=(crypto+regulation+OR+\"digital+asset\"+regulation+OR+\"stablecoin\"+regulation)+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 1
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Hedge Fund News",
-    "url": "https://news.google.com/rss/search?q=(\"hedge+fund\"+OR+\"Bridgewater\"+OR+\"Citadel\"+OR+\"Renaissance\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Private Equity",
-    "url": "https://news.google.com/rss/search?q=(\"private+equity\"+OR+Blackstone+OR+KKR+OR+Apollo+OR+Carlyle)+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Sovereign Wealth",
-    "url": "https://news.google.com/rss/search?q=(\"sovereign+wealth+fund\"+OR+\"pension+fund\"+OR+\"institutional+investor\")+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Market Outlook",
-    "url": "https://news.google.com/rss/search?q=(\"market+outlook\"+OR+\"stock+market+forecast\"+OR+\"bull+market\"+OR+\"bear+market\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Risk & Volatility",
-    "url": "https://news.google.com/rss/search?q=(VIX+OR+\"market+volatility\"+OR+\"risk+off\"+OR+\"market+correction\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Bank Research",
-    "url": "https://news.google.com/rss/search?q=(\"Goldman+Sachs\"+OR+\"JPMorgan\"+OR+\"Morgan+Stanley\")+forecast+OR+outlook+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "GCC Business News",
-    "name": "Arabian Business",
-    "url": "https://news.google.com/rss/search?q=site:arabianbusiness.com+(Saudi+Arabia+OR+UAE+OR+GCC)+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "GCC Business News",
-    "name": "The National",
-    "url": "https://news.google.com/rss/search?q=site:thenationalnews.com+(Abu+Dhabi+OR+UAE+OR+Saudi)+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "GCC Business News",
-    "name": "Arab News",
-    "url": "https://news.google.com/rss/search?q=site:arabnews.com+(Saudi+Arabia+OR+investment+OR+infrastructure)+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "GCC Business News",
-    "name": "Gulf FDI",
-    "url": "https://news.google.com/rss/search?q=(PIF+OR+\"DP+World\"+OR+Mubadala+OR+ADNOC+OR+Masdar+OR+\"ACWA+Power\")+infrastructure+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "GCC Business News",
-    "name": "Gulf Investments",
-    "url": "https://news.google.com/rss/search?q=(\"Saudi+Arabia\"+OR+\"UAE\"+OR+\"Abu+Dhabi\")+investment+infrastructure+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "GCC Business News",
-    "name": "Vision 2030",
-    "url": "https://news.google.com/rss/search?q=\"Vision+2030\"+(project+OR+investment+OR+announced)+when:14d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Positive News",
-    "name": "Good News Network",
-    "url": "https://www.goodnewsnetwork.org/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Positive.News",
-    "url": "https://www.positive.news/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Reasons to be Cheerful",
-    "url": "https://reasonstobecheerful.world/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Optimist Daily",
-    "url": "https://www.optimistdaily.com/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Upworthy",
-    "url": "https://www.upworthy.com/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "DailyGood",
-    "url": "https://www.dailygood.org/feed",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Good Good Good",
-    "url": "https://www.goodgoodgood.co/articles/rss.xml",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "GOOD Magazine",
-    "url": "https://www.good.is/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Sunny Skyz",
-    "url": "https://www.sunnyskyz.com/rss_tebow.php",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "The Better India",
-    "url": "https://thebetterindia.com/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Science",
-    "name": "GNN Science",
-    "url": "https://www.goodnewsnetwork.org/category/news/science/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "ScienceDaily",
-    "url": "https://www.sciencedaily.com/rss/all.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Nature News",
-    "url": "https://feeds.nature.com/nature/rss/current",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Live Science",
-    "url": "https://www.livescience.com/feeds.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "New Scientist",
-    "url": "https://www.newscientist.com/feed/home/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Singularity Hub",
-    "url": "https://singularityhub.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Human Progress",
-    "url": "https://humanprogress.org/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Greater Good (Berkeley)",
-    "url": "https://greatergood.berkeley.edu/site/rss/articles",
-    "popularity": 7
-  },
-  {
-    "category": "Environment",
-    "name": "GNN Animals",
-    "url": "https://www.goodnewsnetwork.org/category/news/animals/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "GNN Earth",
-    "url": "https://www.goodnewsnetwork.org/category/news/earth/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Mongabay",
-    "url": "https://news.mongabay.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Conservation Optimism",
-    "url": "https://conservationoptimism.org/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Health",
-    "name": "GNN Health",
-    "url": "https://www.goodnewsnetwork.org/category/news/health/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Positive News",
-    "name": "GNN Heroes",
-    "url": "https://www.goodnewsnetwork.org/category/news/inspiring/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "GNN Heroes Spotlight",
-    "url": "https://www.goodnewsnetwork.org/category/news/heroes/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Shareable",
-    "url": "https://www.shareable.net/feed/",
-    "popularity": 9
-  },
-  {
-    "category": "Positive News",
-    "name": "Yes! Magazine",
-    "url": "https://www.yesmagazine.org/feed",
-    "popularity": 9
-  },
-  {
     "category": "Commodities",
     "name": "Kitco News",
     "url": "https://news.google.com/rss/search?q=site:kitco.com+(gold+OR+silver+OR+metals)+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 2
-  },
-  {
-    "category": "Commodities",
-    "name": "Mining.com",
-    "url": "https://www.mining.com/feed/",
     "popularity": 2
   },
   {
@@ -2724,48 +3522,6 @@
     "popularity": 2
   },
   {
-    "category": "Energy & Infrastructure",
-    "name": "OilPrice.com",
-    "url": "https://oilprice.com/rss/main",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Rigzone",
-    "url": "https://www.rigzone.com/news/rss/rigzone_latest.aspx",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "EIA Reports",
-    "url": "https://www.eia.gov/rss/press_room.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "OPEC News",
-    "url": "https://news.google.com/rss/search?q=(OPEC+OR+\"oil+price\"+OR+\"crude+oil\"+OR+WTI+OR+Brent+OR+\"oil+production\")+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Natural Gas News",
-    "url": "https://news.google.com/rss/search?q=(\"natural+gas\"+OR+LNG+OR+\"gas+price\"+OR+\"Henry+Hub\")+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Energy Intel",
-    "url": "https://news.google.com/rss/search?q=(energy+commodities+OR+\"energy+market\"+OR+\"energy+prices\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Reuters Energy",
-    "url": "https://news.google.com/rss/search?q=site:reuters.com+(oil+OR+gas+OR+energy)+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
     "category": "Commodities",
     "name": "Mining Journal",
     "url": "https://news.google.com/rss/search?q=site:mining-journal.com+when:2d&hl=en-US&gl=US&ceid=US:en",
@@ -2781,18 +3537,6 @@
     "category": "Commodities",
     "name": "Mining Weekly",
     "url": "https://news.google.com/rss/search?q=site:miningweekly.com+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 2
-  },
-  {
-    "category": "Commodities",
-    "name": "Mining Technology",
-    "url": "https://www.mining-technology.com/feed/",
-    "popularity": 2
-  },
-  {
-    "category": "Commodities",
-    "name": "Australian Mining",
-    "url": "https://www.australianmining.com.au/feed/",
     "popularity": 2
   },
   {
@@ -2922,6 +3666,606 @@
     "popularity": 2
   },
   {
+    "category": "Commodities",
+    "name": "Investing.com Commodities",
+    "url": "https://news.google.com/rss/search?q=site:investing.com+commodities&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
+  },
+  {
+    "category": "Commodities",
+    "name": "Commodity Weather Group",
+    "url": "https://news.google.com/rss/search?q=commodity+market+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
+  },
+  {
+    "category": "Commodities",
+    "name": "Gold.org News",
+    "url": "https://news.google.com/rss/search?q=site:gold.org+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 2
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "CoinDesk",
+    "url": "https://www.coindesk.com/arc/outboundfeeds/rss/",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Cointelegraph",
+    "url": "https://cointelegraph.com/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "The Block",
+    "url": "https://news.google.com/rss/search?q=site:theblock.co+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Crypto News",
+    "url": "https://news.google.com/rss/search?q=(bitcoin+OR+ethereum+OR+crypto+OR+\"digital+assets\")+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "DeFi News",
+    "url": "https://news.google.com/rss/search?q=(DeFi+OR+\"decentralized+finance\"+OR+DEX+OR+\"yield+farming\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Decrypt",
+    "url": "https://decrypt.co/feed",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "DL News",
+    "url": "https://news.google.com/rss/search?q=site:dlnews.com+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Unchained",
+    "url": "https://unchainedcrypto.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Wu Blockchain",
+    "url": "https://news.google.com/rss/search?q=site:wublockchain.com+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Messari",
+    "url": "https://news.google.com/rss/search?q=site:messari.io+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Bloomberg Crypto",
+    "url": "https://news.google.com/rss/search?q=bloomberg+crypto+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Reuters Crypto",
+    "url": "https://news.google.com/rss/search?q=reuters+crypto+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "NFT News",
+    "url": "https://news.google.com/rss/search?q=(NFT+OR+\"non-fungible\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Stablecoin Policy",
+    "url": "https://news.google.com/rss/search?q=(stablecoin+regulation+OR+\"stablecoin+bill\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Crypto News (Google)",
+    "url": "https://news.google.com/rss/search?q=cryptocurrency+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Bitcoinist",
+    "url": "https://bitcoinist.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "U.Today",
+    "url": "https://u.today/rss",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "BeInCrypto",
+    "url": "https://beincrypto.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "Crypto Briefing",
+    "url": "https://cryptobriefing.com/feed/",
+    "popularity": 4
+  },
+  {
+    "category": "Crypto & Digital Assets",
+    "name": "DeFi News (Google)",
+    "url": "https://news.google.com/rss/search?q=DeFi+web3+blockchain+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 4
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "ECB Watch",
+    "url": "https://news.google.com/rss/search?q=(\"European+Central+Bank\"+OR+ECB+OR+Lagarde)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "BoJ Watch",
+    "url": "https://news.google.com/rss/search?q=(\"Bank+of+Japan\"+OR+BoJ)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "BoE Watch",
+    "url": "https://news.google.com/rss/search?q=(\"Bank+of+England\"+OR+BoE)+monetary+policy+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "PBoC Watch",
+    "url": "https://news.google.com/rss/search?q=(\"People%27s+Bank+of+China\"+OR+PBoC+OR+PBOC)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "Global Central Banks",
+    "url": "https://news.google.com/rss/search?q=(\"rate+hike\"+OR+\"rate+cut\"+OR+\"interest+rate+decision\")+central+bank+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "ECB Press",
+    "url": "https://www.ecb.europa.eu/rss/press.html",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "Bank of England",
+    "url": "https://news.google.com/rss/search?q=site:bankofengland.co.uk+news&hl=en-US&gl=GB&ceid=GB:en",
+    "popularity": 1
+  },
+  {
+    "category": "Central Bank Watch",
+    "name": "Central Bank News (Google)",
+    "url": "https://news.google.com/rss/search?q=central+bank+interest+rate+decision&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Economic Data",
+    "url": "https://news.google.com/rss/search?q=(CPI+OR+inflation+OR+GDP+OR+\"jobs+report\"+OR+\"nonfarm+payrolls\"+OR+PMI)+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Trade & Tariffs",
+    "url": "https://news.google.com/rss/search?q=(tariff+OR+\"trade+war\"+OR+\"trade+deficit\"+OR+sanctions)+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "Housing Market",
+    "url": "https://news.google.com/rss/search?q=(\"housing+market\"+OR+\"home+prices\"+OR+\"mortgage+rates\"+OR+REIT)+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "BEA News",
+    "url": "https://news.google.com/rss/search?q=site:bea.gov+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Economic Data & Indicators",
+    "name": "FRED Blog",
+    "url": "https://fredblog.stlouisfed.org/feed/",
+    "popularity": 1
+  },
+  {
+    "category": "Derivatives & Options",
+    "name": "Options Market",
+    "url": "https://news.google.com/rss/search?q=(\"options+market\"+OR+\"options+trading\"+OR+\"put+call+ratio\"+OR+VIX)+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 0
+  },
+  {
+    "category": "Derivatives & Options",
+    "name": "Futures Trading",
+    "url": "https://news.google.com/rss/search?q=(\"futures+trading\"+OR+\"S%26P+500+futures\"+OR+\"Nasdaq+futures\")+when:1d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 0
+  },
+  {
+    "category": "Derivatives & Options",
+    "name": "Options News (Google)",
+    "url": "https://news.google.com/rss/search?q=options+derivatives+market&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 0
+  },
+  {
+    "category": "Derivatives & Options",
+    "name": "Macroption",
+    "url": "https://news.google.com/rss/search?q=site:macroption.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 0
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "Financial Regulation",
+    "url": "https://news.google.com/rss/search?q=(SEC+OR+CFTC+OR+FINRA+OR+FCA)+regulation+OR+enforcement+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "Banking Rules",
+    "url": "https://news.google.com/rss/search?q=(Basel+OR+\"capital+requirements\"+OR+\"banking+regulation\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "Crypto Regulation",
+    "url": "https://news.google.com/rss/search?q=(crypto+regulation+OR+\"digital+asset\"+regulation+OR+\"stablecoin\"+regulation)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "Financial Regulation",
+    "name": "FinReg (Google)",
+    "url": "https://news.google.com/rss/search?q=financial+regulation+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Arabian Business",
+    "url": "https://news.google.com/rss/search?q=site:arabianbusiness.com+(Saudi+Arabia+OR+UAE+OR+GCC)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "GCC Business News",
+    "name": "The National",
+    "url": "https://news.google.com/rss/search?q=site:thenationalnews.com+(Abu+Dhabi+OR+UAE+OR+Saudi)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Arab News",
+    "url": "https://news.google.com/rss/search?q=site:arabnews.com+(Saudi+Arabia+OR+investment+OR+infrastructure)+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Gulf FDI",
+    "url": "https://news.google.com/rss/search?q=(PIF+OR+\"DP+World\"+OR+Mubadala+OR+ADNOC+OR+Masdar+OR+\"ACWA+Power\")+infrastructure+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Gulf Investments",
+    "url": "https://news.google.com/rss/search?q=(\"Saudi+Arabia\"+OR+\"UAE\"+OR+\"Abu+Dhabi\")+investment+infrastructure+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "GCC Business News",
+    "name": "Vision 2030",
+    "url": "https://news.google.com/rss/search?q=\"Vision+2030\"+(project+OR+investment+OR+announced)+when:14d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Positive News",
+    "name": "Good News Network",
+    "url": "https://www.goodnewsnetwork.org/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Optimist Daily",
+    "url": "https://www.optimistdaily.com/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Upworthy",
+    "url": "https://www.upworthy.com/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "DailyGood",
+    "url": "https://www.dailygood.org/feed",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Good Good Good",
+    "url": "https://www.goodgoodgood.co/articles/rss.xml",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "GOOD Magazine",
+    "url": "https://www.good.is/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Sunny Skyz",
+    "url": "https://www.sunnyskyz.com/rss_tebow.php",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "GNN Heroes",
+    "url": "https://www.goodnewsnetwork.org/category/news/inspiring/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "GNN Heroes Spotlight",
+    "url": "https://www.goodnewsnetwork.org/category/news/heroes/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Shareable",
+    "url": "https://www.shareable.net/feed/",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Yes! Magazine",
+    "url": "https://www.yesmagazine.org/feed",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Future Crunch",
+    "url": "https://news.google.com/rss/search?q=site:futurecrunch.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
+  },
+  {
+    "category": "Positive News",
+    "name": "Positive News (Google)",
+    "url": "https://news.google.com/rss/search?q=positive+news+good+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
+  },
+  {
+    "category": "Science",
+    "name": "GNN Science",
+    "url": "https://www.goodnewsnetwork.org/category/news/science/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "ScienceDaily",
+    "url": "https://www.sciencedaily.com/rss/all.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Nature News",
+    "url": "https://feeds.nature.com/nature/rss/current",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Live Science",
+    "url": "https://www.livescience.com/feeds.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Singularity Hub",
+    "url": "https://singularityhub.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Greater Good (Berkeley)",
+    "url": "https://greatergood.berkeley.edu/site/rss/articles",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "NASA Breaking News",
+    "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Scientific American",
+    "url": "http://rss.sciam.com/ScientificAmerican-Global",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Space.com",
+    "url": "https://www.space.com/feeds/all",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Popular Science",
+    "url": "https://www.popsci.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Phys.org",
+    "url": "https://phys.org/rss-feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "PsyBlog",
+    "url": "http://feeds.feedburner.com/PsychologyBlog",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Psychology Blog",
+    "url": "http://www.all-about-psychology.com/psychology.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Psychology Headlines Around the World",
+    "url": "http://www.socialpsychology.org/headlines.rss",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Freakonomics",
+    "url": "http://freakonomics.blogs.nytimes.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Neuroscience News -- ScienceDaily",
+    "url": "https://sciencedaily.com/rss/mind_brain/neuroscience.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Quanta Magazine",
+    "url": "http://www.quantamagazine.org/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Nature",
+    "url": "http://www.nature.com/nature/current_issue/rss",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Lesics",
+    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJ4600a9wIfMPbYc60OQ",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "New Scientist",
+    "url": "https://www.newscientist.com/feed/home/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Ars Technica Science",
+    "url": "https://feeds.arstechnica.com/arstechnica/science",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Science Mag",
+    "url": "https://news.google.com/rss/search?q=site:science.org+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "SpaceNews",
+    "url": "https://spacenews.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Science",
+    "name": "Smithsonian Science",
+    "url": "https://news.google.com/rss/search?q=site:smithsonianmag.com+science&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Environment",
+    "name": "GNN Animals",
+    "url": "https://www.goodnewsnetwork.org/category/news/animals/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Environment",
+    "name": "GNN Earth",
+    "url": "https://www.goodnewsnetwork.org/category/news/earth/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Environment",
+    "name": "Conservation Optimism",
+    "url": "https://conservationoptimism.org/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Environment",
+    "name": "The Guardian Environment",
+    "url": "https://www.theguardian.com/environment/rss",
+    "popularity": 5
+  },
+  {
+    "category": "Environment",
+    "name": "Grist",
+    "url": "https://grist.org/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Environment",
+    "name": "The Revelator",
+    "url": "https://therevelator.org/feed/",
+    "popularity": 5
+  },
+  {
+    "category": "Environment",
+    "name": "Environment News (Google)",
+    "url": "https://news.google.com/rss/search?q=environment+climate+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 5
+  },
+  {
+    "category": "Health",
+    "name": "GNN Health",
+    "url": "https://www.goodnewsnetwork.org/category/news/health/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Health",
+    "name": "Healthline",
+    "url": "https://www.healthline.com/rss/health-news",
+    "popularity": 7
+  },
+  {
+    "category": "Health",
+    "name": "STAT News",
+    "url": "https://www.statnews.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Health",
+    "name": "NHS News",
+    "url": "https://news.google.com/rss/search?q=site:nhs.uk+news&hl=en-US&gl=GB&ceid=GB:en",
+    "popularity": 7
+  },
+  {
+    "category": "Health",
+    "name": "Mayo Clinic",
+    "url": "https://news.google.com/rss/search?q=site:mayoclinic.org+blog&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Health",
+    "name": "Health News (Google)",
+    "url": "https://news.google.com/rss/search?q=health+medical+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
     "category": "Supply Chain & Shipping",
     "name": "Shipping & Freight",
     "url": "https://news.google.com/rss/search?q=(\"bulk+carrier\"+OR+\"dry+bulk\"+OR+\"commodity+shipping\"+OR+\"Port+Hedland\"+OR+\"Strait+of+Hormuz\")+when:3d&hl=en-US&gl=US&ceid=US:en",
@@ -2943,6 +4287,42 @@
     "category": "Supply Chain & Shipping",
     "name": "Port & Logistics",
     "url": "https://news.google.com/rss/search?q=(\"iron+ore+port\"+OR+\"copper+port\"+OR+\"commodity+port\"+OR+\"mineral+logistics\")+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Tanker & Shipping",
+    "url": "https://news.google.com/rss/search?q=(tanker+OR+VLCC+OR+Suezmax+OR+Aframax+OR+\"oil+shipping\"+OR+\"LNG+carrier\"+OR+\"shadow+fleet\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Strategic Chokepoints",
+    "url": "https://news.google.com/rss/search?q=(\"Strait+of+Hormuz\"+OR+\"Strait+of+Malacca\"+OR+\"Bab+el-Mandeb\"+OR+\"Suez+Canal\"+OR+\"Panama+Canal\"+OR+\"Turkish+Straits\"+OR+\"Danish+Straits\")+when:2d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Energy Sanctions",
+    "url": "https://news.google.com/rss/search?q=(\"oil+sanctions\"+OR+\"gas+sanctions\"+OR+\"price+cap\"+OR+\"energy+embargo\"+OR+\"LNG+sanctions\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Port & Terminal",
+    "url": "https://news.google.com/rss/search?q=(\"LNG+terminal\"+OR+\"crude+terminal\"+OR+\"oil+port\"+OR+\"Ras+Laffan\"+OR+\"Sabine+Pass\"+OR+\"Rotterdam+oil\")+when:3d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Supply Chain Dive",
+    "url": "https://www.supplychaindive.com/feeds/news/",
+    "popularity": 3
+  },
+  {
+    "category": "Supply Chain & Shipping",
+    "name": "Supply Chain (Google)",
+    "url": "https://news.google.com/rss/search?q=supply+chain+logistics+news&hl=en-US&gl=US&ceid=US:en",
     "popularity": 3
   },
   {
@@ -2976,16 +4356,16 @@
     "popularity": 1
   },
   {
-    "category": "Finance & Markets",
-    "name": "Seeking Alpha Metals",
-    "url": "https://news.google.com/rss/search?q=site:seekingalpha.com+(gold+OR+silver+OR+copper+OR+mining)+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Commodity Regulation & ESG",
+    "name": "ESG News (Google)",
+    "url": "https://news.google.com/rss/search?q=ESG+regulation+commodity&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 1
   },
   {
-    "category": "Finance & Markets",
-    "name": "Commodity Futures",
-    "url": "https://news.google.com/rss/search?q=(COMEX+OR+NYMEX+OR+\"commodity+futures\"+OR+CME+commodities)+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
+    "category": "Commodity Regulation & ESG",
+    "name": "Responsible Investor",
+    "url": "https://www.responsible-investor.com/feed/",
+    "popularity": 1
   },
   {
     "category": "Live News & Headlines",
@@ -3018,64 +4398,16 @@
     "popularity": 9
   },
   {
-    "category": "Energy & Infrastructure",
-    "name": "OPEC & Crude",
-    "url": "https://news.google.com/rss/search?q=(OPEC+OR+\"oil+price\"+OR+\"crude+oil\"+OR+WTI+OR+Brent+OR+\"oil+production\"+OR+\"oil+inventory\")+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
+    "category": "Live News & Headlines",
+    "name": "Google News Top Stories",
+    "url": "https://news.google.com/rss?hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
   },
   {
-    "category": "Energy & Infrastructure",
-    "name": "Natural Gas & LNG",
-    "url": "https://news.google.com/rss/search?q=(\"natural+gas\"+OR+LNG+OR+\"gas+price\"+OR+\"Henry+Hub\"+OR+TTF+OR+JKM+OR+\"LNG+cargo\")+when:1d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Pipelines & Chokepoints",
-    "url": "https://news.google.com/rss/search?q=(pipeline+OR+Druzhba+OR+\"Nord+Stream\"+OR+TurkStream+OR+\"Strait+of+Hormuz\"+OR+\"Bab+el-Mandeb\"+OR+\"Suez+Canal\"+OR+\"Power+of+Siberia\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Energy Crisis & Shortages",
-    "url": "https://news.google.com/rss/search?q=(\"fuel+shortage\"+OR+\"gas+shortage\"+OR+\"diesel+shortage\"+OR+\"jet+fuel+shortage\"+OR+\"energy+crisis\"+OR+rationing+OR+\"petrol+shortage\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Refinery & Disruptions",
-    "url": "https://news.google.com/rss/search?q=(refinery+OR+\"refinery+outage\"+OR+\"force+majeure\"+OR+\"pipeline+sabotage\"+OR+\"pipeline+attack\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Energy & Infrastructure",
-    "name": "Energy Intel",
-    "url": "https://news.google.com/rss/search?q=(energy+commodities+OR+\"energy+market\"+OR+\"energy+prices\"+OR+\"energy+security\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "Supply Chain & Shipping",
-    "name": "Tanker & Shipping",
-    "url": "https://news.google.com/rss/search?q=(tanker+OR+VLCC+OR+Suezmax+OR+Aframax+OR+\"oil+shipping\"+OR+\"LNG+carrier\"+OR+\"shadow+fleet\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Supply Chain & Shipping",
-    "name": "Strategic Chokepoints",
-    "url": "https://news.google.com/rss/search?q=(\"Strait+of+Hormuz\"+OR+\"Strait+of+Malacca\"+OR+\"Bab+el-Mandeb\"+OR+\"Suez+Canal\"+OR+\"Panama+Canal\"+OR+\"Turkish+Straits\"+OR+\"Danish+Straits\")+when:2d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Supply Chain & Shipping",
-    "name": "Energy Sanctions",
-    "url": "https://news.google.com/rss/search?q=(\"oil+sanctions\"+OR+\"gas+sanctions\"+OR+\"price+cap\"+OR+\"energy+embargo\"+OR+\"LNG+sanctions\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Supply Chain & Shipping",
-    "name": "Port & Terminal",
-    "url": "https://news.google.com/rss/search?q=(\"LNG+terminal\"+OR+\"crude+terminal\"+OR+\"oil+port\"+OR+\"Ras+Laffan\"+OR+\"Sabine+Pass\"+OR+\"Rotterdam+oil\")+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
+    "category": "Live News & Headlines",
+    "name": "Google News US",
+    "url": "https://news.google.com/rss/search?q=breaking+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 9
   },
   {
     "category": "Defense & Security",
@@ -3162,66 +4494,6 @@
     "popularity": 3
   },
   {
-    "category": "Think Tanks & Research",
-    "name": "Brookings",
-    "url": "https://news.google.com/rss/search?q=site:brookings.edu&hl=en&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Carnegie",
-    "url": "https://news.google.com/rss/search?q=site:carnegieendowment.org&hl=en&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "FAS",
-    "url": "https://news.google.com/rss/search?q=site:fas.org+nuclear+weapons+security&hl=en&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "NTI",
-    "url": "https://news.google.com/rss/search?q=site:nti.org+when:30d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "RUSI",
-    "url": "https://news.google.com/rss/search?q=site:rusi.org+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Wilson Center",
-    "url": "https://news.google.com/rss/search?q=site:wilsoncenter.org+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "GMF",
-    "url": "https://news.google.com/rss/search?q=site:gmfus.org+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Stimson Center",
-    "url": "https://www.stimson.org/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "CNAS",
-    "url": "https://news.google.com/rss/search?q=site:cnas.org+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Think Tanks & Research",
-    "name": "Lowy Institute",
-    "url": "https://news.google.com/rss/search?q=site:lowyinstitute.org+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
     "category": "Defense & Security",
     "name": "Arms Control Assn",
     "url": "https://news.google.com/rss/search?q=site:armscontrol.org+when:7d&hl=en-US&gl=US&ceid=US:en",
@@ -3240,21 +4512,45 @@
     "popularity": 3
   },
   {
-    "category": "Cybersecurity & Tech Policy",
-    "name": "Ransomware.live",
-    "url": "https://www.ransomware.live/rss.xml",
-    "popularity": 3
-  },
-  {
-    "category": "Defense & Security",
-    "name": "FAO News",
-    "url": "https://www.fao.org/feeds/fao-newsroom-rss",
-    "popularity": 3
-  },
-  {
     "category": "Defense & Security",
     "name": "FAO GIEWS",
     "url": "https://news.google.com/rss/search?q=site:fao.org+GIEWS+food+security+when:30d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Defense & Security",
+    "name": "EU ISS",
+    "url": "https://news.google.com/rss/search?q=site:iss.europa.eu+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Jane's Defence",
+    "url": "https://news.google.com/rss/search?q=site:janes.com+defence&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 3
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Aviation Week",
+    "url": "https://aviationweek.com/rss.xml",
+    "popularity": 3
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Naval News",
+    "url": "https://www.navalnews.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Defense Blog",
+    "url": "https://defence-blog.com/feed/",
+    "popularity": 3
+  },
+  {
+    "category": "Defense & Security",
+    "name": "Defense News (Google)",
+    "url": "https://news.google.com/rss/search?q=defense+security+news&hl=en-US&gl=US&ceid=US:en",
     "popularity": 3
   },
   {
@@ -3265,20 +4561,8 @@
   },
   {
     "category": "Investigative Journalism",
-    "name": "DFRLab",
-    "url": "https://dfrlab.org/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Investigative Journalism",
     "name": "Lighthouse Reports",
     "url": "https://www.lighthousereports.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Investigative Journalism",
-    "name": "The Sentry",
-    "url": "https://thesentry.org/feed/",
     "popularity": 5
   },
   {
@@ -3300,496 +4584,28 @@
     "popularity": 5
   },
   {
-    "category": "Defense & Security",
-    "name": "EU ISS",
-    "url": "https://news.google.com/rss/search?q=site:iss.europa.eu+when:7d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "PitchBook News",
-    "url": "https://pitchbook.com/feed",
+    "category": "Investigative Journalism",
+    "name": "ICIJ",
+    "url": "https://www.icij.org/feed/",
     "popularity": 5
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "a16z Blog",
-    "url": "https://www.a16z.news/feed",
+    "category": "Investigative Journalism",
+    "name": "Reveal News",
+    "url": "https://revealnews.org/feed/",
     "popularity": 5
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "First Round Review",
-    "url": "https://review.firstround.com/articles/rss",
+    "category": "Investigative Journalism",
+    "name": "The Intercept",
+    "url": "https://theintercept.com/feed/",
     "popularity": 5
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Sequoia Blog",
-    "url": "https://www.sequoiacap.com/feed/",
+    "category": "Investigative Journalism",
+    "name": "Bellingcat",
+    "url": "https://www.bellingcat.com/feed/",
     "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "NFX Essays",
-    "url": "https://www.nfx.com/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Paul Graham Essays",
-    "url": "https://www.aaronsw.com/2002/feeds/pgessays.rss",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Both Sides of Table",
-    "url": "https://bothsidesofthetable.com/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "EU Startups",
-    "url": "https://www.eu-startups.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Tech in Asia",
-    "url": "https://www.techinasia.com/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "KrASIA",
-    "url": "https://kr-asia.com/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Disrupt Africa",
-    "url": "https://disrupt-africa.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "LAVCA (LATAM)",
-    "url": "https://lavca.org/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Contxto (LATAM)",
-    "url": "https://contxto.com/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Cybersecurity & Tech Policy",
-    "name": "Cyber Incidents",
-    "url": "https://news.google.com/rss/search?q=cyber+attack+OR+data+breach+OR+ransomware+OR+hacking+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 3
-  },
-  {
-    "category": "Technology",
-    "name": "Tom's Hardware",
-    "url": "https://www.tomshardware.com/feeds/all",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "SemiAnalysis",
-    "url": "https://www.semianalysis.com/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Programming",
-    "name": "YC Launches",
-    "url": "https://hnrss.org/launches",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Dev Events",
-    "url": "https://dev.events/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "YC News",
-    "url": "https://news.ycombinator.com/rss",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Techstars Blog",
-    "url": "https://www.techstars.com/blog/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Nikkei Asia",
-    "url": "https://news.google.com/rss/search?q=site:asia.nikkei.com+markets+when:3d&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 5
-  },
-  {
-    "category": "Technology",
-    "name": "Wired",
-    "url": "https://www.wired.com/feed/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Ars Technica",
-    "url": "https://feeds.arstechnica.com/arstechnica/index",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Gizmodo",
-    "url": "https://gizmodo.com/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "CNET",
-    "url": "https://www.cnet.com/rss/news/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "TechRadar",
-    "url": "https://www.techradar.com/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Mashable",
-    "url": "https://mashable.com/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "How-To Geek",
-    "url": "https://www.howtogeek.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Phoronix",
-    "url": "https://www.phoronix.com/rss.php",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "OMG! Ubuntu",
-    "url": "https://www.omgubuntu.co.uk/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "9to5Mac",
-    "url": "https://9to5mac.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "9to5Google",
-    "url": "https://9to5google.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Android Authority",
-    "url": "https://www.androidauthority.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "MacRumors",
-    "url": "https://feeds.macrumors.com/MacRumors-All",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "AnandTech",
-    "url": "https://www.anandtech.com/rss/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "SlashDot",
-    "url": "http://rss.slashdot.org/Slashdot/slashdotMain",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "The Register",
-    "url": "https://www.theregister.com/headlines.atom",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "ReadWrite",
-    "url": "https://readwrite.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "World News",
-    "name": "BBC News",
-    "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "NYT World News",
-    "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "Reuters World News",
-    "url": "https://www.reutersagency.com/feed/%3Fbest-types%3Dworld-news%26post_type%3Dbest",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "CNN Top Stories",
-    "url": "http://rss.cnn.com/rss/edition.rss",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "Associated Press",
-    "url": "https://feeds.apnews.com/apnews/topnews",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "DW News",
-    "url": "https://rss.dw.com/rdf/rss-en-all",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "VOA News",
-    "url": "https://www.voanews.com/api/z_qoeqiomit",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "The Independent",
-    "url": "https://www.independent.co.uk/news/world/rss",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
-    "name": "Washington Post World",
-    "url": "https://feeds.washingtonpost.com/rss/world",
-    "popularity": 9
-  },
-  {
-    "category": "Programming",
-    "name": "Flutter Blog",
-    "url": "https://medium.com/feed/flutter",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Dart Blog",
-    "url": "https://medium.com/feed/dartlang",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Reddit Programming",
-    "url": "https://www.reddit.com/r/programming/.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Microsoft Dev Blog",
-    "url": "https://devblogs.microsoft.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "React Official Blog",
-    "url": "https://react.dev/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Next.js Blog",
-    "url": "https://nextjs.org/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Rust Blog",
-    "url": "https://blog.rust-lang.org/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "web.dev",
-    "url": "https://web.dev/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Stack Overflow Blog",
-    "url": "https://stackoverflow.blog/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Python Official Blog",
-    "url": "https://blog.python.org/feeds/posts/default",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Go Blog",
-    "url": "https://go.dev/blog/feed.atom",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Node.js Blog",
-    "url": "https://nodejs.org/en/feed/blog.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Vue.js Blog",
-    "url": "https://blog.vuejs.org/feed.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "CSS Weekly",
-    "url": "https://css-weekly.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "JavaScript Weekly",
-    "url": "https://javascriptweekly.com/rss/1a1oc1f6",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "DZone",
-    "url": "https://dzone.com/aD/feed.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Martin Fowler",
-    "url": "https://martinfowler.com/feed.atom",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "TypeScript Blog",
-    "url": "https://devblogs.microsoft.com/typescript/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Kotlin Blog",
-    "url": "https://blog.jetbrains.com/kotlin/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Swift Blog (Apple)",
-    "url": "https://www.swift.org/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Ruby on Rails Blog",
-    "url": "https://rubyonrails.org/feed/releases.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "PHP Blog",
-    "url": "https://www.php.net/feed.atom",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "C++ Blog (isocpp)",
-    "url": "https://isocpp.org/blog/rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Java Blog (Oracle)",
-    "url": "https://blogs.oracle.com/java/rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Scala Blog",
-    "url": "https://www.scala-lang.org/feed/blog.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Elixir Blog",
-    "url": "https://elixir-lang.org/blog.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Svelte Blog",
-    "url": "https://svelte.dev/blog/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Deno Blog",
-    "url": "https://deno.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Bun Blog",
-    "url": "https://bun.sh/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Zig Blog",
-    "url": "https://ziglang.org/news/index.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "JetBrains Blog",
-    "url": "https://blog.jetbrains.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Docker Blog",
-    "url": "https://www.docker.com/blog/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Kubernetes Blog",
-    "url": "https://kubernetes.io/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "HashiCorp Blog",
-    "url": "https://www.hashicorp.com/blog/feed.xml",
-    "popularity": 4
   },
   {
     "category": "Design",
@@ -3811,20 +4627,8 @@
   },
   {
     "category": "Design",
-    "name": "Abduzeedo",
-    "url": "https://abduzeedo.com/rss.xml",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
     "name": "UX Collective",
     "url": "https://uxdesign.cc/feed",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "Awwwards",
-    "url": "https://www.awwwards.com/blog/feed/",
     "popularity": 6
   },
   {
@@ -3847,44 +4651,62 @@
   },
   {
     "category": "Design",
-    "name": "Designmodo",
-    "url": "https://designmodo.com/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "Dribbble Blog",
-    "url": "https://dribbble.com/stories/feed",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "Figma Blog",
-    "url": "https://www.figma.com/blog/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
     "name": "A List Apart",
     "url": "https://alistapart.com/main/feed/",
     "popularity": 6
   },
   {
-    "category": "Gaming",
-    "name": "Polygon",
-    "url": "https://www.polygon.com/rss/index.xml",
-    "popularity": 7
+    "category": "Design",
+    "name": "UX Planet",
+    "url": "https://uxplanet.org/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "UX Movement",
+    "url": "http://feeds.feedburner.com/uxmovement",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "UXmatters",
+    "url": "https://uxmatters.com/index.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "Slack Design",
+    "url": "https://slack.design/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "Designboom",
+    "url": "https://www.designboom.com/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "Dezeen",
+    "url": "https://www.dezeen.com/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "Underconsideration",
+    "url": "https://www.underconsideration.com/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Design",
+    "name": "Design News (Google)",
+    "url": "https://news.google.com/rss/search?q=design+news+graphic+UX&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
   },
   {
     "category": "Gaming",
     "name": "IGN",
     "url": "https://feeds.ign.com/ign/news",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Kotaku",
-    "url": "https://kotaku.com/rss",
     "popularity": 7
   },
   {
@@ -3919,38 +4741,8 @@
   },
   {
     "category": "Gaming",
-    "name": "RPG Site",
-    "url": "https://www.rpgsite.net/feed/news",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Siliconera",
-    "url": "https://www.siliconera.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Destructoid",
-    "url": "https://www.destructoid.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
     "name": "VG247",
     "url": "https://www.vg247.com/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Giant Bomb",
-    "url": "https://www.giantbomb.com/feeds/news/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Hardcore Gamer",
-    "url": "https://hardcoregamer.com/feed/",
     "popularity": 7
   },
   {
@@ -3973,44 +4765,8 @@
   },
   {
     "category": "Gaming",
-    "name": "Gamasutra (Game Developer)",
-    "url": "https://www.gamedeveloper.com/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Dexerto",
-    "url": "https://www.dexerto.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Dot Esports",
-    "url": "https://dotesports.com/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "TheGamer",
-    "url": "https://www.thegamer.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
     "name": "GamesRadar+",
     "url": "https://www.gamesradar.com/rss/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "WCCFTech Gaming",
-    "url": "https://wccftech.com/category/gaming/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Screen Rant Gaming",
-    "url": "https://screenrant.com/gaming/feed/",
     "popularity": 7
   },
   {
@@ -4027,12 +4783,6 @@
   },
   {
     "category": "Gaming",
-    "name": "Twinfinite",
-    "url": "https://twinfinite.net/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
     "name": "Attack of the Fanboy",
     "url": "https://attackofthefanboy.com/feed/",
     "popularity": 7
@@ -4045,32 +4795,8 @@
   },
   {
     "category": "Gaming",
-    "name": "Xbox Wire",
-    "url": "https://news.xbox.com/en-us/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "Nintendo Newsroom",
-    "url": "https://www.nintendo.com/en-US/feed/news/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
     "name": "Steam News",
     "url": "https://store.steampowered.com/feeds/news.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "ESPN Esports",
-    "url": "https://www.espn.com/espn/rss/esports/news",
-    "popularity": 7
-  },
-  {
-    "category": "Gaming",
-    "name": "The Esports Observer",
-    "url": "https://esportsobserver.com/feed/",
     "popularity": 7
   },
   {
@@ -4081,33 +4807,45 @@
   },
   {
     "category": "Gaming",
-    "name": "Liquipedia News",
-    "url": "https://liquipedia.net/commons/index.php?title=Special:NewPages&feed=rss",
+    "name": "Polygon",
+    "url": "https://www.polygon.com/rss/index.xml",
     "popularity": 7
   },
   {
     "category": "Gaming",
-    "name": "Nerd Street",
-    "url": "https://www.nerdstreet.com/news?format=rss",
+    "name": "The Verge Gaming",
+    "url": "https://news.google.com/rss/search?q=site:theverge.com+gaming&hl=en-US&gl=US&ceid=US:en",
     "popularity": 7
   },
   {
     "category": "Gaming",
-    "name": "ValorantZone",
-    "url": "https://www.thespike.gg/feed",
+    "name": "GamesIndustry.biz",
+    "url": "https://www.gamesindustry.biz/feed",
     "popularity": 7
   },
   {
-    "category": "Sports",
-    "name": "ESPN Top News",
-    "url": "https://www.espn.com/espn/rss/news",
-    "popularity": 8
+    "category": "Gaming",
+    "name": "TouchArcade",
+    "url": "https://toucharcade.com/feed/",
+    "popularity": 7
   },
   {
-    "category": "Sports",
-    "name": "Bleacher Report",
-    "url": "https://bleacherreport.com/articles/feed",
-    "popularity": 8
+    "category": "Gaming",
+    "name": "PCGamesN",
+    "url": "https://www.pcgamesn.com/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Gaming",
+    "name": "Game Rant",
+    "url": "https://gamerant.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Gaming",
+    "name": "Gaming News (Google)",
+    "url": "https://news.google.com/rss/search?q=gaming+news+new+releases&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
   },
   {
     "category": "Sports",
@@ -4123,20 +4861,8 @@
   },
   {
     "category": "Sports",
-    "name": "CBS Sports",
-    "url": "https://www.cbssports.com/rss/headlines/",
-    "popularity": 8
-  },
-  {
-    "category": "Sports",
     "name": "The Athletic",
     "url": "https://theathletic.com/rss-feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Sports",
-    "name": "Sports Illustrated",
-    "url": "https://www.si.com/rss/si_topstories.rss",
     "popularity": 8
   },
   {
@@ -4147,81 +4873,39 @@
   },
   {
     "category": "Sports",
-    "name": "Goal.com",
-    "url": "https://www.goal.com/feeds/en/news",
+    "name": "Reddit Tennis",
+    "url": "https://www.reddit.com/r/tennis/.rss",
     "popularity": 8
   },
   {
     "category": "Sports",
-    "name": "NBA Official News",
-    "url": "https://www.nba.com/feeds/rss/nba_rss.xml",
+    "name": "peRFect Tennis",
+    "url": "https://www.perfect-tennis.com/feed/",
     "popularity": 8
   },
   {
-    "category": "Science",
-    "name": "NASA Breaking News",
-    "url": "https://www.nasa.gov/rss/dyn/breaking_news.rss",
-    "popularity": 7
+    "category": "Sports",
+    "name": "The Ringer Sports",
+    "url": "https://news.google.com/rss/search?q=site:theringer.com+sports&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
   },
   {
-    "category": "Science",
-    "name": "Scientific American",
-    "url": "http://rss.sciam.com/ScientificAmerican-Global",
-    "popularity": 7
+    "category": "Sports",
+    "name": "The Athletic (Google)",
+    "url": "https://news.google.com/rss/search?q=site:theathletic.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
   },
   {
-    "category": "Science",
-    "name": "Space.com",
-    "url": "https://www.space.com/feeds/all",
-    "popularity": 7
+    "category": "Sports",
+    "name": "Recode Sports",
+    "url": "https://news.google.com/rss/search?q=sports+news+latest&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
   },
   {
-    "category": "Science",
-    "name": "National Geographic",
-    "url": "https://www.nationalgeographic.com/rss/index.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Nature News",
-    "url": "https://www.nature.com/nature.rss",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Popular Science",
-    "url": "https://www.popsci.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Live Science",
-    "url": "https://www.livescience.com/feeds/all",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Phys.org",
-    "url": "https://phys.org/rss-feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "EurekAlert!",
-    "url": "https://www.eurekalert.org/rss/technology_engineering.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "The Planetary Society",
-    "url": "https://www.planetary.org/articles/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Anime",
-    "name": "Anime News Network",
-    "url": "https://www.animenewsnetwork.com/news/rss.xml",
-    "popularity": 6
+    "category": "Sports",
+    "name": "Sports News (latest)",
+    "url": "https://news.google.com/rss/search?q=sports+news+results+scores&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
   },
   {
     "category": "Anime",
@@ -4255,38 +4939,8 @@
   },
   {
     "category": "Anime",
-    "name": "Anime Trending",
-    "url": "https://anitrendz.net/news/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
-    "name": "HIDIVE Blog",
-    "url": "https://www.hidive.com/blog/rss",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
-    "name": "Manga Mogura RE",
-    "url": "https://mangamogura.com/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
     "name": "Anime Feminist",
     "url": "https://www.animefeminist.com/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
-    "name": "Manga Tokyo",
-    "url": "https://www.manga.tokyo/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
-    "name": "Anime Collective",
-    "url": "https://animecollective.com/feed/",
     "popularity": 6
   },
   {
@@ -4309,50 +4963,38 @@
   },
   {
     "category": "Anime",
-    "name": "Comic Natalie",
-    "url": "https://natalie.mu/comic/feed/news",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
-    "name": "ComiXology Blog",
-    "url": "https://blog.comixology.com/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
-    "name": "ICv2 Manga News",
-    "url": "https://icv2.com/rss/manga",
-    "popularity": 6
-  },
-  {
-    "category": "Anime",
     "name": "Baka-Updates Manga",
     "url": "https://www.mangaupdates.com/rss.php",
+    "popularity": 6
+  },
+  {
+    "category": "Anime",
+    "name": "Anime News (Google)",
+    "url": "https://news.google.com/rss/search?q=anime+news+2025&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
+  },
+  {
+    "category": "Anime",
+    "name": "Anime Corner News",
+    "url": "https://news.google.com/rss/search?q=anime+corner+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
+  },
+  {
+    "category": "Anime",
+    "name": "AniList",
+    "url": "https://news.google.com/rss/search?q=site:anilist.co+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
+  },
+  {
+    "category": "Anime",
+    "name": "Anime News (latest)",
+    "url": "https://news.google.com/rss/search?q=anime+review+news+2025&hl=en-US&gl=US&ceid=US:en",
     "popularity": 6
   },
   {
     "category": "Business",
     "name": "Forbes Business",
     "url": "https://www.forbes.com/business/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Bloomberg",
-    "url": "https://www.bloomberg.com/politics/feeds/site.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Financial Times",
-    "url": "https://www.ft.com/%3Fformat%3Drss",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Harvard Business Review",
-    "url": "https://hbr.org/feed",
     "popularity": 7
   },
   {
@@ -4392,15 +5034,63 @@
     "popularity": 7
   },
   {
-    "category": "Lifestyle",
-    "name": "Lifehacker",
-    "url": "https://lifehacker.com/rss",
-    "popularity": 8
+    "category": "Business",
+    "name": "Moz",
+    "url": "http://feeds.feedburner.com/seomoz",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "Social Media Examiner",
+    "url": "http://www.socialmediaexaminer.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "John Egan",
+    "url": "http://jwegan.com/feed/rss/",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "Hubspot",
+    "url": "http://blog.hubspot.com/CMS/UI/Modules/BizBlogger/rss.aspx?tabid=6307&moduleid=8441&maxcount=25",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "Backlinko",
+    "url": "http://backlinko.com/feed",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "Bloomberg",
+    "url": "https://news.google.com/rss/search?q=site:bloomberg.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "CNBC Business",
+    "url": "https://www.cnbc.com/id/10001147/device/rss/rss.html",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "Fortune",
+    "url": "https://fortune.com/feed/",
+    "popularity": 7
+  },
+  {
+    "category": "Business",
+    "name": "The Economist Business",
+    "url": "https://news.google.com/rss/search?q=site:economist.com+business&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
   },
   {
     "category": "Lifestyle",
-    "name": "Zen Habits",
-    "url": "https://zenhabits.net/feed/",
+    "name": "Lifehacker",
+    "url": "https://lifehacker.com/rss",
     "popularity": 8
   },
   {
@@ -4411,20 +5101,8 @@
   },
   {
     "category": "Lifestyle",
-    "name": "Medium Daily Digest",
-    "url": "https://medium.com/feed/topic/self-improvement",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
     "name": "Apartment Therapy",
     "url": "https://www.apartmenttherapy.com/main.rss",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Real Simple",
-    "url": "https://www.realsimple.com/feeds",
     "popularity": 8
   },
   {
@@ -4440,165 +5118,105 @@
     "popularity": 8
   },
   {
-    "category": "AI & Machine Learning",
-    "name": "Anthropic Blog",
-    "url": "https://www.anthropic.com/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "OpenAI Blog",
-    "url": "https://openai.com/blog/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Google AI Blog",
-    "url": "https://blog.google/technology/ai/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "DeepMind Blog",
-    "url": "https://deepmind.google/blog/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Hugging Face Blog",
-    "url": "https://huggingface.co/blog/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Import AI (Jack Clark)",
-    "url": "https://importai.substack.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "The Batch (Andrew Ng)",
-    "url": "https://www.deeplearning.ai/the-batch/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "AI Alignment Forum",
-    "url": "https://www.alignmentforum.org/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Papers With Code",
-    "url": "https://paperswithcode.com/latest.rss",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "MIT News - AI",
-    "url": "https://news.mit.edu/rss/topic/artificial-intelligence2",
-    "popularity": 4
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "The Motley Fool",
-    "url": "https://www.fool.com/feeds/index.aspx",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Investopedia",
-    "url": "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "MarketWatch",
-    "url": "https://feeds.marketwatch.com/marketwatch/topstories/",
-    "popularity": 5
-  },
-  {
-    "category": "Finance & Markets",
-    "name": "Seeking Alpha",
-    "url": "https://seekingalpha.com/feed.xml",
-    "popularity": 5
-  },
-  {
-    "category": "Health",
-    "name": "WebMD Health",
-    "url": "https://rssfeeds.webmd.com/rss/rss.aspx?RSSSource=RSS_PUBLIC",
-    "popularity": 7
-  },
-  {
-    "category": "Health",
-    "name": "Healthline",
-    "url": "https://www.healthline.com/rss/health-news",
-    "popularity": 7
-  },
-  {
-    "category": "Health",
-    "name": "Medical News Today",
-    "url": "https://www.medicalnewstoday.com/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Health",
-    "name": "Harvard Health Blog",
-    "url": "https://www.health.harvard.edu/blog/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Health",
-    "name": "NHS News",
-    "url": "https://www.nhs.uk/news/rss.aspx",
-    "popularity": 7
-  },
-  {
-    "category": "Environment",
-    "name": "The Guardian Environment",
-    "url": "https://www.theguardian.com/environment/rss",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Climate Central",
-    "url": "https://www.climatecentral.org/feeds/news",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Grist",
-    "url": "https://grist.org/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Treehugger",
-    "url": "https://www.treehugger.com/feeds/latest/",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Yale Environment 360",
-    "url": "https://e360.yale.edu/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Environment",
-    "name": "Carbon Brief",
-    "url": "https://www.carbonbrief.org/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Movies & TV",
-    "name": "Collider",
-    "url": "https://collider.com/feed/",
+    "category": "Lifestyle",
+    "name": "Bon Appétit",
+    "url": "https://www.bonappetit.com/feed/rss",
     "popularity": 8
   },
   {
-    "category": "Movies & TV",
-    "name": "Screen Rant",
-    "url": "https://screenrant.com/feed/",
+    "category": "Lifestyle",
+    "name": "Eater",
+    "url": "https://www.eater.com/rss/index.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "The Kitchn",
+    "url": "https://www.thekitchn.com/main.rss",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "500px",
+    "url": "https://iso.500px.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Big Picture",
+    "url": "https://www.bostonglobe.com/rss/bigpicture",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Digital Photography School",
+    "url": "https://feeds.feedburner.com/DigitalPhotographySchool",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "One Big Photo",
+    "url": "http://feeds.feedburner.com/OneBigPhoto",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "PetaPixel",
+    "url": "https://petapixel.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Strobist",
+    "url": "http://feeds.feedburner.com/blogspot/WOBq",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "The Sartorialist",
+    "url": "https://feeds.feedburner.com/TheSartorialist",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Atlas Obscura",
+    "url": "https://www.atlasobscura.com/feeds/latest",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Live Life Travel",
+    "url": "https://www.livelifetravel.world/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "NYT Travel",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Nomadic Matt's Travel Site",
+    "url": "https://www.nomadicmatt.com/travel-blog/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "The Guardian Travel",
+    "url": "https://www.theguardian.com/uk/travel/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "The Everygirl",
+    "url": "https://theeverygirl.com/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Lifestyle",
+    "name": "Curbly",
+    "url": "https://www.curbly.com/feed",
     "popularity": 8
   },
   {
@@ -4627,18 +5245,6 @@
   },
   {
     "category": "Movies & TV",
-    "name": "AV Club",
-    "url": "https://www.avclub.com/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Movies & TV",
-    "name": "Roger Ebert",
-    "url": "https://www.rogerebert.com/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Movies & TV",
     "name": "Den of Geek",
     "url": "https://www.denofgeek.com/feed/",
     "popularity": 8
@@ -4651,26 +5257,8 @@
   },
   {
     "category": "Movies & TV",
-    "name": "Empire",
-    "url": "https://www.empireonline.com/movies/news/rss/",
-    "popularity": 8
-  },
-  {
-    "category": "Movies & TV",
-    "name": "Digital Spy",
-    "url": "https://www.digitalspy.com/rss/",
-    "popularity": 8
-  },
-  {
-    "category": "Movies & TV",
     "name": "CBR (Comic Book Resources)",
     "url": "https://www.cbr.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Movies & TV",
-    "name": "The Wrap",
-    "url": "https://www.thewrap.com/feed/",
     "popularity": 8
   },
   {
@@ -4683,6 +5271,18 @@
     "category": "Movies & TV",
     "name": "What to Watch",
     "url": "https://www.whattowatch.com/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Movies & TV",
+    "name": "Rotten Tomatoes",
+    "url": "https://news.google.com/rss/search?q=site:rottentomatoes.com+news&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 8
+  },
+  {
+    "category": "Movies & TV",
+    "name": "TVLine",
+    "url": "https://tvline.com/feed/",
     "popularity": 8
   },
   {
@@ -4717,30 +5317,6 @@
   },
   {
     "category": "Music",
-    "name": "Consequence of Sound",
-    "url": "https://consequence.net/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "Hypebeast Music",
-    "url": "https://hypebeast.com/music/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "Complex Music",
-    "url": "https://www.complex.com/music/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "Genius News",
-    "url": "https://genius.com/news.rss",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
     "name": "The Source",
     "url": "https://thesource.com/feed/",
     "popularity": 8
@@ -4753,74 +5329,32 @@
   },
   {
     "category": "Music",
-    "name": "HipHopDX",
-    "url": "https://hiphopdx.com/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "Resident Advisor",
-    "url": "https://ra.co/feed/news.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "The FADER",
-    "url": "https://www.thefader.com/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "Mixmag",
-    "url": "https://mixmag.net/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "DJ Mag",
-    "url": "https://djmag.com/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
-    "name": "Kerrang!",
-    "url": "https://www.kerrang.com/feed",
-    "popularity": 8
-  },
-  {
-    "category": "Music",
     "name": "Loudwire",
     "url": "https://loudwire.com/feed/",
     "popularity": 8
   },
   {
     "category": "Music",
-    "name": "Metal Hammer",
-    "url": "https://www.loudersound.com/metal-hammer/rss",
+    "name": "Consequence of Sound",
+    "url": "https://consequence.net/feed/",
     "popularity": 8
   },
   {
     "category": "Music",
-    "name": "Bandcamp Daily",
-    "url": "https://daily.bandcamp.com/feed/",
+    "name": "Music News (Google)",
+    "url": "https://news.google.com/rss/search?q=music+news+album+release&hl=en-US&gl=US&ceid=US:en",
     "popularity": 8
   },
   {
-    "category": "Pop Culture",
-    "name": "Hypebeast",
-    "url": "https://hypebeast.com/feed",
+    "category": "Music",
+    "name": "DIY Magazine",
+    "url": "https://diymag.com/rss",
     "popularity": 8
   },
   {
-    "category": "Pop Culture",
-    "name": "Complex",
-    "url": "https://www.complex.com/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Pop Culture",
-    "name": "The Ringer",
-    "url": "https://www.theringer.com/rss/index.xml",
+    "category": "Music",
+    "name": "Pitchfork Reviews",
+    "url": "https://news.google.com/rss/search?q=site:pitchfork.com+review&hl=en-US&gl=US&ceid=US:en",
     "popularity": 8
   },
   {
@@ -4831,20 +5365,8 @@
   },
   {
     "category": "Pop Culture",
-    "name": "Vulture",
-    "url": "https://www.vulture.com/feed/all/rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Pop Culture",
     "name": "Seventeen",
     "url": "https://www.seventeen.com/rss/all.xml/",
-    "popularity": 8
-  },
-  {
-    "category": "Pop Culture",
-    "name": "i-D Magazine",
-    "url": "https://i-d.vice.com/en/rss",
     "popularity": 8
   },
   {
@@ -4867,123 +5389,27 @@
   },
   {
     "category": "Pop Culture",
-    "name": "Marvel.com News",
-    "url": "https://www.marvel.com/articles/rss",
+    "name": "AV Club",
+    "url": "https://www.avclub.com/rss",
     "popularity": 8
   },
   {
     "category": "Pop Culture",
-    "name": "DC Comics Blog",
-    "url": "https://www.dc.com/blog/rss",
+    "name": "Pop Culture (Google)",
+    "url": "https://news.google.com/rss/search?q=pop+culture+news&hl=en-US&gl=US&ceid=US:en",
     "popularity": 8
   },
   {
     "category": "Pop Culture",
-    "name": "Newsarama",
-    "url": "https://www.gamesradar.com/comics/rss/",
+    "name": "Uproxx",
+    "url": "https://uproxx.com/feed/",
     "popularity": 8
   },
   {
     "category": "Pop Culture",
-    "name": "The Beat",
-    "url": "https://www.comicsbeat.com/feed/",
+    "name": "Mental Floss",
+    "url": "https://www.mentalfloss.com/feed",
     "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Bon Appétit",
-    "url": "https://www.bonappetit.com/feed/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Serious Eats",
-    "url": "https://www.seriouseats.com/feeds/all.rss.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Eater",
-    "url": "https://www.eater.com/rss/index.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Food52",
-    "url": "https://food52.com/blog.rss",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "The Kitchn",
-    "url": "https://www.thekitchn.com/main.rss",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Epicurious",
-    "url": "https://www.epicurious.com/feed/news-and-trends/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Cybersecurity & Tech Policy",
-    "name": "Threatpost",
-    "url": "https://threatpost.com/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Cybersecurity & Tech Policy",
-    "name": "Schneier on Security",
-    "url": "https://www.schneier.com/feed/atom/",
-    "popularity": 3
-  },
-  {
-    "category": "Cybersecurity & Tech Policy",
-    "name": "Bleeping Computer",
-    "url": "https://www.bleepingcomputer.com/feed/",
-    "popularity": 3
-  },
-  {
-    "category": "Science",
-    "name": "SpaceX News",
-    "url": "https://www.spacex.com/updates/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "SpaceFlightNow",
-    "url": "https://spaceflightnow.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Spaceflight Insider",
-    "url": "https://www.spaceflightinsider.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Astronomy Magazine",
-    "url": "https://astronomy.com/rss/news",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Sky & Telescope",
-    "url": "https://skyandtelescope.org/astronomy-news/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Afford Anything",
-    "url": "https://affordanything.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Student Loan Hero",
-    "url": "https://studentloanhero.com/blog/feed",
-    "popularity": 7
   },
   {
     "category": "Personal Finance",
@@ -5005,62 +5431,14 @@
   },
   {
     "category": "Personal Finance",
-    "name": "Get Rich Slowly",
-    "url": "https://www.getrichslowly.org/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Good Financial Cents",
-    "url": "https://www.goodfinancialcents.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "I Will Teach You To Be Rich",
-    "url": "https://www.iwillteachyoutoberich.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Learn To Trade The Market",
-    "url": "https://www.learntotradethemarket.com/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Making Sense Of Cents",
-    "url": "https://www.makingsenseofcents.com/feed",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
     "name": "Millennial Money",
     "url": "https://millennialmoney.com/feed/",
     "popularity": 7
   },
   {
     "category": "Personal Finance",
-    "name": "MintLife Blog",
-    "url": "https://blog.mint.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Money Crashers",
-    "url": "https://www.moneycrashers.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
     "name": "Money Saving Mom",
     "url": "https://moneysavingmom.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Money Under 30",
-    "url": "https://www.moneyunder30.com/feed",
     "popularity": 7
   },
   {
@@ -5083,18 +5461,6 @@
   },
   {
     "category": "Personal Finance",
-    "name": "NerdWallet",
-    "url": "https://www.nerdwallet.com/blog/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "Oblivious Investor",
-    "url": "https://obliviousinvestor.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
     "name": "Reddit Personal Finance",
     "url": "https://reddit.com/r/personalfinance/.rss",
     "popularity": 7
@@ -5113,24 +5479,6 @@
   },
   {
     "category": "Personal Finance",
-    "name": "The College Investor",
-    "url": "https://thecollegeinvestor.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "The Dough Roller",
-    "url": "https://www.doughroller.net/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
-    "name": "The Penny Hoarder",
-    "url": "https://www.thepennyhoarder.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Personal Finance",
     "name": "Well Kept Wallet",
     "url": "https://wellkeptwallet.com/feed/",
     "popularity": 7
@@ -5142,262 +5490,28 @@
     "popularity": 7
   },
   {
-    "category": "Lifestyle",
-    "name": "500px",
-    "url": "https://iso.500px.com/feed/",
-    "popularity": 8
+    "category": "Personal Finance",
+    "name": "The Balance",
+    "url": "https://news.google.com/rss/search?q=site:thebalancemoney.com&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
   },
   {
-    "category": "Lifestyle",
-    "name": "500px Editors",
-    "url": "https://500px.com/editors.rss",
-    "popularity": 8
+    "category": "Personal Finance",
+    "name": "MoneySavingExpert",
+    "url": "https://news.google.com/rss/search?q=site:moneysavingexpert.com&hl=en-US&gl=GB&ceid=GB:en",
+    "popularity": 7
   },
   {
-    "category": "Lifestyle",
-    "name": "Big Picture",
-    "url": "https://www.bostonglobe.com/rss/bigpicture",
-    "popularity": 8
+    "category": "Personal Finance",
+    "name": "Kiplinger",
+    "url": "https://www.kiplinger.com/rss",
+    "popularity": 7
   },
   {
-    "category": "Lifestyle",
-    "name": "Canon Rumors",
-    "url": "https://www.canonrumors.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Digital Photography School",
-    "url": "https://feeds.feedburner.com/DigitalPhotographySchool",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Light Stalking",
-    "url": "https://www.lightstalking.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Lightroom Killer Tips",
-    "url": "https://lightroomkillertips.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "One Big Photo",
-    "url": "http://feeds.feedburner.com/OneBigPhoto",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "PetaPixel",
-    "url": "https://petapixel.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Strobist",
-    "url": "http://feeds.feedburner.com/blogspot/WOBq",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Stuck in Customs",
-    "url": "https://stuckincustoms.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "The Sartorialist",
-    "url": "https://feeds.feedburner.com/TheSartorialist",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Atlas Obscura",
-    "url": "https://www.atlasobscura.com/feeds/latest",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Live Life Travel",
-    "url": "https://www.livelifetravel.world/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Lonely Planet Travel News",
-    "url": "https://www.lonelyplanet.com/news/feed/atom/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "NYT Travel",
-    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Travel.xml",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "Nomadic Matt's Travel Site",
-    "url": "https://www.nomadicmatt.com/travel-blog/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "The Guardian Travel",
-    "url": "https://www.theguardian.com/uk/travel/rss",
-    "popularity": 8
-  },
-  {
-    "category": "Programming",
-    "name": "Code Wall",
-    "url": "https://www.codewall.co.uk/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "David Walsh Blog",
-    "url": "https://davidwalsh.name/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Mozilla Hacks",
-    "url": "https://hacks.mozilla.org/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Sink In",
-    "url": "https://gosink.in/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Google Web Updates",
-    "url": "https://developers.google.com/web/updates/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Better Programming",
-    "url": "https://medium.com/feed/better-programming",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Code as Craft",
-    "url": "https://codeascraft.com/feed/atom/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "CodeNewbie Podcast",
-    "url": "http://feeds.codenewbie.org/cnpodcast.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Coding Horror",
-    "url": "https://feeds.feedburner.com/codinghorror",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Complete Developer Podcast",
-    "url": "https://completedeveloperpodcast.com/feed/podcast/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Overreacted",
-    "url": "https://overreacted.io/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Developer Tea",
-    "url": "https://feeds.simplecast.com/dLRotFGk",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "FLOSS Weekly",
-    "url": "https://feeds.twit.tv/floss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Facebook Engineering",
-    "url": "https://engineering.fb.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "GitLab Blog",
-    "url": "https://about.gitlab.com/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Google Developers Blog",
-    "url": "http://feeds.feedburner.com/GDBcode",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "HackerNoon",
-    "url": "https://medium.com/feed/hackernoon",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Hanselminutes",
-    "url": "https://feeds.simplecast.com/gvtxUiIf",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Instagram Engineering",
-    "url": "https://instagram-engineering.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Java, SQL and jOOQ",
-    "url": "https://blog.jooq.org/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Joel on Software",
-    "url": "https://www.joelonsoftware.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "LinkedIn Engineering",
-    "url": "https://engineering.linkedin.com/blog.rss.html",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Netflix TechBlog",
-    "url": "https://netflixtechblog.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Overflow",
-    "url": "https://buffer.com/resources/overflow/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Software Engineering Daily Podcast",
-    "url": "https://softwareengineeringdaily.com/category/podcast/feed",
-    "popularity": 4
+    "category": "Personal Finance",
+    "name": "Personal Finance (Google)",
+    "url": "https://news.google.com/rss/search?q=personal+finance+investing+tips&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 7
   },
   {
     "category": "Android",
@@ -5409,12 +5523,6 @@
     "category": "Android",
     "name": "Android Central Podcast",
     "url": "http://feeds.feedburner.com/AndroidCentralPodcast",
-    "popularity": 5
-  },
-  {
-    "category": "Android",
-    "name": "Android Community",
-    "url": "https://androidcommunity.com/feed/",
     "popularity": 5
   },
   {
@@ -5433,12 +5541,6 @@
     "category": "Android",
     "name": "Cult of Android",
     "url": "https://www.cultofandroid.com/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Android",
-    "name": "CyanogenMods",
-    "url": "https://www.cyanogenmods.org/feed",
     "popularity": 5
   },
   {
@@ -5467,135 +5569,15 @@
   },
   {
     "category": "Android",
-    "name": "xda-developers",
-    "url": "https://data.xda-developers.com/portal-feed",
-    "popularity": 5
-  },
-  {
-    "category": "Android",
     "name": "Android Authority Podcast",
     "url": "https://androidauthority.libsyn.com/rss",
     "popularity": 5
   },
   {
-    "category": "Programming",
-    "name": "Android - Buffer Resources",
-    "url": "https://buffer.com/resources/android/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Android Developers (YouTube)",
-    "url": "https://www.youtube.com/feeds/videos.xml?user=androiddevelopers",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Android Developers (Medium)",
-    "url": "https://medium.com/feed/androiddevelopers",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Android Developers Backstage",
-    "url": "http://feeds.feedburner.com/blogspot/androiddevelopersbackstage",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Android Developers Blog",
-    "url": "http://feeds.feedburner.com/blogspot/hsDu",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Android Weekly Archive",
-    "url": "https://us2.campaign-archive.com/feed?u=887caf4f48db76fd91e20a06d&id=4eb677ad19",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Instagram Engineering (Android)",
-    "url": "https://instagram-engineering.com/feed/tagged/android",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "MindOrks",
-    "url": "https://medium.com/feed/mindorks/tagged/android",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Dan Lew Codes",
-    "url": "https://blog.danlew.net/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "r/androiddev",
-    "url": "https://reddit.com/r/androiddev.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Fragmented Podcast",
-    "url": "https://feeds.simplecast.com/LpAGSLnY",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Handstand Sam",
-    "url": "https://handstandsam.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Jake Wharton",
-    "url": "https://jakewharton.com/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Kt. Academy",
-    "url": "https://blog.kotlin-academy.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Sports",
-    "name": "Grand Slam Fantasy Tennis",
-    "url": "http://www.grandslamfantasytennis.com/feed/?x=1",
-    "popularity": 8
-  },
-  {
-    "category": "Sports",
-    "name": "ATP World Tour",
-    "url": "https://www.atptour.com/en/media/rss-feed/xml-feed",
-    "popularity": 8
-  },
-  {
-    "category": "Sports",
-    "name": "Reddit Tennis",
-    "url": "https://www.reddit.com/r/tennis/.rss",
-    "popularity": 8
-  },
-  {
-    "category": "Sports",
-    "name": "peRFect Tennis",
-    "url": "https://www.perfect-tennis.com/feed/",
-    "popularity": 8
-  },
-  {
-    "category": "Sports",
-    "name": "ESPN Tennis",
-    "url": "https://www.espn.com/espn/rss/tennis/news",
-    "popularity": 8
-  },
-  {
-    "category": "Learning",
-    "name": "The Decision Lab",
-    "url": "https://thedecisionlab.com/feed/",
-    "popularity": 6
+    "category": "Android",
+    "name": "Google Android Blog",
+    "url": "https://blog.google/products/android/rss/",
+    "popularity": 5
   },
   {
     "category": "Learning",
@@ -5634,112 +5616,28 @@
     "popularity": 6
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Steve Blank",
-    "url": "http://steveblank.com/feed/",
-    "popularity": 5
+    "category": "Learning",
+    "name": "Coursera Blog",
+    "url": "https://blog.coursera.org/feed/",
+    "popularity": 6
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "The singularity is nearer",
-    "url": "https://geohot.github.io/blog/feed.xml",
-    "popularity": 5
+    "category": "Learning",
+    "name": "edX Blog",
+    "url": "https://news.google.com/rss/search?q=site:edx.org+blog&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Guy Kawasaki",
-    "url": "http://guykawasaki.com/feed/",
-    "popularity": 5
+    "category": "Learning",
+    "name": "Khan Academy Blog",
+    "url": "https://news.google.com/rss/search?q=site:khanacademy.org+blog&hl=en-US&gl=US&ceid=US:en",
+    "popularity": 6
   },
   {
-    "category": "Startups & Venture Capital",
-    "name": "Essays - Benedict Evans",
-    "url": "http://ben-evans.com/benedictevans?format=rss",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "First Round Review",
-    "url": "http://firstround.com/review/feed.xml",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Sam Altman",
-    "url": "http://blog.samaltman.com/posts.atom",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Andrew Chen",
-    "url": "http://andrewchen.co/feed/",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Both Sides of the Table",
-    "url": "http://feeds.feedburner.com/BothSidesOfTheTable",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "OnStartups",
-    "url": "http://feed.onstartups.com/onstartups",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "The Black Box of Product Management - Medium",
-    "url": "https://medium.com/feed/the-black-box-of-product-management",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Product Life",
-    "url": "https://productlife.to/feed",
-    "popularity": 5
-  },
-  {
-    "category": "Startups & Venture Capital",
-    "name": "Irrational Exuberance",
-    "url": "https://lethain.com/feeds/",
-    "popularity": 5
-  },
-  {
-    "category": "Technology",
-    "name": "SlashGear",
-    "url": "http://feeds.slashgear.com/slashgear",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Tech in Asia",
-    "url": "https://feeds2.feedburner.com/PennOlson",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Fast Company (Design)",
-    "url": "http://www.fastcodesign.com/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Startups – TechCrunch",
-    "url": "https://techcrunch.com/startups/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Forbes - Leadership",
-    "url": "https://www.forbes.com/leadership/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Technology",
-    "name": "Forbes - Entrepreneurs",
-    "url": "http://www.forbes.com/entrepreneurs/index.xml",
-    "popularity": 7
+    "category": "Learning",
+    "name": "FreeCodeCamp",
+    "url": "https://www.freecodecamp.org/news/rss/",
+    "popularity": 6
   },
   {
     "category": "Products & Ideas",
@@ -5755,549 +5653,21 @@
   },
   {
     "category": "Products & Ideas",
-    "name": "Sachin Rekhi's Blog",
-    "url": "http://feeds.feedburner.com/sachinrekhiblog",
+    "name": "Wired Ideas",
+    "url": "https://news.google.com/rss/search?q=site:wired.com+ideas&hl=en-US&gl=US&ceid=US:en",
     "popularity": 6
   },
   {
-    "category": "Programming",
-    "name": "The Pragmatic Engineer",
-    "url": "https://blog.pragmaticengineer.com/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "The Airtable Engineering Blog",
-    "url": "https://medium.com/feed/airtable-eng",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Medium Engineering",
-    "url": "https://medium.com/feed/medium-eng",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "The PayPal Technology Blog",
-    "url": "https://medium.com/feed/paypal-engineering",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Pinterest Engineering Blog",
-    "url": "https://medium.com/feed/pinterest-engineering",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Grab Tech",
-    "url": "http://engineering.grab.com/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Slack Engineering",
-    "url": "https://slack.engineering/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Engineering – The GitHub Blog",
-    "url": "http://githubengineering.com/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Atlassian Developer Blog",
-    "url": "https://developer.atlassian.com/blog/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Grokking Newsletter",
-    "url": "http://newsletter.grokking.org/?format=rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "eBay Tech Blog",
-    "url": "http://www.ebaytechblog.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Spotify Engineering",
-    "url": "http://labs.spotify.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Twitter Engineering",
-    "url": "https://blog.twitter.com/engineering/en_us/blog.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Stripe Blog",
-    "url": "https://stripe.com/blog/feed.rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "The Cloudflare Blog",
-    "url": "https://blog.cloudflare.com/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Engineering – The Asana Blog",
-    "url": "https://blog.asana.com/category/eng/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Canva Engineering Blog",
-    "url": "https://engineering.canva.com/rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "The Airbnb Tech Blog",
-    "url": "https://medium.com/feed/airbnb-engineering",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Dropbox Tech",
-    "url": "https://dropbox.tech/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "WePay Engineering Blog",
-    "url": "https://wecode.wepay.com/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Web Browser Engineering",
-    "url": "https://browser.engineering/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Spotify Engineering (Official)",
-    "url": "https://engineering.atspotify.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Mind the Product",
-    "url": "https://www.mindtheproduct.com/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Julia Evans",
-    "url": "https://jvns.ca/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Martin Kleppmann's blog",
-    "url": "https://feeds.feedburner.com/martinkl?format=xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Dan Luu",
-    "url": "https://danluu.com/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Shopify Engineering",
-    "url": "https://shopifyengineering.myshopify.com/blogs/engineering.atom",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Josh Comeau's blog",
-    "url": "https://joshwcomeau.com/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Uber Engineering Blog",
-    "url": "https://www.uber.com/blog/engineering/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Flurries of latent creativity - Stripe CTO blog",
-    "url": "https://blog.singleton.io/index.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Sophie Alpert",
-    "url": "https://sophiebits.com/atom.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Amjad Masad",
-    "url": "https://amasad.me/rss",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Signal Blog",
-    "url": "https://signal.org/blog/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "Programming",
-    "name": "Nvidia Developer Blog",
-    "url": "https://developer.nvidia.com/blog/feed",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Machine Learning Blog | ML@CMU",
-    "url": "https://blog.ml.cmu.edu/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "DeepMind",
-    "url": "https://deepmind.com/blog/feed/basic/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Jay Alammar",
-    "url": "https://jalammar.github.io/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Distill",
-    "url": "http://distill.pub/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Lil’Log",
-    "url": "https://lilianweng.github.io/lil-log/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "MIT News - Artificial Intelligence",
-    "url": "http://news.mit.edu/rss/topic/artificial-intelligence2",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Sebastian Ruder",
-    "url": "http://ruder.io/rss/index.rss",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "The Berkeley Artificial Intelligence Research Blog",
-    "url": "http://bair.berkeley.edu/blog/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "DeepLearningAI",
-    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCcIXc5mJsHVYTZR1maL5l9w",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Eric Jang (Blogspot)",
-    "url": "http://blog.evjang.com/feeds/posts/default?alt=rss",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "OpenAI",
-    "url": "https://openai.com/news/engineering/rss.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "The Gradient",
-    "url": "https://thegradient.pub/rss/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Magenta",
-    "url": "http://magenta.tensorflow.org/feed.xml",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "NLP News",
-    "url": "http://newsletter.ruder.io/?format=rss",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Towards Data Science",
-    "url": "https://towardsdatascience.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Unite.AI",
-    "url": "https://www.unite.ai/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Grammarly Blog",
-    "url": "https://www.grammarly.com/blog/feed/",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Eric Jang (Personal)",
-    "url": "https://evjang.com/feed",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Amazon Science Homepage",
-    "url": "https://www.amazon.science/index.rss",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Machine Learning (Reddit)",
-    "url": "http://www.reddit.com/r/MachineLearning/.rss",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Yannic Kilcher",
-    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Two Minute Papers",
-    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "PyTorch",
-    "url": "https://pytorch.org/feed",
-    "popularity": 4
-  },
-  {
-    "category": "Design",
-    "name": "UX Planet",
-    "url": "https://uxplanet.org/feed",
+    "category": "Products & Ideas",
+    "name": "Cool Hunting",
+    "url": "https://coolhunting.com/feed/",
     "popularity": 6
   },
   {
-    "category": "Design",
-    "name": "UX Movement",
-    "url": "http://feeds.feedburner.com/uxmovement",
+    "category": "Products & Ideas",
+    "name": "Swiss Miss",
+    "url": "https://swiss-miss.com/feed/",
     "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "Inside Design",
-    "url": "http://blog.invisionapp.com/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "UXmatters",
-    "url": "https://uxmatters.com/index.xml",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "Airbnb Design",
-    "url": "http://airbnb.design/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "Slack Design",
-    "url": "https://slack.design/feed/",
-    "popularity": 6
-  },
-  {
-    "category": "Design",
-    "name": "UX Daily",
-    "url": "https://interaction-design.org/rss/site_news.xml",
-    "popularity": 6
-  },
-  {
-    "category": "Science",
-    "name": "PsyBlog",
-    "url": "http://feeds.feedburner.com/PsychologyBlog",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Psychology Blog",
-    "url": "http://www.all-about-psychology.com/psychology.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Psychology Headlines Around the World",
-    "url": "http://www.socialpsychology.org/headlines.rss",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Nautilus (Psychology)",
-    "url": "https://nautil.us/rss/all",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Freakonomics",
-    "url": "http://freakonomics.blogs.nytimes.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Psychology Today",
-    "url": "https://www.psychologytoday.com/intl/rss.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Neuroscience News",
-    "url": "http://neurosciencenews.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Neuroscience News -- ScienceDaily",
-    "url": "https://sciencedaily.com/rss/mind_brain/neuroscience.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "SharpBrains",
-    "url": "http://www.sharpbrains.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Quanta Magazine",
-    "url": "http://www.quantamagazine.org/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Nature",
-    "url": "http://www.nature.com/nature/current_issue/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "MIT News - Science, Technology and Society",
-    "url": "https://news.mit.edu/rss/topic/science-technology-and-society",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "ScienceAlert",
-    "url": "https://www.sciencealert.com/rss",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Lesics",
-    "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCqZQJ4600a9wIfMPbYc60OQ",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Moz",
-    "url": "http://feeds.feedburner.com/seomoz",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Content Marketing Institute",
-    "url": "http://feeds.feedburner.com/cmi-content-marketing",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Neil Patel",
-    "url": "http://feeds.feedburner.com/KISSmetrics",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "MarketingProfs",
-    "url": "http://rss.marketingprofs.com/marketingprofs/daily",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Marketo Marketing blog",
-    "url": "http://feeds.feedburner.com/modernb2bmarketing",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Quick Sprout",
-    "url": "http://www.quicksprout.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Social Media Examiner",
-    "url": "http://www.socialmediaexaminer.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "John Egan",
-    "url": "http://jwegan.com/feed/rss/",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Convince and Convert",
-    "url": "http://www.convinceandconvert.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Hubspot",
-    "url": "http://blog.hubspot.com/CMS/UI/Modules/BizBlogger/rss.aspx?tabid=6307&moduleid=8441&maxcount=25",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Seth Godin's Blog",
-    "url": "http://sethgodin.typepad.com/seths_blog/atom.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
-    "name": "Backlinko",
-    "url": "http://backlinko.com/feed",
-    "popularity": 7
   },
   {
     "category": "Others",
