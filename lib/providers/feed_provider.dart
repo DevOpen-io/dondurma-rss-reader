@@ -152,8 +152,17 @@ class FeedProvider extends ChangeNotifier {
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
-  bool _showUnreadOnly = false;
-  bool get showUnreadOnly => _showUnreadOnly;
+  // Runtime-only filter sheet state — intentionally NOT persisted to Hive;
+  // resets on app restart or "clear filters".
+  String _readFilter = 'all'; // 'all' | 'unread' | 'read'
+  Set<String> _filterCategories = {};
+  String get readFilter => _readFilter;
+  Set<String> get filterCategories => Set.unmodifiable(_filterCategories);
+  bool get hasActiveSheetFilter =>
+      _readFilter != 'all' || _filterCategories.isNotEmpty;
+
+  /// Legacy view of the read filter, kept for existing call sites.
+  bool get showUnreadOnly => _readFilter == 'unread';
 
   /// Whether there are more items beyond the current render window.
   bool get hasMoreItems => _itemRenderLimit < _filteredItems.length;
@@ -404,12 +413,37 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Toggles between showing all items and unread-only items.
-  void toggleShowUnreadOnly() {
-    _showUnreadOnly = !_showUnreadOnly;
+  /// Applies the runtime filter chosen in the filter bottom sheet.
+  /// [readFilter] is `'all' | 'unread' | 'read'`; an empty [categories] set
+  /// means "all categories". State lives only in memory (never persisted).
+  void applySheetFilter({
+    required String readFilter,
+    required Set<String> categories,
+  }) {
+    _readFilter = readFilter;
+    _filterCategories = {...categories};
     _itemRenderLimit = _pageSize;
     _invalidateFilterCache();
     notifyListeners();
+  }
+
+  /// Resets the filter sheet state back to "show everything".
+  void clearSheetFilter() =>
+      applySheetFilter(readFilter: 'all', categories: const {});
+
+  /// Pure decision: does an item with [isRead]/[category] survive the runtime
+  /// filter? Read status and category set combine with AND; an empty
+  /// [categories] set imposes no category constraint.
+  static bool passesRuntimeFilter({
+    required bool isRead,
+    required String category,
+    required String readFilter,
+    required Set<String> categories,
+  }) {
+    if (readFilter == 'unread' && isRead) return false;
+    if (readFilter == 'read' && !isRead) return false;
+    if (categories.isNotEmpty && !categories.contains(category)) return false;
+    return true;
   }
 
   /// Selects a specific feed URL for filtering.
@@ -441,8 +475,17 @@ class FeedProvider extends ChangeNotifier {
 
     Iterable<FeedItem> filtered = _items;
 
-    if (_showUnreadOnly) {
-      filtered = filtered.where((i) => !_readItemIds.contains(i.id));
+    // Runtime sheet filter (read status + multi-category, AND) — replaces the
+    // old unread-only step, same position in the documented pipeline order.
+    if (hasActiveSheetFilter) {
+      filtered = filtered.where(
+        (i) => passesRuntimeFilter(
+          isRead: _readItemIds.contains(i.id),
+          category: i.category,
+          readFilter: _readFilter,
+          categories: _filterCategories,
+        ),
+      );
     }
 
     if (_selectedCategory != null) {
@@ -978,7 +1021,8 @@ class FeedProvider extends ChangeNotifier {
     _readItemIds.clear();
     _cachedItemIds.clear();
     _searchQuery = '';
-    _showUnreadOnly = false;
+    _readFilter = 'all';
+    _filterCategories = {};
     _itemRenderLimit = _pageSize;
 
     _lastSyncTime = null;
@@ -1019,8 +1063,7 @@ List<Map<String, dynamic>> _decodeCachedItems(String data) {
 }
 
 /// Encodes a list of item maps to JSON string (runs in background isolate).
-String _encodeCachedItems(List<Map<String, dynamic>> maps) =>
-    jsonEncode(maps);
+String _encodeCachedItems(List<Map<String, dynamic>> maps) => jsonEncode(maps);
 
 // ---------------------------------------------------------------------------
 // Concurrency limiter

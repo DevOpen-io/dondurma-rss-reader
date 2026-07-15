@@ -291,5 +291,11 @@
   "feedAddError": "Bu adreste RSS kaynağı bulunamadı. Adresi kontrol edin: çoğu kaynak adresi /feed veya /rss ile biter.",
   "clearFilters": "Tüm makaleleri göster",
   "thirtyMinutes": "30 Dakika",
-  "semanticCategoryOptions": "Kategori seçenekleri"
+  "semanticCategoryOptions": "Kategori seçenekleri",
+  "filterSheetTitle": "Filtrele",
+  "filterReadStatus": "Okunma durumu",
+  "filterOptionUnread": "Okunmamış",
+  "filterOptionRead": "Okunmuş",
+  "filterApply": "Filtrele",
+  "filterClear": "Temizle"
 }

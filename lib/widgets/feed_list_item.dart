@@ -1,5 +1,6 @@
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -10,6 +11,14 @@ import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../services/image_cache_service.dart';
 import '../providers/subscription_provider.dart';
+
+/// Cuts [text] to at most [maxChars] characters, ending with an ellipsis.
+/// Keeps both the site name and the category visible in the meta row: without
+/// per-segment limits a long site name pushes the category off screen.
+String truncateLabel(String text, int maxChars) {
+  if (text.length <= maxChars) return text;
+  return '${text.substring(0, maxChars - 1)}…';
+}
 
 class FeedListItem extends StatefulWidget {
   final FeedItem item;
@@ -30,16 +39,17 @@ class _FeedListItemState extends State<FeedListItem>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 250),
-    )..addListener(() {
-        if (_snapBackAnimation != null) {
-          setState(() {
-            _dragExtent = _snapBackAnimation!.value;
-          });
-        }
-      });
+    _controller =
+        AnimationController(
+          vsync: this,
+          duration: const Duration(milliseconds: 250),
+        )..addListener(() {
+          if (_snapBackAnimation != null) {
+            setState(() {
+              _dragExtent = _snapBackAnimation!.value;
+            });
+          }
+        });
   }
 
   @override
@@ -81,9 +91,10 @@ class _FeedListItemState extends State<FeedListItem>
     }
 
     _actionTriggered = false;
-    _snapBackAnimation = Tween<double>(begin: _dragExtent, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+    _snapBackAnimation = Tween<double>(
+      begin: _dragExtent,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward(from: 0.0);
   }
 
@@ -91,12 +102,16 @@ class _FeedListItemState extends State<FeedListItem>
   Widget build(BuildContext context) {
     final isSwipingRight = _dragExtent > 0;
 
-    return Selector2<FeedProvider, BookmarkProvider,
-        ({bool isCached, bool isBookmarked})>(
+    return Selector2<
+      FeedProvider,
+      BookmarkProvider,
+      ({bool isCached, bool isBookmarked})
+    >(
       selector: (context, feedProvider, bookmarkProvider) => (
         isCached: feedProvider.cachedItemIds.contains(widget.item.id),
-        isBookmarked:
-            bookmarkProvider.bookmarkedItemIds.contains(widget.item.id),
+        isBookmarked: bookmarkProvider.bookmarkedItemIds.contains(
+          widget.item.id,
+        ),
       ),
       builder: (context, state, child) {
         final bool isBookmarked = state.isBookmarked;
@@ -108,6 +123,23 @@ class _FeedListItemState extends State<FeedListItem>
           label: l10n.semanticOpenArticle(widget.item.title),
           hint: isRead ? l10n.semanticArticleRead : l10n.semanticArticleUnread,
           button: false,
+          // Swipe gestures are invisible to screen readers; expose both swipe
+          // actions as custom semantics actions so TalkBack users can reach
+          // them from the card itself.
+          customSemanticsActions: {
+            CustomSemanticsAction(
+              label: isRead
+                  ? l10n.semanticMarkAsUnread
+                  : l10n.semanticMarkAsRead,
+            ): () =>
+                context.read<FeedProvider>().toggleReadStatus(widget.item.id),
+            CustomSemanticsAction(
+              label: isBookmarked
+                  ? l10n.semanticRemoveBookmark
+                  : l10n.semanticBookmark,
+            ): () =>
+                context.read<BookmarkProvider>().toggleBookmark(widget.item),
+          },
           child: Container(
             margin: const EdgeInsets.only(bottom: 10.0),
             child: Stack(
@@ -158,78 +190,56 @@ class _ArticleCard extends StatelessWidget {
     required this.isCached,
   });
 
-  bool get _hasThumbnail =>
-      item.imageUrl != null && item.imageUrl!.isNotEmpty;
+  bool get _hasThumbnail => item.imageUrl != null && item.imageUrl!.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final surfaceColor = colorScheme.surface;
 
-    return Container(
-      decoration: BoxDecoration(
+    return Material(
+      color: colorScheme.surfaceContainerLow,
+      borderRadius: BorderRadius.circular(18),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Material(
-        color: isRead
-            ? surfaceColor
-            : Color.alphaBlend(
-                colorScheme.primary.withValues(alpha: 0.07),
-                surfaceColor,
+        onTap: () {
+          final feedProvider = context.read<FeedProvider>();
+          final allItems = feedProvider.filteredItems;
+          final index = allItems.indexWhere((i) => i.id == item.id);
+          context.push(
+            '/article',
+            extra: {'items': allItems, 'initialIndex': index >= 0 ? index : 0},
+          );
+          feedProvider.markAsRead(item.id);
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(14.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _FeedItemIcon(item: item, isRead: isRead),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _FeedItemContent(item: item, isRead: isRead),
               ),
-        borderRadius: BorderRadius.circular(18),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () {
-            final feedProvider = context.read<FeedProvider>();
-            final allItems = feedProvider.filteredItems;
-            final index = allItems.indexWhere((i) => i.id == item.id);
-            context.push(
-              '/article',
-              extra: {
-                'items': allItems,
-                'initialIndex': index >= 0 ? index : 0,
-              },
-            );
-            feedProvider.markAsRead(item.id);
-          },
-          child: Padding(
-            padding: const EdgeInsets.all(14.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _FeedItemIcon(item: item, isRead: isRead),
+              if (_hasThumbnail) ...[
                 const SizedBox(width: 12),
-                Expanded(
-                  child: _FeedItemContent(item: item, isRead: isRead),
+                _FeedItemThumbnail(
+                  item: item,
+                  isRead: isRead,
+                  isBookmarked: isBookmarked,
+                  isCached: isCached,
                 ),
-                if (_hasThumbnail) ...[
-                  const SizedBox(width: 12),
-                  _FeedItemThumbnail(
-                    item: item,
-                    isRead: isRead,
-                    isBookmarked: isBookmarked,
-                    isCached: isCached,
-                  ),
-                ] else ...[
-                  const SizedBox(width: 4),
-                  _FeedItemActions(
-                    item: item,
-                    isBookmarked: isBookmarked,
-                    isCached: isCached,
-                    isRead: isRead,
-                  ),
-                ],
+              ] else ...[
+                const SizedBox(width: 4),
+                _FeedItemActions(
+                  item: item,
+                  isBookmarked: isBookmarked,
+                  isCached: isCached,
+                  isRead: isRead,
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),
@@ -265,8 +275,9 @@ class _SwipeBackground extends StatelessWidget {
               : colorScheme.secondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(18),
         ),
-        alignment:
-            isSwipingRight ? Alignment.centerLeft : Alignment.centerRight,
+        alignment: isSwipingRight
+            ? Alignment.centerLeft
+            : Alignment.centerRight,
         padding: EdgeInsets.only(
           left: isSwipingRight ? 24.0 : 0,
           right: !isSwipingRight ? 24.0 : 0,
@@ -279,9 +290,7 @@ class _SwipeBackground extends StatelessWidget {
             isSwipingRight
                 ? (isRead ? Icons.mark_email_unread : Icons.mark_email_read)
                 : (isBookmarked ? Icons.bookmark_remove : Icons.bookmark_add),
-            color: isSwipingRight
-                ? colorScheme.primary
-                : colorScheme.secondary,
+            color: isSwipingRight ? colorScheme.primary : colorScheme.secondary,
             size: 28,
           ),
         ),
@@ -304,14 +313,17 @@ class _FeedItemIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final subscriptionProvider = context.watch<SubscriptionProvider>();
     final categoryIcon = subscriptionProvider.getCategoryIcon(item.category);
+    final colorScheme = Theme.of(context).colorScheme;
 
+    // Theme-derived tile colors; item.iconColor/iconBackgroundColor are
+    // hardcoded feed-service blues that clash with non-blue color schemes.
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
         color: isRead
-            ? item.iconBackgroundColor.withValues(alpha: 0.12)
-            : item.iconBackgroundColor,
+            ? colorScheme.primaryContainer.withValues(alpha: 0.45)
+            : colorScheme.primaryContainer,
         borderRadius: BorderRadius.circular(11),
       ),
       child: Center(
@@ -319,8 +331,8 @@ class _FeedItemIcon extends StatelessWidget {
           categoryIcon,
           size: 20,
           color: isRead
-              ? item.iconColor.withValues(alpha: 0.4)
-              : item.iconColor,
+              ? colorScheme.onPrimaryContainer.withValues(alpha: 0.55)
+              : colorScheme.onPrimaryContainer,
         ),
       ),
     );
@@ -377,22 +389,23 @@ class _FeedItemThumbnail extends StatelessWidget {
               placeholder: (_, _) => Container(
                 width: 72,
                 height: 72,
-                color: colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.5),
+                color: colorScheme.surfaceContainerHighest.withValues(
+                  alpha: 0.5,
+                ),
               ),
             ),
           ),
         ),
-        // Offsets compensate the 10px hit-area padding so the 24px chip stays
-        // visually at bottom/right 4 while the tap target grows to 44x44.
+        // Offsets compensate the 12px hit-area padding so the 24px chip stays
+        // visually at bottom/right 4 while the tap target grows to 48x48.
         Positioned(
-          bottom: -6,
-          right: -6,
+          bottom: -8,
+          right: -8,
           child: GestureDetector(
             onTap: () => context.read<BookmarkProvider>().toggleBookmark(item),
             behavior: HitTestBehavior.opaque,
             child: Padding(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(12),
               child: Container(
                 width: 24,
                 height: 24,
@@ -425,8 +438,7 @@ class _FeedItemThumbnail extends StatelessWidget {
               child: Icon(
                 Icons.offline_pin,
                 size: 12,
-                color: colorScheme.secondary
-                    .withValues(alpha: isRead ? 0.35 : 0.7),
+                color: colorScheme.secondary.withValues(alpha: 0.7),
               ),
             ),
           ),
@@ -464,15 +476,22 @@ class _FeedItemContent extends StatelessWidget {
                 ),
               ),
             Expanded(
-              child: Text(
-                item.siteName,
-                style: TextStyle(
-                  color: isRead
-                      ? colorScheme.onSurface.withValues(alpha: 0.6)
-                      : colorScheme.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 0.2,
+              child: Text.rich(
+                TextSpan(
+                  text: truncateLabel(item.siteName, 20),
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.2,
+                  ),
+                  children: [
+                    if (item.category != 'Uncategorized')
+                      TextSpan(
+                        text: ' · ${truncateLabel(item.category, 14)}',
+                        style: const TextStyle(fontWeight: FontWeight.w400),
+                      ),
+                  ],
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -482,7 +501,7 @@ class _FeedItemContent extends StatelessWidget {
             Text(
               _formatDate(item),
               style: TextStyle(
-                color: colorScheme.onSurface.withValues(alpha: 0.55),
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -508,8 +527,7 @@ class _FeedItemContent extends StatelessWidget {
         Text(
           item.description,
           style: TextStyle(
-            color: colorScheme.onSurface
-                .withValues(alpha: isRead ? 0.55 : 0.65),
+            color: colorScheme.onSurfaceVariant,
             fontSize: 13,
             height: 1.35,
           ),
@@ -555,7 +573,7 @@ class _FeedItemActions extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return SizedBox(
-      width: 40,
+      width: 48,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.center,
@@ -565,8 +583,7 @@ class _FeedItemActions extends StatelessWidget {
             icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
             color: isBookmarked
                 ? colorScheme.primary
-                : colorScheme.onSurface
-                    .withValues(alpha: isRead ? 0.25 : 0.4),
+                : colorScheme.onSurfaceVariant,
             size: 20,
             semanticLabel: isBookmarked
                 ? AppLocalizations.of(context).semanticRemoveBookmark
@@ -579,8 +596,7 @@ class _FeedItemActions extends StatelessWidget {
                 label: AppLocalizations.of(context).semanticOfflineCached,
                 child: Icon(
                   Icons.offline_pin,
-                  color: colorScheme.secondary
-                      .withValues(alpha: isRead ? 0.35 : 0.7),
+                  color: colorScheme.secondary.withValues(alpha: 0.7),
                   size: 15,
                 ),
               ),
@@ -615,7 +631,8 @@ class _ActionIcon extends StatelessWidget {
         onTap: onTap,
         behavior: HitTestBehavior.opaque,
         child: Padding(
-          padding: const EdgeInsets.all(10.0),
+          // 20px icon + 14px padding = 48x48 minimum touch target.
+          padding: const EdgeInsets.all(14.0),
           child: Icon(icon, color: color, size: size),
         ),
       ),

@@ -394,5 +394,11 @@
   "feedAddError": "Couldn't find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.",
   "clearFilters": "Show all articles",
   "thirtyMinutes": "30 Minutes",
-  "semanticCategoryOptions": "Category options"
+  "semanticCategoryOptions": "Category options",
+  "filterSheetTitle": "Filter",
+  "filterReadStatus": "Read status",
+  "filterOptionUnread": "Unread",
+  "filterOptionRead": "Read",
+  "filterApply": "Apply filters",
+  "filterClear": "Clear filters"
 }

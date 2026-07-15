@@ -945,4 +945,22 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semanticCategoryOptions => 'Kategori seçenekleri';
+
+  @override
+  String get filterSheetTitle => 'Filtrele';
+
+  @override
+  String get filterReadStatus => 'Okunma durumu';
+
+  @override
+  String get filterOptionUnread => 'Okunmamış';
+
+  @override
+  String get filterOptionRead => 'Okunmuş';
+
+  @override
+  String get filterApply => 'Filtrele';
+
+  @override
+  String get filterClear => 'Temizle';
 }

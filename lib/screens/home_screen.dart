@@ -13,6 +13,7 @@ import '../widgets/home/home_search_history_panel.dart';
 import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_list_skeleton.dart';
 import '../widgets/home/add_category_dialog.dart';
+import '../widgets/home/filter_bottom_sheet.dart';
 import 'categories_screen.dart';
 import 'bookmarks_screen.dart';
 import 'settings_screen.dart';
@@ -87,15 +88,21 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (todayItems.isNotEmpty) {
       entries.add(_HeaderEntry(l10n.today));
-      for (final item in todayItems) { entries.add(_ItemEntry(item)); }
+      for (final item in todayItems) {
+        entries.add(_ItemEntry(item));
+      }
     }
     if (yesterdayItems.isNotEmpty) {
       entries.add(_HeaderEntry(l10n.yesterday));
-      for (final item in yesterdayItems) { entries.add(_ItemEntry(item)); }
+      for (final item in yesterdayItems) {
+        entries.add(_ItemEntry(item));
+      }
     }
     if (olderItems.isNotEmpty) {
       entries.add(_HeaderEntry(l10n.older));
-      for (final item in olderItems) { entries.add(_ItemEntry(item)); }
+      for (final item in olderItems) {
+        entries.add(_ItemEntry(item));
+      }
     }
 
     entries.add(_WidgetEntry(HomePaginationFooter(provider: provider)));
@@ -104,16 +111,26 @@ class _HomeScreenState extends State<HomeScreen> {
       entries.add(
         _WidgetEntry(
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 48.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 32.0,
+              vertical: 48.0,
+            ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.rss_feed, size: 56, color: cs.onSurface.withValues(alpha: 0.2)),
+                Icon(
+                  Icons.rss_feed,
+                  size: 56,
+                  color: cs.onSurface.withValues(alpha: 0.2),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   l10n.noFeedsFound,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.55), fontSize: 15),
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.55),
+                    fontSize: 15,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 FilledButton.icon(
@@ -139,17 +156,20 @@ class _HomeScreenState extends State<HomeScreen> {
                       ? l10n.noFeedsInCategory(provider.selectedCategory!)
                       : l10n.noFeedsMatchFilter,
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: cs.onSurface.withValues(alpha: 0.5), fontSize: 14),
+                  style: TextStyle(
+                    color: cs.onSurface.withValues(alpha: 0.5),
+                    fontSize: 14,
+                  ),
                 ),
-                if (provider.showUnreadOnly ||
+                if (provider.hasActiveSheetFilter ||
                     provider.searchQuery.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   TextButton(
                     onPressed: () {
                       _searchController.clear();
                       provider.setSearchQuery('');
-                      if (provider.showUnreadOnly) {
-                        provider.toggleShowUnreadOnly();
+                      if (provider.hasActiveSheetFilter) {
+                        provider.clearSheetFilter();
                       }
                     },
                     child: Text(l10n.clearFilters),
@@ -195,12 +215,19 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.wifi_off, size: 16, color: cs.onErrorContainer),
+                          Icon(
+                            Icons.wifi_off,
+                            size: 16,
+                            color: cs.onErrorContainer,
+                          ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               l10n.offlineBanner,
-                              style: TextStyle(fontSize: 13, color: cs.onErrorContainer),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: cs.onErrorContainer,
+                              ),
                             ),
                           ),
                         ],
@@ -240,13 +267,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         final entry = entries[index];
                         return switch (entry) {
                           _HeaderEntry(:final label) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: _buildSectionHeader(label),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: _buildSectionHeader(label),
+                          ),
                           _ItemEntry(:final item) => Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 16),
-                              child: FeedListItem(item: item),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: FeedListItem(item: item),
+                          ),
                           _WidgetEntry(:final child) => child,
                         };
                       },
@@ -274,8 +301,8 @@ class _HomeScreenState extends State<HomeScreen> {
           return p.selectedCategory ?? l10n.myFeeds;
       }
     });
-    final showUnreadOnly = context.select<FeedProvider, bool>(
-      (p) => p.showUnreadOnly,
+    final hasActiveFilter = context.select<FeedProvider, bool>(
+      (p) => p.hasActiveSheetFilter,
     );
 
     return Scaffold(
@@ -323,22 +350,20 @@ class _HomeScreenState extends State<HomeScreen> {
           if (_selectedIndex == 0) ...[
             if (!_isSearching)
               IconButton(
-                icon: Icon(
-                  showUnreadOnly
-                      ? Icons.visibility_off
-                      : Icons.visibility,
-                  color: showUnreadOnly
-                      ? Theme.of(context).colorScheme.primary
-                      : Theme.of(
-                          context,
-                        ).colorScheme.onSurface.withValues(alpha: 0.5),
+                icon: Badge(
+                  isLabelVisible: hasActiveFilter,
+                  smallSize: 8,
+                  child: Icon(
+                    Icons.filter_list,
+                    color: hasActiveFilter
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(
+                            context,
+                          ).colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
                 ),
-                tooltip: showUnreadOnly
-                    ? l10n.semanticShowAll
-                    : l10n.semanticFilterUnread,
-                onPressed: () {
-                  context.read<FeedProvider>().toggleShowUnreadOnly();
-                },
+                tooltip: l10n.filterSheetTitle,
+                onPressed: () => FilterBottomSheet.show(context),
               ),
             if (_isSearching)
               IconButton(
@@ -393,8 +418,8 @@ class _HomeScreenState extends State<HomeScreen> {
                           _searchController.text = query;
                           _searchController.selection =
                               TextSelection.fromPosition(
-                            TextPosition(offset: query.length),
-                          );
+                                TextPosition(offset: query.length),
+                              );
                           provider.setSearchQuery(query);
                         },
                       ),
@@ -484,9 +509,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 width: 44,
                                 height: 44,
                                 decoration: BoxDecoration(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                                 child: Icon(
@@ -605,4 +628,3 @@ final class _WidgetEntry extends _FeedListEntry {
   final Widget child;
   const _WidgetEntry(this.child);
 }
-

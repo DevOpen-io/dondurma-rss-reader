@@ -943,4 +943,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get semanticCategoryOptions => 'Category options';
+
+  @override
+  String get filterSheetTitle => 'Filter';
+
+  @override
+  String get filterReadStatus => 'Read status';
+
+  @override
+  String get filterOptionUnread => 'Unread';
+
+  @override
+  String get filterOptionRead => 'Read';
+
+  @override
+  String get filterApply => 'Apply filters';
+
+  @override
+  String get filterClear => 'Clear filters';
 }

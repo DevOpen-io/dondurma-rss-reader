@@ -87,6 +87,11 @@ No algorithms. No tracking. Just your feeds, your way.
 - **Share Articles** — Share article links via system share sheet
 - **Read/Unread Management** — Swipe right to toggle read status
 
+### 🏠 Home Screen Widgets
+- **Latest News Widget** — Android/iOS home screen widget showing your most recent articles
+- **Category Widget** — Configurable widget scoped to a single category
+- **Tap-to-Open** — Tap an article in the widget to jump straight into the app
+
 ### 🌍 Localization
 - **English** 🇬🇧 & **Turkish** 🇹🇷 fully supported
 - Easily extendable to new languages via ARB files
@@ -109,6 +114,7 @@ lib/
 │   ├── notification_service.dart      # Local notifications wrapper
 │   ├── opml_service.dart              # OPML import/export
 │   ├── background_fetch_service.dart  # Workmanager background fetch dispatcher
+│   ├── widget_update_service.dart     # Home-screen widget data sync (home_widget)
 │   └── image_cache_service.dart       # Article and thumbnail cache managers
 ├── screens/                   # Full-page UI screens
 │   ├── home_screen.dart           # Main screen with bottom nav
@@ -134,6 +140,7 @@ lib/
 │   │   ├── article_image_carousel.dart
 │   │   └── article_reading_mode_toggle.dart
 │   ├── folders/                   # Folder-specific widgets
+│   │   ├── category_action_sheet.dart
 │   │   ├── feed_action_sheet.dart
 │   │   └── folder_dialogs.dart
 │   ├── home/                      # Home screen widgets
@@ -168,6 +175,7 @@ lib/
 | **WebView** | webview_flutter + adblocker_webview |
 | **Notifications** | flutter_local_notifications |
 | **Background Work** | workmanager |
+| **Home Screen Widgets** | home_widget |
 | **Skeleton Loading** | skeletonizer |
 | **XML** | xml (for OPML) |
 | **Sharing** | share_plus, url_launcher |
@@ -298,6 +306,11 @@ Algoritma yok. Takip yok. Sadece sizin akışlarınız, sizin kurallarınız.
 - **Makale Paylaşımı** — Sistem paylaşım sayfası üzerinden makale bağlantılarını paylaşın
 - **Okundu/Okunmadı Yönetimi** — Sağa kaydırma ile okundu durumunu değiştirin
 
+### 🏠 Ana Ekran Widget'ları
+- **Son Haberler Widget'ı** — Android/iOS ana ekranında en son makaleleri gösteren widget
+- **Kategori Widget'ı** — Tek bir kategoriye özel yapılandırılabilir widget
+- **Dokunarak Açma** — Widget'taki bir habere dokunarak doğrudan uygulamaya gidin
+
 ### 🌍 Yerelleştirme
 - **İngilizce** 🇬🇧 ve **Türkçe** 🇹🇷 tam destek
 - ARB dosyaları aracılığıyla kolayca yeni dillere genişletilebilir
@@ -320,6 +333,7 @@ lib/
 │   ├── notification_service.dart      # Yerel bildirimler sarmalayıcı
 │   ├── opml_service.dart              # OPML içe/dışa aktarım
 │   ├── background_fetch_service.dart  # Workmanager arka plan işleyicisi
+│   ├── widget_update_service.dart     # Ana ekran widget veri senkronizasyonu (home_widget)
 │   └── image_cache_service.dart       # Makale ve küçük resim önbellek yöneticileri
 ├── screens/                   # Tam sayfa UI ekranları
 │   ├── home_screen.dart           # Alt navigasyonlu ana ekran
@@ -345,6 +359,7 @@ lib/
 │   │   ├── article_image_carousel.dart
 │   │   └── article_reading_mode_toggle.dart
 │   ├── folders/                   # Klasör bileşenleri
+│   │   ├── category_action_sheet.dart
 │   │   ├── feed_action_sheet.dart
 │   │   └── folder_dialogs.dart
 │   ├── home/                      # Ana ekran bileşenleri
@@ -379,6 +394,7 @@ lib/
 | **WebView** | webview_flutter + adblocker_webview |
 | **Bildirimler** | flutter_local_notifications |
 | **Arka Plan İşleri** | workmanager |
+| **Ana Ekran Widget'ları** | home_widget |
 | **İskelet Yükleme** | skeletonizer |
 | **XML** | xml (OPML için) |
 | **Paylaşım** | share_plus, url_launcher |

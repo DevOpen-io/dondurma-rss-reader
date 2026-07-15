@@ -1849,6 +1849,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Category options'**
   String get semanticCategoryOptions;
+
+  /// No description provided for @filterSheetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter'**
+  String get filterSheetTitle;
+
+  /// No description provided for @filterReadStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Read status'**
+  String get filterReadStatus;
+
+  /// No description provided for @filterOptionUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Unread'**
+  String get filterOptionUnread;
+
+  /// No description provided for @filterOptionRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Read'**
+  String get filterOptionRead;
+
+  /// No description provided for @filterApply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply filters'**
+  String get filterApply;
+
+  /// No description provided for @filterClear.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get filterClear;
 }
 
 class _AppLocalizationsDelegate
