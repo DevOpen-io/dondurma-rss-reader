@@ -27,11 +27,13 @@
 ## 📲 Download the App
 
 <p align="center">
+  <strong>Available now on iOS and Android</strong><br/><br/>
   <a href="https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr">
-    <img src="https://img.shields.io/badge/Download_on_the-App_Store-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download Dondurma RSS Reader on the App Store" />
+    <img src="https://img.shields.io/badge/Download_on_the-App_Store-0D96F6?style=for-the-badge&logo=app-store&logoColor=white" alt="Download Dondurma RSS Reader on the App Store" />
   </a>
+  &nbsp;&nbsp;&nbsp;
   <a href="https://play.google.com/store/apps/details?id=io.devopen.dondurma">
-    <img src="https://img.shields.io/badge/Get_it_on-Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Get Dondurma RSS Reader on Google Play" />
+    <img src="https://img.shields.io/badge/Get_it_on-Google_Play-34A853?style=for-the-badge&logo=google-play&logoColor=white" alt="Get Dondurma RSS Reader on Google Play" />
   </a>
 </p>
 
@@ -258,11 +260,13 @@ Privacy policy: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-p
 ## 📲 Uygulamayı İndir
 
 <p align="center">
+  <strong>Şimdi iOS ve Android'de mevcut</strong><br/><br/>
   <a href="https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr">
-    <img src="https://img.shields.io/badge/App_Store'dan-İndir-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Dondurma RSS Reader'ı App Store'dan indir" />
+    <img src="https://img.shields.io/badge/App_Store'dan-İndir-0D96F6?style=for-the-badge&logo=app-store&logoColor=white" alt="Dondurma RSS Reader'ı App Store'dan indir" />
   </a>
+  &nbsp;&nbsp;&nbsp;
   <a href="https://play.google.com/store/apps/details?id=io.devopen.dondurma">
-    <img src="https://img.shields.io/badge/Google_Play'den-İndir-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Dondurma RSS Reader'ı Google Play'den indir" />
+    <img src="https://img.shields.io/badge/Google_Play'den-İndir-34A853?style=for-the-badge&logo=google-play&logoColor=white" alt="Dondurma RSS Reader'ı Google Play'den indir" />
   </a>
 </p>
 
