@@ -24,7 +24,19 @@
 
 # 🇬🇧 English
 
+## 📲 Download the App
+
+<p align="center">
+  <a href="https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr">
+    <img src="https://img.shields.io/badge/Download_on_the-App_Store-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download Dondurma RSS Reader on the App Store" />
+  </a>
+  <a href="https://play.google.com/store/apps/details?id=io.devopen.dondurma">
+    <img src="https://img.shields.io/badge/Get_it_on-Google_Play-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Get Dondurma RSS Reader on Google Play" />
+  </a>
+</p>
+
 ## 📖 About
+
 
 **Dondurma** (Turkish for "ice cream" 🍦) is a beautifully crafted, open-source RSS/Atom feed reader that puts you in control of your news consumption. Built with Flutter and Material 3 design principles, it delivers a premium reading experience across **Android, iOS, Web, Windows, macOS, and Linux**.
 
@@ -243,7 +255,19 @@ Privacy policy: [English](docs/privacy-policy.en.md) | [Türkçe](docs/privacy-p
 
 # 🇹🇷 Türkçe
 
+## 📲 Uygulamayı İndir
+
+<p align="center">
+  <a href="https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr">
+    <img src="https://img.shields.io/badge/App_Store'dan-İndir-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Dondurma RSS Reader'ı App Store'dan indir" />
+  </a>
+  <a href="https://play.google.com/store/apps/details?id=io.devopen.dondurma">
+    <img src="https://img.shields.io/badge/Google_Play'den-İndir-414141?style=for-the-badge&logo=google-play&logoColor=white" alt="Dondurma RSS Reader'ı Google Play'den indir" />
+  </a>
+</p>
+
 ## 📖 Hakkında
+
 
 **Dondurma** 🍦 güzel tasarlanmış, açık kaynaklı bir RSS/Atom haber okuyucusudur ve haber tüketiminizin kontrolünü tamamen size bırakır. Flutter ve Material 3 tasarım ilkeleriyle geliştirilmiş olup **Android, iOS, Web, Windows, macOS ve Linux** platformlarında premium bir okuma deneyimi sunar.
 
