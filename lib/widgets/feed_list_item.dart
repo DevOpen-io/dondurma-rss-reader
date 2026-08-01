@@ -15,6 +15,8 @@ import '../providers/subscription_provider.dart';
 /// Cuts [text] to at most [maxChars] characters, ending with an ellipsis.
 /// Keeps both the site name and the category visible in the meta row: without
 /// per-segment limits a long site name pushes the category off screen.
+const int _articleNavigationWindowRadius = 25;
+
 String truncateLabel(String text, int maxChars) {
   if (text.length <= maxChars) return text;
   return '${text.substring(0, maxChars - 1)}…';
@@ -206,11 +208,21 @@ class _ArticleCard extends StatelessWidget {
           final feedProvider = context.read<FeedProvider>();
           final allItems = feedProvider.filteredItems;
           final index = allItems.indexWhere((i) => i.id == item.id);
+          final safeIndex = index >= 0 ? index : 0;
+          final start = (safeIndex - _articleNavigationWindowRadius)
+              .clamp(0, allItems.length)
+              .toInt();
+          final end = (safeIndex + _articleNavigationWindowRadius + 1)
+              .clamp(0, allItems.length)
+              .toInt();
+          final articleItems = allItems.sublist(start, end);
           context.push(
             '/article',
-            extra: {'items': allItems, 'initialIndex': index >= 0 ? index : 0},
+            extra: {'items': articleItems, 'initialIndex': safeIndex - start},
           );
-          feedProvider.markAsRead(item.id);
+          Future<void>.delayed(const Duration(milliseconds: 400), () {
+            if (context.mounted) feedProvider.markAsRead(item.id);
+          });
         },
         child: Padding(
           padding: const EdgeInsets.all(14.0),

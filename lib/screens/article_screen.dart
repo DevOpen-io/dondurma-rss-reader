@@ -18,6 +18,8 @@ import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import 'dart:math' as math;
 
+const _articleTransitionSettleDelay = Duration(milliseconds: 380);
+
 /// Full-screen article viewer with swipe navigation between articles.
 ///
 /// Wraps individual article pages in a [PageView] so users can swipe
@@ -112,8 +114,11 @@ class _ArticlePageState extends State<_ArticlePage> {
       if (!mounted) return;
       _articlePageProvider = context.read<ArticlePageProvider>();
       _articlePageProvider!.addListener(_onProviderChanged);
-      _articlePageProvider!.setContentReady();
-      _maybeCheckAutoFullText();
+      Future<void>.delayed(_articleTransitionSettleDelay, () {
+        if (!mounted) return;
+        _articlePageProvider?.setContentReady();
+        _maybeCheckAutoFullText();
+      });
     });
   }
 
@@ -236,14 +241,13 @@ class _ArticlePageState extends State<_ArticlePage> {
         break;
     }
 
-    // Get content from provider
-    final String displayContent = provider.displayContent;
     final hasHero =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
 
-    // Estimated reading time
-    final readingMinutes = provider.readingMinutes;
-    final readTimeText = readingMinutes <= 0
+    final int? readingMinutes = provider.contentReady
+        ? provider.readingMinutes
+        : null;
+    final readTimeText = readingMinutes == null || readingMinutes <= 0
         ? l10n.lessThanOneMinRead
         : l10n.estimatedReadTime(readingMinutes);
 
@@ -512,7 +516,8 @@ class _ArticlePageState extends State<_ArticlePage> {
                         const SizedBox(height: 24),
 
                         // Shimmer skeleton loading indicator
-                        if (!provider.contentReady ||
+                        if (!widget.isActive ||
+                            !provider.contentReady ||
                             provider.isLoadingFullText) ...[
                           ArticleContentSkeleton(
                             label: provider.isLoadingFullText
@@ -522,7 +527,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                         ] else ...[
                           // Rich HTML content
                           Html(
-                            data: displayContent,
+                            data: provider.displayContent,
                             extensions: [
                               TagExtension(
                                 tagsToExtend: {"img-carousel"},
