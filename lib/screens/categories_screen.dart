@@ -574,7 +574,7 @@ class _FeedRow extends StatelessWidget {
                     size: 14,
                     color: cs.primary.withValues(alpha: 0.7),
                   ),
-                if (sub.fullTextEnabled) ...[
+                if (sub.fullTextEnabled == true) ...[
                   if (sub.notificationsEnabled) const SizedBox(width: 4),
                   Icon(
                     Icons.article_outlined,

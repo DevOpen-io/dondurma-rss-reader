@@ -1126,6 +1126,24 @@ abstract class AppLocalizations {
   /// **'Full Article'**
   String get modeFull;
 
+  /// No description provided for @fullTextDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get fullTextDefault;
+
+  /// No description provided for @fullTextOn.
+  ///
+  /// In en, this message translates to:
+  /// **'On'**
+  String get fullTextOn;
+
+  /// No description provided for @fullTextOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get fullTextOff;
+
   /// No description provided for @searchHistory.
   ///
   /// In en, this message translates to:

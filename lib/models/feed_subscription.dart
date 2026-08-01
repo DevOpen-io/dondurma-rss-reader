@@ -9,7 +9,7 @@ class FeedSubscription {
   final String name;
   final String category;
   final bool notificationsEnabled;
-  final bool fullTextEnabled;
+  final bool? fullTextEnabled;
   final List<String> excludedKeywords;
 
   FeedSubscription({
@@ -17,7 +17,7 @@ class FeedSubscription {
     required this.name,
     required this.category,
     this.notificationsEnabled = true,
-    this.fullTextEnabled = false,
+    this.fullTextEnabled,
     this.excludedKeywords = const [],
   });
 
@@ -27,20 +27,22 @@ class FeedSubscription {
     'name': name,
     'category': category,
     'notificationsEnabled': notificationsEnabled,
-    'fullTextEnabled': fullTextEnabled,
+    if (fullTextEnabled != null) 'fullTextEnabled': fullTextEnabled,
     'excludedKeywords': excludedKeywords,
   };
 
   /// Deserializes a [FeedSubscription] from a JSON map.
   ///
-  /// All fields fall back to sensible defaults for backward compatibility.
+  /// Legacy [fullTextEnabled] values of `false` are migrated to `null`
+  /// (follow global default) since `false` was the original default and
+  /// indistinguishable from "never touched".
   factory FeedSubscription.fromJson(Map<String, dynamic> json) =>
       FeedSubscription(
         url: json['url'] as String? ?? '',
         name: json['name'] as String? ?? '',
         category: json['category'] as String? ?? 'Uncategorized',
         notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
-        fullTextEnabled: json['fullTextEnabled'] as bool? ?? false,
+        fullTextEnabled: json['fullTextEnabled'] == true ? true : null,
         excludedKeywords:
             (json['excludedKeywords'] as List<dynamic>?)
                 ?.map((e) => e.toString())

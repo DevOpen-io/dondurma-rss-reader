@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
 import '../models/feed_item.dart';
+import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/full_text_extraction_service.dart';
 
@@ -31,9 +32,16 @@ class ArticlePageProvider extends ChangeNotifier {
   String? _fullTextContent;
   String? get fullTextContent => _fullTextContent;
 
-  /// Whether the extraction was attempted and failed.
+  /// Whether the extraction was attempted and failed (manual trigger).
   bool _fullTextFailed = false;
   bool get fullTextFailed => _fullTextFailed;
+
+  /// Whether an auto-triggered extraction failed (shown as subtle notice, not snackbar).
+  bool _autoFullTextFailed = false;
+  bool get autoFullTextFailed => _autoFullTextFailed;
+
+  /// Whether the last activation was automatic (from per-feed/global default).
+  bool _lastAttemptAutomatic = false;
 
   /// Whether the heavy Html widget is ready to render. Set to `true`
   /// after the first frame so the route transition animation is not blocked.
@@ -72,21 +80,29 @@ class ArticlePageProvider extends ChangeNotifier {
   // Full-text extraction
   // ---------------------------------------------------------------------------
 
-  /// Checks if the item's feed has full-text enabled by default and
-  /// auto-activates extraction.
-  void checkAutoFullText(SubscriptionProvider subProvider) {
+  /// Checks per-feed and global settings to auto-activate full-text extraction.
+  void checkAutoFullText(
+    SubscriptionProvider subProvider,
+    SettingsProvider settingsProvider,
+  ) {
     final sub = subProvider.subscriptions.where((s) => s.url == item.feedUrl);
-    if (sub.isNotEmpty && sub.first.fullTextEnabled) {
-      activateFullText();
+    final bool feedFullText = sub.isNotEmpty
+        ? (sub.first.fullTextEnabled ?? false)
+        : false;
+    final bool effective = feedFullText || settingsProvider.autoFullText;
+    if (effective) {
+      activateFullText(automatic: true);
     }
   }
 
-  Future<void> activateFullText() async {
+  Future<void> activateFullText({bool automatic = false}) async {
     if (item.link.isEmpty) return;
 
+    _lastAttemptAutomatic = automatic;
     _fullTextActive = true;
     _isLoadingFullText = true;
     _fullTextFailed = false;
+    _autoFullTextFailed = false;
     _fullTextContent = null;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
@@ -105,10 +121,17 @@ class ArticlePageProvider extends ChangeNotifier {
     if (result != null && result.isNotEmpty) {
       _fullTextContent = result;
       _fullTextFailed = false;
+      _autoFullTextFailed = false;
     } else {
-      _fullTextFailed = true;
       _fullTextActive = false;
       _fullTextContent = null;
+      if (_lastAttemptAutomatic) {
+        _autoFullTextFailed = true;
+        _fullTextFailed = false;
+      } else {
+        _fullTextFailed = true;
+        _autoFullTextFailed = false;
+      }
     }
     notifyListeners();
   }
@@ -118,6 +141,7 @@ class ArticlePageProvider extends ChangeNotifier {
     _isLoadingFullText = false;
     _fullTextContent = null;
     _fullTextFailed = false;
+    _autoFullTextFailed = false;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
     notifyListeners();

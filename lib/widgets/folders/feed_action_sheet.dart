@@ -64,7 +64,11 @@ class FeedActionSheet extends StatelessWidget {
                     color: cs.primaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(Icons.rss_feed_rounded, size: 20, color: cs.onPrimaryContainer),
+                  child: Icon(
+                    Icons.rss_feed_rounded,
+                    size: 20,
+                    color: cs.onPrimaryContainer,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -73,13 +77,17 @@ class FeedActionSheet extends StatelessWidget {
                     children: [
                       Text(
                         sub.name,
-                        style: tt.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        style: tt.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         _domain(sub.url),
-                        style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                        style: tt.bodySmall?.copyWith(
+                          color: cs.onSurfaceVariant,
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -104,27 +112,75 @@ class FeedActionSheet extends StatelessWidget {
                           ? Icons.notifications_active_outlined
                           : Icons.notifications_off_outlined,
                       size: 20,
-                      color: sub.notificationsEnabled ? cs.primary : cs.onSurfaceVariant,
+                      color: sub.notificationsEnabled
+                          ? cs.primary
+                          : cs.onSurfaceVariant,
                     ),
                     title: Text(l10n.feedNotifications, style: tt.bodyMedium),
                     trailing: Switch(
                       value: sub.notificationsEnabled,
-                      onChanged: (_) => context.read<SubscriptionProvider>().toggleFeedNotifications(sub.url),
+                      onChanged: (_) => context
+                          .read<SubscriptionProvider>()
+                          .toggleFeedNotifications(sub.url),
                     ),
                   ),
-                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
-                  ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    leading: Icon(
-                      sub.fullTextEnabled ? Icons.article : Icons.article_outlined,
-                      size: 20,
-                      color: sub.fullTextEnabled ? cs.primary : cs.onSurfaceVariant,
-                    ),
-                    title: Text(l10n.fullTextToggle, style: tt.bodyMedium),
-                    trailing: Switch(
-                      value: sub.fullTextEnabled,
-                      onChanged: (_) => context.read<SubscriptionProvider>().toggleFullText(sub.url),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Icon(
+                              sub.fullTextEnabled == true
+                                  ? Icons.article
+                                  : Icons.article_outlined,
+                              size: 20,
+                              color: sub.fullTextEnabled == true
+                                  ? cs.primary
+                                  : cs.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 12),
+                            Text(l10n.fullTextToggle, style: tt.bodyMedium),
+                          ],
+                        ),
+                        const SizedBox(height: 10),
+                        Row(
+                          children: [
+                            _FullTextChip(
+                              label: l10n.fullTextDefault,
+                              isSelected: sub.fullTextEnabled == null,
+                              onTap: () => context
+                                  .read<SubscriptionProvider>()
+                                  .setFullTextMode(sub.url, null),
+                              colorScheme: cs,
+                            ),
+                            const SizedBox(width: 8),
+                            _FullTextChip(
+                              label: l10n.fullTextOn,
+                              isSelected: sub.fullTextEnabled == true,
+                              onTap: () => context
+                                  .read<SubscriptionProvider>()
+                                  .setFullTextMode(sub.url, true),
+                              colorScheme: cs,
+                            ),
+                            const SizedBox(width: 8),
+                            _FullTextChip(
+                              label: l10n.fullTextOff,
+                              isSelected: sub.fullTextEnabled == false,
+                              onTap: () => context
+                                  .read<SubscriptionProvider>()
+                                  .setFullTextMode(sub.url, false),
+                              colorScheme: cs,
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -141,17 +197,33 @@ class FeedActionSheet extends StatelessWidget {
                   FolderActionTile(
                     icon: Icons.drive_file_move_outline,
                     label: l10n.moveToFolder,
-                    trailing: Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: cs.onSurfaceVariant,
+                    ),
                     onTap: onMove,
                   ),
-                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
                   FolderActionTile(
                     icon: Icons.edit_outlined,
                     label: l10n.editFeed,
-                    trailing: Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: cs.onSurfaceVariant,
+                    ),
                     onTap: onEdit,
                   ),
-                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
                   FolderActionTile(
                     icon: Icons.delete_outline,
                     label: l10n.deleteFeed,
@@ -163,6 +235,48 @@ class FeedActionSheet extends StatelessWidget {
             ),
             const SizedBox(height: 8),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FullTextChip extends StatelessWidget {
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+  final ColorScheme colorScheme;
+
+  const _FullTextChip({
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? colorScheme.primary
+              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+          borderRadius: BorderRadius.circular(20),
+          border: isSelected
+              ? null
+              : Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+          ),
         ),
       ),
     );
@@ -202,7 +316,9 @@ class FolderActionTile extends StatelessWidget {
             Expanded(
               child: Text(
                 label,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: effectiveColor),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: effectiveColor),
               ),
             ),
             ?trailing,

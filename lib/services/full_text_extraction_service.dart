@@ -40,6 +40,18 @@ class FullTextExtractionService {
     _cache[url] = html;
   }
 
+  // Failure cache — remembers URLs where extraction returned null so we
+  // don't waste bandwidth retrying on every article open.
+  static final List<String> _failedUrls = [];
+  static const int _failedCapacity = 20;
+
+  static void _recordFailure(String url) {
+    if (_failedUrls.length >= _failedCapacity) {
+      _failedUrls.removeAt(0);
+    }
+    if (!_failedUrls.contains(url)) _failedUrls.add(url);
+  }
+
   // ---------------------------------------------------------------------------
   // Tags and class-name patterns considered non-content
   // ---------------------------------------------------------------------------
@@ -82,6 +94,8 @@ class FullTextExtractionService {
   Future<String?> extractFullText(String url) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
+    // Skip if previously failed this session
+    if (_failedUrls.contains(url)) return null;
 
     try {
       final response = await http
@@ -96,7 +110,10 @@ class FullTextExtractionService {
           )
           .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode != 200) return null;
+      if (response.statusCode != 200) {
+        _recordFailure(url);
+        return null;
+      }
 
       // Full-page HTML parse + heuristic scoring is CPU-heavy (pages can be
       // megabytes) — run it in a background isolate to keep the UI smooth.
@@ -106,9 +123,11 @@ class FullTextExtractionService {
         _cachePut(url, result);
         return result;
       }
+      _recordFailure(url);
       return null;
     } catch (e) {
       debugPrint('FullTextExtractionService error for $url: $e');
+      _recordFailure(url);
       return null;
     }
   }

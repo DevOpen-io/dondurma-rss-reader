@@ -113,7 +113,10 @@ class _ArticlePageState extends State<_ArticlePage> {
       _articlePageProvider = context.read<ArticlePageProvider>();
       _articlePageProvider!.setContentReady();
       _articlePageProvider!.addListener(_onProviderChanged);
-      _articlePageProvider!.checkAutoFullText(context.read<SubscriptionProvider>());
+      _articlePageProvider!.checkAutoFullText(
+        context.read<SubscriptionProvider>(),
+        context.read<SettingsProvider>(),
+      );
     });
   }
 
@@ -125,6 +128,8 @@ class _ArticlePageState extends State<_ArticlePage> {
 
   void _onProviderChanged() {
     final provider = context.read<ArticlePageProvider>();
+    // Only show error snackbar for manual full-text attempts.
+    // Auto-attempt failures are shown as a subtle inline notice.
     if (provider.fullTextFailed && mounted) {
       final l10n = AppLocalizations.of(context);
       ScaffoldMessenger.of(
@@ -442,13 +447,51 @@ class _ArticlePageState extends State<_ArticlePage> {
                         if (widget.item.link.isNotEmpty) ...[
                           const SizedBox(height: 10),
                           ArticleReadingModeToggle(
-                            isFullText: provider.fullTextActive &&
+                            isFullText:
+                                provider.fullTextActive &&
                                 provider.fullTextContent != null,
                             isLoading: provider.isLoadingFullText,
                             onToggle: provider.toggleFullText,
                             colorScheme: colorScheme,
                             l10n: l10n,
                           ),
+                          if (provider.autoFullTextFailed) ...[
+                            const SizedBox(height: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer.withValues(
+                                  alpha: 0.3,
+                                ),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.info_outline_rounded,
+                                    size: 14,
+                                    color: colorScheme.onPrimaryContainer
+                                        .withValues(alpha: 0.7),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      l10n.fullTextFailed,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: colorScheme.onPrimaryContainer
+                                            .withValues(alpha: 0.8),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ],
 
                         const SizedBox(height: 24),
@@ -651,7 +694,9 @@ class _ArticlePageState extends State<_ArticlePage> {
                           value: animatedProgress,
                           minHeight: 3.0,
                           backgroundColor: Colors.transparent,
-                          valueColor: AlwaysStoppedAnimation<Color>(colorScheme.primary),
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            colorScheme.primary,
+                          ),
                         );
                       },
                     ),
@@ -665,5 +710,3 @@ class _ArticlePageState extends State<_ArticlePage> {
     );
   }
 }
-
-

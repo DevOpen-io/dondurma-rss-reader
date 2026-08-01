@@ -562,6 +562,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get modeFull => 'Full Article';
 
   @override
+  String get fullTextDefault => 'Default';
+
+  @override
+  String get fullTextOn => 'On';
+
+  @override
+  String get fullTextOff => 'Off';
+
+  @override
   String get searchHistory => 'Search History';
 
   @override

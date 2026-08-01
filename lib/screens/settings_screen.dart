@@ -343,6 +343,15 @@ class SettingsScreen extends StatelessWidget {
                 onChanged: (v) =>
                     context.read<SettingsProvider>().setLineSpacing(v!),
               ),
+              const SettingsTileDivider(),
+              SettingsSwitchTile(
+                icon: Icons.article_outlined,
+                title: l10n.fullTextExtraction,
+                subtitle: l10n.fullTextExtractionDesc,
+                value: settings.autoFullText,
+                onChanged: (v) =>
+                    context.read<SettingsProvider>().setAutoFullText(v),
+              ),
             ],
           ),
 

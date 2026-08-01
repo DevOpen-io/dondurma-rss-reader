@@ -560,6 +560,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get modeFull => 'Tam Makale';
 
   @override
+  String get fullTextDefault => 'Varsayılan';
+
+  @override
+  String get fullTextOn => 'Açık';
+
+  @override
+  String get fullTextOff => 'Kapalı';
+
+  @override
   String get searchHistory => 'Arama Geçmişi';
 
   @override

@@ -106,13 +106,16 @@ class SubscriptionProvider extends ChangeNotifier {
   List<String> get categoriesOrdered {
     final all = categories;
     final ordered = _categoryOrder.where(all.contains).toList();
-    final remaining = all.where((c) => !_categoryOrder.contains(c)).toList()..sort();
+    final remaining = all.where((c) => !_categoryOrder.contains(c)).toList()
+      ..sort();
     return [...ordered, ...remaining];
   }
 
   /// Reorders the non-Uncategorized category at [oldIndex] to [newIndex].
   Future<void> reorderCategory(int oldIndex, int newIndex) async {
-    final ordered = categoriesOrdered.where((c) => c != 'Uncategorized').toList();
+    final ordered = categoriesOrdered
+        .where((c) => c != 'Uncategorized')
+        .toList();
     if (oldIndex < 0 || oldIndex >= ordered.length) return;
     if (newIndex < 0 || newIndex > ordered.length) return;
     final item = ordered.removeAt(oldIndex);
@@ -444,12 +447,19 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
-  /// Toggles full-text extraction enabled/disabled for a specific feed.
-  Future<void> toggleFullText(String feedUrl) async {
+  /// Sets full-text mode for a feed: `null` = follow global, `true` = always on,
+  /// `false` = always off.
+  Future<void> setFullTextMode(String feedUrl, bool? value) async {
     final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
     if (index != -1) {
-      _subscriptions[index] = _subscriptions[index].copyWith(
-        fullTextEnabled: !_subscriptions[index].fullTextEnabled,
+      final old = _subscriptions[index];
+      _subscriptions[index] = FeedSubscription(
+        url: old.url,
+        name: old.name,
+        category: old.category,
+        notificationsEnabled: old.notificationsEnabled,
+        fullTextEnabled: value,
+        excludedKeywords: old.excludedKeywords,
       );
       await _saveSubscriptions();
       notifyListeners();

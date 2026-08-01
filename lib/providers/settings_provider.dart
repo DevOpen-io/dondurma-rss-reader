@@ -45,6 +45,9 @@ class SettingsProvider extends ChangeNotifier {
   // Browser Mode: 'builtin', 'external', 'system'
   String _browserMode = 'builtin';
 
+  // Full-text extraction
+  bool _autoFullText = false;
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -76,6 +79,8 @@ class SettingsProvider extends ChangeNotifier {
 
   String get browserMode => _browserMode;
 
+  bool get autoFullText => _autoFullText;
+
   // ---------------------------------------------------------------------------
   // Hive box accessor
   // ---------------------------------------------------------------------------
@@ -104,7 +109,8 @@ class SettingsProvider extends ChangeNotifier {
         : savedInterval;
     _syncBackground = _box.get('syncBackground', defaultValue: true);
 
-    final schemeName = _box.get('flexScheme', defaultValue: 'material') as String;
+    final schemeName =
+        _box.get('flexScheme', defaultValue: 'material') as String;
     _flexScheme = FlexScheme.values.firstWhere(
       (e) => e.name == schemeName,
       orElse: () => FlexScheme.material,
@@ -166,6 +172,9 @@ class SettingsProvider extends ChangeNotifier {
 
     // Browser Mode
     _browserMode = _box.get('browserMode', defaultValue: 'builtin');
+
+    // Full-text extraction
+    _autoFullText = _box.get('autoFullText', defaultValue: false);
 
     notifyListeners();
   }
@@ -302,6 +311,13 @@ class SettingsProvider extends ChangeNotifier {
     _browserMode = mode;
     notifyListeners();
     await _box.put('browserMode', mode);
+  }
+
+  /// Enables or disables automatic full-text extraction for all feeds.
+  Future<void> setAutoFullText(bool value) async {
+    _autoFullText = value;
+    notifyListeners();
+    await _box.put('autoFullText', value);
   }
 
   /// Adds a search query to the history.

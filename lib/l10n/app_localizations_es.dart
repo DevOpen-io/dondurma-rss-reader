@@ -571,6 +571,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get modeFull => 'Artículo completo';
 
   @override
+  String get fullTextDefault => 'Predeterminado';
+
+  @override
+  String get fullTextOn => 'Activado';
+
+  @override
+  String get fullTextOff => 'Desactivado';
+
+  @override
   String get searchHistory => 'Historial de búsqueda';
 
   @override
