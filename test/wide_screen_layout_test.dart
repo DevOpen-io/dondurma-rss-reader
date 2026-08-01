@@ -207,7 +207,6 @@ void main() {
         );
         expect(cwFinders, findsNWidgets(2));
 
-        final bodyCw = tester.widget<ConstrainedWidth>(cwFinders.first);
         final box = find.descendant(
           of: cwFinders.first,
           matching: find.byType(ConstrainedBox),
