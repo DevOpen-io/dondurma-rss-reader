@@ -1102,12 +1102,6 @@ abstract class AppLocalizations {
   /// **'Full-Text'**
   String get fullTextToggle;
 
-  /// No description provided for @shortTextMode.
-  ///
-  /// In en, this message translates to:
-  /// **'Short Text Mode'**
-  String get shortTextMode;
-
   /// No description provided for @readingModeLabel.
   ///
   /// In en, this message translates to:

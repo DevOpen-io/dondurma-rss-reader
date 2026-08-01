@@ -167,7 +167,6 @@
   "fullTextLoading": "Cargando el artículo completo…",
   "fullTextFailed": "No se pudo cargar el contenido completo. Mostrando el resumen de la fuente.",
   "fullTextToggle": "Texto completo",
-  "shortTextMode": "Modo de texto corto",
   "readingModeLabel": "Modo de lectura",
   "modeShort": "Resumen",
   "modeFull": "Artículo completo",

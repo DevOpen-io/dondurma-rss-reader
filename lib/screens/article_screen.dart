@@ -111,13 +111,28 @@ class _ArticlePageState extends State<_ArticlePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _articlePageProvider = context.read<ArticlePageProvider>();
-      _articlePageProvider!.setContentReady();
       _articlePageProvider!.addListener(_onProviderChanged);
-      _articlePageProvider!.checkAutoFullText(
-        context.read<SubscriptionProvider>(),
-        context.read<SettingsProvider>(),
-      );
+      _articlePageProvider!.setContentReady();
+      _maybeCheckAutoFullText();
     });
+  }
+
+  @override
+  void didUpdateWidget(covariant _ArticlePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.isActive && widget.isActive) {
+      _maybeCheckAutoFullText();
+    }
+  }
+
+  void _maybeCheckAutoFullText() {
+    if (!mounted || !widget.isActive) return;
+    final provider =
+        _articlePageProvider ?? context.read<ArticlePageProvider>();
+    provider.checkAutoFullText(
+      context.read<SubscriptionProvider>(),
+      context.read<SettingsProvider>(),
+    );
   }
 
   @override

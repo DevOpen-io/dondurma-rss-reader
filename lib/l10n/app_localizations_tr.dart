@@ -548,9 +548,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fullTextToggle => 'Tam Metin';
 
   @override
-  String get shortTextMode => 'Kısa Metin Modu';
-
-  @override
   String get readingModeLabel => 'Okuma modu';
 
   @override

@@ -1,3 +1,4 @@
+import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -12,7 +13,15 @@ import 'package:html/dom.dart';
 /// Designed for feeds that only publish excerpts — fetches the original page,
 /// strips boilerplate elements, and returns the inner HTML of the highest-
 /// scoring content block. Results are cached in-memory for the session.
+///
+/// Singleton: all state ([_cache], [_failedUrls]) is shared process-wide, so a
+/// single instance keeps the instance/state design consistent.
 class FullTextExtractionService {
+  FullTextExtractionService._();
+  static final FullTextExtractionService instance =
+      FullTextExtractionService._();
+  factory FullTextExtractionService() => instance;
+
   // ---------------------------------------------------------------------------
   // HTTP header constants (match FeedService for consistency)
   // ---------------------------------------------------------------------------
@@ -41,15 +50,16 @@ class FullTextExtractionService {
   }
 
   // Failure cache — remembers URLs where extraction returned null so we
-  // don't waste bandwidth retrying on every article open.
-  static final List<String> _failedUrls = [];
+  // don't waste bandwidth retrying on every article open. LinkedHashSet gives
+  // O(1) lookup + insertion-order iteration for FIFO eviction.
+  static final LinkedHashSet<String> _failedUrls = LinkedHashSet<String>();
   static const int _failedCapacity = 20;
 
   static void _recordFailure(String url) {
-    if (_failedUrls.length >= _failedCapacity) {
-      _failedUrls.removeAt(0);
+    if (_failedUrls.length >= _failedCapacity && !_failedUrls.contains(url)) {
+      _failedUrls.remove(_failedUrls.first);
     }
-    if (!_failedUrls.contains(url)) _failedUrls.add(url);
+    _failedUrls.add(url);
   }
 
   // ---------------------------------------------------------------------------
@@ -91,11 +101,18 @@ class FullTextExtractionService {
   ///
   /// Returns `null` if the page cannot be fetched or no suitable content block
   /// is found.
-  Future<String?> extractFullText(String url) async {
+  ///
+  /// [forceRefresh] bypasses the failure cache for explicit user-initiated
+  /// retries (tapping "Full Article"), so a URL that failed on an automatic
+  /// attempt is still retried on demand. Successful results are always cached.
+  Future<String?> extractFullText(
+    String url, {
+    bool forceRefresh = false,
+  }) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
-    // Skip if previously failed this session
-    if (_failedUrls.contains(url)) return null;
+    // Skip if previously failed this session — unless the user forces a retry.
+    if (!forceRefresh && _failedUrls.contains(url)) return null;
 
     try {
       final response = await http

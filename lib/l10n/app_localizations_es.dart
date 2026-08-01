@@ -559,9 +559,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fullTextToggle => 'Texto completo';
 
   @override
-  String get shortTextMode => 'Modo de texto corto';
-
-  @override
   String get readingModeLabel => 'Modo de lectura';
 
   @override

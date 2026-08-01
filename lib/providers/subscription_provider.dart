@@ -452,15 +452,7 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<void> setFullTextMode(String feedUrl, bool? value) async {
     final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
     if (index != -1) {
-      final old = _subscriptions[index];
-      _subscriptions[index] = FeedSubscription(
-        url: old.url,
-        name: old.name,
-        category: old.category,
-        notificationsEnabled: old.notificationsEnabled,
-        fullTextEnabled: value,
-        excludedKeywords: old.excludedKeywords,
-      );
+      _subscriptions[index] = _subscriptions[index].copyWithFullTextMode(value);
       await _saveSubscriptions();
       notifyListeners();
     }

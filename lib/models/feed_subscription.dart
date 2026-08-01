@@ -27,28 +27,44 @@ class FeedSubscription {
     'name': name,
     'category': category,
     'notificationsEnabled': notificationsEnabled,
+    _schemaKey: _schemaVersion,
     if (fullTextEnabled != null) 'fullTextEnabled': fullTextEnabled,
     'excludedKeywords': excludedKeywords,
   };
 
-  /// Deserializes a [FeedSubscription] from a JSON map.
+  /// Schema marker written by every tri-state-aware save.
   ///
-  /// Legacy [fullTextEnabled] values of `false` are migrated to `null`
-  /// (follow global default) since `false` was the original default and
-  /// indistinguishable from "never touched".
-  factory FeedSubscription.fromJson(Map<String, dynamic> json) =>
-      FeedSubscription(
-        url: json['url'] as String? ?? '',
-        name: json['name'] as String? ?? '',
-        category: json['category'] as String? ?? 'Uncategorized',
-        notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
-        fullTextEnabled: json['fullTextEnabled'] == true ? true : null,
-        excludedKeywords:
-            (json['excludedKeywords'] as List<dynamic>?)
-                ?.map((e) => e.toString())
-                .toList() ??
-            const [],
-      );
+  /// Before the tri-state migration `fullTextEnabled` was a non-nullable `bool`
+  /// whose default was `false`, so a stored `false` was indistinguishable from
+  /// "never touched". Records carrying this marker were written after the
+  /// migration, so their `false` is an explicit "always off" and is preserved;
+  /// records without it treat `false` as the legacy default and map it to
+  /// `null` (follow the global setting).
+  static const _schemaKey = 'fullTextSchema';
+  static const _schemaVersion = 2;
+
+  /// Deserializes a [FeedSubscription] from a JSON map.
+  factory FeedSubscription.fromJson(Map<String, dynamic> json) {
+    final raw = json['fullTextEnabled'];
+    final bool triStateAware = json[_schemaKey] == _schemaVersion;
+    final bool? fullText = switch (raw) {
+      true => true,
+      false => triStateAware ? false : null,
+      _ => null,
+    };
+    return FeedSubscription(
+      url: json['url'] as String? ?? '',
+      name: json['name'] as String? ?? '',
+      category: json['category'] as String? ?? 'Uncategorized',
+      notificationsEnabled: json['notificationsEnabled'] as bool? ?? true,
+      fullTextEnabled: fullText,
+      excludedKeywords:
+          (json['excludedKeywords'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
+    );
+  }
 
   FeedSubscription copyWith({
     String? url,
@@ -65,6 +81,17 @@ class FeedSubscription {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       fullTextEnabled: fullTextEnabled ?? this.fullTextEnabled,
       excludedKeywords: excludedKeywords ?? this.excludedKeywords,
+    );
+  }
+
+  FeedSubscription copyWithFullTextMode(bool? value) {
+    return FeedSubscription(
+      url: url,
+      name: name,
+      category: category,
+      notificationsEnabled: notificationsEnabled,
+      fullTextEnabled: value,
+      excludedKeywords: excludedKeywords,
     );
   }
 

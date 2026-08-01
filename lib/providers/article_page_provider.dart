@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
 import '../models/feed_item.dart';
+import '../models/feed_subscription.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/full_text_extraction_service.dart';
@@ -42,6 +43,10 @@ class ArticlePageProvider extends ChangeNotifier {
 
   /// Whether the last activation was automatic (from per-feed/global default).
   bool _lastAttemptAutomatic = false;
+
+  /// Set once [dispose] runs so async continuations skip [notifyListeners],
+  /// which throws on a disposed [ChangeNotifier].
+  bool _disposed = false;
 
   /// Whether the heavy Html widget is ready to render. Set to `true`
   /// after the first frame so the route transition animation is not blocked.
@@ -85,18 +90,24 @@ class ArticlePageProvider extends ChangeNotifier {
     SubscriptionProvider subProvider,
     SettingsProvider settingsProvider,
   ) {
-    final sub = subProvider.subscriptions.where((s) => s.url == item.feedUrl);
-    final bool feedFullText = sub.isNotEmpty
-        ? (sub.first.fullTextEnabled ?? false)
-        : false;
-    final bool effective = feedFullText || settingsProvider.autoFullText;
+    if (_fullTextActive) return;
+    FeedSubscription? sub;
+    for (final s in subProvider.subscriptions) {
+      if (s.url == item.feedUrl) {
+        sub = s;
+        break;
+      }
+    }
+    // Per-feed tri-state: null → follow global, otherwise the explicit value.
+    final bool effective =
+        sub?.fullTextEnabled ?? settingsProvider.autoFullText;
     if (effective) {
       activateFullText(automatic: true);
     }
   }
 
   Future<void> activateFullText({bool automatic = false}) async {
-    if (item.link.isEmpty) return;
+    if (item.link.isEmpty || _disposed) return;
 
     _lastAttemptAutomatic = automatic;
     _fullTextActive = true;
@@ -108,16 +119,14 @@ class ArticlePageProvider extends ChangeNotifier {
     _cachedReadingMinutes = null;
     notifyListeners();
 
-    final result = await _extractionService.extractFullText(item.link);
+    final result = await _extractionService.extractFullText(
+      item.link,
+      forceRefresh: !automatic,
+    );
 
-    // Guard: provider may have been disposed while the HTTP request was in-flight
-    // (user popped the article page). Calling notifyListeners() on a disposed
-    // ChangeNotifier throws "Cannot use a disposed ChangeNotifier".
-    if (!hasListeners) return;
+    if (_disposed) return;
 
     _isLoadingFullText = false;
-    _cachedDisplayContent = null;
-    _cachedReadingMinutes = null;
     if (result != null && result.isNotEmpty) {
       _fullTextContent = result;
       _fullTextFailed = false;
@@ -137,6 +146,7 @@ class ArticlePageProvider extends ChangeNotifier {
   }
 
   void deactivateFullText() {
+    _lastAttemptAutomatic = false;
     _fullTextActive = false;
     _isLoadingFullText = false;
     _fullTextContent = null;
@@ -420,6 +430,7 @@ class ArticlePageProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     readingProgress.dispose();
     super.dispose();
   }

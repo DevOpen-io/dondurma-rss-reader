@@ -131,54 +131,45 @@ class FeedActionSheet extends StatelessWidget {
                   ),
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Icon(
-                              sub.fullTextEnabled == true
-                                  ? Icons.article
-                                  : Icons.article_outlined,
-                              size: 20,
-                              color: sub.fullTextEnabled == true
-                                  ? cs.primary
-                                  : cs.onSurfaceVariant,
-                            ),
-                            const SizedBox(width: 12),
-                            Text(l10n.fullTextToggle, style: tt.bodyMedium),
-                          ],
+                        Icon(
+                          sub.fullTextEnabled == true
+                              ? Icons.article
+                              : Icons.article_outlined,
+                          size: 20,
+                          color: sub.fullTextEnabled == true
+                              ? cs.primary
+                              : cs.onSurfaceVariant,
                         ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            _FullTextChip(
-                              label: l10n.fullTextDefault,
-                              isSelected: sub.fullTextEnabled == null,
-                              onTap: () => context
-                                  .read<SubscriptionProvider>()
-                                  .setFullTextMode(sub.url, null),
-                              colorScheme: cs,
-                            ),
-                            const SizedBox(width: 8),
-                            _FullTextChip(
-                              label: l10n.fullTextOn,
-                              isSelected: sub.fullTextEnabled == true,
-                              onTap: () => context
-                                  .read<SubscriptionProvider>()
-                                  .setFullTextMode(sub.url, true),
-                              colorScheme: cs,
-                            ),
-                            const SizedBox(width: 8),
-                            _FullTextChip(
-                              label: l10n.fullTextOff,
-                              isSelected: sub.fullTextEnabled == false,
-                              onTap: () => context
-                                  .read<SubscriptionProvider>()
-                                  .setFullTextMode(sub.url, false),
-                              colorScheme: cs,
-                            ),
-                          ],
+                        const SizedBox(width: 12),
+                        Text(l10n.fullTextToggle, style: tt.bodyMedium),
+                        const Spacer(),
+                        _FullTextChip(
+                          label: l10n.fullTextDefault,
+                          isSelected: sub.fullTextEnabled == null,
+                          onTap: () => context
+                              .read<SubscriptionProvider>()
+                              .setFullTextMode(sub.url, null),
+                          colorScheme: cs,
+                        ),
+                        const SizedBox(width: 6),
+                        _FullTextChip(
+                          label: l10n.fullTextOn,
+                          isSelected: sub.fullTextEnabled == true,
+                          onTap: () => context
+                              .read<SubscriptionProvider>()
+                              .setFullTextMode(sub.url, true),
+                          colorScheme: cs,
+                        ),
+                        const SizedBox(width: 6),
+                        _FullTextChip(
+                          label: l10n.fullTextOff,
+                          isSelected: sub.fullTextEnabled == false,
+                          onTap: () => context
+                              .read<SubscriptionProvider>()
+                              .setFullTextMode(sub.url, false),
+                          colorScheme: cs,
                         ),
                       ],
                     ),
@@ -260,7 +251,7 @@ class _FullTextChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
           color: isSelected
               ? colorScheme.primary
@@ -273,7 +264,7 @@ class _FullTextChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: 12,
             fontWeight: FontWeight.w600,
             color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
           ),
