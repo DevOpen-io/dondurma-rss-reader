@@ -9,6 +9,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../router/onboarding_state.dart';
+import '../widgets/constrained_width.dart';
 
 const _globalFeedsUrl =
     'https://raw.githubusercontent.com/DevOpen-io/dondurma-rss-reader/refs/heads/main/remote_data/suggested_feeds.json';
@@ -62,13 +63,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       curve: const Interval(0.0, 0.5, curve: Curves.easeOut),
     );
 
-    _headerSlide = Tween<Offset>(
-      begin: const Offset(0, 0.25),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _entranceController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
-    ));
+    _headerSlide = Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
+        .animate(
+          CurvedAnimation(
+            parent: _entranceController,
+            curve: const Interval(0.0, 0.6, curve: Curves.easeOutCubic),
+          ),
+        );
 
     _contentFade = CurvedAnimation(
       parent: _entranceController,
@@ -200,12 +201,20 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final toAdd = <({String url, String name, String category})>[];
     for (final cat in _selectedGlobal) {
       for (final feed in _topFeedsFor(_globalFeeds, cat)) {
-        toAdd.add((url: feed['url']!, name: feed['name']!, category: feed['category']!));
+        toAdd.add((
+          url: feed['url']!,
+          name: feed['name']!,
+          category: feed['category']!,
+        ));
       }
     }
     for (final cat in _selectedTr) {
       for (final feed in _topFeedsFor(_trFeeds, cat)) {
-        toAdd.add((url: feed['url']!, name: feed['name']!, category: feed['category']!));
+        toAdd.add((
+          url: feed['url']!,
+          name: feed['name']!,
+          category: feed['category']!,
+        ));
       }
     }
 
@@ -239,130 +248,130 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
           SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                FadeTransition(
-                  opacity: _headerFade,
-                  child: SlideTransition(
-                    position: _headerSlide,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                      child: Column(
+            child: ConstrainedWidth(
+              maxWidth: 600,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FadeTransition(
+                    opacity: _headerFade,
+                    child: SlideTransition(
+                      position: _headerSlide,
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 64,
+                              height: 64,
+                              decoration: BoxDecoration(
+                                color: colorScheme.primaryContainer,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Icon(
+                                Icons.rss_feed_rounded,
+                                size: 36,
+                                color: colorScheme.onPrimaryContainer,
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            Text(
+                              l10n.onboardingTitle,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.headlineSmall
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w700,
+                                    color: colorScheme.onSurface,
+                                  ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              l10n.onboardingSubtitle,
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    color: colorScheme.onSurface.withValues(
+                                      alpha: 0.6,
+                                    ),
+                                    height: 1.5,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  FadeTransition(
+                    opacity: _headerFade,
+                    child: TabBar(
+                      controller: _tabController,
+                      tabs: [
+                        Tab(text: l10n.tabGlobal),
+                        Tab(text: l10n.tabTurkish),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: FadeTransition(
+                      opacity: _contentFade,
+                      child: TabBarView(
+                        controller: _tabController,
                         children: [
-                          Container(
-                            width: 64,
-                            height: 64,
-                            decoration: BoxDecoration(
-                              color: colorScheme.primaryContainer,
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Icon(
-                              Icons.rss_feed_rounded,
-                              size: 36,
-                              color: colorScheme.onPrimaryContainer,
-                            ),
+                          _buildContent(
+                            feeds: _globalFeeds,
+                            loading: _loadingGlobal,
+                            error: _errorGlobal,
+                            selected: _selectedGlobal,
+                            onToggle: (cat) => setState(() {
+                              if (_selectedGlobal.contains(cat)) {
+                                _selectedGlobal.remove(cat);
+                              } else {
+                                _selectedGlobal.add(cat);
+                              }
+                            }),
+                            onRetry: () {
+                              setState(() {
+                                _loadingGlobal = true;
+                                _errorGlobal = false;
+                              });
+                              _loadGlobalFeeds();
+                            },
+                            l10n: l10n,
+                            colorScheme: colorScheme,
                           ),
-                          const SizedBox(height: 20),
-                          Text(
-                            l10n.onboardingTitle,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .headlineSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w700,
-                                  color: colorScheme.onSurface,
-                                ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            l10n.onboardingSubtitle,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: colorScheme.onSurface
-                                      .withValues(alpha: 0.6),
-                                  height: 1.5,
-                                ),
+                          _buildContent(
+                            feeds: _trFeeds,
+                            loading: _loadingTr,
+                            error: _errorTr,
+                            selected: _selectedTr,
+                            onToggle: (cat) => setState(() {
+                              if (_selectedTr.contains(cat)) {
+                                _selectedTr.remove(cat);
+                              } else {
+                                _selectedTr.add(cat);
+                              }
+                            }),
+                            onRetry: () {
+                              setState(() {
+                                _loadingTr = true;
+                                _errorTr = false;
+                              });
+                              _loadTrFeeds();
+                            },
+                            l10n: l10n,
+                            colorScheme: colorScheme,
                           ),
                         ],
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                FadeTransition(
-                  opacity: _headerFade,
-                  child: TabBar(
-                    controller: _tabController,
-                    tabs: [
-                      Tab(text: l10n.tabGlobal),
-                      Tab(text: l10n.tabTurkish),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: FadeTransition(
+                  FadeTransition(
                     opacity: _contentFade,
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        _buildContent(
-                          feeds: _globalFeeds,
-                          loading: _loadingGlobal,
-                          error: _errorGlobal,
-                          selected: _selectedGlobal,
-                          onToggle: (cat) => setState(() {
-                            if (_selectedGlobal.contains(cat)) {
-                              _selectedGlobal.remove(cat);
-                            } else {
-                              _selectedGlobal.add(cat);
-                            }
-                          }),
-                          onRetry: () {
-                            setState(() {
-                              _loadingGlobal = true;
-                              _errorGlobal = false;
-                            });
-                            _loadGlobalFeeds();
-                          },
-                          l10n: l10n,
-                          colorScheme: colorScheme,
-                        ),
-                        _buildContent(
-                          feeds: _trFeeds,
-                          loading: _loadingTr,
-                          error: _errorTr,
-                          selected: _selectedTr,
-                          onToggle: (cat) => setState(() {
-                            if (_selectedTr.contains(cat)) {
-                              _selectedTr.remove(cat);
-                            } else {
-                              _selectedTr.add(cat);
-                            }
-                          }),
-                          onRetry: () {
-                            setState(() {
-                              _loadingTr = true;
-                              _errorTr = false;
-                            });
-                            _loadTrFeeds();
-                          },
-                          l10n: l10n,
-                          colorScheme: colorScheme,
-                        ),
-                      ],
-                    ),
+                    child: _buildBottom(l10n, colorScheme),
                   ),
-                ),
-                FadeTransition(
-                  opacity: _contentFade,
-                  child: _buildBottom(l10n, colorScheme),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ],
@@ -404,10 +413,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ),
               const SizedBox(height: 16),
-              FilledButton.tonal(
-                onPressed: onRetry,
-                child: Text(l10n.retry),
-              ),
+              FilledButton.tonal(onPressed: onRetry, child: Text(l10n.retry)),
             ],
           ),
         ),

@@ -9,6 +9,7 @@ import '../providers/subscription_provider.dart';
 import '../utils/app_snackbar.dart';
 import '../widgets/folders/feed_action_sheet.dart';
 import '../widgets/folders/folder_dialogs.dart';
+import '../widgets/constrained_width.dart';
 
 /// Screen for managing feed categories (folders) and their subscriptions.
 ///
@@ -260,10 +261,7 @@ class CategoriesScreen extends StatelessWidget {
                                   context.read<FeedProvider>().refreshAll();
                                   showAppSnackBar(
                                     ScaffoldMessenger.of(context),
-                                    l10n.feedMovedToFolder(
-                                      sub.name,
-                                      category,
-                                    ),
+                                    l10n.feedMovedToFolder(sub.name, category),
                                   );
                                 }
                               });
@@ -361,26 +359,28 @@ class CategoriesScreen extends StatelessWidget {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(0, 8, 0, 128),
-      itemCount: sortedCategoryNames.length,
-      itemBuilder: (context, index) {
-        final categoryName = sortedCategoryNames[index];
-        final subs = categoryFeeds[categoryName]!;
-        return _CategorySection(
-          categoryName: categoryName,
-          subs: subs,
-          subscriptionProvider: subscriptionProvider,
-          onIconTap: () => _showIconPicker(context, categoryName),
-          onRename: () => _showEditCategoryDialog(context, categoryName),
-          onDelete: () => _showDeleteCategoryConfirmation(
-            context,
-            categoryName,
-            subs.length,
-          ),
-          onFeedTap: (sub) => _showFeedActionSheet(context, sub),
-        );
-      },
+    return ConstrainedWidth(
+      child: ListView.builder(
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 128),
+        itemCount: sortedCategoryNames.length,
+        itemBuilder: (context, index) {
+          final categoryName = sortedCategoryNames[index];
+          final subs = categoryFeeds[categoryName]!;
+          return _CategorySection(
+            categoryName: categoryName,
+            subs: subs,
+            subscriptionProvider: subscriptionProvider,
+            onIconTap: () => _showIconPicker(context, categoryName),
+            onRename: () => _showEditCategoryDialog(context, categoryName),
+            onDelete: () => _showDeleteCategoryConfirmation(
+              context,
+              categoryName,
+              subs.length,
+            ),
+            onFeedTap: (sub) => _showFeedActionSheet(context, sub),
+          );
+        },
+      ),
     );
   }
 }

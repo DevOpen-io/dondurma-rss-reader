@@ -14,6 +14,7 @@ import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_list_skeleton.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
+import '../widgets/constrained_width.dart';
 import 'categories_screen.dart';
 import 'bookmarks_screen.dart';
 import 'settings_screen.dart';
@@ -424,12 +425,14 @@ class _HomeScreenState extends State<HomeScreen> {
                         },
                       ),
                     Expanded(
-                      child: _buildHomeBody(
-                        context,
-                        provider,
-                        todayItems,
-                        yesterdayItems,
-                        olderItems,
+                      child: ConstrainedWidth(
+                        child: _buildHomeBody(
+                          context,
+                          provider,
+                          todayItems,
+                          yesterdayItems,
+                          olderItems,
+                        ),
                       ),
                     ),
                   ],
@@ -448,106 +451,111 @@ class _HomeScreenState extends State<HomeScreen> {
           16,
           16 + MediaQuery.viewPaddingOf(context).bottom,
         ),
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.10),
-                blurRadius: 24,
-                offset: const Offset(0, 6),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
-            child: Material(
-              color: Theme.of(context).colorScheme.surfaceContainer,
-              child: SizedBox(
-                height: 64,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: NavBarItem(
-                        icon: _selectedIndex == 0
-                            ? Icons.list
-                            : Icons.list_outlined,
-                        label: l10n.feedsTab,
-                        selected: _selectedIndex == 0,
-                        onTap: () => _onItemTapped(0),
+        child: ConstrainedWidth(
+          maxWidth: 480,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.10),
+                  blurRadius: 24,
+                  offset: const Offset(0, 6),
+                ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Material(
+                color: Theme.of(context).colorScheme.surfaceContainer,
+                child: SizedBox(
+                  height: 64,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: NavBarItem(
+                          icon: _selectedIndex == 0
+                              ? Icons.list
+                              : Icons.list_outlined,
+                          label: l10n.feedsTab,
+                          selected: _selectedIndex == 0,
+                          onTap: () => _onItemTapped(0),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: NavBarItem(
-                        icon: _selectedIndex == 1
-                            ? Icons.folder
-                            : Icons.folder_outlined,
-                        label: l10n.foldersTab,
-                        selected: _selectedIndex == 1,
-                        onTap: () => _onItemTapped(1),
+                      Expanded(
+                        child: NavBarItem(
+                          icon: _selectedIndex == 1
+                              ? Icons.folder
+                              : Icons.folder_outlined,
+                          label: l10n.foldersTab,
+                          selected: _selectedIndex == 1,
+                          onTap: () => _onItemTapped(1),
+                        ),
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 10,
-                      ),
-                      child: AnimatedOpacity(
-                        opacity: _selectedIndex <= 1 ? 1.0 : 0.0,
-                        duration: const Duration(milliseconds: 150),
-                        child: IgnorePointer(
-                          ignoring: _selectedIndex > 1,
-                          child: Tooltip(
-                            message: _selectedIndex == 0
-                                ? l10n.semanticAddFeed
-                                : l10n.addFolder,
-                            child: GestureDetector(
-                              onTap: _selectedIndex == 0
-                                  ? _showAddFeedDialog
-                                  : _showAddFolderDialog,
-                              child: Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: Icon(
-                                  _selectedIndex == 0
-                                      ? Icons.add
-                                      : Icons.create_new_folder_outlined,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.onPrimary,
-                                  size: 22,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 10,
+                        ),
+                        child: AnimatedOpacity(
+                          opacity: _selectedIndex <= 1 ? 1.0 : 0.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: IgnorePointer(
+                            ignoring: _selectedIndex > 1,
+                            child: Tooltip(
+                              message: _selectedIndex == 0
+                                  ? l10n.semanticAddFeed
+                                  : l10n.addFolder,
+                              child: GestureDetector(
+                                onTap: _selectedIndex == 0
+                                    ? _showAddFeedDialog
+                                    : _showAddFolderDialog,
+                                child: Container(
+                                  width: 44,
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: Icon(
+                                    _selectedIndex == 0
+                                        ? Icons.add
+                                        : Icons.create_new_folder_outlined,
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onPrimary,
+                                    size: 22,
+                                  ),
                                 ),
                               ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: NavBarItem(
-                        icon: _selectedIndex == 2
-                            ? Icons.bookmark
-                            : Icons.bookmark_border,
-                        label: l10n.bookmarksTab,
-                        selected: _selectedIndex == 2,
-                        onTap: () => _onItemTapped(2),
+                      Expanded(
+                        child: NavBarItem(
+                          icon: _selectedIndex == 2
+                              ? Icons.bookmark
+                              : Icons.bookmark_border,
+                          label: l10n.bookmarksTab,
+                          selected: _selectedIndex == 2,
+                          onTap: () => _onItemTapped(2),
+                        ),
                       ),
-                    ),
-                    Expanded(
-                      child: NavBarItem(
-                        icon: _selectedIndex == 3
-                            ? Icons.settings
-                            : Icons.settings_outlined,
-                        label: l10n.settingsTab,
-                        selected: _selectedIndex == 3,
-                        onTap: () => _onItemTapped(3),
+                      Expanded(
+                        child: NavBarItem(
+                          icon: _selectedIndex == 3
+                              ? Icons.settings
+                              : Icons.settings_outlined,
+                          label: l10n.settingsTab,
+                          selected: _selectedIndex == 3,
+                          onTap: () => _onItemTapped(3),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

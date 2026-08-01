@@ -61,7 +61,7 @@ class _FeedListItemState extends State<FeedListItem>
   void _onHorizontalDragUpdate(DragUpdateDetails details) {
     if (_controller.isAnimating) return;
     final prev = _actionTriggered;
-    final width = MediaQuery.of(context).size.width;
+    final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
     final threshold = width * 0.25;
     setState(() {
       _dragExtent += details.primaryDelta!;
@@ -79,7 +79,7 @@ class _FeedListItemState extends State<FeedListItem>
 
   void _onHorizontalDragEnd(DragEndDetails details) {
     if (_controller.isAnimating) return;
-    final width = MediaQuery.of(context).size.width;
+    final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
     final threshold = width * 0.25;
     final velocity = details.primaryVelocity ?? 0.0;
 

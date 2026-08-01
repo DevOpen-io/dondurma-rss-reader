@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/bookmark_provider.dart';
 import '../widgets/feed_list_item.dart';
+import '../widgets/constrained_width.dart';
 
 /// Displays the user's saved/bookmarked articles in a scrollable list.
 ///
@@ -56,17 +57,19 @@ class BookmarksScreen extends StatelessWidget {
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.only(
-        top: 16.0,
-        left: 16.0,
-        right: 16.0,
-        bottom: 120.0,
+    return ConstrainedWidth(
+      child: ListView.builder(
+        padding: const EdgeInsets.only(
+          top: 16.0,
+          left: 16.0,
+          right: 16.0,
+          bottom: 120.0,
+        ),
+        itemCount: bookmarkedItems.length,
+        itemBuilder: (context, index) {
+          return FeedListItem(item: bookmarkedItems[index]);
+        },
       ),
-      itemCount: bookmarkedItems.length,
-      itemBuilder: (context, index) {
-        return FeedListItem(item: bookmarkedItems[index]);
-      },
     );
   }
 }
