@@ -16,6 +16,7 @@ import '../widgets/article/article_content_skeleton.dart';
 import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
+import '../utils/app_toast.dart';
 import 'dart:math' as math;
 
 const _articleTransitionSettleDelay = Duration(milliseconds: 380);
@@ -148,13 +149,11 @@ class _ArticlePageState extends State<_ArticlePage> {
 
   void _onProviderChanged() {
     final provider = context.read<ArticlePageProvider>();
-    // Only show error snackbar for manual full-text attempts.
+    // Only show an error toast for manual full-text attempts.
     // Auto-attempt failures are shown as a subtle inline notice.
     if (provider.fullTextFailed && mounted) {
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.fullTextFailed)));
+      showAppToast(l10n.fullTextFailed, type: AppToastType.error);
     }
   }
 
@@ -171,9 +170,7 @@ class _ArticlePageState extends State<_ArticlePage> {
     final uri = Uri.tryParse(cleanUrl);
     if (uri == null) {
       final l10n = AppLocalizations.of(context);
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.invalidUrlFormat)));
+      showAppToast(l10n.invalidUrlFormat, type: AppToastType.error);
       return;
     }
 

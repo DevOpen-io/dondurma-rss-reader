@@ -6,13 +6,13 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../utils/app_snackbar.dart';
+import '../utils/app_toast.dart';
 
 /// Full-screen page that displays a curated list of suggested RSS feeds,
 /// fetched from a remote JSON endpoint.
 ///
 /// Users can search by name, filter by category (via a bottom sheet picker),
-/// and subscribe with a single tap. Undo is offered via snackbar.
+/// and subscribe with a single tap. Undo is offered via a global toast.
 class ExploreFeedsPage extends StatefulWidget {
   const ExploreFeedsPage({super.key});
 
@@ -194,16 +194,14 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     final l10n = AppLocalizations.of(context);
     final subscriptionProvider = context.read<SubscriptionProvider>();
     final feedProvider = context.read<FeedProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-
     final added = await subscriptionProvider.addFeed(url, name, category);
     if (!added) return;
     if (context.mounted) feedProvider.refreshAll();
 
-    showAppSnackBar(
-      messenger,
+    showAppToast(
       l10n.addedSubscription(name),
-      action: SnackBarAction(
+      type: AppToastType.success,
+      action: AppToastAction(
         label: l10n.undo,
         onPressed: () async {
           await subscriptionProvider.removeFeed(url);
@@ -298,15 +296,13 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
 
     final subscriptionProvider = context.read<SubscriptionProvider>();
     final feedProvider = context.read<FeedProvider>();
-    final messenger = ScaffoldMessenger.of(context);
-
     await subscriptionProvider.removeFeed(url);
     if (context.mounted) feedProvider.refreshAll();
 
-    showAppSnackBar(
-      messenger,
+    showAppToast(
       l10n.removedSubscription(name),
-      action: SnackBarAction(
+      type: AppToastType.success,
+      action: AppToastAction(
         label: l10n.undo,
         onPressed: () async {
           await subscriptionProvider.addFeed(url, name, category);

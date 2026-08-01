@@ -9,7 +9,7 @@ import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../screens/what_is_rss_page.dart';
-import '../utils/app_snackbar.dart';
+import '../utils/app_toast.dart';
 import 'explore_feeds_dialog.dart';
 import 'folders/category_action_sheet.dart';
 import 'folders/feed_action_sheet.dart';
@@ -76,7 +76,9 @@ class AppDrawer extends StatelessWidget {
               child: Consumer2<FeedProvider, SubscriptionProvider>(
                 builder: (context, provider, subscriptionProvider, _) {
                   final ordered = subscriptionProvider.categoriesOrdered;
-                  final nonUncategorized = ordered.where((c) => c != 'Uncategorized').toList();
+                  final nonUncategorized = ordered
+                      .where((c) => c != 'Uncategorized')
+                      .toList();
                   final hasUncategorized = ordered.contains('Uncategorized');
 
                   return ListView(
@@ -101,9 +103,9 @@ class AppDrawer extends StatelessWidget {
                       // which clones the full ThemeData on every rebuild for every
                       // category — O(N) ThemeData copies per frame.
                       Theme(
-                        data: Theme.of(context).copyWith(
-                          dividerColor: Colors.transparent,
-                        ),
+                        data: Theme.of(
+                          context,
+                        ).copyWith(dividerColor: Colors.transparent),
                         child: ReorderableListView(
                           shrinkWrap: true,
                           physics: const NeverScrollableScrollPhysics(),
@@ -122,7 +124,10 @@ class AppDrawer extends StatelessWidget {
                           },
                           onReorderItem: (oldIndex, newIndex) {
                             if (newIndex > oldIndex) newIndex--;
-                            subscriptionProvider.reorderCategory(oldIndex, newIndex);
+                            subscriptionProvider.reorderCategory(
+                              oldIndex,
+                              newIndex,
+                            );
                           },
                           children: [
                             for (int i = 0; i < nonUncategorized.length; i++)
@@ -130,10 +135,15 @@ class AppDrawer extends StatelessWidget {
                                 key: ValueKey(nonUncategorized[i]),
                                 index: i,
                                 child: _buildExpandableCategoryItem(
-                                  categoryIcon: subscriptionProvider.getCategoryIcon(nonUncategorized[i]),
+                                  categoryIcon: subscriptionProvider
+                                      .getCategoryIcon(nonUncategorized[i]),
                                   title: nonUncategorized[i],
-                                  feedSources: subscriptionProvider.subscriptions
-                                      .where((sub) => sub.category == nonUncategorized[i])
+                                  feedSources: subscriptionProvider
+                                      .subscriptions
+                                      .where(
+                                        (sub) =>
+                                            sub.category == nonUncategorized[i],
+                                      )
                                       .toList(),
                                   provider: provider,
                                   subscriptionProvider: subscriptionProvider,
@@ -147,7 +157,9 @@ class AppDrawer extends StatelessWidget {
                       if (hasUncategorized) ...[
                         _buildSectionHeader(context, l10n.uncategorized),
                         _buildExpandableCategoryItem(
-                          categoryIcon: subscriptionProvider.getCategoryIcon('Uncategorized'),
+                          categoryIcon: subscriptionProvider.getCategoryIcon(
+                            'Uncategorized',
+                          ),
                           title: l10n.randomBlogs,
                           feedSources: subscriptionProvider.subscriptions
                               .where((sub) => sub.category == 'Uncategorized')
@@ -192,7 +204,9 @@ class AppDrawer extends StatelessWidget {
                         context: context,
                         onTap: () {
                           context.pop();
-                          launchUrl(Uri(scheme: 'mailto', path: 'info@devopen.io'));
+                          launchUrl(
+                            Uri(scheme: 'mailto', path: 'info@devopen.io'),
+                          );
                         },
                       ),
                     ],
@@ -200,10 +214,7 @@ class AppDrawer extends StatelessWidget {
                 },
               ),
             ),
-            Divider(
-              height: 1,
-              color: cs.outlineVariant.withValues(alpha: 0.4),
-            ),
+            Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.4)),
             _buildAboutTile(context, l10n),
           ],
         ),
@@ -295,48 +306,137 @@ class AppDrawer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
       child: ExpansionTile(
-          initiallyExpanded: provider.selectedCategory == targetCategory,
-          tilePadding: const EdgeInsets.only(left: 10, right: 10),
-          childrenPadding: const EdgeInsets.only(left: 12, right: 8, bottom: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
-          ),
-          backgroundColor: isCategorySelected
-              ? cs.primaryContainer.withValues(alpha: 0.22)
-              : Colors.transparent,
-          collapsedBackgroundColor: isCategorySelected
-              ? cs.primaryContainer.withValues(alpha: 0.35)
-              : Colors.transparent,
-          iconColor: cs.onSurfaceVariant,
-          collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
-          leading: _buildIconChip(
-            context,
-            icon: categoryIcon,
-            isSelected: isCategorySelected,
-          ),
-          title: Row(
-            children: [
-              Expanded(
+        initiallyExpanded: provider.selectedCategory == targetCategory,
+        tilePadding: const EdgeInsets.only(left: 10, right: 10),
+        childrenPadding: const EdgeInsets.only(left: 12, right: 8, bottom: 8),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        collapsedShape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+        backgroundColor: isCategorySelected
+            ? cs.primaryContainer.withValues(alpha: 0.22)
+            : Colors.transparent,
+        collapsedBackgroundColor: isCategorySelected
+            ? cs.primaryContainer.withValues(alpha: 0.35)
+            : Colors.transparent,
+        iconColor: cs.onSurfaceVariant,
+        collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
+        leading: _buildIconChip(
+          context,
+          icon: categoryIcon,
+          isSelected: isCategorySelected,
+        ),
+        title: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  provider.selectCategory(targetCategory);
+                  onFeedSelected?.call();
+                  context.pop();
+                },
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: tt.bodyMedium?.copyWith(
+                          color: isCategorySelected
+                              ? cs.primary
+                              : cs.onSurface.withValues(alpha: 0.8),
+                          fontWeight: isCategorySelected
+                              ? FontWeight.w700
+                              : FontWeight.w500,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (count > 0) ...[
+                      const SizedBox(width: 8),
+                      _buildCountPill(context, count, isCategorySelected),
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            if (!isUncategorizedNode) ...[
+              const SizedBox(width: 4),
+              Semantics(
+                label: AppLocalizations.of(context).semanticCategoryOptions,
+                button: true,
                 child: GestureDetector(
                   behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    provider.selectCategory(targetCategory);
-                    onFeedSelected?.call();
-                    context.pop();
-                  },
+                  onTap: () => _showCategoryActionSheet(
+                    context,
+                    targetCategory,
+                    subscriptionProvider.getCategoryIcon(targetCategory),
+                    feedSources.length,
+                  ),
+                  // 40x40 hit target (visual icon unchanged at 18px).
+                  child: SizedBox(
+                    width: 40,
+                    height: 40,
+                    child: Center(
+                      child: Icon(
+                        Icons.more_vert,
+                        size: 18,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        children: feedSources.map((sub) {
+          final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
+          final feedCount = provider.unreadCount(feedUrl: sub.url);
+
+          return Padding(
+            padding: const EdgeInsets.only(left: 22.0, top: 2.0),
+            child: Material(
+              color: isFeedSelected
+                  ? cs.primary.withValues(alpha: 0.08)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(10),
+                onTap: () {
+                  provider.selectFeed(sub.url);
+                  onFeedSelected?.call();
+                  context.pop();
+                },
+                onLongPress: () => _showFeedActionSheet(context, sub),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 9,
+                  ),
                   child: Row(
                     children: [
+                      Container(
+                        width: 5,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isFeedSelected
+                              ? cs.primary
+                              : cs.onSurfaceVariant.withValues(alpha: 0.35),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          title,
-                          style: tt.bodyMedium?.copyWith(
-                            color: isCategorySelected
+                          sub.name,
+                          style: tt.bodySmall?.copyWith(
+                            fontSize: 13,
+                            color: isFeedSelected
                                 ? cs.primary
-                                : cs.onSurface.withValues(alpha: 0.8),
-                            fontWeight: isCategorySelected
+                                : cs.onSurface.withValues(alpha: 0.65),
+                            fontWeight: isFeedSelected
                                 ? FontWeight.w700
                                 : FontWeight.w500,
                           ),
@@ -344,117 +444,26 @@ class AppDrawer extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
-                      if (count > 0) ...[
+                      if (feedCount > 0) ...[
                         const SizedBox(width: 8),
-                        _buildCountPill(context, count, isCategorySelected),
+                        Text(
+                          '$feedCount',
+                          style: tt.labelSmall?.copyWith(
+                            color: isFeedSelected
+                                ? cs.primary
+                                : cs.onSurfaceVariant.withValues(alpha: 0.7),
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                       ],
                     ],
                   ),
                 ),
               ),
-              if (!isUncategorizedNode) ...[
-                const SizedBox(width: 4),
-                Semantics(
-                  label: AppLocalizations.of(context).semanticCategoryOptions,
-                  button: true,
-                  child: GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: () => _showCategoryActionSheet(
-                      context,
-                      targetCategory,
-                      subscriptionProvider.getCategoryIcon(targetCategory),
-                      feedSources.length,
-                    ),
-                    // 40x40 hit target (visual icon unchanged at 18px).
-                    child: SizedBox(
-                      width: 40,
-                      height: 40,
-                      child: Center(
-                        child: Icon(
-                          Icons.more_vert,
-                          size: 18,
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ],
-          ),
-          children: feedSources.map((sub) {
-            final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
-            final feedCount = provider.unreadCount(feedUrl: sub.url);
-
-            return Padding(
-              padding: const EdgeInsets.only(left: 22.0, top: 2.0),
-              child: Material(
-                color: isFeedSelected
-                    ? cs.primary.withValues(alpha: 0.08)
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(10),
-                  onTap: () {
-                    provider.selectFeed(sub.url);
-                    onFeedSelected?.call();
-                    context.pop();
-                  },
-                  onLongPress: () => _showFeedActionSheet(context, sub),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 9,
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: isFeedSelected
-                                ? cs.primary
-                                : cs.onSurfaceVariant.withValues(alpha: 0.35),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            sub.name,
-                            style: tt.bodySmall?.copyWith(
-                              fontSize: 13,
-                              color: isFeedSelected
-                                  ? cs.primary
-                                  : cs.onSurface.withValues(alpha: 0.65),
-                              fontWeight: isFeedSelected
-                                  ? FontWeight.w700
-                                  : FontWeight.w500,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (feedCount > 0) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            '$feedCount',
-                            style: tt.labelSmall?.copyWith(
-                              color: isFeedSelected
-                                  ? cs.primary
-                                  : cs.onSurfaceVariant.withValues(alpha: 0.7),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            );
-          }).toList(),
-        ),
+            ),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -492,8 +501,9 @@ class AppDrawer extends StatelessWidget {
                       color: isSelected
                           ? cs.primary
                           : cs.onSurface.withValues(alpha: 0.8),
-                      fontWeight:
-                          isSelected ? FontWeight.w700 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -570,8 +580,9 @@ class AppDrawer extends StatelessWidget {
                   .read<SubscriptionProvider>()
                   .removeCategory(category)
                   .then((_) {
-                if (context.mounted) context.read<FeedProvider>().refreshAll();
-              });
+                    if (context.mounted)
+                      context.read<FeedProvider>().refreshAll();
+                  });
               Navigator.of(ctx).pop();
             },
             child: Text(
@@ -664,7 +675,9 @@ class AppDrawer extends StatelessWidget {
                     itemBuilder: (_, index) {
                       final category = allCategories[index];
                       return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
                         leading: Icon(
                           subscriptionProvider.getCategoryIcon(category),
                           size: 20,
@@ -680,17 +693,13 @@ class AppDrawer extends StatelessWidget {
                           subscriptionProvider
                               .moveFeedToCategory(sub.url, category)
                               .then((_) {
-                                if (sheetCtx.mounted) Navigator.of(sheetCtx).pop();
+                                if (sheetCtx.mounted)
+                                  Navigator.of(sheetCtx).pop();
                                 if (context.mounted) {
                                   context.read<FeedProvider>().refreshAll();
-                                  // Close the drawer first — the snackbar
-                                  // renders below it and would be hidden.
-                                  final messenger =
-                                      ScaffoldMessenger.of(context);
-                                  Navigator.of(context).pop();
-                                  showAppSnackBar(
-                                    messenger,
+                                  showAppToast(
                                     l10n.feedMovedToFolder(sub.name, category),
+                                    type: AppToastType.success,
                                   );
                                 }
                               });
@@ -736,7 +745,9 @@ class AppDrawer extends StatelessWidget {
               backgroundColor: Theme.of(context).colorScheme.error,
             ),
             onPressed: () {
-              context.read<SubscriptionProvider>().removeFeed(sub.url).then((_) {
+              context.read<SubscriptionProvider>().removeFeed(sub.url).then((
+                _,
+              ) {
                 if (context.mounted) context.read<FeedProvider>().refreshAll();
               });
               Navigator.of(ctx).pop();
@@ -780,8 +791,7 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
                   color: cs.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(20),
@@ -831,24 +841,15 @@ class AppDrawer extends StatelessWidget {
         const SizedBox(height: 12),
         InkWell(
           onTap: () {
-            launchUrl(
-              Uri.parse('mailto:info@devopen.io'),
-            );
+            launchUrl(Uri.parse('mailto:info@devopen.io'));
           },
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8.0,
-              horizontal: 4.0,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.email_outlined,
-                  size: 20,
-                  color: cs.primary,
-                ),
+                Icon(Icons.email_outlined, size: 20, color: cs.primary),
                 const SizedBox(width: 8),
                 Text(
                   'info@devopen.io',
@@ -864,25 +865,16 @@ class AppDrawer extends StatelessWidget {
         InkWell(
           onTap: () {
             launchUrl(
-              Uri.parse(
-                'https://github.com/DevOpen-io/Dondurma-Rss-Reader',
-              ),
+              Uri.parse('https://github.com/DevOpen-io/Dondurma-Rss-Reader'),
             );
           },
           borderRadius: BorderRadius.circular(8),
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              vertical: 8.0,
-              horizontal: 4.0,
-            ),
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.code,
-                  size: 20,
-                  color: cs.primary,
-                ),
+                Icon(Icons.code, size: 20, color: cs.primary),
                 const SizedBox(width: 8),
                 Text(
                   'GitHub',

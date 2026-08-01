@@ -11,7 +11,7 @@ import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
-import '../utils/app_snackbar.dart';
+import '../utils/app_toast.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
@@ -519,9 +519,9 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () async {
                   await context.read<FeedProvider>().clearCache();
                   if (context.mounted) {
-                    showAppSnackBar(
-                      ScaffoldMessenger.of(context),
+                    showAppToast(
                       l10n.cacheClearedSuccess,
+                      type: AppToastType.success,
                     );
                   }
                 },
@@ -535,9 +535,9 @@ class SettingsScreen extends StatelessWidget {
                 onTap: () async {
                   await context.read<SettingsProvider>().clearSearchHistory();
                   if (context.mounted) {
-                    showAppSnackBar(
-                      ScaffoldMessenger.of(context),
+                    showAppToast(
                       l10n.searchHistoryCleared,
+                      type: AppToastType.success,
                     );
                   }
                 },
@@ -570,18 +570,18 @@ class SettingsScreen extends StatelessWidget {
                       .subscriptions;
                   if (subscriptions.isEmpty) {
                     if (context.mounted) {
-                      showAppSnackBar(
-                        ScaffoldMessenger.of(context),
+                      showAppToast(
                         l10n.noSubscriptionsToExport,
+                        type: AppToastType.info,
                       );
                     }
                     return;
                   }
                   final success = await OpmlService().exportOpml(subscriptions);
                   if (context.mounted) {
-                    showAppSnackBar(
-                      ScaffoldMessenger.of(context),
+                    showAppToast(
                       success ? l10n.exportSuccess : l10n.exportFailed,
+                      type: success ? AppToastType.success : AppToastType.error,
                     );
                   }
                 },
@@ -599,9 +599,9 @@ class SettingsScreen extends StatelessWidget {
                   final imported = await OpmlService().importOpml();
                   if (imported.isEmpty) {
                     if (context.mounted) {
-                      showAppSnackBar(
-                        ScaffoldMessenger.of(context),
+                      showAppToast(
                         l10n.noFeedsFoundOrCancelled,
+                        type: AppToastType.info,
                       );
                     }
                     return;
@@ -611,11 +611,13 @@ class SettingsScreen extends StatelessWidget {
                       .read<SubscriptionProvider>()
                       .importFeeds(imported);
                   if (context.mounted) {
-                    showAppSnackBar(
-                      ScaffoldMessenger.of(context),
+                    showAppToast(
                       added > 0
                           ? l10n.importedFeeds(added)
                           : l10n.allFeedsExist,
+                      type: added > 0
+                          ? AppToastType.success
+                          : AppToastType.info,
                     );
                   }
                 },

@@ -21,6 +21,7 @@ import 'services/background_fetch_service.dart';
 import 'services/notification_service.dart';
 import 'services/widget_update_service.dart';
 import 'models/feed_item.dart';
+import 'utils/app_toast.dart';
 
 /// Custom scroll behavior that uses iOS-style bouncing physics on all
 /// platforms and enables mouse/trackpad drag for desktop.
@@ -109,8 +110,9 @@ void main() async {
 Future<void> _initBackgroundFetch() async {
   await Workmanager().initialize(callbackDispatcher);
 
-  final bool syncEnabled =
-      Hive.box('settings').get('syncBackground', defaultValue: true);
+  final bool syncEnabled = Hive.box(
+    'settings',
+  ).get('syncBackground', defaultValue: true);
   if (syncEnabled) {
     await registerBgFetch();
   } else {
@@ -256,10 +258,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     // Watch only the three settings MaterialApp actually uses, so unrelated
     // settings changes (search history, quiet hours…) don't rebuild the app
     // root and re-run theme construction.
-    final flexScheme =
-        context.select<SettingsProvider, FlexScheme>((s) => s.flexScheme);
-    final themeMode =
-        context.select<SettingsProvider, ThemeMode>((s) => s.themeMode);
+    final flexScheme = context.select<SettingsProvider, FlexScheme>(
+      (s) => s.flexScheme,
+    );
+    final themeMode = context.select<SettingsProvider, ThemeMode>(
+      (s) => s.themeMode,
+    );
     final locale = context.select<SettingsProvider, Locale>((s) => s.locale);
 
     return MaterialApp.router(
@@ -270,8 +274,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       themeMode: themeMode,
       scrollBehavior: const PremiumScrollBehavior(),
       locale: locale,
-      supportedLocales:
-          supportedAppLanguages.map((l) => l.locale).toList(growable: false),
+      supportedLocales: supportedAppLanguages
+          .map((l) => l.locale)
+          .toList(growable: false),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
@@ -279,6 +284,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         GlobalCupertinoLocalizations.delegate,
       ],
       routerConfig: appRouter,
+      builder: (context, child) =>
+          AppToastHost(child: child ?? const SizedBox.shrink()),
     );
   }
 }

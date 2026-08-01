@@ -7,6 +7,7 @@ import '../screens/debug_screen.dart';
 import '../screens/onboarding_screen.dart';
 import '../models/feed_item.dart';
 import 'onboarding_state.dart';
+import '../utils/app_toast.dart';
 
 /// Navigator key used for programmatic navigation from outside the widget tree
 /// (e.g. notification tap handlers).
@@ -20,10 +21,13 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 /// - `/debug`   → [DebugScreen] (hidden developer utilities)
 final appRouter = GoRouter(
   navigatorKey: rootNavigatorKey,
+  observers: [appToastRouteObserver],
   initialLocation: '/',
   redirect: (context, state) {
     if (sessionOnboardingBypassed) return null;
-    final seen = Hive.box('settings').get('hasSeenOnboarding', defaultValue: false) as bool;
+    final seen =
+        Hive.box('settings').get('hasSeenOnboarding', defaultValue: false)
+            as bool;
     if (!seen && state.matchedLocation != '/onboarding') return '/onboarding';
     return null;
   },

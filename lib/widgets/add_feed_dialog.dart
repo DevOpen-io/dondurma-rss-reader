@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/feed_service.dart';
+import '../utils/app_toast.dart';
 
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
@@ -333,14 +334,20 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
       final success = await subscriptions.addFeed(url, name, category);
       if (success) {
         feeds.refreshAll();
-        if (context.mounted) context.pop();
+        if (context.mounted) {
+          context.pop();
+          showAppToast(
+            l10n.addedSubscription(name),
+            type: AppToastType.success,
+          );
+        }
       } else {
         if (context.mounted) {
-          // Inline error — a snackbar would render behind this bottom sheet.
           setState(() {
             _isLoading = false;
             _urlValidationError = l10n.feedAlreadyExists;
           });
+          showAppToast(l10n.feedAlreadyExists, type: AppToastType.error);
         }
       }
     } catch (e) {
@@ -349,6 +356,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
           _isLoading = false;
           _urlValidationError = l10n.feedAddError;
         });
+        showAppToast(l10n.feedAddError, type: AppToastType.error);
       }
     }
   }
