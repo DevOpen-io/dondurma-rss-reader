@@ -237,15 +237,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get changeAppLanguage => 'Uygulama dilini değiştirin';
 
   @override
-  String get english => 'English';
-
-  @override
-  String get turkish => 'Türkçe';
-
-  @override
-  String get spanish => 'İspanyolca';
-
-  @override
   String get dataAndStorage => 'Veri ve Depolama';
 
   @override

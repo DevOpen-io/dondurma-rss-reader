@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
+import '../l10n/supported_languages.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
@@ -96,18 +97,11 @@ class SettingsScreen extends StatelessWidget {
               title: l10n.language,
               value: settings.locale,
               items: [
-                DropdownMenuItem(
-                  value: const Locale('en'),
-                  child: Text(l10n.english),
-                ),
-                DropdownMenuItem(
-                  value: const Locale('tr'),
-                  child: Text(l10n.turkish),
-                ),
-                DropdownMenuItem(
-                  value: const Locale('es'),
-                  child: Text(l10n.spanish),
-                ),
+                for (final lang in supportedAppLanguages)
+                  DropdownMenuItem(
+                    value: lang.locale,
+                    child: Text(lang.nativeName),
+                  ),
               ],
               onChanged: (v) => context.read<SettingsProvider>().setLocale(v!),
             ),

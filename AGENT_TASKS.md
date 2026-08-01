@@ -10,12 +10,12 @@ This document is a persistent living record for AI coding agents to understand w
 - [x] **Background Sync**: Polling timer implemented depending on `cacheIntervalSeconds` and `syncBackground` settings.
 - [x] **Cloudflare Bypass**: Included specific browser emulation headers inside `FeedService` to successfully fetch from restricted endpoints like Anime Trending.
 - [x] **Dark/Light Theme**: Theme switching tied to `SettingsProvider` and Hive persistence.
-- [x] **GitLab CI/CD**: Added `.gitlab-ci.yml` template to automatically build Android `app-release.apk` on every push.
+- [x] **CI/CD**: Added GitHub Actions workflow (`.github/workflows/build-and-release.yml`) to automatically build Android `app-release.apk` on push/release.
 - [x] **OPML Export / Import**: Allow users to backup or restore their feed subscriptions via OPML files. Export shares an `.opml` file via the system share sheet; Import opens a file picker to load `.opml`/`.xml` files. Both nested (category folders) and flat OPML structures are supported. Duplicate feeds are skipped on import.
 - [x] **Pagination / Infinite Scroll**: Replaced the fake 70/30 split with real date-based sections (Today / Yesterday / Older). `FeedProvider` now exposes `olderItems`, `isLoadingMore`, and `hasMoreItems`. The home screen uses a `NotificationListener` for automatic infinite scroll and a `_PaginationFooter` widget that shows a spinner while loading, a "Load more" fallback button, and a "You're all caught up" message when all items are rendered. The render limit resets to 50 on every filter/category/search change.
 - [x] **Custom Category Management**: Users can add/delete/rename feed categories in the Folders tab. A FAB with a folder icon opens an "Add Folder" dialog with duplicate validation. Each feed has a move icon to reassign it to a different folder via a selection dialog. Empty folders are supported via a separate `_customCategories` set persisted in Hive. All strings are localized in English and Turkish.
 - [x] **In-App Browser**: Implemented `InAppBrowser` widget (`lib/widgets/in_app_browser.dart`) using `webview_flutter`. Opens as a full-screen modal route with: a linear progress indicator while loading, dynamic page title in the AppBar, back/forward/refresh/share controls in a bottom bar, and an "Open in External Browser" button. The `ArticleScreen` "Open in Browser" AppBar button and "Read on Original Webpage" button both now open the in-app browser. In-content HTML links also open in the in-app browser.
-- [x] **Internationalization (i18n)**: Implemented `flutter_localizations` with English and Turkish translations. Created ARB files (`app_en.arb`, `app_tr.arb`), configured `l10n.yaml`, wired up `MaterialApp` with localization delegates, added locale persistence to `SettingsProvider`, and made the Language dropdown functional. Users can now switch between English and Turkish.
+- [x] **Internationalization (i18n)**: Implemented `flutter_localizations` with English, Turkish, and Spanish translations. Created ARB files (`app_en.arb`, `app_tr.arb`, `app_es.arb`), configured `l10n.yaml`, wired up `MaterialApp` with localization delegates, added locale persistence to `SettingsProvider`, and made the Language dropdown functional. Users can now switch between English, Turkish, and Spanish.
 - [x] **Notifications**: Implemented local OS notifications when the background sync finds new unread articles. Uses `flutter_local_notifications` package with Android 13+ (POST_NOTIFICATIONS) permission handling and iOS permission prompts. Notifications are triggered from `FeedProvider.refreshAll()` by diffing old vs new items and filtering by per-feed settings.
   - [x] **Per-Feed Controls**: Each feed has a notification bell toggle in the Folders screen. Feeds with notifications disabled are excluded from notification triggers via `notificationsEnabled` field on `FeedSubscription`.
   - [x] **Digest Mode**: Settings screen offers Instant / Daily Summary / Weekly Summary modes. Non-instant modes suppress real-time notifications.
@@ -45,6 +45,10 @@ This document is a persistent living record for AI coding agents to understand w
   - [x] Swipe left/right to navigate between articles.
   - [x] Add reading progress indicator in Article View.
   - [x] Show estimated reading time under article title.
+- [x] **Home Screen Widgets**: Provide quick access from the OS home screen.
+  - [x] Latest News widget showing the most recent articles (Android/iOS).
+  - [x] Category widget scoped to a single configurable category.
+  - [x] Tap-to-open deep link (`homewidget://article?id=<id>`) straight into the article.
 
 ## Missing / Pending Features
 - [ ] **Testing**: Write comprehensive unit tests for the providers and widget tests for the UI components.
@@ -64,9 +68,6 @@ This document is a persistent living record for AI coding agents to understand w
 - [ ] **External Integrations**: Share content to third-party read-later services.
   - [ ] Implement "Send to Pocket" API integration.
   - [ ] Implement "Send to Instapaper" API integration.
-- [ ] **Home Screen Widgets**: Provide quick access from the OS home screen.
-  - [ ] Create widget showing latest unread count.
-  - [ ] Create widget showing latest article titles from specific feeds.
 
 - [ ] **Feed Organization Enhancements**: Improve subscription management.
   - [ ] Pin favorite feeds to top of folder.

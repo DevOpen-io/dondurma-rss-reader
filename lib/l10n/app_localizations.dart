@@ -520,24 +520,6 @@ abstract class AppLocalizations {
   /// **'Change the app language'**
   String get changeAppLanguage;
 
-  /// No description provided for @english.
-  ///
-  /// In en, this message translates to:
-  /// **'English'**
-  String get english;
-
-  /// No description provided for @turkish.
-  ///
-  /// In en, this message translates to:
-  /// **'Türkçe'**
-  String get turkish;
-
-  /// No description provided for @spanish.
-  ///
-  /// In en, this message translates to:
-  /// **'Español'**
-  String get spanish;
-
   /// No description provided for @dataAndStorage.
   ///
   /// In en, this message translates to:

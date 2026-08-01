@@ -9,6 +9,7 @@ import 'package:adblocker_webview/adblocker_webview.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:home_widget/home_widget.dart' hide callbackDispatcher;
 import 'l10n/app_localizations.dart';
+import 'l10n/supported_languages.dart';
 import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/subscription_provider.dart';
@@ -269,7 +270,8 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       themeMode: themeMode,
       scrollBehavior: const PremiumScrollBehavior(),
       locale: locale,
-      supportedLocales: const [Locale('en'), Locale('tr'), Locale('es')],
+      supportedLocales:
+          supportedAppLanguages.map((l) => l.locale).toList(growable: false),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

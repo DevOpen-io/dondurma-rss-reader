@@ -235,15 +235,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeAppLanguage => 'Change the app language';
 
   @override
-  String get english => 'English';
-
-  @override
-  String get turkish => 'Türkçe';
-
-  @override
-  String get spanish => 'Español';
-
-  @override
   String get dataAndStorage => 'Data & Storage';
 
   @override

@@ -238,15 +238,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get changeAppLanguage => 'Cambiar el idioma de la aplicación';
 
   @override
-  String get english => 'English';
-
-  @override
-  String get turkish => 'Türkçe';
-
-  @override
-  String get spanish => 'Español';
-
-  @override
   String get dataAndStorage => 'Datos y almacenamiento';
 
   @override
