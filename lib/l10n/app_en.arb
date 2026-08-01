@@ -112,6 +112,14 @@
       }
     }
   },
+  "removedSubscription": "Removed {name} from your subscriptions.",
+  "@removedSubscription": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
   "suggestedFeedsWarning": "Warning: Some RSS sources may be broken or no longer work.",
   "errorLoadingSuggestedFeeds": "Could not load suggested feeds. Please try again later.",
   "general": "General",

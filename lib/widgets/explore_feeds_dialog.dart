@@ -196,7 +196,8 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     final feedProvider = context.read<FeedProvider>();
     final messenger = ScaffoldMessenger.of(context);
 
-    await subscriptionProvider.addFeed(url, name, category);
+    final added = await subscriptionProvider.addFeed(url, name, category);
+    if (!added) return;
     if (context.mounted) feedProvider.refreshAll();
 
     showAppSnackBar(
@@ -204,7 +205,113 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
       l10n.addedSubscription(name),
       action: SnackBarAction(
         label: l10n.undo,
-        onPressed: () => subscriptionProvider.removeFeed(url),
+        onPressed: () async {
+          await subscriptionProvider.removeFeed(url);
+          feedProvider.refreshAll();
+        },
+      ),
+    );
+  }
+
+  Future<void> _unsubscribeFromFeed(
+    BuildContext context,
+    String name,
+    String url,
+    String category,
+  ) async {
+    final l10n = AppLocalizations.of(context);
+    final colorScheme = Theme.of(context).colorScheme;
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: colorScheme.errorContainer,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.remove_circle_outline_rounded,
+                      color: colorScheme.onErrorContainer,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      l10n.removeFeed,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(
+                l10n.removeFeedConfirm(name),
+                style: TextStyle(
+                  color: colorScheme.onSurface.withValues(alpha: 0.72),
+                  height: 1.35,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.of(sheetContext).pop(false),
+                      child: Text(l10n.cancel),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: FilledButton(
+                      style: FilledButton.styleFrom(
+                        backgroundColor: colorScheme.error,
+                        foregroundColor: colorScheme.onError,
+                      ),
+                      onPressed: () => Navigator.of(sheetContext).pop(true),
+                      child: Text(l10n.delete),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    final subscriptionProvider = context.read<SubscriptionProvider>();
+    final feedProvider = context.read<FeedProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+
+    await subscriptionProvider.removeFeed(url);
+    if (context.mounted) feedProvider.refreshAll();
+
+    showAppSnackBar(
+      messenger,
+      l10n.removedSubscription(name),
+      action: SnackBarAction(
+        label: l10n.undo,
+        onPressed: () async {
+          await subscriptionProvider.addFeed(url, name, category);
+          feedProvider.refreshAll();
+        },
       ),
     );
   }
@@ -361,6 +468,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                         itemBuilder: (context, index) => _SuggestedFeedTile(
                           feed: feeds[index],
                           onSubscribe: _subscribeToFeed,
+                          onUnsubscribe: _unsubscribeFromFeed,
                         ),
                       );
                     },
@@ -488,7 +596,9 @@ class _ActiveFilterBar extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: isFiltered ? colorScheme.primary : colorScheme.onSurface,
+                  color: isFiltered
+                      ? colorScheme.primary
+                      : colorScheme.onSurface,
                 ),
               ),
             ),
@@ -605,8 +715,14 @@ class _SheetChip extends StatelessWidget {
 class _SuggestedFeedTile extends StatelessWidget {
   final Map<String, String> feed;
   final Future<void> Function(BuildContext, String, String, String) onSubscribe;
+  final Future<void> Function(BuildContext, String, String, String)
+  onUnsubscribe;
 
-  const _SuggestedFeedTile({required this.feed, required this.onSubscribe});
+  const _SuggestedFeedTile({
+    required this.feed,
+    required this.onSubscribe,
+    required this.onUnsubscribe,
+  });
 
   static String _domain(String urlStr) {
     final uri = Uri.tryParse(urlStr);
@@ -722,6 +838,8 @@ class _SuggestedFeedTile extends StatelessWidget {
                     ? _SubscribedBadge(
                         label: l10n.subscribed,
                         colorScheme: colorScheme,
+                        onTap: () =>
+                            onUnsubscribe(context, name, url, category),
                       )
                     : _SubscribeButton(
                         label: l10n.addSource,
@@ -784,31 +902,48 @@ class _SubscribeButton extends StatelessWidget {
 class _SubscribedBadge extends StatelessWidget {
   final String label;
   final ColorScheme colorScheme;
+  final VoidCallback onTap;
 
-  const _SubscribedBadge({required this.label, required this.colorScheme});
+  const _SubscribedBadge({
+    required this.label,
+    required this.colorScheme,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
+    return Semantics(
+      button: true,
+      label: label,
+      child: Material(
         color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.check_rounded, size: 14, color: colorScheme.secondary),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.secondary,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.check_rounded,
+                  size: 14,
+                  color: colorScheme.secondary,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.secondary,
+                  ),
+                ),
+              ],
             ),
           ),
-        ],
+        ),
       ),
     );
   }

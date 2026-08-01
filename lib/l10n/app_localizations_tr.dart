@@ -217,6 +217,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String removedSubscription(String name) {
+    return '$name aboneliklerinizden kaldırıldı.';
+  }
+
+  @override
   String get suggestedFeedsWarning =>
       'Uyarı: Bazı RSS kaynakları bozulmuş veya artık çalışmıyor olabilir.';
 

@@ -64,6 +64,7 @@
   "subscribed": "Abone Olundu",
   "undo": "Geri Al",
   "addedSubscription": "{name} aboneliğinize eklendi!",
+  "removedSubscription": "{name} aboneliklerinizden kaldırıldı.",
   "suggestedFeedsWarning": "Uyarı: Bazı RSS kaynakları bozulmuş veya artık çalışmıyor olabilir.",
   "errorLoadingSuggestedFeeds": "Önerilen kaynaklar yüklenemedi. Lütfen daha sonra tekrar deneyin.",
   "general": "Genel",

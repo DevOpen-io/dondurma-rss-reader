@@ -484,6 +484,12 @@ abstract class AppLocalizations {
   /// **'Added {name} to your subscriptions!'**
   String addedSubscription(String name);
 
+  /// No description provided for @removedSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed {name} from your subscriptions.'**
+  String removedSubscription(String name);
+
   /// No description provided for @suggestedFeedsWarning.
   ///
   /// In en, this message translates to:

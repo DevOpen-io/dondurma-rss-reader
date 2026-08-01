@@ -64,6 +64,7 @@
   "subscribed": "Suscrito",
   "undo": "Deshacer",
   "addedSubscription": "¡{name} añadido a tus suscripciones!",
+  "removedSubscription": "{name} eliminado de tus suscripciones.",
   "suggestedFeedsWarning": "Advertencia: algunas fuentes RSS pueden estar rotas o dejar de funcionar.",
   "errorLoadingSuggestedFeeds": "No se pudieron cargar las fuentes sugeridas. Inténtalo de nuevo más tarde.",
   "general": "General",

@@ -218,6 +218,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String removedSubscription(String name) {
+    return '$name eliminado de tus suscripciones.';
+  }
+
+  @override
   String get suggestedFeedsWarning =>
       'Advertencia: algunas fuentes RSS pueden estar rotas o dejar de funcionar.';
 

@@ -215,6 +215,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String removedSubscription(String name) {
+    return 'Removed $name from your subscriptions.';
+  }
+
+  @override
   String get suggestedFeedsWarning =>
       'Warning: Some RSS sources may be broken or no longer work.';
 
