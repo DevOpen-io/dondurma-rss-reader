@@ -120,6 +120,7 @@
   "changeAppLanguage": "Change the app language",
   "english": "English",
   "turkish": "Türkçe",
+  "spanish": "Español",
   "dataAndStorage": "Data & Storage",
   "offlineCacheLimit": "Offline Cache Limit",
   "offlineCacheLimitDesc": "Recent articles kept for offline reading",

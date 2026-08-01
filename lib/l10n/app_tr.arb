@@ -72,6 +72,7 @@
   "changeAppLanguage": "Uygulama dilini değiştirin",
   "english": "English",
   "turkish": "Türkçe",
+  "spanish": "İspanyolca",
   "dataAndStorage": "Veri ve Depolama",
   "offlineCacheLimit": "Önbellek Sınırı",
   "offlineCacheLimitDesc": "Çevrimdışı okuma için saklanan son makaleler",

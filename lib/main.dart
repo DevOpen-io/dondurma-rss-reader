@@ -269,7 +269,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       themeMode: themeMode,
       scrollBehavior: const PremiumScrollBehavior(),
       locale: locale,
-      supportedLocales: const [Locale('en'), Locale('tr')],
+      supportedLocales: const [Locale('en'), Locale('tr'), Locale('es')],
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

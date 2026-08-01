@@ -243,6 +243,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get turkish => 'Türkçe';
 
   @override
+  String get spanish => 'İspanyolca';
+
+  @override
   String get dataAndStorage => 'Veri ve Depolama';
 
   @override

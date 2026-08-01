@@ -9,7 +9,7 @@ class TermsOfServicePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final isEn = Localizations.localeOf(context).languageCode == 'en';
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       appBar: AppBar(title: Text(l10n.termsOfService), centerTitle: true),
@@ -20,7 +20,7 @@ class TermsOfServicePage extends StatelessWidget {
           children: [
             _header(theme, l10n),
             const SizedBox(height: 24),
-            ..._sections(isEn).map((s) => _card(theme, s)),
+            ..._sections(localeCode).map((s) => _card(theme, s)),
           ],
         ),
       ),
@@ -93,7 +93,11 @@ class TermsOfServicePage extends StatelessWidget {
     );
   }
 
-  List<_S> _sections(bool isEn) => isEn ? _enSections : _trSections;
+  List<_S> _sections(String localeCode) => switch (localeCode) {
+        'es' => _esSections,
+        'tr' => _trSections,
+        _ => _enSections,
+      };
 
   static const _enSections = [
     _S(Icons.check_circle_outline, '1. Acceptance of Terms',
@@ -114,6 +118,27 @@ class TermsOfServicePage extends StatelessWidget {
         'We reserve the right to modify these Terms at any time. Continued use of the App after changes constitutes acceptance of the new terms.'),
     _S(Icons.email_outlined, '9. Contact',
         'For questions about these Terms of Service:\n\n📧 Email: info@devopen.io\n🌐 Website: https://github.com/DevOpen-io'),
+  ];
+
+  static const _esSections = [
+    _S(Icons.check_circle_outline, '1. Aceptación de los términos',
+        'Al descargar, instalar o usar Dondurma RSS Reader ("la Aplicación"), aceptas quedar sujeto a estos Términos de Servicio. Si no estás de acuerdo, no uses la Aplicación.'),
+    _S(Icons.article_outlined, '2. Descripción del servicio',
+        'Dondurma RSS Reader es un lector de fuentes RSS/Atom gratuito y de código abierto. La Aplicación te permite suscribirte y leer fuentes RSS de varios sitios web. La Aplicación no produce, publica ni selecciona ningún contenido de noticias.'),
+    _S(Icons.rss_feed_outlined, '3. Contenido de terceros',
+        'La Aplicación muestra contenido de fuentes RSS de terceros. No somos responsables de la exactitud, integridad o fiabilidad de ningún contenido de terceros. El contenido pertenece a los editores respectivos.'),
+    _S(Icons.person_outline, '4. Responsabilidades del usuario',
+        'Eres responsable de:\n• Las fuentes RSS a las que elijas suscribirte\n• Que tu uso cumpla con las leyes aplicables\n• Mantener la seguridad de tu dispositivo\n• Cualquier dato que exportes o compartas desde la Aplicación'),
+    _S(Icons.copyright_outlined, '5. Propiedad intelectual',
+        'La Aplicación es un software de código abierto desarrollado por DevOpen. El código fuente está disponible en GitHub. El contenido mostrado en las fuentes RSS pertenece a los creadores y editores correspondientes.'),
+    _S(Icons.warning_amber_outlined, '6. Exención de garantías',
+        'La Aplicación se proporciona "tal cual" sin garantías de ningún tipo. No garantizamos que la Aplicación esté libre de errores, que sea ininterrumpida ni que todas las fuentes RSS sean accesibles en todo momento.'),
+    _S(Icons.gavel_outlined, '7. Limitación de responsabilidad',
+        'DevOpen y sus desarrolladores no serán responsables de ningún daño indirecto, incidental, especial o consecuente que surja del uso de la Aplicación.'),
+    _S(Icons.update_outlined, '8. Cambios en los términos',
+        'Nos reservamos el derecho de modificar estos Términos en cualquier momento. El uso continuado de la Aplicación tras los cambios constituye la aceptación de los nuevos términos.'),
+    _S(Icons.email_outlined, '9. Contacto',
+        'Para preguntas sobre estos Términos de Servicio:\n\n📧 Correo electrónico: info@devopen.io\n🌐 Sitio web: https://github.com/DevOpen-io'),
   ];
 
   static const _trSections = [

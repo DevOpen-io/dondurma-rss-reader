@@ -13,7 +13,7 @@ class PrivacyPolicyPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
-    final isEnglish = Localizations.localeOf(context).languageCode == 'en';
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Scaffold(
       appBar: AppBar(
@@ -70,18 +70,18 @@ class PrivacyPolicyPage extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Sections
-            ..._buildSections(context, isEnglish),
+            ..._buildSections(context, localeCode),
           ],
         ),
       ),
     );
   }
 
-  List<Widget> _buildSections(BuildContext context, bool isEnglish) {
+  List<Widget> _buildSections(BuildContext context, String localeCode) {
     final theme = Theme.of(context);
 
-    final sections = isEnglish
-        ? [
+    final sections = switch (localeCode) {
+      'en' => [
             _SectionData(
               icon: Icons.info_outline,
               title: 'Introduction',
@@ -159,8 +159,95 @@ class PrivacyPolicyPage extends StatelessWidget {
                   '📧 Email: info@devopen.io\n'
                   '🌐 Website: https://github.com/DevOpen-io',
             ),
-          ]
-        : [
+          ],
+      'es' => [
+            _SectionData(
+              icon: Icons.info_outline,
+              title: 'Introducción',
+              content:
+                  'Dondurma RSS Reader ("la Aplicación") está desarrollada por DevOpen '
+                  '(Talha Aksoy & Eren Gün). Estamos comprometidos con proteger tu '
+                  'privacidad. Esta Política de Privacidad explica cómo la Aplicación '
+                  'gestiona tu información.',
+            ),
+            _SectionData(
+              icon: Icons.storage_outlined,
+              title: 'Recopilación y almacenamiento de datos',
+              content:
+                  'La Aplicación almacena todos los datos localmente en tu dispositivo '
+                  'mediante la base de datos Hive. NO recopilamos, transmitimos ni '
+                  'almacenamos ningún dato personal en servidores externos.\n\n'
+                  'Los datos almacenados localmente incluyen:\n'
+                  '• Suscripciones de fuentes RSS (URL y nombres)\n'
+                  '• Contenido de artículos en caché para lectura sin conexión\n'
+                  '• Artículos marcados\n'
+                  '• Ajustes y preferencias de la aplicación\n'
+                  '• Historial de búsqueda',
+            ),
+            _SectionData(
+              icon: Icons.cloud_off_outlined,
+              title: 'Sin comunicación con servidores',
+              content:
+                  'La Aplicación no tiene su propio servidor backend. Todas las fuentes '
+                  'RSS se obtienen directamente de los sitios web originales. No actuamos '
+                  'como intermediarios ni registramos, supervisamos o almacenamos tu '
+                  'actividad de lectura.',
+            ),
+            _SectionData(
+              icon: Icons.extension_outlined,
+              title: 'Servicios de terceros',
+              content:
+                  'La Aplicación utiliza los siguientes servicios de terceros:\n\n'
+                  '• Google Fonts — para la tipografía (familia tipográfica Outfit)\n'
+                  '• WebView — para mostrar contenido web dentro de la aplicación\n'
+                  '• Bloqueador de anuncios (adblocker_webview) — filtrado opcional de anuncios en el navegador integrado\n\n'
+                  'Estos servicios pueden tener sus propias políticas de privacidad. '
+                  'Te recomendamos revisarlas.',
+            ),
+            _SectionData(
+              icon: Icons.notifications_outlined,
+              title: 'Notificaciones',
+              content:
+                  'La Aplicación puede enviar notificaciones locales para artículos '
+                  'nuevos. Estas notificaciones se generan íntegramente en tu dispositivo '
+                  'y no implican ningún servicio externo de notificaciones push. Puedes '
+                  'desactivar las notificaciones en cualquier momento en Ajustes.',
+            ),
+            _SectionData(
+              icon: Icons.security_outlined,
+              title: 'Seguridad de los datos',
+              content:
+                  'Dado que todos los datos se almacenan localmente en tu dispositivo, '
+                  'la seguridad de tus datos depende de la seguridad de tu dispositivo. '
+                  'Recomendamos usar medidas de seguridad a nivel de dispositivo, como '
+                  'bloqueo de pantalla y cifrado.',
+            ),
+            _SectionData(
+              icon: Icons.child_care_outlined,
+              title: 'Privacidad de los niños',
+              content:
+                  'La Aplicación no está dirigida a menores de 13 años. No recopilamos '
+                  'a sabiendas ninguna información personal de menores.',
+            ),
+            _SectionData(
+              icon: Icons.update_outlined,
+              title: 'Cambios en esta política',
+              content:
+                  'Podemos actualizar esta Política de Privacidad de vez en cuando. '
+                  'Cualquier cambio se reflejará en la Aplicación y la fecha de '
+                  'actualización se modificará en consecuencia.',
+            ),
+            _SectionData(
+              icon: Icons.email_outlined,
+              title: 'Contacta con nosotros',
+              content:
+                  'Si tienes alguna pregunta sobre esta Política de Privacidad, '
+                  'contacta con nosotros:\n\n'
+                  '📧 Correo electrónico: info@devopen.io\n'
+                  '🌐 Sitio web: https://github.com/DevOpen-io',
+            ),
+          ],
+      _ => [
             _SectionData(
               icon: Icons.info_outline,
               title: 'Giriş',
@@ -238,7 +325,8 @@ class PrivacyPolicyPage extends StatelessWidget {
                   '📧 E-posta: info@devopen.io\n'
                   '🌐 Web sitesi: https://github.com/DevOpen-io',
             ),
-          ];
+          ],
+    };
 
     return sections.map((section) {
       return Padding(

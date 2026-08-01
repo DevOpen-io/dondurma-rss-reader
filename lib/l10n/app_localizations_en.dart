@@ -241,6 +241,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get turkish => 'Türkçe';
 
   @override
+  String get spanish => 'Español';
+
+  @override
   String get dataAndStorage => 'Data & Storage';
 
   @override

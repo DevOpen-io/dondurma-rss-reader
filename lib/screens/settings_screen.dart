@@ -104,6 +104,10 @@ class SettingsScreen extends StatelessWidget {
                   value: const Locale('tr'),
                   child: Text(l10n.turkish),
                 ),
+                DropdownMenuItem(
+                  value: const Locale('es'),
+                  child: Text(l10n.spanish),
+                ),
               ],
               onChanged: (v) => context.read<SettingsProvider>().setLocale(v!),
             ),
