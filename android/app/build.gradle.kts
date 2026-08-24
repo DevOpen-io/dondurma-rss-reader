@@ -18,7 +18,7 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-android {
+extensions.configure<com.android.build.api.dsl.ApplicationExtension> {
     namespace = "io.devopen.dondurma"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
@@ -27,10 +27,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
         isCoreLibraryDesugaringEnabled = true
-    }
-
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
     }
 
     signingConfigs {
@@ -58,6 +54,13 @@ android {
 
     buildTypes {
         release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             if (keystorePropertiesFile.exists()) {
@@ -68,6 +71,12 @@ android {
                 signingConfig = signingConfigs.getByName("debug")
             }
         }
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
     }
 }
 
