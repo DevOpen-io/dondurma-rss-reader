@@ -7,7 +7,9 @@ import 'package:workmanager/workmanager.dart';
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import 'feed_service.dart';
+import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
+import 'observed_article_store.dart';
 import 'widget_update_service.dart';
 
 /// Unique name of the periodic background fetch task.
@@ -48,10 +50,7 @@ Future<void> registerBgFetch() async {
 Future<void> runBgFetch() async {
   try {
     await Hive.initFlutter();
-    await Future.wait([
-      Hive.openBox('settings'),
-      Hive.openBox('feeds'),
-    ]);
+    await Future.wait([Hive.openBox('settings'), Hive.openBox('feeds')]);
     await NotificationService.instance.init();
 
     final settingsBox = Hive.box('settings');
@@ -59,50 +58,30 @@ Future<void> runBgFetch() async {
 
     debugPrint('[BG] task started');
 
-    // Master toggle
-    final bool notificationsEnabled =
-        settingsBox.get('notificationsEnabled', defaultValue: true);
-    if (!notificationsEnabled) {
-      debugPrint('[BG] notifications disabled, skip');
-      return;
-    }
-
-    // Only instant mode fires background notifications
-    final String digestMode =
-        settingsBox.get('digestMode', defaultValue: 'instant');
-    if (digestMode != 'instant') {
-      debugPrint('[BG] digestMode=$digestMode, skip');
-      return;
-    }
-
-    // Quiet hours
-    final bool quietHoursEnabled =
-        settingsBox.get('quietHoursEnabled', defaultValue: true);
-    if (quietHoursEnabled) {
-      final int quietStart =
-          settingsBox.get('quietHoursStart', defaultValue: 22);
-      final int quietEnd = settingsBox.get('quietHoursEnd', defaultValue: 7);
-      if (NotificationService.isInQuietHours(
-        DateTime.now().hour,
-        quietStart,
-        quietEnd,
-      )) {
-        debugPrint('[BG] quiet hours active, skip');
-        return;
-      }
-    }
+    // Delivery settings never short-circuit observation/synchronization.
+    final bool notificationsEnabled = settingsBox.get(
+      'notificationsEnabled',
+      defaultValue: true,
+    );
+    final String digestMode = settingsBox.get(
+      'digestMode',
+      defaultValue: 'instant',
+    );
+    final bool quietHoursEnabled = settingsBox.get(
+      'quietHoursEnabled',
+      defaultValue: true,
+    );
+    final int quietStart = settingsBox.get('quietHoursStart', defaultValue: 22);
+    final int quietEnd = settingsBox.get('quietHoursEnd', defaultValue: 7);
 
     // Read subscriptions
     final String? subsData = feedsBox.get('subscriptions');
     if (subsData == null) return;
     final List<dynamic> subsList = jsonDecode(subsData);
-    final subscriptions =
-        subsList.map((e) => FeedSubscription.fromJson(e)).toList();
+    final subscriptions = subsList
+        .map((e) => FeedSubscription.fromJson(e))
+        .toList();
     if (subscriptions.isEmpty) return;
-
-    // Previously seen item IDs (persisted across bg runs)
-    final List<dynamic>? knownIdsList = feedsBox.get('bgKnownItemIds');
-    final Set<String> knownIds = knownIdsList?.cast<String>().toSet() ?? {};
 
     // Feed URLs where notifications are muted
     final mutedUrls = subscriptions
@@ -116,18 +95,39 @@ Future<void> runBgFetch() async {
       subscriptions.map((sub) async {
         try {
           final result = await feedService.fetchFeed(sub.url, sub.category);
-          return result.items;
+          return (
+            subscription: sub,
+            items: result.items,
+            succeeded: true,
+            allowInitialization: !result.notModified,
+          );
         } catch (_) {
-          return <FeedItem>[];
+          return (
+            subscription: sub,
+            items: <FeedItem>[],
+            succeeded: false,
+            allowInitialization: false,
+          );
         }
       }),
     );
+    feedService.dispose();
 
-    final allItems = results.expand((i) => i).toList();
+    final allItems = results.expand((result) => result.items).toList();
     debugPrint('[BG] fetched ${allItems.length} items total');
 
-    // Always persist the full ID set so the next run has a baseline
-    await feedsBox.put('bgKnownItemIds', allItems.map((i) => i.id).toList());
+    final observedStore = ObservedArticleStore.forBox(feedsBox);
+    final claimedItems = <FeedItem>[];
+    for (final result in results) {
+      if (!result.succeeded) continue;
+      final claim = await observedStore.claimFeedBatch(
+        feedUrl: result.subscription.url,
+        observationEpoch: result.subscription.notificationEpoch,
+        items: result.items,
+        allowInitialization: result.allowInitialization,
+      );
+      claimedItems.addAll(claim.claimedItems);
+    }
 
     // Persist fresh items into the main cache + home-screen widgets so the next
     // app launch (and the widgets) show up-to-date news without waiting for an
@@ -138,25 +138,15 @@ Future<void> runBgFetch() async {
       await WidgetUpdateService.updateFeedWidgets(allItems);
     }
 
-    // On first ever bg run knownIds is empty — skip notification to avoid
-    // flooding the user with every currently-fetched article.
-    if (knownIds.isEmpty) {
-      debugPrint('[BG] first run, saved ${allItems.length} IDs, skip notify');
-      return;
-    }
-
-    // Recency guard: only notify for articles published in the last 48 hours
-    final cutoff = DateTime.now().subtract(const Duration(hours: 48));
-
-    final newItems = allItems
-        .where(
-          (item) =>
-              !knownIds.contains(item.id) &&
-              !mutedUrls.contains(item.feedUrl) &&
-              item.pubDate != null &&
-              item.pubDate!.isAfter(cutoff),
-        )
-        .toList();
+    final newItems = NotificationDeliveryPolicy.eligibleItems(
+      claimedItems: claimedItems,
+      notificationsEnabled: notificationsEnabled,
+      digestMode: digestMode,
+      quietHoursEnabled: quietHoursEnabled,
+      quietHoursStart: quietStart,
+      quietHoursEnd: quietEnd,
+      mutedFeedUrls: mutedUrls,
+    );
 
     debugPrint('[BG] ${newItems.length} new items, sending notification');
     if (newItems.isEmpty) return;

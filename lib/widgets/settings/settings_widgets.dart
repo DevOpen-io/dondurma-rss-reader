@@ -4,7 +4,11 @@ class SettingsSectionTitle extends StatelessWidget {
   final String title;
   final IconData icon;
 
-  const SettingsSectionTitle({required this.title, required this.icon, super.key});
+  const SettingsSectionTitle({
+    required this.title,
+    required this.icon,
+    super.key,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +53,9 @@ class SettingsCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Material(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.35,
+          ),
           child: Column(mainAxisSize: MainAxisSize.min, children: children),
         ),
       ),
@@ -154,7 +160,9 @@ class SettingsDropdownTile<T> extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
                     ),
                   ),
                 ],
@@ -278,7 +286,9 @@ class SettingsQuietHoursTile extends StatelessWidget {
                     subtitle!,
                     style: TextStyle(
                       fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.55,
+                      ),
                     ),
                   ),
                 ],

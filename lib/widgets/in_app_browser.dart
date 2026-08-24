@@ -341,9 +341,7 @@ class _InAppBrowserState extends State<InAppBrowser> {
                 isDarkMode ? Icons.light_mode : Icons.dark_mode,
                 size: 22,
               ),
-              tooltip: isDarkMode
-                  ? l10n.brightnessLight
-                  : l10n.brightnessDark,
+              tooltip: isDarkMode ? l10n.brightnessLight : l10n.brightnessDark,
               onPressed: () {
                 final newValue = !isDarkMode;
                 context.read<SettingsProvider>().setWebviewDarkModeEnabled(

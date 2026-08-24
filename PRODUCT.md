@@ -1,35 +1,42 @@
-# Product
+# Dondurma Product Guide
 
-## Register
+## Audience
 
-product
+Daily RSS/Atom readers valuing privacy, focus, offline access, predictable organization, and control over algorithmic discovery. UI supports English, Turkish, Spanish.
 
-## Users
+## Promise
 
-Tech-savvy readers who want to consume RSS/Atom news on their own terms — no algorithms, no tracking, no curation they didn't ask for. Bilingual (English + Turkish). Used daily in a focused reading context: commute, coffee break, dedicated reading time.
+No accounts, tracking, algorithmic timeline, or ads. Users choose sources, folders, filters, notification behavior, and reading appearance.
 
-## Product Purpose
+Success: users find, read, save, resume wanted articles without attention traps.
 
-Open-source RSS/Atom reader that puts the user in full control of their information diet. Success = user reads everything they want, misses nothing from their feeds, and is never shown content they didn't subscribe to.
+## Personality
 
-## Brand Personality
+Calm, capable, personal. Ice-cream identity adds warmth; functionality stays serious. Friendly utility, never noisy or childish.
 
-Calm, capable, personal. "Your feeds, your way." Playful naming (ice cream) paired with serious functionality. Not chirpy, not austere — friendly utility.
+## Product pillars
 
-## Anti-references
+1. **Control:** user-defined feeds, folders, keywords, browser, sync, notifications.
+2. **Focused reading:** clear hierarchy, comfortable typography, minimal chrome.
+3. **Local-first privacy:** Hive storage; no account, analytics, advertising SDK.
+4. **Resilience:** cache, conditional HTTP, background sync, recoverable feedback.
+5. **Inclusive access:** EN/TR/ES, semantics, 48 dp targets, contrast, reduced motion, responsive widths.
 
-- Algorithmic timelines (X/Twitter, Instagram): discovery-driven, attention-maximizing
-- News aggregators with editorial recommendation (Flipboard, Apple News): opinionated curation
-- Bloated enterprise readers: cluttered, form-over-function
+## Design language
 
-## Design Principles
+- Material 3, FlexColorScheme, Outfit typography.
+- Rounded surfaces, restrained elevation, consistent spacing, clear primary action.
+- Content leads. Decoration supports brand without competing.
+- Toasts handle transient feedback; dialogs/sheets handle decisions and input.
+- Wide layouts cap content width; phone layouts stay compact.
 
-1. **Clarity first**: every screen haes one primary task; chrome stays out of the way of content
-2. **User in control**: subscriptions, categories, keywords, themes — all user-defined
-3. **Consistent utility**: interactions, labels, and flows work the same way across all tabs
-4. **Material 3 native**: use platform components as designed; don't fight the system
-5. **Zero noise**: no upsells, no badges for engagement, no dark patterns
+## Avoid
 
-## Accessibility & Inclusion
+- Algorithmic recommendations, engagement loops, accounts, telemetry, ads, upsells
+- Hidden destructive actions or ambiguous gestures
+- Unlocalized UI strings or motion ignoring accessibility settings
+- Dense enterprise-reader chrome
 
-WCAG AA minimum. Full light/dark/high-contrast theme support. Turkish + English localization required on all UI strings.
+## Current boundary
+
+Local-first feed reading. TTS, statistics, tags, external read-later services, advanced search, and reading queues remain backlog, not shipped features.

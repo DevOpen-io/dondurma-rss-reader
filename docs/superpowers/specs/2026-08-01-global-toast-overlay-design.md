@@ -1,7 +1,7 @@
 # Global Toast Overlay
 
 Date: 2026-08-01
-Status: approved for review
+Status: implemented. Current source: `lib/utils/app_toast.dart`; tests: `test/app_toast_test.dart`. Historical design record; code wins on drift.
 
 ## Goal
 

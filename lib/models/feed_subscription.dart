@@ -1,3 +1,5 @@
+import 'dart:math';
+
 /// Represents a user's subscription to an RSS/Atom feed source.
 ///
 /// Immutable value object that stores the feed URL, display name, category
@@ -11,6 +13,7 @@ class FeedSubscription {
   final bool notificationsEnabled;
   final bool? fullTextEnabled;
   final List<String> excludedKeywords;
+  final String notificationEpoch;
 
   FeedSubscription({
     required this.url,
@@ -19,7 +22,8 @@ class FeedSubscription {
     this.notificationsEnabled = true,
     this.fullTextEnabled,
     this.excludedKeywords = const [],
-  });
+    String? notificationEpoch,
+  }) : notificationEpoch = notificationEpoch ?? _newNotificationEpoch();
 
   /// Serializes this subscription to a JSON-compatible map.
   Map<String, dynamic> toJson() => {
@@ -30,6 +34,7 @@ class FeedSubscription {
     _schemaKey: _schemaVersion,
     if (fullTextEnabled != null) 'fullTextEnabled': fullTextEnabled,
     'excludedKeywords': excludedKeywords,
+    'notificationEpoch': notificationEpoch,
   };
 
   /// Schema marker written by every tri-state-aware save.
@@ -63,6 +68,8 @@ class FeedSubscription {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      notificationEpoch:
+          json['notificationEpoch'] as String? ?? _legacyNotificationEpoch,
     );
   }
 
@@ -73,6 +80,7 @@ class FeedSubscription {
     bool? notificationsEnabled,
     bool? fullTextEnabled,
     List<String>? excludedKeywords,
+    String? notificationEpoch,
   }) {
     return FeedSubscription(
       url: url ?? this.url,
@@ -81,6 +89,7 @@ class FeedSubscription {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       fullTextEnabled: fullTextEnabled ?? this.fullTextEnabled,
       excludedKeywords: excludedKeywords ?? this.excludedKeywords,
+      notificationEpoch: notificationEpoch ?? this.notificationEpoch,
     );
   }
 
@@ -92,6 +101,7 @@ class FeedSubscription {
       notificationsEnabled: notificationsEnabled,
       fullTextEnabled: value,
       excludedKeywords: excludedKeywords,
+      notificationEpoch: notificationEpoch,
     );
   }
 
@@ -101,4 +111,12 @@ class FeedSubscription {
 
   @override
   int get hashCode => url.hashCode;
+
+  static const String _legacyNotificationEpoch = 'legacy-v1';
+  static int _epochCounter = 0;
+
+  static String _newNotificationEpoch() {
+    final random = Random.secure().nextInt(1 << 32);
+    return '${DateTime.now().microsecondsSinceEpoch}-${_epochCounter++}-$random';
+  }
 }

@@ -580,8 +580,9 @@ class AppDrawer extends StatelessWidget {
                   .read<SubscriptionProvider>()
                   .removeCategory(category)
                   .then((_) {
-                    if (context.mounted)
+                    if (context.mounted) {
                       context.read<FeedProvider>().refreshAll();
+                    }
                   });
               Navigator.of(ctx).pop();
             },
@@ -693,8 +694,9 @@ class AppDrawer extends StatelessWidget {
                           subscriptionProvider
                               .moveFeedToCategory(sub.url, category)
                               .then((_) {
-                                if (sheetCtx.mounted)
+                                if (sheetCtx.mounted) {
                                   Navigator.of(sheetCtx).pop();
+                                }
                                 if (context.mounted) {
                                   context.read<FeedProvider>().refreshAll();
                                   showAppToast(

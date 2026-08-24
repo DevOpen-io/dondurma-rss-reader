@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-04-22
+Last updated: 2026-08-24
 
 This Privacy Policy explains how Dondurma RSS Reader processes information when you use the app.
 
@@ -43,8 +43,7 @@ The app makes network requests only to provide app features you use. These may i
 
 - RSS or Atom feed sources you add
 - Original article pages, if full-text extraction is enabled
-- A suggested feeds list hosted on GitLab
-- Google Favicon service for feed icons
+- Suggested feed URLs selected during discovery or onboarding
 - Google Fonts service for font assets
 
 When the app fetches feeds or article pages, the source website may receive your IP address, user agent, and request time. Those services may log requests according to their own policies.
@@ -69,7 +68,7 @@ The app can use the system share sheet to share links or articles. It can also i
 
 Your data stays on your device until you delete it. You can remove data by using app controls such as:
 
-- Clear cache
+- Clear cached articles
 - Clear search history
 - Reset app data
 - Remove subscriptions or bookmarks

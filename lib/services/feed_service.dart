@@ -7,6 +7,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
+import 'article_identity.dart';
 
 /// Fetches and parses RSS and Atom feeds over HTTP.
 ///
@@ -49,7 +50,7 @@ class FeedService {
   /// ID across fetches. Using `DateTime.now()` here would mint a fresh ID every
   /// refresh, breaking read-state tracking and re-triggering notifications.
   static String fallbackId(String feedUrl, String? title, String? rawDate) =>
-      'gen:$feedUrl#${title ?? ''}#${rawDate ?? ''}';
+      ArticleIdentity.fallbackId(feedUrl, title, rawDate);
 
   // ---------------------------------------------------------------------------
   // HTTP header constants
@@ -184,7 +185,10 @@ class FeedService {
 
   /// Maps RSS feed items to the universal [FeedItem] model.
   static List<FeedItem> _mapRssItems(
-      RssFeed feed, String category, String sourceUrl) {
+    RssFeed feed,
+    String category,
+    String sourceUrl,
+  ) {
     final siteName = _decodeHtmlEntities(feed.title ?? 'Unknown Site');
 
     return feed.items.map((item) {
@@ -202,8 +206,10 @@ class FeedService {
         }
       }
 
+      final guid = ArticleIdentity.nonEmpty(item.guid);
+      final link = ArticleIdentity.normalizeArticleUrl(item.link);
       return FeedItem(
-        id: item.guid ?? item.link ?? fallbackId(sourceUrl, item.title, item.pubDate),
+        id: guid ?? link ?? fallbackId(sourceUrl, item.title, item.pubDate),
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: parsed.text,
@@ -252,12 +258,13 @@ class FeedService {
         link = item.links.first.href ?? '';
       }
 
+      final atomId = ArticleIdentity.nonEmpty(item.id);
+      final normalizedLink = ArticleIdentity.normalizeArticleUrl(link);
       return FeedItem(
         id:
-            item.id ??
-            (link.isNotEmpty
-                ? link
-                : fallbackId(sourceUrl, item.title, item.updated ?? item.published)),
+            atomId ??
+            normalizedLink ??
+            fallbackId(sourceUrl, item.title, item.updated ?? item.published),
         siteName: siteName,
         title: _decodeHtmlEntities(item.title ?? 'No Title'),
         description: parsed.text,
@@ -281,7 +288,9 @@ class FeedService {
   static _ParsedContent _parseContent(String htmlString) {
     if (htmlString.isEmpty) return const _ParsedContent('', []);
     final document = parse(htmlString);
-    final text = (document.body?.text ?? '').replaceAll(RegExp(r'\s+'), ' ').trim();
+    final text = (document.body?.text ?? '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     final images = document
         .getElementsByTagName('img')
         .map((img) => img.attributes['src'])

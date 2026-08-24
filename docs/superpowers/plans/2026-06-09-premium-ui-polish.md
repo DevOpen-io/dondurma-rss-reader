@@ -1,5 +1,7 @@
 # Premium UI Polish Implementation Plan
 
+Status: historical plan, substantially implemented. Current UI and tests define shipped behavior; unchecked boxes below preserve original execution plan, not current backlog.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Polish the existing RSS reader UI to feel premium — richer theme system, nav bar pill indicator, improved feed cards with thumbnails, article reading comfort, and richer empty states.

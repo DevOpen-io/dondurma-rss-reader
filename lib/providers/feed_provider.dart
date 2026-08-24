@@ -8,7 +8,9 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import '../models/feed_item.dart';
 import '../services/feed_service.dart';
+import '../services/notification_delivery_policy.dart';
 import '../services/notification_service.dart';
+import '../services/observed_article_store.dart';
 import '../services/widget_update_service.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
@@ -21,6 +23,7 @@ import 'subscription_provider.dart';
 /// [BookmarkProvider] via `ChangeNotifierProxyProvider3` in `main.dart`.
 class FeedProvider extends ChangeNotifier {
   final FeedService _feedService = FeedService();
+  late final ObservedArticleStore _observedArticleStore;
 
   /// Max concurrent feed HTTP requests. Limits socket/memory pressure on
   /// devices with constrained network stacks.
@@ -182,7 +185,9 @@ class FeedProvider extends ChangeNotifier {
   // Initialization & dependency updates
   // ---------------------------------------------------------------------------
 
-  FeedProvider() {
+  FeedProvider({ObservedArticleStore? observedArticleStore}) {
+    _observedArticleStore =
+        observedArticleStore ?? ObservedArticleStore.forBox(_box);
     _loadState();
   }
 
@@ -804,6 +809,7 @@ class FeedProvider extends ChangeNotifier {
         );
         return (
           url: sub.url,
+          observationEpoch: sub.notificationEpoch,
           items: result.notModified
               ? (existingByFeed[sub.url] ?? const <FeedItem>[])
               : result.items,
@@ -818,6 +824,7 @@ class FeedProvider extends ChangeNotifier {
         // blank it out, and leave its validators untouched.
         return (
           url: sub.url,
+          observationEpoch: sub.notificationEpoch,
           items: existingByFeed[sub.url] ?? const <FeedItem>[],
           succeeded: false,
           fresh: false,
@@ -830,6 +837,22 @@ class FeedProvider extends ChangeNotifier {
     });
 
     final outcomes = await Future.wait(futures);
+
+    // Observation is independent from delivery. A fresh 200 response may
+    // initialize or advance history. A 304 may only refresh identities in an
+    // already-initialized namespace; cached items cannot initialize one.
+    // Failed feeds never touch their history.
+    final claimedItems = <FeedItem>[];
+    for (final outcome in outcomes) {
+      if (!outcome.succeeded) continue;
+      final claim = await _observedArticleStore.claimFeedBatch(
+        feedUrl: outcome.url,
+        observationEpoch: outcome.observationEpoch,
+        items: outcome.items,
+        allowInitialization: outcome.fresh,
+      );
+      claimedItems.addAll(claim.claimedItems);
+    }
 
     // online: reached the network on at least one feed (200 or 304).
     // anyFreshBody: at least one feed returned a 200 body → content changed, so
@@ -895,10 +918,10 @@ class FeedProvider extends ChangeNotifier {
     _invalidateFilterCache();
     notifyListeners();
 
-    // Fire notifications for newly discovered items (skip the initial load and
-    // 304-only cycles where nothing changed).
-    if (anyFreshBody && _hasLoadedOnce) {
-      _notifyNewArticles(freshItems);
+    // First foreground load suppresses delivery only. Observation already
+    // advanced above, so these articles cannot backfill on a later refresh.
+    if (_hasLoadedOnce) {
+      await _deliverClaimedArticles(claimedItems);
     }
     _hasLoadedOnce = true;
 
@@ -922,13 +945,9 @@ class FeedProvider extends ChangeNotifier {
   // Notification diffing
   // ---------------------------------------------------------------------------
 
-  /// Computes newly discovered articles and triggers a notification.
-  ///
-  /// Uses the persisted [bgKnownItemIds] set (shared with the background
-  /// service) so notifications are never duplicated across sessions or between
-  /// the foreground timer and Workmanager. Only articles newer than 48 hours
-  /// are eligible, and bursts are throttled to at most one per 15 minutes.
-  void _notifyNewArticles(List<FeedItem> freshItems) {
+  /// Applies delivery policy to articles already claimed by the durable,
+  /// cross-isolate observed-history store.
+  Future<void> _deliverClaimedArticles(List<FeedItem> claimedItems) async {
     if (settingsProvider == null || subscriptionProvider == null) return;
 
     // Rate limit: max 1 notification burst per 15 minutes in-app.
@@ -938,46 +957,34 @@ class FeedProvider extends ChangeNotifier {
       return;
     }
 
-    // Use the persisted seen-ID set shared with the background service.
-    final List<dynamic>? knownIdsList = _box.get('bgKnownItemIds');
-    final Set<String> knownIds = knownIdsList?.cast<String>().toSet() ?? {};
-
-    // Always update the persisted set so the next run has an accurate baseline.
-    _box.put('bgKnownItemIds', freshItems.map((i) => i.id).toList());
-
-    // No baseline yet (first ever install) — skip to avoid flood.
-    if (knownIds.isEmpty) return;
-
-    // Recency guard: only notify for articles published in the last 48 hours.
-    final cutoff = now.subtract(const Duration(hours: 48));
-
     final mutedFeedUrls = subscriptionProvider!.subscriptions
         .where((s) => !s.notificationsEnabled)
         .map((s) => s.url)
         .toSet();
 
-    final newItems = freshItems
-        .where(
-          (item) =>
-              !knownIds.contains(item.id) &&
-              !mutedFeedUrls.contains(item.feedUrl) &&
-              item.pubDate != null &&
-              item.pubDate!.isAfter(cutoff),
-        )
-        .toList();
+    final newItems = NotificationDeliveryPolicy.eligibleItems(
+      claimedItems: claimedItems,
+      notificationsEnabled: settingsProvider!.notificationsEnabled,
+      digestMode: settingsProvider!.digestMode,
+      quietHoursEnabled: settingsProvider!.quietHoursEnabled,
+      quietHoursStart: settingsProvider!.quietHoursStart,
+      quietHoursEnd: settingsProvider!.quietHoursEnd,
+      mutedFeedUrls: mutedFeedUrls,
+      now: now,
+    );
 
     if (newItems.isEmpty) return;
 
     _lastNotificationTime = now;
     final latestJson = jsonEncode(newItems.first.toJson());
 
-    NotificationService.instance.showNewArticlesNotification(
+    await NotificationService.instance.showNewArticlesNotification(
       newItems: newItems,
-      notificationsEnabled: settingsProvider!.notificationsEnabled,
-      digestMode: settingsProvider!.digestMode,
-      quietHoursEnabled: settingsProvider!.quietHoursEnabled,
-      quietHoursStart: settingsProvider!.quietHoursStart,
-      quietHoursEnd: settingsProvider!.quietHoursEnd,
+      notificationsEnabled: true,
+      digestMode: 'instant',
+      quietHoursEnabled: false,
+      quietHoursStart: 0,
+      quietHoursEnd: 0,
       latestItemJson: latestJson,
     );
   }

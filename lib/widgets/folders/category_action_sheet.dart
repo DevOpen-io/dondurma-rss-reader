@@ -48,7 +48,11 @@ class CategoryActionSheet extends StatelessWidget {
                     color: cs.primaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(categoryIcon, size: 20, color: cs.onPrimaryContainer),
+                  child: Icon(
+                    categoryIcon,
+                    size: 20,
+                    color: cs.onPrimaryContainer,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -74,14 +78,26 @@ class CategoryActionSheet extends StatelessWidget {
                     label: l10n.markAllAsRead,
                     onTap: onMarkAllRead,
                   ),
-                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
                   FolderActionTile(
                     icon: Icons.drive_file_rename_outline,
                     label: l10n.renameFolder,
-                    trailing: Icon(Icons.chevron_right_rounded, size: 18, color: cs.onSurfaceVariant),
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: cs.onSurfaceVariant,
+                    ),
                     onTap: onRename,
                   ),
-                  Divider(height: 1, indent: 16, color: cs.outline.withValues(alpha: 0.2)),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
                   FolderActionTile(
                     icon: Icons.delete_outline,
                     label: l10n.deleteFolder,

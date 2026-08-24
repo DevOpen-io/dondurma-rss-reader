@@ -10,12 +10,10 @@ Use caveman skill. Terse responses. Drop filler, articles, hedging. Fragments OK
 
 **Prefer TDD when practical:** write or adjust failing tests first for new behavior or bug fixes, then implement until green; skip only where a test would not add signal (e.g. pure UI snapshot churn) — default bias is test-first.
 
-- use superpowers 
-- **Subagent-driven development** for implementation plans with independent tasks — use `superpowers:subagent-driven-development` skill.
+- Use available repository skills when their trigger matches.
 - **MCP over CLI** for Dart/Flutter tooling (analysis, fixes, project queries) when the MCP tool covers the task.
-- dont use git commands.
+- Avoid mutating Git history or user changes. Read-only Git inspection is allowed.
 - **UI/UX Excellence:** Exhibit impeccable skill in frontend design. Deliver modern, polished, and pixel-perfect layouts with exceptional attention to spacing, typography, and visual hierarchy.
-- dont use git commands.
 
 ## 1. Think Before Coding
 
@@ -86,9 +84,9 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 A one-time migration in `_migrateHiveBoxes()` moves legacy keys from `'settings'` into the dedicated boxes.
 
-**Routing**: GoRouter with 3 routes: `/` (HomeScreen with bottom nav), `/article` (ArticleScreen with PageView swipe), `/debug` (DebugScreen).
+**Routing**: GoRouter routes: `/onboarding`, `/`, `/article`, `/debug`; onboarding redirect uses persisted state plus session bypass.
 
-**Localization**: ARB files in `lib/l10n/` (`app_en.arb`, `app_tr.arb`). Generated files (`app_localizations*.dart`) are committed — do not edit them manually; run `flutter gen-l10n` after changing ARB files.
+**Localization**: ARB files: `app_en.arb`, `app_tr.arb`, `app_es.arb`. Metadata comes from `supportedAppLanguages`. Generated Dart is committed; never edit manually.
 
 ## Key Patterns
 
@@ -96,6 +94,8 @@ A one-time migration in `_migrateHiveBoxes()` moves legacy keys from `'settings'
 - Categories = subscriptions' category fields + `_customCategories` set, merged in `SubscriptionProvider.categories` getter.
 - `NotificationService` is a singleton; `isSupported` returns `false` on platforms without notification support.
 - Per-feed `excludedKeywords` filtering happens inside `FeedProvider` before exposing items.
+- Per-feed `fullTextEnabled` is tri-state; `null` follows global `autoFullText`.
+- Global transient feedback uses `lib/utils/app_toast.dart`; new toast replaces current toast.
 - Browser mode is a string: `'builtin'` | `'external'` | `'system'`.
 - `_manageCacheTimer()` in `FeedProvider` recreates the background sync timer each time the proxy provider fires an update.
 - Category icons are stored separately in Hive and assigned on first load from `SubscriptionProvider`.
@@ -103,9 +103,8 @@ A one-time migration in `_migrateHiveBoxes()` moves legacy keys from `'settings'
 ## Gotchas
 
 - Always provide fallback defaults in Hive/JSON deserialization — fields may be absent in older persisted data.
-- The `lib/l10n/app_localizations*.dart` files are auto-generated; only edit `app_en.arb` and `app_tr.arb`.
+- `lib/l10n/app_localizations*.dart` is generated; edit all relevant EN/TR/ES ARB sources.
 - When adding a new Hive key to `'feeds'` or `'bookmarks'`, check whether it needs a migration path in `_migrateHiveBoxes()`.
 - `FeedProvider` uses date-based pagination (`_pageSize = 50`); the page limit resets on every filter/category/search change.
 - `NotificationService.requestPermission()` and `AdBlockerWebviewController.initialize()` run in the background after `runApp` — they are intentionally not awaited.
-
 

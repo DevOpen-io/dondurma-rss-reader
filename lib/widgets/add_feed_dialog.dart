@@ -248,8 +248,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                         ),
                       ),
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return l10n.pleaseEnterName;
+                        }
                         return null;
                       },
                     ),

@@ -1,11 +1,11 @@
 # Notification Reliability Design
 
 Date: 2026-08-24
-Status: approved design, pending implementation
+Status: implemented
 
 ## Goal
 
-An observed article may be claimed as new at most once. Refresh failures, lifecycle changes, foreground/background overlap, settings, cache limits, and subscription initialization must not make it new again.
+An article identity may be claimed as new at most once within the observed-history retention window. Refresh failures, lifecycle changes, foreground/background overlap, settings, cache limits, and subscription initialization must not make it new again during that window.
 
 Delivery is at-most-once attempt. Once claimed, an OS notification failure does not make the article eligible again.
 
@@ -14,7 +14,7 @@ Delivery is at-most-once attempt. Once claimed, an OS notification failure does 
 Included:
 
 - feed-scoped observed history;
-- seven-day retention by observation time;
+- fourteen-day retention by observation time, safely exceeding the 48-hour notification eligibility window;
 - silent first-feed initialization and legacy migration;
 - successful-feed-only state changes;
 - cross-isolate exclusive claim;
@@ -49,9 +49,9 @@ Conceptual schema:
 }
 ```
 
-Feed namespace prevents unrelated feeds with equal GUIDs from colliding. Entries are pruned when observation time is older than seven days. Pruning never uses publication date, `offlineCacheLimit`, cache contents, or current response size.
+Feed namespace combines normalized feed URL with a persisted subscription epoch. This prevents unrelated feeds with equal GUIDs from colliding and makes every new subscription—including unsubscribe/resubscribe of the same URL—initialize silently. Entries are pruned when last observation time is older than fourteen days, seven times the 48-hour notification eligibility window. Pruning never uses publication date, `offlineCacheLimit`, cache contents, or current response size.
 
-Only successful valid feed results enter the store. HTTP failure leaves that feed untouched. HTTP 304 does not erase or replace history.
+Only successful valid feed results enter the store. HTTP failure leaves that feed untouched. HTTP 304 does not erase or replace history and cannot initialize an uninitialized namespace from cached items; only an authoritative HTTP 200 response may initialize it.
 
 ## Claim Operation
 
@@ -59,7 +59,7 @@ Input is one successful feed batch plus whether feed is already initialized. Und
 
 1. reads state fresh from disk;
 2. parses with fallback-safe defaults;
-3. prunes observations older than seven days;
+3. prunes observations older than fourteen days;
 4. deduplicates batch identities;
 5. if feed is uninitialized, records all items and returns no claims;
 6. otherwise records absent identities and returns those identities as claimed;
@@ -78,24 +78,13 @@ Lock ownership uses atomic filesystem creation:
 File.create(exclusive: true)
 ```
 
-Only one contender can create the lock path. Existing lock causes bounded short retry/backoff. Lock metadata contains a unique owner token and creation timestamp.
+Only one contender can create the lock path. Existing lock causes bounded short retry/backoff. Lock metadata contains a unique owner token and creation timestamp for diagnostics only.
 
 Lock holder performs fresh read, prune, claim, temp write, rename. Release deletes lock in `finally`, but only after verifying metadata still matches its owner token.
 
-### Stale-lock recovery
+Runtime contention never steals, renames, or deletes another owner's lock based on age. Existing lock causes bounded retry/backoff. Acquisition timeout fails closed: no article is returned as newly claimed. Synchronization/cache work may continue, but notification delivery is skipped rather than risking duplicates.
 
-A lock older than a conservative stale threshold is eligible for recovery. Recovery does not blindly delete it:
-
-1. contender reads lock metadata;
-2. verifies timestamp is stale;
-3. attempts atomic rename from lock path to a unique quarantine path;
-4. only successful renamer owns recovery;
-5. quarantine file is deleted;
-6. contender retries exclusive lock creation.
-
-Atomic rename ensures two recoverers cannot both remove the same lock. Owner-token verification prevents an old holder from deleting a successor's lock. Critical-section work is short; threshold comfortably exceeds expected file I/O time.
-
-Lock acquisition has finite timeout. Timeout fails closed: no article is returned as newly claimed. Synchronization/cache work may continue, but notification delivery is skipped rather than risking duplicates.
+Cross-platform owner-death detection cannot be guaranteed without more infrastructure. Version 1 therefore performs no runtime stale-lock recovery. A process crash may leave an orphan lock that suppresses future notification claims until controlled cleanup or app-data reset. Missing notifications are preferred over duplicate notifications. Controlled startup cleanup may be considered later only if it can prove no holder is active.
 
 ## State-file durability
 
@@ -111,7 +100,7 @@ Every feed has independent `initialized` state.
 - New subscription therefore initializes silently even if other feeds are initialized.
 - Failed first fetch leaves feed uninitialized; later first success remains silent.
 - Null/empty new store initializes silently.
-- Existing `bgKnownItemIds` signals legacy installation. Legacy IDs are not force-mapped to feeds. Current subscriptions silently initialize on first successful fetch.
+- Existing subscriptions missing an epoch deserialize to `legacy-v1`; newly created subscriptions receive a unique persisted epoch. Existing `bgKnownItemIds` remains legacy evidence but its global IDs are not force-mapped to feeds. Each `legacy-v1` feed silently initializes on first successful fetch.
 - Absence of legacy state also uses silent initialization. This covers fresh installs.
 - Legacy key remains readable during migration but is no longer notification authority.
 
@@ -164,7 +153,7 @@ After claims, background applies global, digest, quiet-hours, per-feed, publicat
 - Lock timeout: skip claims/delivery; never claim without exclusion.
 - State write failure: return no claims.
 - Notification failure: claimed state remains; no retry.
-- Cleanup failure: stale-lock recovery handles later acquisition.
+- Cleanup failure: later acquisitions fail closed; version 1 does not steal an orphan lock.
 
 ## Tests
 
@@ -177,12 +166,18 @@ Unit tests cover:
 - suppressed delivery settings without later backfill;
 - foreground/background sequential directions;
 - concurrent two-store claim against same old state, exactly one winner;
-- active lock retry, stale-lock recovery, competing stale recovery, owner-safe cleanup;
+- active lock retry, timeout without lock stealing, and owner-safe cleanup;
 - RSS/Atom empty ID handling, URL normalization, fallback stability, batch dedupe;
 - HTTP 304 and mixed success/304/failure history preservation;
-- cache trimming independence and seven-day pruning.
+- cache trimming independence and fourteen-day pruning;
+- article leaves and re-enters a response inside retention, producing zero new claim.
 
-Concurrency test uses two independent store instances and simultaneous futures against same real temporary directory. It asserts exactly one combined claim for one article and validates final persisted state.
+Concurrency tests use two independent store instances against the same real temporary directory. One starts simultaneous claims and asserts exactly one combined claim. Another holds the first critical section open, verifies the second contender times out without stealing the lock, then verifies exactly one claim and valid persisted state.
+
+## Remaining risks
+
+- Bounded history is deliberate. If a publisher reintroduces the same stable article after its identity has been pruned beyond fourteen days, it may be observed again. The 48-hour publication-date eligibility normally prevents delivery, but a publisher that also changes/recenters the date can make it eligible.
+- A crash while holding the exclusive-creation lock can leave an orphan lock. Version 1 fails closed until controlled cleanup or app-data reset because correctness is preferred over liveness.
 
 ## Verification
 

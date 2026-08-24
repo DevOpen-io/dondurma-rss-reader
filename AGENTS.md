@@ -23,8 +23,8 @@ A modern Flutter RSS/Atom feed reader with Material 3 UI, FlexColorScheme themin
 - [`FeedSubscription`](lib/models/feed_subscription.dart) — Feed source with url, name, category, notifications, full-text, excluded keywords
 
 ## Hive Boxes
-- **`'settings'`** — flexScheme, themeMode, locale, cache limit, sync interval, notification settings, ad block, webview mode, `hasSeenOnboarding`, `_boxesMigrated` flag
-- **`'feeds'`** — subscriptions, custom categories, cached items, read IDs, category icons, category order, `feedValidators` (etag/lastModified), `bgKnownItemIds` (notification baseline)
+- **`'settings'`** — theme, locale, cache/sync, notifications, reading, filters/search, browser, `autoFullText`, onboarding, migration flag
+- **`'feeds'`** — subscriptions, custom categories, cached items, read IDs, category icons/order, `feedValidators`; `bgKnownItemIds` is legacy migration evidence only
 - **`'bookmarks'`** — Bookmarked items (JSON + ID set)
 
 ## Core Services
@@ -56,21 +56,25 @@ file_selector, package_info_plus, xml, intl, flutter_localizations
 - **Swipe Gestures**: Right = read/unread, Left = bookmark
 - **Pagination**: Date-based sections (Today/Yesterday/Older), `_pageSize = 50`, resets on filter/category/search change
 - **In-App Browser**: WebView with ad blocking toggle (EasyList + AdGuard) and optional DarkReader injection
-- **Theme**: 10 FlexColorScheme schemes × 3 brightness modes (System/Light/Dark); high contrast + reduced-motion options
+- **Theme**: 10 FlexColorScheme schemes × 3 brightness modes (System/Light/Dark); toast motion respects system animation preference
 - **Offline Banner**: Shows when viewing cached content
 - **Background Sync**: Foreground timer (configurable interval) + Workmanager when app is closed
 - **Full-Text Extraction**: Per-feed toggle, heuristic reader-mode scraper in isolate
 - **Keyword Filtering**: Per-feed `excludedKeywords` + global excluded keywords, regex compiled once per filter pass
 - **Search History**: MRU list capped at 10, stored in settings
 - **Onboarding**: Multi-step flow with suggested feeds, background blobs animation
+- **Feedback**: Global modal-aware toast; replace-not-queue timing and reduced-motion support
 
 ## Important Patterns
 - `FeedProvider._hasLoadedOnce` gates notification dispatch — first load never triggers notifications
+- `ObservedArticleStore` owns feed+subscription-epoch scoped, 14-day observation history outside Hive cache; exclusive lock-file creation serializes foreground/Workmanager claims
+- Notification settings affect delivery after claim; suppressed articles never backfill
 - `FeedProvider.refreshAll()` coalesces concurrent requests (`_refreshQueued`) and limits parallel HTTP to 5 (`_fetchConcurrency`, semaphore)
 - `FeedProvider.filterInputsChanged` (pure static gate) invalidates the filter cache only when global/per-feed keywords or bookmark IDs actually change — unrelated upstream updates don't rebuild the feed list
 - Categories = subscriptions' category fields + `_customCategories` set, merged in `SubscriptionProvider.categories` getter
 - `NotificationService.isSupported` returns `false` on unsupported platforms
 - Per-feed `excludedKeywords` / `fullTextEnabled` fields on `FeedSubscription`
+- `FeedSubscription.fullTextEnabled` is tri-state; `null` follows global `autoFullText`
 - Browser mode: `'builtin'` | `'external'` | `'system'`
 - App root uses `context.select` on `flexScheme`/`themeMode`/`locale` so unrelated settings changes don't rebuild MaterialApp
 - `sessionOnboardingBypassed` (router/onboarding_state.dart) short-circuits the onboarding redirect
@@ -82,5 +86,6 @@ file_selector, package_info_plus, xml, intl, flutter_localizations
 - `_manageCacheTimer()` recreates timer on proxy provider updates
 - Category icons stored separately in Hive, assigned on first load; legacy emoji icons mapped to Material icons
 - Generated localization files in `lib/l10n/app_localizations*.dart` — do not edit manually
+- Tests cover parsing, fetch mechanics, filters, resume policy, feed rows, toast, responsive widths; extend changed behavior
 - `NotificationService.requestPermission()` and `AdBlockerWebviewController.initialize()` run unawaited after `runApp`
 - `Assets/Logo.png` is launcher-icon source only and must NOT be bundled (asset list covers `assets/logo.ico`, `assets/js/`)

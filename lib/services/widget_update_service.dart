@@ -27,10 +27,7 @@ class WidgetUpdateService {
           return b.pubDate!.compareTo(a.pubDate!);
         });
 
-      await Future.wait([
-        _saveLatest(sorted),
-        _saveCategory(sorted),
-      ]);
+      await Future.wait([_saveLatest(sorted), _saveCategory(sorted)]);
       await Future.wait([
         HomeWidget.updateWidget(
           androidName: 'widgets.LatestNewsWidgetReceiver',
@@ -48,10 +45,7 @@ class WidgetUpdateService {
 
   static Future<void> _saveLatest(List<FeedItem> sorted) async {
     final items = sorted.take(50).map(_toMap).toList();
-    await HomeWidget.saveWidgetData<String>(
-      'widget_latest',
-      jsonEncode(items),
-    );
+    await HomeWidget.saveWidgetData<String>('widget_latest', jsonEncode(items));
   }
 
   /// Writes per-category article buckets so the native category widget can

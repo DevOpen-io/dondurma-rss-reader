@@ -1,5 +1,7 @@
 # Keyword Input Bottom Sheet Implementation Plan
 
+Status: completed historical plan. Current source: `lib/widgets/keyword_input_sheet.dart`; unchecked boxes below preserve original plan state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Replace the `KeywordInputDialog` (AlertDialog) with a `KeywordInputSheet` (modal bottom sheet) that matches the existing design language of `add_feed_dialog.dart`.

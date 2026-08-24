@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
 class FeedListSkeleton extends StatelessWidget {
-  const FeedListSkeleton({super.key, this.itemCount = 6, this.showHeader = true});
+  const FeedListSkeleton({
+    super.key,
+    this.itemCount = 6,
+    this.showHeader = true,
+  });
 
   final int itemCount;
   final bool showHeader;

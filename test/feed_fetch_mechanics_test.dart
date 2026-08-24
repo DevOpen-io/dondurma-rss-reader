@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 
 FeedItem _item(String id, {DateTime? pubDate}) => FeedItem(
   id: id,
@@ -58,6 +59,27 @@ void main() {
 
     test('tolerates null title/date', () {
       expect(FeedService.fallbackId('https://f', null, null), isNotEmpty);
+    });
+  });
+
+  group('ArticleIdentity', () {
+    test('rejects empty publisher IDs', () {
+      expect(ArticleIdentity.nonEmpty(null), isNull);
+      expect(ArticleIdentity.nonEmpty('   '), isNull);
+      expect(ArticleIdentity.nonEmpty(' guid '), 'guid');
+    });
+
+    test('normalizes HTTP URLs conservatively', () {
+      expect(
+        ArticleIdentity.normalizeArticleUrl(
+          ' HTTPS://Example.COM:443/path?q=1#section ',
+        ),
+        'https://example.com/path?q=1',
+      );
+      expect(
+        ArticleIdentity.normalizeArticleUrl('https://example.com/path/'),
+        'https://example.com/path/',
+      );
     });
   });
 

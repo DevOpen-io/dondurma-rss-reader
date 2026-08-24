@@ -166,10 +166,7 @@ class OpmlService {
   /// Returns an empty list if the user cancels or the file is invalid.
   Future<List<FeedSubscription>> importOpml() async {
     try {
-      const typeGroup = XTypeGroup(
-        label: 'OPML',
-        extensions: ['opml', 'xml'],
-      );
+      const typeGroup = XTypeGroup(label: 'OPML', extensions: ['opml', 'xml']);
       final file = await openFile(acceptedTypeGroups: [typeGroup]);
       if (file == null) return [];
 

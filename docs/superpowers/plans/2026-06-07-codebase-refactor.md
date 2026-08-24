@@ -1,5 +1,7 @@
 # Codebase Refactor Implementation Plan
 
+Status: completed historical plan. Extracted widgets live under `lib/widgets/article`, `home`, `folders`, and `settings`; unchecked boxes below preserve original plan state.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 >
 > **CRITICAL CONSTRAINT: DO NOT run any git commands.** No `git add`, `git commit`, `git status`, `git diff`, or any other git operation. All changes land as uncommitted edits. This is a hard project rule.

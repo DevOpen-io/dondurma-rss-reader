@@ -72,10 +72,12 @@ void main() {
       await tester.pumpAndSettle();
 
       final constrainedBox = tester.widget<ConstrainedBox>(
-        find.descendant(
-          of: find.byType(ConstrainedWidth),
-          matching: find.byType(ConstrainedBox),
-        ).first,
+        find
+            .descendant(
+              of: find.byType(ConstrainedWidth),
+              matching: find.byType(ConstrainedBox),
+            )
+            .first,
       );
       expect(constrainedBox.constraints.maxWidth, 680);
     });
@@ -162,58 +164,56 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets(
-      'nav pill sits in bottom quarter of screen at tablet size',
-      (tester) async {
-        tester.view.physicalSize = const Size(2560, 1600);
-        tester.view.devicePixelRatio = 2.0;
-        addTearDown(tester.view.resetPhysicalSize);
+    testWidgets('nav pill sits in bottom quarter of screen at tablet size', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(2560, 1600);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
 
-        await tester.pumpWidget(wrapHome());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
 
-        final logicalScreenHeight = 1600 / 2.0; // 800dp
+      final logicalScreenHeight = 1600 / 2.0; // 800dp
 
-        final feedsFinder = find.bySemanticsLabel('Feeds');
-        final settingsFinder = find.bySemanticsLabel('Settings');
+      final feedsFinder = find.bySemanticsLabel('Feeds');
+      final settingsFinder = find.bySemanticsLabel('Settings');
 
-        expect(feedsFinder, findsOneWidget);
-        expect(settingsFinder, findsOneWidget);
+      expect(feedsFinder, findsOneWidget);
+      expect(settingsFinder, findsOneWidget);
 
-        final feedsTop = tester.getTopLeft(feedsFinder).dy;
-        final settingsBottom = tester.getBottomRight(settingsFinder).dy;
+      final feedsTop = tester.getTopLeft(feedsFinder).dy;
+      final settingsBottom = tester.getBottomRight(settingsFinder).dy;
 
-        // Pill should sit in the bottom 25% of the screen.
-        expect(feedsTop, greaterThan(logicalScreenHeight * 0.75));
-        expect(settingsBottom, closeTo(logicalScreenHeight, 20));
-      },
-    );
+      // Pill should sit in the bottom 25% of the screen.
+      expect(feedsTop, greaterThan(logicalScreenHeight * 0.75));
+      expect(settingsBottom, closeTo(logicalScreenHeight, 20));
+    });
 
-    testWidgets(
-      'feed list body capped at 680dp at tablet size',
-      (tester) async {
-        tester.view.physicalSize = const Size(2560, 1600);
-        tester.view.devicePixelRatio = 2.0;
-        addTearDown(tester.view.resetPhysicalSize);
+    testWidgets('feed list body capped at 680dp at tablet size', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(2560, 1600);
+      tester.view.devicePixelRatio = 2.0;
+      addTearDown(tester.view.resetPhysicalSize);
 
-        await tester.pumpWidget(wrapHome());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
 
-        // Two ConstrainedWidths in Scaffold: body (680) + bottom nav (480).
-        // Find the one with maxWidth: 680 (the body).
-        final cwFinders = find.descendant(
-          of: find.byType(Scaffold),
-          matching: find.byType(ConstrainedWidth),
-        );
-        expect(cwFinders, findsNWidgets(2));
+      // Two ConstrainedWidths in Scaffold: body (680) + bottom nav (480).
+      // Find the one with maxWidth: 680 (the body).
+      final cwFinders = find.descendant(
+        of: find.byType(Scaffold),
+        matching: find.byType(ConstrainedWidth),
+      );
+      expect(cwFinders, findsNWidgets(2));
 
-        final box = find.descendant(
-          of: cwFinders.first,
-          matching: find.byType(ConstrainedBox),
-        );
-        final constraints = tester.widget<ConstrainedBox>(box.first).constraints;
-        expect(constraints.maxWidth, 680);
-      },
-    );
+      final box = find.descendant(
+        of: cwFinders.first,
+        matching: find.byType(ConstrainedBox),
+      );
+      final constraints = tester.widget<ConstrainedBox>(box.first).constraints;
+      expect(constraints.maxWidth, 680);
+    });
   });
 }

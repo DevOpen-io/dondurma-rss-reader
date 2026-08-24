@@ -6,6 +6,8 @@ status: approved
 
 # Keyword Input Bottom Sheet
 
+Status: implemented. Current source: `lib/widgets/keyword_input_sheet.dart`. Historical design record; code wins on drift.
+
 ## Goal
 
 Convert `KeywordInputDialog` (AlertDialog) to a `KeywordInputSheet` (modal bottom sheet) matching the existing bottom sheet design language used in `add_feed_dialog.dart`.
