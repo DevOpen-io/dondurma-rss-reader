@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import '../models/feed_item.dart';
+import '../models/feed_subscription.dart';
+import '../services/feed_cache_policy.dart';
 import '../services/feed_service.dart';
 import '../services/notification_delivery_policy.dart';
 import '../services/notification_service.dart';
@@ -24,6 +26,7 @@ import 'subscription_provider.dart';
 class FeedProvider extends ChangeNotifier {
   final FeedService _feedService = FeedService();
   late final ObservedArticleStore _observedArticleStore;
+  late final Future<void> _initialization;
 
   /// Max concurrent feed HTTP requests. Limits socket/memory pressure on
   /// devices with constrained network stacks.
@@ -74,6 +77,11 @@ class FeedProvider extends ChangeNotifier {
   /// [refreshAll] runs exactly one more pass when it finishes, so overlapping
   /// triggers collapse into a single trailing refresh instead of stacking.
   bool _refreshQueued = false;
+  Completer<void>? _refreshWaiter;
+
+  /// Immutable snapshot owned by this provider. The upstream provider is
+  /// mutable, so its current list cannot represent previous subscription state.
+  Set<String> _knownSubscriptionUrls = const {};
 
   // Dependencies that need to be updated via ProxyProvider
   SubscriptionProvider? subscriptionProvider;
@@ -188,7 +196,7 @@ class FeedProvider extends ChangeNotifier {
   FeedProvider({ObservedArticleStore? observedArticleStore}) {
     _observedArticleStore =
         observedArticleStore ?? ObservedArticleStore.forBox(_box);
-    _loadState();
+    _initialization = _loadState();
   }
 
   /// Called by the `ChangeNotifierProxyProvider3` whenever any upstream
@@ -203,10 +211,6 @@ class FeedProvider extends ChangeNotifier {
     // Snapshot sync settings before overwrite to decide if timer needs reset.
     final int prevInterval = settingsProvider?.cacheIntervalSeconds ?? -1;
     final bool prevSync = settingsProvider?.syncBackground ?? false;
-
-    // Snapshot subscription URLs to detect actual feed-list changes.
-    final List<String> prevUrls =
-        subscriptionProvider?.subscriptions.map((s) => s.url).toList() ?? [];
 
     subscriptionProvider = sub;
     settingsProvider = set;
@@ -234,6 +238,13 @@ class FeedProvider extends ChangeNotifier {
     _lastFeedKeywords = nextFeedKeywords;
     _lastBookmarkIds = nextBookmarkIds;
 
+    final currentUrls = sub.subscriptions.map((s) => s.url).toSet();
+    final subscriptionsChanged = !setEquals(
+      _knownSubscriptionUrls,
+      currentUrls,
+    );
+    _knownSubscriptionUrls = Set.unmodifiable(currentUrls);
+
     if (isFirstUpdate) {
       refreshAll();
       _manageCacheTimer();
@@ -256,8 +267,7 @@ class FeedProvider extends ChangeNotifier {
     }
 
     // If subscriptions were added/removed, kick off a fresh fetch.
-    final List<String> currUrls = sub.subscriptions.map((s) => s.url).toList();
-    if (!listEquals(prevUrls, currUrls)) {
+    if (subscriptionsChanged) {
       refreshAll();
     }
   }
@@ -742,9 +752,105 @@ class FeedProvider extends ChangeNotifier {
   // Refresh & sync
   // ---------------------------------------------------------------------------
 
+  /// Validates, persists, and makes a subscription usable in one awaited
+  /// foreground transaction. The authoritative validation response is reused
+  /// by the normal refresh pipeline, including cache and observation handling.
+  Future<bool> addSubscriptionAndRefresh(
+    String url,
+    String name,
+    String category,
+  ) async {
+    await _initialization;
+    final subscriptions = subscriptionProvider;
+    if (subscriptions == null) return false;
+    if (subscriptions.subscriptions.any(
+      (subscription) => subscription.url == url,
+    )) {
+      return false;
+    }
+
+    _isLoading = true;
+    notifyListeners();
+    final previousKnownUrls = _knownSubscriptionUrls;
+    try {
+      final prefetched = await _feedService.fetchFeed(url, category);
+      if (prefetched.notModified) {
+        throw Exception('Authoritative subscription fetch returned 304.');
+      }
+
+      // ProxyProvider may rebuild after addFeed returns. Pre-advance this
+      // provider-owned snapshot so that delayed update does not start a second,
+      // all-feed refresh for a transaction already owned here.
+      _knownSubscriptionUrls = Set.unmodifiable({...previousKnownUrls, url});
+      final added = await subscriptions.addFeed(url, name, category);
+      if (!added) {
+        _knownSubscriptionUrls = previousKnownUrls;
+        return false;
+      }
+
+      // If another refresh was already running, let its queued pass settle
+      // before applying the authoritative new-feed result so it cannot overwrite
+      // the transaction's articles with an older subscription snapshot.
+      if (_isSyncing) await refreshAll();
+      final subscription = subscriptions.subscriptions.firstWhere(
+        (item) => item.url == url,
+      );
+      await _applyNewSubscriptionResult(subscription, prefetched);
+      return true;
+    } catch (_) {
+      _knownSubscriptionUrls = previousKnownUrls;
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _applyNewSubscriptionResult(
+    FeedSubscription subscription,
+    FeedFetchResult result,
+  ) async {
+    final merged = _items
+        .where((item) => item.feedUrl != subscription.url)
+        .toList();
+    merged.addAll(result.items);
+    merged.sort((a, b) {
+      if (a.pubDate == null && b.pubDate == null) return 0;
+      if (a.pubDate == null) return 1;
+      if (b.pubDate == null) return -1;
+      return b.pubDate!.compareTo(a.pubDate!);
+    });
+    _items = merged;
+
+    final validators = _loadFeedValidators();
+    if (result.etag != null || result.lastModified != null) {
+      validators[subscription.url] = {
+        'etag': result.etag,
+        'lastModified': result.lastModified,
+      };
+    } else {
+      validators.remove(subscription.url);
+    }
+    _saveFeedValidators(validators);
+
+    await _observedArticleStore.claimFeedBatch(
+      feedUrl: subscription.url,
+      observationEpoch: subscription.notificationEpoch,
+      items: result.items,
+      allowInitialization: true,
+    );
+
+    _isOffline = false;
+    _invalidateFilterCache();
+    notifyListeners();
+    await _saveCachedItems();
+    WidgetUpdateService.updateFeedWidgets(_items).ignore();
+  }
+
   /// Fetches all subscribed feeds with bounded concurrency, merges bookmarks,
   /// sorts by date, fires notifications for new articles, and persists cache.
   Future<void> refreshAll() async {
+    await _initialization;
     if (subscriptionProvider == null) return;
 
     // Coalesce overlapping refreshes. The periodic timer, app-resume, and
@@ -754,21 +860,34 @@ class FeedProvider extends ChangeNotifier {
     // run it when it finishes.
     if (_isSyncing) {
       _refreshQueued = true;
-      return;
+      return (_refreshWaiter ??= Completer<void>()).future;
     }
 
     _isSyncing = true;
+    Object? failure;
+    StackTrace? failureStack;
     try {
-      await _performRefresh();
+      do {
+        _refreshQueued = false;
+        await _performRefresh();
+      } while (_refreshQueued);
+    } catch (error, stackTrace) {
+      failure = error;
+      failureStack = stackTrace;
+      rethrow;
     } finally {
       // Always clear the guard, even if a fetch/persist step throws — otherwise
       // the provider would deadlock and never refresh again.
       _isSyncing = false;
-    }
-
-    if (_refreshQueued) {
-      _refreshQueued = false;
-      await refreshAll();
+      final waiter = _refreshWaiter;
+      _refreshWaiter = null;
+      if (waiter != null && !waiter.isCompleted) {
+        if (failure == null) {
+          waiter.complete();
+        } else {
+          waiter.completeError(failure, failureStack);
+        }
+      }
     }
   }
 
@@ -801,12 +920,22 @@ class FeedProvider extends ChangeNotifier {
       await semaphore.acquire();
       final v = validators[sub.url];
       try {
-        final result = await _feedService.fetchFeed(
+        final etag = v?['etag'] as String?;
+        final lastModified = v?['lastModified'] as String?;
+        var result = await _feedService.fetchFeed(
           sub.url,
           sub.category,
-          etag: v?['etag'] as String?,
-          lastModified: v?['lastModified'] as String?,
+          etag: etag,
+          lastModified: lastModified,
         );
+        final hasTrustworthyCache = existingByFeed[sub.url]?.isNotEmpty == true;
+        final usedValidator = etag != null || lastModified != null;
+        if (result.notModified && usedValidator && !hasTrustworthyCache) {
+          // A 304 carries no body. Without local articles it is unusable, so
+          // retry once unconditionally. Any failure is handled by the outer
+          // catch and never starts another retry.
+          result = await _feedService.fetchFeed(sub.url, sub.category);
+        }
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -1000,7 +1129,13 @@ class FeedProvider extends ChangeNotifier {
     // offlineCacheLimit == 0 means "no offline cache"
     if (limit == 0) return;
 
-    final itemsToCache = _items.take(limit).toList();
+    final subscriptions = subscriptionProvider;
+    if (subscriptions == null) return;
+    final itemsToCache = FeedCachePolicy.fairTrim(
+      items: _items,
+      subscribedFeedUrls: subscriptions.subscriptions.map((sub) => sub.url),
+      limit: limit,
+    );
     _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
     // No notifyListeners() here — cachedItemIds is only used for badge display
     // and the next normal rebuild will pick it up, avoiding an unnecessary

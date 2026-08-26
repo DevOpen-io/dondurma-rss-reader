@@ -32,6 +32,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
   bool _hasErrorTr = false;
   String? _selectedCategoryGlobal;
   String? _selectedCategoryTr;
+  final Set<String> _subscribingUrls = {};
 
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
@@ -191,24 +192,35 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     String url,
     String category,
   ) async {
+    if (_subscribingUrls.contains(url)) return;
+    setState(() => _subscribingUrls.add(url));
     final l10n = AppLocalizations.of(context);
     final subscriptionProvider = context.read<SubscriptionProvider>();
     final feedProvider = context.read<FeedProvider>();
-    final added = await subscriptionProvider.addFeed(url, name, category);
-    if (!added) return;
-    if (context.mounted) feedProvider.refreshAll();
+    try {
+      final added = await feedProvider.addSubscriptionAndRefresh(
+        url,
+        name,
+        category,
+      );
+      if (!added) return;
 
-    showAppToast(
-      l10n.addedSubscription(name),
-      type: AppToastType.success,
-      action: AppToastAction(
-        label: l10n.undo,
-        onPressed: () async {
-          await subscriptionProvider.removeFeed(url);
-          feedProvider.refreshAll();
-        },
-      ),
-    );
+      showAppToast(
+        l10n.addedSubscription(name),
+        type: AppToastType.success,
+        action: AppToastAction(
+          label: l10n.undo,
+          onPressed: () async {
+            await subscriptionProvider.removeFeed(url);
+            feedProvider.refreshAll();
+          },
+        ),
+      );
+    } catch (_) {
+      showAppToast(l10n.feedAddError, type: AppToastType.error);
+    } finally {
+      if (mounted) setState(() => _subscribingUrls.remove(url));
+    }
   }
 
   Future<void> _unsubscribeFromFeed(
@@ -463,6 +475,9 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                         itemCount: feeds.length,
                         itemBuilder: (context, index) => _SuggestedFeedTile(
                           feed: feeds[index],
+                          isSubscribing: _subscribingUrls.contains(
+                            feeds[index]['url'],
+                          ),
                           onSubscribe: _subscribeToFeed,
                           onUnsubscribe: _unsubscribeFromFeed,
                         ),
@@ -710,12 +725,14 @@ class _SheetChip extends StatelessWidget {
 /// A single suggested feed tile.
 class _SuggestedFeedTile extends StatelessWidget {
   final Map<String, String> feed;
+  final bool isSubscribing;
   final Future<void> Function(BuildContext, String, String, String) onSubscribe;
   final Future<void> Function(BuildContext, String, String, String)
   onUnsubscribe;
 
   const _SuggestedFeedTile({
     required this.feed,
+    required this.isSubscribing,
     required this.onSubscribe,
     required this.onUnsubscribe,
   });
@@ -753,7 +770,7 @@ class _SuggestedFeedTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: isSubscribed
+          onTap: isSubscribed || isSubscribing
               ? null
               : () => onSubscribe(context, name, url, category),
           child: Padding(
@@ -840,7 +857,10 @@ class _SuggestedFeedTile extends StatelessWidget {
                     : _SubscribeButton(
                         label: l10n.addSource,
                         colorScheme: colorScheme,
-                        onTap: () => onSubscribe(context, name, url, category),
+                        isLoading: isSubscribing,
+                        onTap: isSubscribing
+                            ? null
+                            : () => onSubscribe(context, name, url, category),
                       ),
               ],
             ),
@@ -869,11 +889,13 @@ class _FaviconFallback extends StatelessWidget {
 class _SubscribeButton extends StatelessWidget {
   final String label;
   final ColorScheme colorScheme;
-  final VoidCallback onTap;
+  final bool isLoading;
+  final VoidCallback? onTap;
 
   const _SubscribeButton({
     required this.label,
     required this.colorScheme,
+    required this.isLoading,
     required this.onTap,
   });
 
@@ -890,7 +912,12 @@ class _SubscribeButton extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
         textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       ),
-      child: Text(label),
+      child: isLoading
+          ? const SizedBox.square(
+              dimension: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Text(label),
     );
   }
 }

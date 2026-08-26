@@ -6,6 +6,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
+import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
@@ -99,6 +100,7 @@ Future<void> runBgFetch() async {
             subscription: sub,
             items: result.items,
             succeeded: true,
+            fresh: !result.notModified,
             allowInitialization: !result.notModified,
           );
         } catch (_) {
@@ -106,6 +108,7 @@ Future<void> runBgFetch() async {
             subscription: sub,
             items: <FeedItem>[],
             succeeded: false,
+            fresh: false,
             allowInitialization: false,
           );
         }
@@ -129,13 +132,26 @@ Future<void> runBgFetch() async {
       claimedItems.addAll(claim.claimedItems);
     }
 
-    // Persist fresh items into the main cache + home-screen widgets so the next
-    // app launch (and the widgets) show up-to-date news without waiting for an
-    // in-app refresh. Runs on every successful fetch, including the first run
-    // and runs with no new items (which short-circuit notification below).
-    if (allItems.isNotEmpty) {
-      await _persistBgCache(feedsBox, settingsBox, allItems);
-      await WidgetUpdateService.updateFeedWidgets(allItems);
+    // Replace only feeds with an authoritative fresh response. Failed and 304
+    // feeds retain their durable articles.
+    final freshItemsByFeed = <String, List<FeedItem>>{
+      for (final result in results)
+        if (result.succeeded && result.fresh)
+          result.subscription.url: result.items,
+    };
+    if (freshItemsByFeed.isNotEmpty) {
+      final merged = FeedCachePolicy.mergeFreshFeeds(
+        existingItems: _readBgCache(feedsBox),
+        freshItemsByFeed: freshItemsByFeed,
+        subscribedFeedUrls: subscriptions.map((sub) => sub.url),
+      );
+      final persisted = await _persistBgCache(
+        feedsBox,
+        settingsBox,
+        merged,
+        subscriptions.map((sub) => sub.url),
+      );
+      await WidgetUpdateService.updateFeedWidgets(persisted);
     }
 
     final newItems = NotificationDeliveryPolicy.eligibleItems(
@@ -174,22 +190,34 @@ Future<void> runBgFetch() async {
 /// Writes the freshly fetched items into the `'feeds'` box `cachedItemsJson`
 /// key, sorted newest-first and capped to the user's offline cache limit, using
 /// the same format [FeedProvider] reads on startup.
-Future<void> _persistBgCache(
+Future<List<FeedItem>> _persistBgCache(
   Box feedsBox,
   Box settingsBox,
   List<FeedItem> items,
+  Iterable<String> subscribedFeedUrls,
 ) async {
   final int limit = settingsBox.get('offlineCacheLimit', defaultValue: 50);
-  if (limit == 0) return; // offline cache disabled
+  if (limit == 0) return const []; // offline cache disabled
 
-  final sorted = items.toList()
-    ..sort((a, b) {
-      if (a.pubDate == null && b.pubDate == null) return 0;
-      if (a.pubDate == null) return 1;
-      if (b.pubDate == null) return -1;
-      return b.pubDate!.compareTo(a.pubDate!);
-    });
-
-  final maps = sorted.take(limit).map((e) => e.toJson()).toList();
+  final selected = FeedCachePolicy.fairTrim(
+    items: items,
+    subscribedFeedUrls: subscribedFeedUrls,
+    limit: limit,
+  );
+  final maps = selected.map((e) => e.toJson()).toList();
   await feedsBox.put('cachedItemsJson', jsonEncode(maps));
+  return selected;
+}
+
+List<FeedItem> _readBgCache(Box feedsBox) {
+  final raw = feedsBox.get('cachedItemsJson');
+  if (raw is! String || raw.isEmpty) return const [];
+  try {
+    final decoded = jsonDecode(raw) as List<dynamic>;
+    return decoded
+        .map((entry) => FeedItem.fromJson(entry as Map<String, dynamic>))
+        .toList();
+  } catch (_) {
+    return const [];
+  }
 }

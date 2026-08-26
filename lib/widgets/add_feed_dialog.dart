@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../services/feed_service.dart';
 import '../utils/app_toast.dart';
 
 class AddFeedDialog extends StatefulWidget {
@@ -328,13 +327,13 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     if (category.isEmpty) category = 'Uncategorized';
 
     try {
-      await FeedService().fetchFeed(url, category);
-      if (!context.mounted) return;
-      final subscriptions = context.read<SubscriptionProvider>();
       final feeds = context.read<FeedProvider>();
-      final success = await subscriptions.addFeed(url, name, category);
+      final success = await feeds.addSubscriptionAndRefresh(
+        url,
+        name,
+        category,
+      );
       if (success) {
-        feeds.refreshAll();
         if (context.mounted) {
           context.pop();
           showAppToast(
