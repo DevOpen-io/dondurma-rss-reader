@@ -9,6 +9,7 @@ import '../../models/feed_subscription.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../widgets/keyword_input_sheet.dart';
+import '../category_icon.dart';
 
 class EditCategoryDialog extends StatefulWidget {
   const EditCategoryDialog({super.key, required this.currentCategory});
@@ -62,6 +63,104 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
                   });
             }
             context.pop();
+          },
+          child: Text(l10n.save),
+        ),
+      ],
+    );
+  }
+}
+
+/// Dialog that lets the user pick any emoji via the keyboard as the
+/// category icon. An empty field restores the default icon.
+class EmojiIconDialog extends StatefulWidget {
+  const EmojiIconDialog({super.key, required this.category});
+  final String category;
+
+  @override
+  State<EmojiIconDialog> createState() => _EmojiIconDialogState();
+}
+
+class _EmojiIconDialogState extends State<EmojiIconDialog> {
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(
+      text: context.read<SubscriptionProvider>().getCategoryEmoji(
+        widget.category,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    final typed = _controller.text.trim();
+    return AlertDialog(
+      title: Text(l10n.changeIcon),
+      content: Row(
+        children: [
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: cs.primaryContainer.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Center(
+              child: typed.isEmpty
+                  ? CategoryIcon(
+                      category: widget.category,
+                      size: 22,
+                      color: cs.onPrimaryContainer,
+                    )
+                  : Text(
+                      typed.characters.first,
+                      style: const TextStyle(fontSize: 24, height: 1),
+                    ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextField(
+              controller: _controller,
+              autofocus: true,
+              onChanged: (_) => setState(() {}),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 26),
+              decoration: InputDecoration(
+                labelText: l10n.emojiLabel,
+                border: const OutlineInputBorder(),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 16,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(l10n.cancel),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            context.read<SubscriptionProvider>().setCategoryEmoji(
+              widget.category,
+              _controller.text,
+            );
+            Navigator.of(context).pop();
           },
           child: Text(l10n.save),
         ),

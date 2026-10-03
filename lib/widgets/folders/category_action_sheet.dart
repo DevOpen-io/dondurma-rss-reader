@@ -1,21 +1,22 @@
 import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../category_icon.dart';
 import 'feed_action_sheet.dart';
 
 class CategoryActionSheet extends StatelessWidget {
   const CategoryActionSheet({
     super.key,
     required this.category,
-    required this.categoryIcon,
     required this.onMarkAllRead,
+    required this.onChangeIcon,
     required this.onRename,
     required this.onDelete,
   });
 
   final String category;
-  final IconData categoryIcon;
   final VoidCallback onMarkAllRead;
+  final VoidCallback onChangeIcon;
   final VoidCallback onRename;
   final VoidCallback onDelete;
 
@@ -48,8 +49,8 @@ class CategoryActionSheet extends StatelessWidget {
                     color: cs.primaryContainer.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: Icon(
-                    categoryIcon,
+                  child: CategoryIcon(
+                    category: category,
                     size: 20,
                     color: cs.onPrimaryContainer,
                   ),
@@ -77,6 +78,21 @@ class CategoryActionSheet extends StatelessWidget {
                     icon: Icons.done_all_rounded,
                     label: l10n.markAllAsRead,
                     onTap: onMarkAllRead,
+                  ),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
+                  FolderActionTile(
+                    icon: Icons.emoji_emotions_outlined,
+                    label: l10n.changeIcon,
+                    trailing: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 18,
+                      color: cs.onSurfaceVariant,
+                    ),
+                    onTap: onChangeIcon,
                   ),
                   Divider(
                     height: 1,

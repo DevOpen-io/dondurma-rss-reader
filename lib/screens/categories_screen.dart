@@ -8,6 +8,7 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../utils/app_toast.dart';
 import '../widgets/folders/feed_action_sheet.dart';
+import '../widgets/category_icon.dart';
 import '../widgets/folders/folder_dialogs.dart';
 import '../widgets/constrained_width.dart';
 
@@ -16,7 +17,11 @@ import '../widgets/constrained_width.dart';
 /// Supports adding/renaming/deleting categories, moving feeds between
 /// categories, editing feed details, and per-feed keyword exclusion.
 class CategoriesScreen extends StatelessWidget {
-  const CategoriesScreen({super.key});
+  const CategoriesScreen({super.key, this.onFeedSelected});
+
+  /// Called when a feed's navigate affordance is tapped — HomeScreen switches
+  /// to the Feeds tab so the feed-filtered list becomes visible.
+  final VoidCallback? onFeedSelected;
 
   void _showEditCategoryDialog(BuildContext context, String currentCategory) {
     showDialog<void>(
@@ -27,65 +32,9 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   void _showIconPicker(BuildContext context, String categoryName) {
-    final icons = SubscriptionProvider.categoryIconOptions;
-
-    showModalBottomSheet(
+    showDialog<void>(
       context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (bottomSheetContext) {
-        return Padding(
-          padding: const EdgeInsets.all(20.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Select Icon for $categoryName',
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              Flexible(
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  itemCount: icons.length,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    crossAxisSpacing: 10,
-                    mainAxisSpacing: 10,
-                  ),
-                  itemBuilder: (context, index) {
-                    final iconData = icons[index];
-                    return InkWell(
-                      onTap: () {
-                        context.read<SubscriptionProvider>().setCategoryIcon(
-                          categoryName,
-                          iconData,
-                        );
-                        Navigator.pop(bottomSheetContext);
-                      },
-                      borderRadius: BorderRadius.circular(10),
-                      child: Center(
-                        child: Icon(
-                          iconData,
-                          size: 28,
-                          color: Theme.of(context).colorScheme.onSurface,
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 10),
-            ],
-          ),
-        );
-      },
+      builder: (_) => EmojiIconDialog(category: categoryName),
     );
   }
 
@@ -239,8 +188,8 @@ class CategoriesScreen extends StatelessWidget {
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ),
-                        leading: Icon(
-                          subscriptionProvider.getCategoryIcon(category),
+                        leading: CategoryIcon(
+                          category: category,
                           size: 20,
                           color: cs.onSurfaceVariant,
                         ),
@@ -378,6 +327,10 @@ class CategoriesScreen extends StatelessWidget {
               subs.length,
             ),
             onFeedTap: (sub) => _showFeedActionSheet(context, sub),
+            onFeedNavigate: (sub) {
+              context.read<FeedProvider>().selectFeed(sub.url);
+              onFeedSelected?.call();
+            },
           );
         },
       ),
@@ -396,6 +349,7 @@ class _CategorySection extends StatelessWidget {
     required this.onRename,
     required this.onDelete,
     required this.onFeedTap,
+    required this.onFeedNavigate,
   });
 
   final String categoryName;
@@ -405,12 +359,17 @@ class _CategorySection extends StatelessWidget {
   final VoidCallback onRename;
   final VoidCallback onDelete;
   final void Function(FeedSubscription) onFeedTap;
+  final void Function(FeedSubscription) onFeedNavigate;
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final icon = subscriptionProvider.getCategoryIcon(categoryName);
+    final icon = CategoryIcon(
+      category: categoryName,
+      size: 18,
+      color: cs.onPrimaryContainer,
+    );
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
@@ -434,7 +393,7 @@ class _CategorySection extends StatelessWidget {
                       color: cs.primaryContainer.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(10),
                     ),
-                    child: Icon(icon, size: 18, color: cs.onPrimaryContainer),
+                    child: icon,
                   ),
                 ),
                 const SizedBox(width: 10),
@@ -509,7 +468,11 @@ class _CategorySection extends StatelessWidget {
                   indent: 16,
                   color: cs.outlineVariant.withValues(alpha: 0.3),
                 ),
-              _FeedRow(sub: subs[i], onTap: () => onFeedTap(subs[i])),
+              _FeedRow(
+                sub: subs[i],
+                onTap: () => onFeedTap(subs[i]),
+                onNavigate: () => onFeedNavigate(subs[i]),
+              ),
             ],
           ],
         ],
@@ -519,10 +482,15 @@ class _CategorySection extends StatelessWidget {
 }
 
 class _FeedRow extends StatelessWidget {
-  const _FeedRow({required this.sub, required this.onTap});
+  const _FeedRow({
+    required this.sub,
+    required this.onTap,
+    required this.onNavigate,
+  });
 
   final FeedSubscription sub;
   final VoidCallback onTap;
+  final VoidCallback onNavigate;
 
   String _domain(String url) {
     try {
@@ -583,10 +551,17 @@ class _FeedRow extends StatelessWidget {
                   ),
                 ],
                 const SizedBox(width: 4),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  size: 16,
-                  color: cs.onSurface.withValues(alpha: 0.3),
+                InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: onNavigate,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Icon(
+                      Icons.chevron_right_rounded,
+                      size: 16,
+                      color: cs.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
                 ),
               ],
             ),

@@ -68,15 +68,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void _openCategorySheet(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final categories =
-        context
-            .read<SubscriptionProvider>()
-            .subscriptions
-            .map((s) => s.category)
-            .where((c) => c != 'Uncategorized' && c.isNotEmpty)
-            .toSet()
-            .toList()
-          ..sort();
+    // orderedCategories covers standalone custom categories too — deriving
+    // from subscriptions alone hides empty categories added on the
+    // Categories page.
+    final categories = context
+        .read<SubscriptionProvider>()
+        .categoriesOrdered
+        .where((c) => c != 'Uncategorized' && c.isNotEmpty)
+        .toList();
 
     showModalBottomSheet<void>(
       context: context,

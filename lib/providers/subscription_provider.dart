@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
 import '../models/feed_subscription.dart';
+import '../services/article_identity.dart';
 
 /// Manages the user's RSS feed subscriptions, categories, and their icons.
 ///
@@ -45,42 +46,6 @@ class SubscriptionProvider extends ChangeNotifier {
     Icons.rocket_launch_outlined,
     Icons.photo_camera_outlined,
   ];
-
-  static const Map<String, IconData> _legacyEmojiIcons = {
-    '📁': Icons.folder_outlined,
-    '📚': Icons.menu_book_outlined,
-    '📰': Icons.newspaper_outlined,
-    '🎮': Icons.sports_esports_outlined,
-    '💡': Icons.lightbulb_outline,
-    '🔥': Icons.local_fire_department_outlined,
-    '✨': Icons.auto_awesome_outlined,
-    '🌟': Icons.star_outline,
-    '📱': Icons.smartphone_outlined,
-    '💻': Icons.laptop_mac_outlined,
-    '🎬': Icons.movie_outlined,
-    '🎵': Icons.music_note_outlined,
-    '⚽️': Icons.sports_soccer,
-    '⚽': Icons.sports_soccer,
-    '🍳': Icons.restaurant_outlined,
-    '✈️': Icons.flight_outlined,
-    '✈': Icons.flight_outlined,
-    '🎨': Icons.palette_outlined,
-    '💼': Icons.work_outline,
-    '📈': Icons.trending_up,
-    '🔬': Icons.science_outlined,
-    '🌿': Icons.park_outlined,
-    '🤖': Icons.smart_toy_outlined,
-    '🚗': Icons.directions_car_outlined,
-    '🐱': Icons.pets_outlined,
-    '🐶': Icons.pets_outlined,
-    '🍕': Icons.local_pizza_outlined,
-    '☕': Icons.coffee_outlined,
-    '❤️': Icons.favorite_outline,
-    '❤': Icons.favorite_outline,
-    '🌎': Icons.public_outlined,
-    '🚀': Icons.rocket_launch_outlined,
-    '📷': Icons.photo_camera_outlined,
-  };
 
   static const IconData _defaultCategoryIcon = Icons.folder_outlined;
   static final Set<int> _supportedCategoryCodePoints = categoryIconOptions
@@ -160,6 +125,11 @@ class SubscriptionProvider extends ChangeNotifier {
     if (iconsData != null) {
       final Map<String, dynamic> iconsMap = jsonDecode(iconsData);
       _categoryIcons = iconsMap.map((key, storedIcon) {
+        // Emoji values persist verbatim; only numeric codePoints go through
+        // legacy icon resolution.
+        if (storedIcon != null && int.tryParse('$storedIcon') == null) {
+          return MapEntry(key.toString(), storedIcon.toString());
+        }
         final normalizedStoredValue = _storedValueForIcon(
           _resolveCategoryIcon(storedIcon),
         );
@@ -228,13 +198,7 @@ class SubscriptionProvider extends ChangeNotifier {
       }
     }
 
-    // 2. Eski emojilerden kalma mapping desteği
-    final legacyIcon = _legacyEmojiIcons[storedIcon];
-    if (legacyIcon != null) {
-      return legacyIcon;
-    }
-
-    // 3. Hiçbiri tutmazsa const olan varsayılan ikonu dönüyoruz (Icons.folder_outlined)
+    // 2. Hiçbiri tutmazsa const olan varsayılan ikonu dönüyoruz (Icons.folder_outlined)
     return _defaultCategoryIcon;
   }
 
@@ -253,11 +217,25 @@ class SubscriptionProvider extends ChangeNotifier {
   // Category operations
   // ---------------------------------------------------------------------------
 
+  /// The emoji stored for [category], or `null` when the category uses a
+  /// legacy Material icon (numeric codePoint value).
+  String? getCategoryEmoji(String category) {
+    final storedIcon = _categoryIcons[category];
+    if (storedIcon == null || int.tryParse(storedIcon) != null) {
+      return null;
+    }
+    return storedIcon;
+  }
+
   IconData getCategoryIcon(String category) {
     final storedIcon = _categoryIcons[category];
-    if (storedIcon == null) {
-      _assignDefaultIcon(category);
-      _saveCategoryIcons();
+    if (storedIcon == null || int.tryParse(storedIcon) == null) {
+      // Emoji or absent value — never normalize a user emoji into a
+      // codePoint, and only materialize a default when nothing is stored.
+      if (storedIcon == null) {
+        _assignDefaultIcon(category);
+        _saveCategoryIcons();
+      }
       return _defaultCategoryIcon;
     }
 
@@ -270,8 +248,13 @@ class SubscriptionProvider extends ChangeNotifier {
     return resolvedIcon;
   }
 
-  Future<void> setCategoryIcon(String category, IconData icon) async {
-    _categoryIcons[category] = _storedValueForIcon(icon);
+  /// Stores the first grapheme cluster of [emoji] as the category icon.
+  /// An empty string restores the default icon.
+  Future<void> setCategoryEmoji(String category, String emoji) async {
+    final trimmed = emoji.trim();
+    _categoryIcons[category] = trimmed.isEmpty
+        ? _storedValueForIcon(_defaultCategoryIcon)
+        : trimmed.characters.first;
     await _saveCategoryIcons();
     notifyListeners();
   }
@@ -349,10 +332,32 @@ class SubscriptionProvider extends ChangeNotifier {
   // Feed operations
   // ---------------------------------------------------------------------------
 
+  /// Whether [url] canonically matches an existing subscription
+  /// (scheme/host/trailing-slash normalized), so `HTTP://x.com/feed/` and
+  /// `https://x.com/feed` count as the same feed.
+  bool hasFeedUrl(String url) {
+    final canonical = ArticleIdentity.normalizeFeedUrl(url);
+    return _subscriptions.any(
+      (s) => ArticleIdentity.normalizeFeedUrl(s.url) == canonical,
+    );
+  }
+
+  /// URLs of subscriptions whose canonical form collides with another
+  /// subscription — i.e. legacy duplicates added before normalization.
+  Set<String> get duplicateFeedUrls {
+    final seen = <String>{};
+    final dupes = <String>{};
+    for (final s in _subscriptions) {
+      final canonical = ArticleIdentity.normalizeFeedUrl(s.url);
+      if (!seen.add(canonical)) dupes.add(s.url);
+    }
+    return dupes;
+  }
+
   /// Adds a new feed subscription. Returns `false` if a feed with the same
   /// URL already exists.
   Future<bool> addFeed(String url, String name, String category) async {
-    if (!_subscriptions.any((s) => s.url == url)) {
+    if (!hasFeedUrl(url)) {
       _subscriptions.add(
         FeedSubscription(url: url, name: name, category: category),
       );
@@ -376,7 +381,7 @@ class SubscriptionProvider extends ChangeNotifier {
   ) async {
     bool changed = false;
     for (final f in feeds) {
-      if (_subscriptions.any((s) => s.url == f.url)) continue;
+      if (hasFeedUrl(f.url)) continue;
       _subscriptions.add(
         FeedSubscription(url: f.url, name: f.name, category: f.category),
       );
@@ -464,7 +469,7 @@ class SubscriptionProvider extends ChangeNotifier {
     int added = 0;
     bool newIcons = false;
     for (final feed in feeds) {
-      if (!_subscriptions.any((s) => s.url == feed.url)) {
+      if (!hasFeedUrl(feed.url)) {
         _subscriptions.add(feed);
         added++;
         if (!_categoryIcons.containsKey(feed.category)) {

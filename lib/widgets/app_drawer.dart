@@ -10,7 +10,8 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../screens/what_is_rss_page.dart';
 import '../utils/app_toast.dart';
-import 'explore_feeds_dialog.dart';
+import '../screens/explore_feeds_page.dart';
+import 'category_icon.dart';
 import 'folders/category_action_sheet.dart';
 import 'folders/feed_action_sheet.dart';
 import 'folders/folder_dialogs.dart';
@@ -135,8 +136,6 @@ class AppDrawer extends StatelessWidget {
                                 key: ValueKey(nonUncategorized[i]),
                                 index: i,
                                 child: _buildExpandableCategoryItem(
-                                  categoryIcon: subscriptionProvider
-                                      .getCategoryIcon(nonUncategorized[i]),
                                   title: nonUncategorized[i],
                                   feedSources: subscriptionProvider
                                       .subscriptions
@@ -157,9 +156,6 @@ class AppDrawer extends StatelessWidget {
                       if (hasUncategorized) ...[
                         _buildSectionHeader(context, l10n.uncategorized),
                         _buildExpandableCategoryItem(
-                          categoryIcon: subscriptionProvider.getCategoryIcon(
-                            'Uncategorized',
-                          ),
                           title: l10n.randomBlogs,
                           feedSources: subscriptionProvider.subscriptions
                               .where((sub) => sub.category == 'Uncategorized')
@@ -242,10 +238,11 @@ class AppDrawer extends StatelessWidget {
   /// Small rounded icon chip used as the leading element of drawer rows.
   Widget _buildIconChip(
     BuildContext context, {
-    required IconData icon,
+    required Widget icon,
     required bool isSelected,
   }) {
     final cs = Theme.of(context).colorScheme;
+    final color = isSelected ? cs.onPrimaryContainer : cs.onSurfaceVariant;
     return Container(
       padding: const EdgeInsets.all(7),
       decoration: BoxDecoration(
@@ -254,10 +251,9 @@ class AppDrawer extends StatelessWidget {
             : cs.surfaceContainerHigh.withValues(alpha: 0.8),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(
-        icon,
-        size: 17,
-        color: isSelected ? cs.onPrimaryContainer : cs.onSurfaceVariant,
+      child: IconTheme(
+        data: IconThemeData(size: 17, color: color),
+        child: icon,
       ),
     );
   }
@@ -286,7 +282,6 @@ class AppDrawer extends StatelessWidget {
 
   /// Expandable category tile with child feed items.
   Widget _buildExpandableCategoryItem({
-    required IconData categoryIcon,
     required String title,
     required List<FeedSubscription> feedSources,
     required FeedProvider provider,
@@ -323,7 +318,13 @@ class AppDrawer extends StatelessWidget {
         collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
         leading: _buildIconChip(
           context,
-          icon: categoryIcon,
+          icon: CategoryIcon(
+            category: targetCategory,
+            size: 17,
+            color: isCategorySelected
+                ? cs.onPrimaryContainer
+                : cs.onSurfaceVariant,
+          ),
           isSelected: isCategorySelected,
         ),
         title: Row(
@@ -371,7 +372,6 @@ class AppDrawer extends StatelessWidget {
                   onTap: () => _showCategoryActionSheet(
                     context,
                     targetCategory,
-                    subscriptionProvider.getCategoryIcon(targetCategory),
                     feedSources.length,
                   ),
                   // 40x40 hit target (visual icon unchanged at 18px).
@@ -444,6 +444,14 @@ class AppDrawer extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if (provider.feedErrorFor(sub.url) != null) ...[
+                        const SizedBox(width: 6),
+                        Icon(
+                          Icons.error_outline_rounded,
+                          size: 14,
+                          color: cs.error,
+                        ),
+                      ],
                       if (feedCount > 0) ...[
                         const SizedBox(width: 8),
                         Text(
@@ -492,7 +500,11 @@ class AppDrawer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                _buildIconChip(context, icon: icon, isSelected: isSelected),
+                _buildIconChip(
+                  context,
+                  icon: Icon(icon),
+                  isSelected: isSelected,
+                ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -524,7 +536,6 @@ class AppDrawer extends StatelessWidget {
   void _showCategoryActionSheet(
     BuildContext context,
     String category,
-    IconData categoryIcon,
     int feedCount,
   ) {
     showModalBottomSheet<void>(
@@ -535,10 +546,16 @@ class AppDrawer extends StatelessWidget {
       ),
       builder: (ctx) => CategoryActionSheet(
         category: category,
-        categoryIcon: categoryIcon,
         onMarkAllRead: () {
           Navigator.of(ctx).pop();
           context.read<FeedProvider>().markAllInCategoryAsRead(category);
+        },
+        onChangeIcon: () {
+          Navigator.of(ctx).pop();
+          showDialog<void>(
+            context: context,
+            builder: (_) => EmojiIconDialog(category: category),
+          );
         },
         onRename: () {
           Navigator.of(ctx).pop();
@@ -679,8 +696,8 @@ class AppDrawer extends StatelessWidget {
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                         ),
-                        leading: Icon(
-                          subscriptionProvider.getCategoryIcon(category),
+                        leading: CategoryIcon(
+                          category: category,
                           size: 20,
                           color: cs.onSurfaceVariant,
                         ),
@@ -779,7 +796,7 @@ class AppDrawer extends StatelessWidget {
             children: [
               _buildIconChip(
                 context,
-                icon: Icons.info_outline,
+                icon: const Icon(Icons.info_outline),
                 isSelected: false,
               ),
               const SizedBox(width: 12),
