@@ -77,6 +77,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get renameFolder => 'Kategoriyi Yeniden Adlandır';
 
   @override
+  String get changeIcon => 'İkonu değiştir';
+
+  @override
+  String get emojiLabel => 'Emoji';
+
+  @override
   String get folderName => 'Kategori Adı';
 
   @override
@@ -168,6 +174,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get feedAlreadyExists => 'Bu kaynak zaten mevcut.';
 
   @override
+  String get duplicateSubscription =>
+      'Yinelenen abonelik — aynı kaynak zaten ekli.';
+
+  @override
+  String lastFetchFailed(Object error) {
+    return 'Son yenileme başarısız: $error';
+  }
+
+  @override
   String get categories => 'KATEGORİLER';
 
   @override
@@ -242,24 +257,28 @@ class AppLocalizationsTr extends AppLocalizations {
   String get changeAppLanguage => 'Uygulama dilini değiştirin';
 
   @override
+  String get timeFormat => 'Saat biçimi';
+
+  @override
+  String get timeFormatSystem => 'Sistem varsayılanı';
+
+  @override
+  String get timeFormat12h => '12 saat';
+
+  @override
+  String get timeFormat24h => '24 saat';
+
+  @override
   String get dataAndStorage => 'Veri ve Depolama';
 
   @override
   String get offlineCacheLimit => 'Önbellek Sınırı';
 
   @override
-  String get offlineCacheLimitDesc =>
-      'Çevrimdışı okuma için saklanan son makaleler';
-
-  @override
   String get none => 'Yok';
 
   @override
   String get autoRefreshFeeds => 'Otomatik Yenileme';
-
-  @override
-  String get autoRefreshFeedsDesc =>
-      'Uygulama açıkken kaynakların yenilenme sıklığı';
 
   @override
   String get thirtySeconds => '30 Saniye';
@@ -493,9 +512,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get digestMode => 'Bildirim Modu';
 
   @override
-  String get digestModeDesc => 'Bildirimleri nasıl alacağınız';
-
-  @override
   String get digestInstant => 'Anında';
 
   @override
@@ -605,9 +621,6 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get browserMode => 'Tarayıcı Modu';
-
-  @override
-  String get browserModeDesc => 'Bağlantıların nasıl açılacağını seçin';
 
   @override
   String get browserBuiltin => 'Dahili Tarayıcı';

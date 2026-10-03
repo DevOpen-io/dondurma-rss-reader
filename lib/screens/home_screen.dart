@@ -440,7 +440,7 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             )
           : _selectedIndex == 1
-          ? const CategoriesScreen()
+          ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),

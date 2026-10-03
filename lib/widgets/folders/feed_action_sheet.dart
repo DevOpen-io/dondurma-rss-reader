@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
 
 class FeedActionSheet extends StatelessWidget {
@@ -40,6 +41,8 @@ class FeedActionSheet extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
     final l10n = AppLocalizations.of(context);
+    final feedError = context.watch<FeedProvider>().feedErrorFor(subUrl);
+    final isDuplicate = sp.duplicateFeedUrls.contains(subUrl);
 
     return SafeArea(
       child: Padding(
@@ -96,6 +99,35 @@ class FeedActionSheet extends StatelessWidget {
                 ),
               ],
             ),
+            if (isDuplicate || feedError != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: cs.errorContainer.withValues(alpha: 0.35),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (isDuplicate)
+                      _WarningRow(
+                        icon: Icons.copy_rounded,
+                        text: l10n.duplicateSubscription,
+                      ),
+                    if (feedError != null)
+                      _WarningRow(
+                        icon: Icons.error_outline_rounded,
+                        text: l10n.lastFetchFailed(feedError),
+                      ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             Container(
               decoration: BoxDecoration(
@@ -227,6 +259,41 @@ class FeedActionSheet extends StatelessWidget {
             const SizedBox(height: 8),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _WarningRow extends StatelessWidget {
+  const _WarningRow({required this.icon, required this.text});
+
+  final IconData icon;
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 3),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Icon(icon, size: 15, color: cs.onErrorContainer),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: cs.onErrorContainer),
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }

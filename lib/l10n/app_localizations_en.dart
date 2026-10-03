@@ -76,6 +76,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get renameFolder => 'Rename Category';
 
   @override
+  String get changeIcon => 'Change icon';
+
+  @override
+  String get emojiLabel => 'Emoji';
+
+  @override
   String get folderName => 'Category Name';
 
   @override
@@ -166,6 +172,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedAlreadyExists => 'Feed already exists.';
 
   @override
+  String get duplicateSubscription =>
+      'Duplicate subscription — same feed is already added.';
+
+  @override
+  String lastFetchFailed(Object error) {
+    return 'Last refresh failed: $error';
+  }
+
+  @override
   String get categories => 'CATEGORIES';
 
   @override
@@ -240,24 +255,28 @@ class AppLocalizationsEn extends AppLocalizations {
   String get changeAppLanguage => 'Change the app language';
 
   @override
+  String get timeFormat => 'Time format';
+
+  @override
+  String get timeFormatSystem => 'System default';
+
+  @override
+  String get timeFormat12h => '12-hour';
+
+  @override
+  String get timeFormat24h => '24-hour';
+
+  @override
   String get dataAndStorage => 'Data & Storage';
 
   @override
   String get offlineCacheLimit => 'Offline Cache Limit';
 
   @override
-  String get offlineCacheLimitDesc =>
-      'Recent articles kept for offline reading';
-
-  @override
   String get none => 'None';
 
   @override
   String get autoRefreshFeeds => 'Auto Refresh Feeds';
-
-  @override
-  String get autoRefreshFeedsDesc =>
-      'How often feeds refresh while the app is open';
 
   @override
   String get thirtySeconds => '30 Seconds';
@@ -495,9 +514,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get digestMode => 'Notification Mode';
 
   @override
-  String get digestModeDesc => 'How you receive notifications';
-
-  @override
   String get digestInstant => 'Instant';
 
   @override
@@ -605,9 +621,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get browserMode => 'Browser Mode';
-
-  @override
-  String get browserModeDesc => 'Choose how links open';
 
   @override
   String get browserBuiltin => 'Built-in Browser';

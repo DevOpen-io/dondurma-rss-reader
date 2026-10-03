@@ -48,6 +48,9 @@ class SettingsProvider extends ChangeNotifier {
   // Full-text extraction
   bool _autoFullText = false;
 
+  // Time format: 'system', '12h', '24h'
+  String _timeFormat = 'system';
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -80,6 +83,8 @@ class SettingsProvider extends ChangeNotifier {
   String get browserMode => _browserMode;
 
   bool get autoFullText => _autoFullText;
+
+  String get timeFormat => _timeFormat;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -175,6 +180,9 @@ class SettingsProvider extends ChangeNotifier {
 
     // Full-text extraction
     _autoFullText = _box.get('autoFullText', defaultValue: false);
+
+    // Time format
+    _timeFormat = _box.get('timeFormat', defaultValue: 'system');
 
     notifyListeners();
   }
@@ -318,6 +326,13 @@ class SettingsProvider extends ChangeNotifier {
     _autoFullText = value;
     notifyListeners();
     await _box.put('autoFullText', value);
+  }
+
+  /// Sets the clock display format: `'system'`, `'12h'`, or `'24h'`.
+  Future<void> setTimeFormat(String format) async {
+    _timeFormat = format;
+    notifyListeners();
+    await _box.put('timeFormat', format);
   }
 
   /// Adds a search query to the history.

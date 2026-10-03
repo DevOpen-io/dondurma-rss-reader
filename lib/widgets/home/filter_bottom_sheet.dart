@@ -32,7 +32,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     super.initState();
     final provider = context.read<FeedProvider>();
     _readFilter = provider.readFilter;
-    _selectedCategories = {...provider.filterCategories};
+    // Pre-select both category axes: the drawer selection and any
+    // previously sheet-applied categories live in different provider fields.
+    _selectedCategories = {
+      ...provider.filterCategories,
+      if (provider.selectedCategory != null) provider.selectedCategory!,
+    };
   }
 
   void _apply() {

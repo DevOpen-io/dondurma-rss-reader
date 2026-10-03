@@ -78,6 +78,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get renameFolder => 'Renombrar categoría';
 
   @override
+  String get changeIcon => 'Cambiar icono';
+
+  @override
+  String get emojiLabel => 'Emoji';
+
+  @override
   String get folderName => 'Nombre de la categoría';
 
   @override
@@ -169,6 +175,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get feedAlreadyExists => 'Esta fuente ya existe.';
 
   @override
+  String get duplicateSubscription =>
+      'Suscripción duplicada: la misma fuente ya está añadida.';
+
+  @override
+  String lastFetchFailed(Object error) {
+    return 'La última actualización falló: $error';
+  }
+
+  @override
   String get categories => 'CATEGORÍAS';
 
   @override
@@ -243,24 +258,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get changeAppLanguage => 'Cambiar el idioma de la aplicación';
 
   @override
+  String get timeFormat => 'Formato de hora';
+
+  @override
+  String get timeFormatSystem => 'Predeterminado del sistema';
+
+  @override
+  String get timeFormat12h => '12 horas';
+
+  @override
+  String get timeFormat24h => '24 horas';
+
+  @override
   String get dataAndStorage => 'Datos y almacenamiento';
 
   @override
   String get offlineCacheLimit => 'Límite de caché sin conexión';
 
   @override
-  String get offlineCacheLimitDesc =>
-      'Artículos recientes guardados para lectura sin conexión';
-
-  @override
   String get none => 'Ninguno';
 
   @override
   String get autoRefreshFeeds => 'Actualización automática';
-
-  @override
-  String get autoRefreshFeedsDesc =>
-      'Con qué frecuencia se actualizan las fuentes con la app abierta';
 
   @override
   String get thirtySeconds => '30 segundos';
@@ -503,9 +522,6 @@ class AppLocalizationsEs extends AppLocalizations {
   String get digestMode => 'Modo de notificación';
 
   @override
-  String get digestModeDesc => 'Cómo recibes las notificaciones';
-
-  @override
   String get digestInstant => 'Instantáneo';
 
   @override
@@ -615,9 +631,6 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get browserMode => 'Modo de navegador';
-
-  @override
-  String get browserModeDesc => 'Elige cómo se abren los enlaces';
 
   @override
   String get browserBuiltin => 'Navegador integrado';

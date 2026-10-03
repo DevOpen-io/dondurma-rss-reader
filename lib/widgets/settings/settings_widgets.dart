@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/time_format.dart';
+
 class SettingsSectionTitle extends StatelessWidget {
   final String title;
   final IconData icon;
@@ -79,6 +81,55 @@ class SettingsTileDivider extends StatelessWidget {
   }
 }
 
+/// Settings title row: label + optional ⓘ button that opens the
+/// description in a dialog instead of printing it under the label.
+class _SettingsTileLabel extends StatelessWidget {
+  final String title;
+  final String? info;
+
+  const _SettingsTileLabel(this.title, this.info);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Flexible(child: Text(title, style: const TextStyle(fontSize: 15))),
+        if (info != null)
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () => _showInfoDialog(context),
+            child: Padding(
+              padding: const EdgeInsets.all(6),
+              child: Icon(
+                Icons.info_outline_rounded,
+                size: 15,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  void _showInfoDialog(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(info!),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(MaterialLocalizations.of(dialogContext).okButtonLabel),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class SettingsSwitchTile extends StatelessWidget {
   final IconData icon;
   final String title;
@@ -101,16 +152,7 @@ class SettingsSwitchTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
+      title: _SettingsTileLabel(title, subtitle),
       trailing: Switch.adaptive(
         value: value,
         onChanged: onChanged,
@@ -120,18 +162,16 @@ class SettingsSwitchTile extends StatelessWidget {
   }
 }
 
-class SettingsDropdownTile<T> extends StatelessWidget {
+class SettingsSelectionTile<T> extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String? subtitle;
   final T value;
   final List<DropdownMenuItem<T>> items;
   final ValueChanged<T?>? onChanged;
 
-  const SettingsDropdownTile({
+  const SettingsSelectionTile({
     required this.icon,
     required this.title,
-    this.subtitle,
     required this.value,
     required this.items,
     required this.onChanged,
@@ -141,58 +181,104 @@ class SettingsDropdownTile<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+    final enabled = onChanged != null;
+    final selected = items.firstWhere(
+      (i) => i.value == value,
+      orElse: () => items.first,
+    );
+    final labelColor = enabled
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withValues(alpha: 0.4);
+
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+      leading: SettingsIcon(icon: icon),
+      title: Text(title, style: const TextStyle(fontSize: 15)),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          SettingsIcon(icon: icon),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 15)),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.55,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
+          DefaultTextStyle(
+            style: TextStyle(
+              fontSize: 13.5,
+              color: labelColor,
+              fontWeight: FontWeight.w500,
             ),
+            child: Flexible(child: selected.child),
           ),
-          const SizedBox(width: 8),
-          DropdownButtonHideUnderline(
-            child: DropdownButton<T>(
-              value: value,
-              items: items,
-              onChanged: onChanged,
-              borderRadius: BorderRadius.circular(12),
-              style: TextStyle(
-                fontSize: 13.5,
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-              icon: Padding(
-                padding: const EdgeInsets.only(left: 4),
-                child: Icon(
-                  Icons.expand_more_rounded,
-                  size: 18,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              isDense: true,
-            ),
+          Padding(
+            padding: const EdgeInsets.only(left: 4),
+            child: Icon(Icons.expand_more_rounded, size: 18, color: labelColor),
           ),
         ],
+      ),
+      onTap: enabled ? () => _showOptions(context) : null,
+    );
+  }
+
+  void _showOptions(BuildContext context) {
+    final theme = Theme.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ),
+            Flexible(
+              child: ListView(
+                shrinkWrap: true,
+                children: [
+                  for (final item in items)
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                      ),
+                      title: DefaultTextStyle(
+                        style: TextStyle(
+                          fontSize: 15,
+                          color: item.value == value
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface,
+                          fontWeight: item.value == value
+                              ? FontWeight.w600
+                              : FontWeight.w400,
+                        ),
+                        child: item.child,
+                      ),
+                      trailing: item.value == value
+                          ? Icon(
+                              Icons.check_rounded,
+                              size: 20,
+                              color: theme.colorScheme.primary,
+                            )
+                          : null,
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        onChanged?.call(item.value);
+                      },
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -218,20 +304,10 @@ class SettingsActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: SettingsIcon(icon: icon, color: iconColor),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      subtitle: subtitle != null
-          ? Text(
-              subtitle!,
-              style: TextStyle(
-                fontSize: 12,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
-              ),
-            )
-          : null,
+      title: _SettingsTileLabel(title, subtitle),
       trailing: trailing,
       onTap: onTap,
     );
@@ -247,6 +323,7 @@ class SettingsQuietHoursTile extends StatelessWidget {
   final int startHour;
   final int endHour;
   final bool enabled;
+  final bool use24Hour;
   final ValueChanged<int> onStartChanged;
   final ValueChanged<int> onEndChanged;
 
@@ -259,6 +336,7 @@ class SettingsQuietHoursTile extends StatelessWidget {
     required this.startHour,
     required this.endHour,
     required this.enabled,
+    this.use24Hour = true,
     required this.onStartChanged,
     required this.onEndChanged,
     super.key,
@@ -274,27 +352,7 @@ class SettingsQuietHoursTile extends StatelessWidget {
         children: [
           SettingsIcon(icon: icon),
           const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 15)),
-                if (subtitle != null) ...[
-                  const SizedBox(height: 3),
-                  Text(
-                    subtitle!,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.55,
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          Expanded(child: _SettingsTileLabel(title, subtitle)),
           const SizedBox(width: 8),
           Row(
             mainAxisSize: MainAxisSize.min,
@@ -303,6 +361,7 @@ class SettingsQuietHoursTile extends StatelessWidget {
                 label: fromLabel,
                 hour: startHour,
                 enabled: enabled,
+                use24Hour: use24Hour,
                 onChanged: onStartChanged,
               ),
               Padding(
@@ -318,6 +377,7 @@ class SettingsQuietHoursTile extends StatelessWidget {
                 label: toLabel,
                 hour: endHour,
                 enabled: enabled,
+                use24Hour: use24Hour,
                 onChanged: onEndChanged,
               ),
             ],
@@ -332,12 +392,14 @@ class SettingsTimePill extends StatelessWidget {
   final String label;
   final int hour;
   final bool enabled;
+  final bool use24Hour;
   final ValueChanged<int> onChanged;
 
   const SettingsTimePill({
     required this.label,
     required this.hour,
     required this.enabled,
+    this.use24Hour = true,
     required this.onChanged,
     super.key,
   });
@@ -365,7 +427,7 @@ class SettingsTimePill extends StatelessWidget {
               (i) => DropdownMenuItem(
                 value: i,
                 child: Text(
-                  '${i.toString().padLeft(2, '0')}:00',
+                  formatHourLabel(i, use24Hour),
                   style: const TextStyle(fontSize: 12),
                 ),
               ),

@@ -226,6 +226,18 @@ abstract class AppLocalizations {
   /// **'Rename Category'**
   String get renameFolder;
 
+  /// No description provided for @changeIcon.
+  ///
+  /// In en, this message translates to:
+  /// **'Change icon'**
+  String get changeIcon;
+
+  /// No description provided for @emojiLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Emoji'**
+  String get emojiLabel;
+
   /// No description provided for @folderName.
   ///
   /// In en, this message translates to:
@@ -394,6 +406,18 @@ abstract class AppLocalizations {
   /// **'Feed already exists.'**
   String get feedAlreadyExists;
 
+  /// No description provided for @duplicateSubscription.
+  ///
+  /// In en, this message translates to:
+  /// **'Duplicate subscription — same feed is already added.'**
+  String get duplicateSubscription;
+
+  /// No description provided for @lastFetchFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Last refresh failed: {error}'**
+  String lastFetchFailed(Object error);
+
   /// No description provided for @categories.
   ///
   /// In en, this message translates to:
@@ -526,6 +550,30 @@ abstract class AppLocalizations {
   /// **'Change the app language'**
   String get changeAppLanguage;
 
+  /// No description provided for @timeFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'Time format'**
+  String get timeFormat;
+
+  /// No description provided for @timeFormatSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System default'**
+  String get timeFormatSystem;
+
+  /// No description provided for @timeFormat12h.
+  ///
+  /// In en, this message translates to:
+  /// **'12-hour'**
+  String get timeFormat12h;
+
+  /// No description provided for @timeFormat24h.
+  ///
+  /// In en, this message translates to:
+  /// **'24-hour'**
+  String get timeFormat24h;
+
   /// No description provided for @dataAndStorage.
   ///
   /// In en, this message translates to:
@@ -538,12 +586,6 @@ abstract class AppLocalizations {
   /// **'Offline Cache Limit'**
   String get offlineCacheLimit;
 
-  /// No description provided for @offlineCacheLimitDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Recent articles kept for offline reading'**
-  String get offlineCacheLimitDesc;
-
   /// No description provided for @none.
   ///
   /// In en, this message translates to:
@@ -555,12 +597,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Auto Refresh Feeds'**
   String get autoRefreshFeeds;
-
-  /// No description provided for @autoRefreshFeedsDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'How often feeds refresh while the app is open'**
-  String get autoRefreshFeedsDesc;
 
   /// No description provided for @thirtySeconds.
   ///
@@ -1000,12 +1036,6 @@ abstract class AppLocalizations {
   /// **'Notification Mode'**
   String get digestMode;
 
-  /// No description provided for @digestModeDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'How you receive notifications'**
-  String get digestModeDesc;
-
   /// No description provided for @digestInstant.
   ///
   /// In en, this message translates to:
@@ -1209,12 +1239,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Browser Mode'**
   String get browserMode;
-
-  /// No description provided for @browserModeDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Choose how links open'**
-  String get browserModeDesc;
 
   /// No description provided for @browserBuiltin.
   ///

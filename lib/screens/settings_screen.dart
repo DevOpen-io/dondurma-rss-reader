@@ -12,6 +12,7 @@ import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import '../utils/app_toast.dart';
+import '../utils/time_format.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
@@ -53,7 +54,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           SettingsCard(
             children: [
-              SettingsDropdownTile<FlexScheme>(
+              SettingsSelectionTile<FlexScheme>(
                 icon: Icons.color_lens_outlined,
                 title: l10n.theme,
                 value: settings.flexScheme,
@@ -76,45 +77,29 @@ class SettingsScreen extends StatelessWidget {
                     context.read<SettingsProvider>().setFlexScheme(v!),
               ),
               const SettingsTileDivider(),
-              ListTile(
-                contentPadding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-                leading: SettingsIcon(icon: Icons.brightness_6_outlined),
-                title: Text(
-                  l10n.brightness,
-                  style: const TextStyle(fontSize: 15),
-                ),
-                subtitle: Padding(
-                  padding: const EdgeInsets.only(top: 10),
-                  child: SegmentedButton<ThemeMode>(
-                    segments: [
-                      ButtonSegment(
-                        value: ThemeMode.system,
-                        label: Text(l10n.brightnessSystem),
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.light,
-                        label: Text(l10n.brightnessLight),
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.dark,
-                        label: Text(l10n.brightnessDark),
-                      ),
-                    ],
-                    selected: {settings.themeMode},
-                    onSelectionChanged: (s) =>
-                        context.read<SettingsProvider>().setThemeMode(s.first),
-                    style: const ButtonStyle(
-                      visualDensity: VisualDensity(
-                        horizontal: -2,
-                        vertical: -2,
-                      ),
-                    ),
+              SettingsSelectionTile<ThemeMode>(
+                icon: Icons.brightness_6_outlined,
+                title: l10n.brightness,
+                value: settings.themeMode,
+                items: [
+                  DropdownMenuItem(
+                    value: ThemeMode.system,
+                    child: Text(l10n.brightnessSystem),
                   ),
-                ),
-                isThreeLine: true,
+                  DropdownMenuItem(
+                    value: ThemeMode.light,
+                    child: Text(l10n.brightnessLight),
+                  ),
+                  DropdownMenuItem(
+                    value: ThemeMode.dark,
+                    child: Text(l10n.brightnessDark),
+                  ),
+                ],
+                onChanged: (v) =>
+                    context.read<SettingsProvider>().setThemeMode(v!),
               ),
               const SettingsTileDivider(),
-              SettingsDropdownTile<Locale>(
+              SettingsSelectionTile<Locale>(
                 icon: Icons.language_rounded,
                 title: l10n.language,
                 value: settings.locale,
@@ -127,6 +112,28 @@ class SettingsScreen extends StatelessWidget {
                 ],
                 onChanged: (v) =>
                     context.read<SettingsProvider>().setLocale(v!),
+              ),
+              const SettingsTileDivider(),
+              SettingsSelectionTile<String>(
+                icon: Icons.schedule_outlined,
+                title: l10n.timeFormat,
+                value: settings.timeFormat,
+                items: [
+                  DropdownMenuItem(
+                    value: 'system',
+                    child: Text(l10n.timeFormatSystem),
+                  ),
+                  DropdownMenuItem(
+                    value: '12h',
+                    child: Text(l10n.timeFormat12h),
+                  ),
+                  DropdownMenuItem(
+                    value: '24h',
+                    child: Text(l10n.timeFormat24h),
+                  ),
+                ],
+                onChanged: (v) =>
+                    context.read<SettingsProvider>().setTimeFormat(v!),
               ),
             ],
           ),
@@ -152,10 +159,9 @@ class SettingsScreen extends StatelessWidget {
                 children: [
                   SettingsCard(
                     children: [
-                      SettingsDropdownTile<String>(
+                      SettingsSelectionTile<String>(
                         icon: Icons.open_in_browser_rounded,
                         title: l10n.browserMode,
-                        subtitle: l10n.browserModeDesc,
                         value: effectiveMode,
                         items: [
                           DropdownMenuItem(
@@ -273,7 +279,7 @@ class SettingsScreen extends StatelessWidget {
           ),
           SettingsCard(
             children: [
-              SettingsDropdownTile<String>(
+              SettingsSelectionTile<String>(
                 icon: Icons.format_size_rounded,
                 title: l10n.fontSize,
                 value: settings.fontSize,
@@ -296,7 +302,7 @@ class SettingsScreen extends StatelessWidget {
                     context.read<SettingsProvider>().setFontSize(v!),
               ),
               const SettingsTileDivider(),
-              SettingsDropdownTile<String>(
+              SettingsSelectionTile<String>(
                 icon: Icons.font_download_outlined,
                 title: l10n.typeface,
                 value: settings.typeface,
@@ -322,7 +328,7 @@ class SettingsScreen extends StatelessWidget {
                     context.read<SettingsProvider>().setTypeface(v!),
               ),
               const SettingsTileDivider(),
-              SettingsDropdownTile<double>(
+              SettingsSelectionTile<double>(
                 icon: Icons.format_line_spacing_rounded,
                 title: l10n.lineSpacing,
                 value: settings.lineSpacing,
@@ -396,10 +402,9 @@ class SettingsScreen extends StatelessWidget {
                         .setNotificationsEnabled(v),
                   ),
                   const SettingsTileDivider(),
-                  SettingsDropdownTile<String>(
+                  SettingsSelectionTile<String>(
                     icon: Icons.schedule_rounded,
                     title: l10n.digestMode,
-                    subtitle: l10n.digestModeDesc,
                     value: settings.digestMode,
                     items: [
                       DropdownMenuItem(
@@ -440,6 +445,7 @@ class SettingsScreen extends StatelessWidget {
                       startHour: settings.quietHoursStart,
                       endHour: settings.quietHoursEnd,
                       enabled: settings.notificationsEnabled,
+                      use24Hour: use24HourFormat(context, settings.timeFormat),
                       onStartChanged: (v) => context
                           .read<SettingsProvider>()
                           .setQuietHoursStart(v),
@@ -458,10 +464,9 @@ class SettingsScreen extends StatelessWidget {
           ),
           SettingsCard(
             children: [
-              SettingsDropdownTile<int>(
+              SettingsSelectionTile<int>(
                 icon: Icons.download_for_offline_outlined,
                 title: l10n.offlineCacheLimit,
-                subtitle: l10n.offlineCacheLimitDesc,
                 value: settings.offlineCacheLimit,
                 items: [0, 50, 100, 150, 200, 250, 300]
                     .map(
@@ -475,10 +480,9 @@ class SettingsScreen extends StatelessWidget {
                     context.read<SettingsProvider>().setOfflineCacheLimit(v!),
               ),
               const SettingsTileDivider(),
-              SettingsDropdownTile<int>(
+              SettingsSelectionTile<int>(
                 icon: Icons.timer_outlined,
                 title: l10n.autoRefreshFeeds,
-                subtitle: l10n.autoRefreshFeedsDesc,
                 value:
                     [30, 60, 300, 1800].contains(settings.cacheIntervalSeconds)
                     ? settings.cacheIntervalSeconds
