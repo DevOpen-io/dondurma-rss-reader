@@ -226,6 +226,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Future<void> _skip() async {
     sessionOnboardingBypassed = true;
+    await Hive.box('settings').put('hasSeenOnboarding', true);
     if (mounted) context.go('/');
   }
 
