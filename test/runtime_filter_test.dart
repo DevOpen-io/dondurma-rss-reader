@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/services/feed_decisions.dart';
 import 'package:ice_cream_rss_reader/widgets/feed_list_item.dart';
 
 void main() {
-  group('FeedProvider.passesRuntimeFilter', () {
+  group('feedPassesRuntimeFilter', () {
     test('all + no categories passes everything', () {
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: true,
           category: 'Tech',
           readFilter: 'all',
@@ -16,7 +16,7 @@ void main() {
         isTrue,
       );
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: false,
           category: 'Tech',
           readFilter: 'all',
@@ -28,7 +28,7 @@ void main() {
 
     test('unread filter drops read items', () {
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: true,
           category: 'Tech',
           readFilter: 'unread',
@@ -37,7 +37,7 @@ void main() {
         isFalse,
       );
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: false,
           category: 'Tech',
           readFilter: 'unread',
@@ -49,7 +49,7 @@ void main() {
 
     test('read filter drops unread items', () {
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: false,
           category: 'Tech',
           readFilter: 'read',
@@ -58,7 +58,7 @@ void main() {
         isFalse,
       );
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: true,
           category: 'Tech',
           readFilter: 'read',
@@ -70,7 +70,7 @@ void main() {
 
     test('category set keeps only matching categories', () {
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: false,
           category: 'Tech',
           readFilter: 'all',
@@ -79,7 +79,7 @@ void main() {
         isTrue,
       );
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: false,
           category: 'Sports',
           readFilter: 'all',
@@ -91,7 +91,7 @@ void main() {
 
     test('read status and categories combine with AND', () {
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: true,
           category: 'Tech',
           readFilter: 'unread',
@@ -100,7 +100,7 @@ void main() {
         isFalse,
       );
       expect(
-        FeedProvider.passesRuntimeFilter(
+        feedPassesRuntimeFilter(
           isRead: false,
           category: 'Tech',
           readFilter: 'unread',

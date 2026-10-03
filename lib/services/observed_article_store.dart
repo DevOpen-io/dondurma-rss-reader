@@ -37,6 +37,17 @@ class ObservedArticleStore {
 
   static const int schemaVersion = 1;
 
+  /// Max articles one batch can claim as newly-observed per feed — bounds
+  /// the post-gap notification burst. Daily churn never approaches this.
+  static const int maxClaimsPerBatch = 10;
+
+  static int _newestFirst(FeedItem a, FeedItem b) {
+    if (a.pubDate == null && b.pubDate == null) return 0;
+    if (a.pubDate == null) return 1;
+    if (b.pubDate == null) return -1;
+    return b.pubDate!.compareTo(a.pubDate!);
+  }
+
   final ObservedArticlePersistence _persistence;
   final Duration retention;
 
@@ -92,6 +103,16 @@ class ObservedArticleStore {
             if (initialized) claimed.add(entry.value);
             articles[entry.key] = timestamp;
           }
+        }
+
+        // Cap claims per batch: after a >retention gap the prune empties
+        // `articles` while `initialized` stays true, so a refilled feed would
+        // otherwise claim its entire backlog as "new" in one pass — a
+        // notification flood. Observation is still recorded for every item
+        // above, so the un-claimed remainder won't re-claim next pass.
+        if (claimed.length > maxClaimsPerBatch) {
+          claimed.sort(_newestFirst);
+          claimed.length = maxClaimsPerBatch;
         }
 
         feeds[feedKey] = {'initialized': true, 'articles': articles};

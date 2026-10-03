@@ -1,19 +1,30 @@
 import 'dart:async';
-import 'dart:collection';
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show compute, listEquals, setEquals;
+import 'package:cached_network_image_ce/cached_network_image.dart'
+    show DefaultCacheManager;
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart'
+    show compute, debugPrint, mapEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
+import 'package:html/parser.dart' show parse;
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../services/feed_cache_policy.dart';
+import '../services/feed_date_groups.dart';
+import '../services/feed_decisions.dart';
+import '../services/feed_list_filter.dart';
+import '../services/feed_refresh.dart';
 import '../services/feed_service.dart';
+import '../services/full_text_extraction_service.dart';
+import '../services/image_cache_service.dart';
 import '../services/notification_delivery_policy.dart';
 import '../services/notification_service.dart';
 import '../services/observed_article_store.dart';
 import '../services/widget_update_service.dart';
+import '../utils/async_semaphore.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
 import 'subscription_provider.dart';
@@ -23,14 +34,15 @@ import 'subscription_provider.dart';
 ///
 /// Connected to [SubscriptionProvider], [SettingsProvider], and
 /// [BookmarkProvider] via `ChangeNotifierProxyProvider3` in `main.dart`.
+///
+/// Heavy lifting lives in dedicated services: [FeedRefresher] (fetch/merge),
+/// [applyFeedFilters] (filter pipeline), [groupFeedItemsByDate] (sections),
+/// and `feed_decisions.dart` (pure sync/filter predicates).
 class FeedProvider extends ChangeNotifier {
   final FeedService _feedService = FeedService();
   late final ObservedArticleStore _observedArticleStore;
+  late final FeedRefresher _refresher;
   late final Future<void> _initialization;
-
-  /// Max concurrent feed HTTP requests. Limits socket/memory pressure on
-  /// devices with constrained network stacks.
-  static const _fetchConcurrency = 5;
 
   List<FeedItem> _items = [];
   String? _selectedCategory;
@@ -104,33 +116,6 @@ class FeedProvider extends ChangeNotifier {
   Map<String, List<String>>? _lastFeedKeywords;
   Set<String>? _lastBookmarkIds;
 
-  /// Pure comparison of the filter-relevant upstream inputs — extracted for
-  /// unit testing. Returns `true` when the filtered list must be recomputed:
-  /// no previous snapshot yet, or global keywords, per-feed keywords, or the
-  /// bookmark ID set differ.
-  static bool filterInputsChanged({
-    required List<String>? prevGlobalKeywords,
-    required List<String> nextGlobalKeywords,
-    required Map<String, List<String>>? prevFeedKeywords,
-    required Map<String, List<String>> nextFeedKeywords,
-    required Set<String>? prevBookmarkIds,
-    required Set<String> nextBookmarkIds,
-  }) {
-    if (prevGlobalKeywords == null ||
-        prevFeedKeywords == null ||
-        prevBookmarkIds == null) {
-      return true;
-    }
-    if (!listEquals(prevGlobalKeywords, nextGlobalKeywords)) return true;
-    if (!setEquals(prevBookmarkIds, nextBookmarkIds)) return true;
-    if (prevFeedKeywords.length != nextFeedKeywords.length) return true;
-    for (final entry in nextFeedKeywords.entries) {
-      final prev = prevFeedKeywords[entry.key];
-      if (prev == null || !listEquals(prev, entry.value)) return true;
-    }
-    return false;
-  }
-
   /// Memoized unread tallies powering the drawer badges. Rebuilt lazily from
   /// [_items] + [_readItemIds] and invalidated alongside the filter cache, so
   /// the drawer no longer rescans every item for every category/feed row on
@@ -157,6 +142,12 @@ class FeedProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get isOffline => _isOffline;
+
+  /// Last fetch failure per feed, persisted across restarts so a dead feed
+  /// stays visibly unhealthy instead of silently showing stale cache.
+  Map<String, String> _feedErrors = {};
+  String? feedErrorFor(String url) => _feedErrors[url];
+
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
 
@@ -196,7 +187,24 @@ class FeedProvider extends ChangeNotifier {
   FeedProvider({ObservedArticleStore? observedArticleStore}) {
     _observedArticleStore =
         observedArticleStore ?? ObservedArticleStore.forBox(_box);
+    _refresher = FeedRefresher(
+      feedService: _feedService,
+      observedArticleStore: _observedArticleStore,
+    );
     _initialization = _loadState();
+    _connectivitySub = Connectivity().onConnectivityChanged.listen(
+      _onConnectivityChanged,
+      onError: (_) {},
+    );
+  }
+
+  /// Re-sync as soon as connectivity returns after an offline stretch —
+  /// otherwise a device that sat through a flap waits for the next timer tick.
+  /// Gated on `_isOffline` so a momentary blip while online stays free.
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    if (_disposed || !_isOffline) return;
+    final hasNetwork = results.any((r) => r != ConnectivityResult.none);
+    if (hasNetwork) refreshAll();
   }
 
   /// Called by the `ChangeNotifierProxyProvider3` whenever any upstream
@@ -226,7 +234,7 @@ class FeedProvider extends ChangeNotifier {
           s.url: List<String>.of(s.excludedKeywords),
     };
     final nextBookmarkIds = Set<String>.of(book.bookmarkedItemIds);
-    final inputsChanged = filterInputsChanged(
+    final inputsChanged = feedFilterInputsChanged(
       prevGlobalKeywords: _lastGlobalKeywords,
       nextGlobalKeywords: nextGlobalKeywords,
       prevFeedKeywords: _lastFeedKeywords,
@@ -272,34 +280,11 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
-  /// Minimum gap between an app-resume refresh and the previous sync.
-  static const Duration resumeRefreshThrottle = Duration(seconds: 60);
-
-  /// Pure decision for [maybeRefreshOnResume] — extracted for unit testing.
-  ///
-  /// Returns `true` only when dependencies are wired, no sync is in flight, and
-  /// either no sync has happened yet or the last one is older than
-  /// [resumeRefreshThrottle].
-  static bool shouldRefreshOnResume({
-    required bool hasDependencies,
-    required bool isSyncing,
-    required DateTime? lastSyncTime,
-    required DateTime now,
-  }) {
-    if (!hasDependencies) return false;
-    if (isSyncing) return false;
-    if (lastSyncTime != null &&
-        now.difference(lastSyncTime) < resumeRefreshThrottle) {
-      return false;
-    }
-    return true;
-  }
-
   /// Refreshes feeds when the app returns to the foreground, unless a sync
   /// completed very recently. Keeps notification-tap / cold-resume launches
   /// showing current news without spamming fetches on rapid app switches.
   Future<void> maybeRefreshOnResume() async {
-    if (!shouldRefreshOnResume(
+    if (!feedShouldRefreshOnResume(
       hasDependencies: subscriptionProvider != null,
       isSyncing: _isSyncing,
       lastSyncTime: _lastSyncTime,
@@ -308,18 +293,6 @@ class FeedProvider extends ChangeNotifier {
       return;
     }
     await refreshAll();
-  }
-
-  /// Pure decision for the periodic sync timer — skip a tick when a sync
-  /// (manual, app-resume, or a previous tick) already completed within the last
-  /// [intervalSeconds], so off-cycle refreshes don't get doubled by the timer.
-  static bool shouldRunPeriodicSync({
-    required DateTime? lastSyncTime,
-    required DateTime now,
-    required int intervalSeconds,
-  }) {
-    if (lastSyncTime == null) return true;
-    return now.difference(lastSyncTime).inSeconds >= intervalSeconds;
   }
 
   void _manageCacheTimer() {
@@ -331,7 +304,7 @@ class FeedProvider extends ChangeNotifier {
 
     if (interval > 0 && syncEnabled) {
       _cacheTimer = Timer.periodic(Duration(seconds: interval), (timer) {
-        if (!shouldRunPeriodicSync(
+        if (!feedShouldRunPeriodicSync(
           lastSyncTime: _lastSyncTime,
           now: DateTime.now(),
           intervalSeconds: interval,
@@ -368,6 +341,13 @@ class FeedProvider extends ChangeNotifier {
       _readItemIds = readIds.cast<String>().toSet();
     }
 
+    final feedErrors = _box.get('feedErrors');
+    if (feedErrors is Map) {
+      _feedErrors = feedErrors.map(
+        (k, v) => MapEntry(k.toString(), v.toString()),
+      );
+    }
+
     final String? cachedItemsData = _box.get('cachedItemsJson');
     if (cachedItemsData != null) {
       try {
@@ -384,7 +364,23 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  /// Hard cap on persisted read ids — pruning only above this keeps normal
+  /// behavior intact: a trimmed article that reappears in a later fetch must
+  /// keep its read mark (unlike a hard-pruned set, which forgets it).
+  static const int _readIdsHardCap = 10000;
+
   Future<void> _saveReadStates() async {
+    if (_readItemIds.length > _readIdsHardCap) {
+      // Bounded-growth path: keep marks only for articles still reachable
+      // (current items or bookmarks). Beyond the cap, forgetting read marks
+      // for evicted articles is cheaper than an ever-growing set.
+      final liveIds = <String>{
+        for (final i in _items) i.id,
+        for (final b in bookmarkProvider?.bookmarkedItems ?? const <FeedItem>[])
+          b.id,
+      };
+      _readItemIds.removeWhere((id) => !liveIds.contains(id));
+    }
     await _box.put('readItemIds', _readItemIds.toList());
   }
 
@@ -407,6 +403,48 @@ class FeedProvider extends ChangeNotifier {
     _box.put('feedValidators', jsonEncode(validators));
   }
 
+  /// Learned per-feed redirect map (`{ canonicalUrl: resolvedUrl }`). A 301'd
+  /// feed keeps answering at its new location; fetching it directly skips a
+  /// redirect round-trip on every sync.
+  Map<String, String> _loadFeedRedirects() {
+    final raw = _box.get('feedRedirects');
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        final decoded = jsonDecode(raw);
+        if (decoded is Map) {
+          return decoded.map((k, v) => MapEntry(k.toString(), v.toString()));
+        }
+      } catch (_) {}
+    }
+    return {};
+  }
+
+  void _saveFeedRedirects(Map<String, String> redirects) {
+    _box.put('feedRedirects', jsonEncode(redirects));
+  }
+
+  /// Merges one refresh pass into the per-feed error map: recorded failures
+  /// are written, successes clear, and feeds in [unproven] (connectivity-only
+  /// failures during a fully offline pass) keep whatever they had — a network
+  /// outage neither indicts nor acquits a feed. Removed feeds are pruned.
+  void _updateFeedErrors(Map<String, String> passErrors, Set<String> unproven) {
+    final urls =
+        subscriptionProvider?.subscriptions.map((s) => s.url).toSet() ??
+        const <String>{};
+    final next = <String, String>{};
+    for (final url in urls) {
+      if (passErrors.containsKey(url)) {
+        next[url] = passErrors[url]!;
+      } else if (unproven.contains(url) && _feedErrors.containsKey(url)) {
+        next[url] = _feedErrors[url]!;
+      }
+    }
+    if (!mapEquals(_feedErrors, next)) {
+      _feedErrors = next;
+      _box.put('feedErrors', _feedErrors);
+    }
+  }
+
   // ---------------------------------------------------------------------------
   // Filter & selection controls
   // ---------------------------------------------------------------------------
@@ -415,6 +453,8 @@ class FeedProvider extends ChangeNotifier {
   void selectCategory(String? category) {
     _selectedCategory = category;
     _selectedFeedUrl = null;
+    // Drawer selection replaces sheet category chips — one category axis.
+    _filterCategories = {};
     _itemRenderLimit = _pageSize;
     _invalidateFilterCache();
     notifyListeners();
@@ -437,6 +477,9 @@ class FeedProvider extends ChangeNotifier {
   }) {
     _readFilter = readFilter;
     _filterCategories = {...categories};
+    // The sheet now owns category filtering: it pre-selects the drawer
+    // category, so applying carries it over — keep one axis, not two ANDed.
+    _selectedCategory = null;
     _itemRenderLimit = _pageSize;
     _invalidateFilterCache();
     notifyListeners();
@@ -446,24 +489,11 @@ class FeedProvider extends ChangeNotifier {
   void clearSheetFilter() =>
       applySheetFilter(readFilter: 'all', categories: const {});
 
-  /// Pure decision: does an item with [isRead]/[category] survive the runtime
-  /// filter? Read status and category set combine with AND; an empty
-  /// [categories] set imposes no category constraint.
-  static bool passesRuntimeFilter({
-    required bool isRead,
-    required String category,
-    required String readFilter,
-    required Set<String> categories,
-  }) {
-    if (readFilter == 'unread' && isRead) return false;
-    if (readFilter == 'read' && !isRead) return false;
-    if (categories.isNotEmpty && !categories.contains(category)) return false;
-    return true;
-  }
-
   /// Selects a specific feed URL for filtering.
   void selectFeed(String? feedUrl) {
     _selectedFeedUrl = feedUrl;
+    // Feed selection replaces sheet category chips — one category axis.
+    _filterCategories = {};
     _itemRenderLimit = _pageSize;
     if (feedUrl != null && subscriptionProvider != null) {
       try {
@@ -488,38 +518,6 @@ class FeedProvider extends ChangeNotifier {
   List<FeedItem> get _filteredItems {
     if (_filteredItemsCache != null) return _filteredItemsCache!;
 
-    Iterable<FeedItem> filtered = _items;
-
-    // Runtime sheet filter (read status + multi-category, AND) — replaces the
-    // old unread-only step, same position in the documented pipeline order.
-    if (hasActiveSheetFilter) {
-      filtered = filtered.where(
-        (i) => passesRuntimeFilter(
-          isRead: _readItemIds.contains(i.id),
-          category: i.category,
-          readFilter: _readFilter,
-          categories: _filterCategories,
-        ),
-      );
-    }
-
-    if (_selectedCategory != null) {
-      filtered = filtered.where((i) => i.category == _selectedCategory);
-    }
-    if (_selectedFeedUrl != null) {
-      filtered = filtered.where((i) => i.feedUrl == _selectedFeedUrl);
-    }
-    if (_searchQuery.isNotEmpty) {
-      final query = _searchQuery.toLowerCase();
-      filtered = filtered.where(
-        (i) =>
-            i.title.toLowerCase().contains(query) ||
-            i.description.toLowerCase().contains(query) ||
-            i.siteName.toLowerCase().contains(query),
-      );
-    }
-
-    // Keyword filtering — compile regex patterns once for the entire pass
     final globalKeywords = settingsProvider?.globalExcludedKeywords ?? [];
     final Map<String, List<String>> feedKeywordsMap = {};
     if (subscriptionProvider != null) {
@@ -530,53 +528,17 @@ class FeedProvider extends ChangeNotifier {
       }
     }
 
-    if (globalKeywords.isNotEmpty || feedKeywordsMap.isNotEmpty) {
-      // Pre-compile global keyword patterns once
-      final globalPatterns = globalKeywords
-          .map(
-            (kw) => RegExp(
-              r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
-              caseSensitive: false,
-            ),
-          )
-          .toList();
-
-      // Pre-compile per-feed keyword patterns once
-      final Map<String, List<RegExp>> feedPatternsMap = {};
-      for (final entry in feedKeywordsMap.entries) {
-        feedPatternsMap[entry.key] = entry.value
-            .map(
-              (kw) => RegExp(
-                r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
-                caseSensitive: false,
-              ),
-            )
-            .toList();
-      }
-
-      filtered = filtered.where((item) {
-        final feedPatterns = feedPatternsMap[item.feedUrl];
-        if (globalPatterns.isEmpty && feedPatterns == null) return true;
-
-        bool matchesAny(List<RegExp> patterns) {
-          for (final regex in patterns) {
-            if (regex.hasMatch(item.title) ||
-                regex.hasMatch(item.description)) {
-              return true;
-            }
-          }
-          return false;
-        }
-
-        if (globalPatterns.isNotEmpty && matchesAny(globalPatterns)) {
-          return false;
-        }
-        if (feedPatterns != null && matchesAny(feedPatterns)) {
-          return false;
-        }
-        return true;
-      });
-    }
+    final filtered = applyFeedFilters(
+      items: _items,
+      readItemIds: _readItemIds,
+      selectedCategory: _selectedCategory,
+      selectedFeedUrl: _selectedFeedUrl,
+      searchQuery: _searchQuery,
+      readFilter: _readFilter,
+      filterCategories: _filterCategories,
+      globalKeywords: globalKeywords,
+      feedKeywordsMap: feedKeywordsMap,
+    );
 
     // Apply dynamic read/bookmark state
     _filteredItemsCache = filtered.map((item) {
@@ -601,11 +563,11 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   /// Cached date-group result to avoid re-computing on every getter call.
-  _DateGroups? _dateGroupsCache;
+  FeedDateGroups? _dateGroupsCache;
   int _dateGroupsCacheHash = -1;
 
   /// Returns the single-pass date-grouped result for the current visible items.
-  _DateGroups get _dateGroups {
+  FeedDateGroups get _dateGroups {
     final visible = _visibleItems;
     final hash = Object.hash(
       visible.length,
@@ -616,30 +578,7 @@ class FeedProvider extends ChangeNotifier {
       return _dateGroupsCache!;
     }
 
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-    final today = <FeedItem>[];
-    final yester = <FeedItem>[];
-    final older = <FeedItem>[];
-
-    for (final item in visible) {
-      final d = item.pubDate;
-      if (d != null &&
-          d.year == now.year &&
-          d.month == now.month &&
-          d.day == now.day) {
-        today.add(item);
-      } else if (d != null &&
-          d.year == yesterday.year &&
-          d.month == yesterday.month &&
-          d.day == yesterday.day) {
-        yester.add(item);
-      } else {
-        older.add(item);
-      }
-    }
-
-    _dateGroupsCache = _DateGroups(today, yester, older);
+    _dateGroupsCache = groupFeedItemsByDate(visible, DateTime.now());
     _dateGroupsCacheHash = hash;
     return _dateGroupsCache!;
   }
@@ -763,9 +702,7 @@ class FeedProvider extends ChangeNotifier {
     await _initialization;
     final subscriptions = subscriptionProvider;
     if (subscriptions == null) return false;
-    if (subscriptions.subscriptions.any(
-      (subscription) => subscription.url == url,
-    )) {
+    if (subscriptions.hasFeedUrl(url)) {
       return false;
     }
 
@@ -833,6 +770,12 @@ class FeedProvider extends ChangeNotifier {
     }
     _saveFeedValidators(validators);
 
+    if (result.finalUrl != null) {
+      final redirects = _loadFeedRedirects();
+      redirects[subscription.url] = result.finalUrl!;
+      _saveFeedRedirects(redirects);
+    }
+
     await _observedArticleStore.claimFeedBatch(
       feedUrl: subscription.url,
       observationEpoch: subscription.notificationEpoch,
@@ -841,6 +784,11 @@ class FeedProvider extends ChangeNotifier {
     );
 
     _isOffline = false;
+    // A successful add proves the feed is healthy — drop any stale error a
+    // delete-and-re-add cycle left behind.
+    if (_feedErrors.remove(subscription.url) != null) {
+      _box.put('feedErrors', _feedErrors);
+    }
     _invalidateFilterCache();
     notifyListeners();
     await _saveCachedItems();
@@ -894,179 +842,187 @@ class FeedProvider extends ChangeNotifier {
   /// Internal single-pass refresh. Always invoke through [refreshAll], which
   /// owns the `_isSyncing` guard and trailing-refresh coalescing.
   Future<void> _performRefresh() async {
+    if (_disposed) return;
     _isLoading = true;
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
-    final subs = subscriptionProvider!.subscriptions;
 
-    // HTTP cache validators (ETag / Last-Modified) per feed URL, persisted so
-    // each refresh issues conditional GETs and unchanged feeds short-circuit
-    // with a 304 instead of re-downloading and re-parsing every cycle.
-    final validators = _loadFeedValidators();
+    final result = await _refresher.refresh(
+      subscriptions: subscriptionProvider!.subscriptions,
+      existingItems: _items,
+      validators: _loadFeedValidators(),
+      bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
+      redirects: _loadFeedRedirects(),
+    );
 
-    // Snapshot current items per feed so a 304 — or a transient error — reuses
-    // the feed's existing articles instead of dropping them this cycle.
-    final existingByFeed = <String, List<FeedItem>>{};
-    for (final it in _items) {
-      (existingByFeed[it.feedUrl] ??= []).add(it);
-    }
-
-    // Rate-limit concurrent HTTP requests to avoid network/memory saturation.
-    // With 30+ feeds, unbounded Future.wait exhausts connection pools and causes
-    // TCP resets on constrained devices.
-    final semaphore = _Semaphore(_fetchConcurrency);
-    final futures = subs.map((sub) async {
-      await semaphore.acquire();
-      final v = validators[sub.url];
-      try {
-        final etag = v?['etag'] as String?;
-        final lastModified = v?['lastModified'] as String?;
-        var result = await _feedService.fetchFeed(
-          sub.url,
-          sub.category,
-          etag: etag,
-          lastModified: lastModified,
-        );
-        final hasTrustworthyCache = existingByFeed[sub.url]?.isNotEmpty == true;
-        final usedValidator = etag != null || lastModified != null;
-        if (result.notModified && usedValidator && !hasTrustworthyCache) {
-          // A 304 carries no body. Without local articles it is unusable, so
-          // retry once unconditionally. Any failure is handled by the outer
-          // catch and never starts another retry.
-          result = await _feedService.fetchFeed(sub.url, sub.category);
-        }
-        return (
-          url: sub.url,
-          observationEpoch: sub.notificationEpoch,
-          items: result.notModified
-              ? (existingByFeed[sub.url] ?? const <FeedItem>[])
-              : result.items,
-          succeeded: true,
-          fresh: !result.notModified,
-          etag: result.etag,
-          lastModified: result.lastModified,
-        );
-      } catch (e) {
-        debugPrint('Error fetching feed ${sub.url}: $e');
-        // Transient failure: keep the feed's existing items so one error doesn't
-        // blank it out, and leave its validators untouched.
-        return (
-          url: sub.url,
-          observationEpoch: sub.notificationEpoch,
-          items: existingByFeed[sub.url] ?? const <FeedItem>[],
-          succeeded: false,
-          fresh: false,
-          etag: null as String?,
-          lastModified: null as String?,
-        );
-      } finally {
-        semaphore.release();
-      }
-    });
-
-    final outcomes = await Future.wait(futures);
-
-    // Observation is independent from delivery. A fresh 200 response may
-    // initialize or advance history. A 304 may only refresh identities in an
-    // already-initialized namespace; cached items cannot initialize one.
-    // Failed feeds never touch their history.
-    final claimedItems = <FeedItem>[];
-    for (final outcome in outcomes) {
-      if (!outcome.succeeded) continue;
-      final claim = await _observedArticleStore.claimFeedBatch(
-        feedUrl: outcome.url,
-        observationEpoch: outcome.observationEpoch,
-        items: outcome.items,
-        allowInitialization: outcome.fresh,
-      );
-      claimedItems.addAll(claim.claimedItems);
-    }
-
-    // online: reached the network on at least one feed (200 or 304).
-    // anyFreshBody: at least one feed returned a 200 body → content changed, so
-    // it's worth re-sorting, persisting, notifying, and updating widgets.
-    bool online = false;
-    bool anyFreshBody = false;
-    final List<FeedItem> freshItems = [];
-    final newValidators = Map<String, dynamic>.from(validators);
-    for (final o in outcomes) {
-      freshItems.addAll(o.items);
-      if (o.succeeded) online = true;
-      if (o.fresh) {
-        anyFreshBody = true;
-        if (o.etag != null || o.lastModified != null) {
-          newValidators[o.url] = {
-            'etag': o.etag,
-            'lastModified': o.lastModified,
-          };
-        } else {
-          // Server offered no validators — force a full fetch next time.
-          newValidators.remove(o.url);
-        }
-      }
-    }
-    _saveFeedValidators(newValidators);
-
-    if (online) {
-      // Merge bookmarks into the list so they are always visible.
-      // Use a Set for O(1) lookup — avoids O(bookmarks × items) scan.
-      if (bookmarkProvider != null) {
-        final freshIds = freshItems.map((i) => i.id).toSet();
-        for (final saved in bookmarkProvider!.bookmarkedItems) {
-          if (!freshIds.contains(saved.id)) {
-            freshItems.add(saved);
-            freshIds.add(saved.id);
-          }
-        }
-      }
-
-      freshItems.sort((a, b) {
-        if (a.pubDate == null && b.pubDate == null) return 0;
-        if (a.pubDate == null) return 1;
-        if (b.pubDate == null) return -1;
-        return b.pubDate!.compareTo(a.pubDate!);
-      });
-      _items = freshItems;
-    } else {
-      // Offline: keep existing _items but still ensure bookmarks are present.
-      if (bookmarkProvider != null) {
-        final existingIds = _items.map((i) => i.id).toSet();
-        for (final saved in bookmarkProvider!.bookmarkedItems) {
-          if (!existingIds.contains(saved.id)) {
-            _items.add(saved);
-            existingIds.add(saved.id);
-          }
-        }
-      }
-      debugPrint('FeedProvider: all fetches failed — showing cached items.');
-    }
-
-    _isOffline = !online;
+    _saveFeedValidators(result.validators);
+    _saveFeedRedirects(result.redirects);
+    _updateFeedErrors(result.feedErrors, result.unprovenUrls);
+    _items = result.items;
+    _isOffline = !result.online;
     _isLoading = false;
     _invalidateFilterCache();
-    notifyListeners();
+    if (!_disposed) notifyListeners();
 
     // First foreground load suppresses delivery only. Observation already
     // advanced above, so these articles cannot backfill on a later refresh.
     if (_hasLoadedOnce) {
-      await _deliverClaimedArticles(claimedItems);
+      await _deliverClaimedArticles(result.claimedItems);
     }
     _hasLoadedOnce = true;
 
     // Only persist a new cache snapshot when a feed actually returned new data.
-    if (anyFreshBody) {
+    if (result.anyFreshBody) {
       await _saveCachedItems();
     }
 
     stopwatch.stop();
     _lastSyncDuration = stopwatch.elapsed;
-    _lastSyncTime = DateTime.now();
+    // Stamp only when a feed actually reached the network — an all-offline
+    // pass must not look like a real sync to the resume/periodic gates.
+    if (result.online) _lastSyncTime = DateTime.now();
     // Notify debug screen that sync state + timestamps have updated.
-    notifyListeners();
+    if (!_disposed) notifyListeners();
 
-    if (anyFreshBody) {
-      WidgetUpdateService.updateFeedWidgets(_items).ignore();
+    // Refresh widget ages on every completed pass, not only when a feed body
+    // changed — otherwise the "5m" strings written last cycle freeze in place.
+    WidgetUpdateService.updateFeedWidgets(_items).ignore();
+
+    // Offline-first: fetch article bodies for full-text feeds so they read
+    // without a network. Runs after the refresh settles — never blocks it.
+    if (result.online) _prefetchFullText().ignore();
+  }
+
+  /// Whether a full-text prefetch pass is already in flight.
+  bool _isPrefetching = false;
+
+  /// Set when a refresh asks for prefetch while one is draining — rerun once
+  /// the in-flight pass settles so newer articles aren't skipped a whole
+  /// sync cycle (mirrors [_refreshQueued]).
+  bool _prefetchQueued = false;
+
+  /// Set once [dispose] runs so async prefetch continuations skip
+  /// [notifyListeners], which throws on a disposed [ChangeNotifier].
+  bool _disposed = false;
+
+  /// Articles per feed prefetch attempts in one pass.
+  static const _fullTextPrefetchPerFeed = 5;
+
+  /// Max parallel article-page fetches during prefetch.
+  static const _fullTextPrefetchConcurrency = 3;
+
+  /// Downloads article bodies for offline reading (decision on issue #14):
+  /// only subscriptions with `fullTextEnabled == true`, the newest
+  /// [_fullTextPrefetchPerFeed] items lacking content, foreground-sync only.
+  /// Extraction failures stay silent — the article keeps its RSS excerpt.
+  Future<void> _prefetchFullText() async {
+    if (_isPrefetching) {
+      _prefetchQueued = true;
+      return;
+    }
+    final subs = subscriptionProvider?.subscriptions
+        .where((s) => s.fullTextEnabled == true)
+        .toList();
+    if (subs == null || subs.isEmpty) return;
+
+    _isPrefetching = true;
+    try {
+      final extraction = FullTextExtractionService.instance;
+      // _items is date-sorted newest-first, so take() picks the latest.
+      // Skipping session-failed URLs keeps them from stalling backfill.
+      final candidates = <FeedItem>[];
+      for (final sub in subs) {
+        candidates.addAll(
+          _items
+              .where(
+                (i) =>
+                    i.feedUrl == sub.url &&
+                    i.prefetchedFullText == null &&
+                    i.link.isNotEmpty &&
+                    !extraction.hasFailedAttempt(i.link),
+              )
+              .take(_fullTextPrefetchPerFeed),
+        );
+      }
+
+      var changed = false;
+      final semaphore = AsyncSemaphore(_fullTextPrefetchConcurrency);
+      await Future.wait(
+        candidates.map((item) async {
+          await semaphore.acquire();
+          try {
+            final html = await extraction.extractFullText(item.link);
+            if (html == null) return;
+            final index = _items.indexWhere(
+              (e) => e.id == item.id && e.feedUrl == item.feedUrl,
+            );
+            if (index == -1) return; // item trimmed meanwhile
+            _items[index] = _items[index].copyWith(prefetchedFullText: html);
+            changed = true;
+            // Decision #15: warm the image caches too — the thumbnail and
+            // the body's inline images — inside the same concurrency slot.
+            await _prefetchImages(item, html);
+          } catch (_) {
+            // Extraction threw — the RSS excerpt remains; the session failure
+            // cache stops this URL from re-attempting until app restart.
+          } finally {
+            semaphore.release();
+          }
+        }),
+      );
+
+      if (changed) {
+        if (!_disposed) {
+          _invalidateFilterCache();
+          notifyListeners();
+        }
+        await _saveCachedItems();
+      }
+    } finally {
+      _isPrefetching = false;
+      if (_prefetchQueued) {
+        _prefetchQueued = false;
+        _prefetchFullText().ignore();
+      }
+    }
+  }
+
+  /// Max inline `<img>` downloads per prefetched article — bounds a runaway
+  /// gallery page to a sane per-article image budget.
+  static const _prefetchImagesPerArticle = 8;
+
+  /// Warms the thumbnail and article-image caches for [item] using [html]
+  /// (its prefetched body). Best-effort: every failure is silent — a missing
+  /// image just renders broken offline, same as today. Each download is
+  /// isolated so one bad image can't forfeit the rest of the budget.
+  Future<void> _prefetchImages(FeedItem item, String html) async {
+    final thumbnail = item.imageUrl;
+    if (thumbnail != null && thumbnail.isNotEmpty) {
+      // The feed list reads ThumbnailCacheManager; the article hero reads
+      // ArticleCacheManager for the same URL — warm both.
+      await _warmImage(ThumbnailCacheManager.instance, thumbnail);
+      await _warmImage(ArticleCacheManager.instance, thumbnail);
+    }
+    final srcs = parse(html)
+        .getElementsByTagName('img')
+        .map((e) => e.attributes['src'])
+        .whereType<String>()
+        .where((s) => s.startsWith('http'))
+        .take(_prefetchImagesPerArticle);
+    for (final src in srcs) {
+      await _warmImage(ArticleCacheManager.instance, src);
+    }
+  }
+
+  Future<void> _warmImage(DefaultCacheManager manager, String url) async {
+    try {
+      await manager
+          .getFileStream(url)
+          .timeout(const Duration(seconds: 15))
+          .drain<void>();
+    } catch (_) {
+      // Dead image, dead cache init, timeout — all silent by policy.
     }
   }
 
@@ -1122,7 +1078,26 @@ class FeedProvider extends ChangeNotifier {
   // Cache persistence
   // ---------------------------------------------------------------------------
 
-  Future<void> _saveCachedItems() async {
+  /// Serializes [cachedItemsJson] writes. Prefetch saves are fire-and-forget
+  /// and can overlap a refresh save — unsynchronized, an older snapshot could
+  /// `put` last and regress the durable cache. Chaining keeps writes ordered.
+  Future<void> _saveChain = Future<void>.value();
+
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
+
+  /// Bumped by cache-clearing operations ([clearCache], [factoryReset]) so an
+  /// in-flight [cachedItemsJson] write started before the reset cannot land
+  /// its stale snapshot after the delete.
+  int _cacheGeneration = 0;
+
+  Future<void> _saveCachedItems() {
+    final run = _saveChain.then((_) => _writeCachedItems());
+    // Keep the chain usable after a failed write instead of poisoning it.
+    _saveChain = run.catchError((_) {});
+    return run;
+  }
+
+  Future<void> _writeCachedItems() async {
     if (settingsProvider == null) return;
     final int limit = settingsProvider!.offlineCacheLimit;
 
@@ -1143,13 +1118,17 @@ class FeedProvider extends ChangeNotifier {
 
     // Encode JSON in a background isolate — avoids blocking scroll/animation
     // while serializing potentially hundreds of items.
+    final generation = _cacheGeneration;
     final maps = itemsToCache.map((e) => e.toJson()).toList();
     final String encodedData = await compute(_encodeCachedItems, maps);
+    // A reset landed while encoding — dropping the write preserves the wipe.
+    if (generation != _cacheGeneration) return;
     await _box.put('cachedItemsJson', encodedData);
   }
 
   /// Clears all cached offline articles.
   Future<void> clearCache() async {
+    _cacheGeneration++;
     _cachedItemIds.clear();
     await _box.delete('cachedItemsJson');
     notifyListeners();
@@ -1162,6 +1141,7 @@ class FeedProvider extends ChangeNotifier {
     _selectedFeedUrl = null;
     _readItemIds.clear();
     _cachedItemIds.clear();
+    _feedErrors = {};
     _searchQuery = '';
     _readFilter = 'all';
     _filterCategories = {};
@@ -1172,6 +1152,7 @@ class FeedProvider extends ChangeNotifier {
     _hasLoadedOnce = false;
     _lastNotificationTime = null;
 
+    _cacheGeneration++;
     await _box.clear();
     _invalidateFilterCache();
     notifyListeners();
@@ -1179,19 +1160,12 @@ class FeedProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _cacheTimer?.cancel();
+    _connectivitySub?.cancel();
     _feedService.dispose();
     super.dispose();
   }
-}
-
-/// Simple tuple holding the three date-based groups computed in a single pass.
-class _DateGroups {
-  final List<FeedItem> today;
-  final List<FeedItem> yesterday;
-  final List<FeedItem> older;
-
-  const _DateGroups(this.today, this.yesterday, this.older);
 }
 
 // ---------------------------------------------------------------------------
@@ -1206,37 +1180,3 @@ List<Map<String, dynamic>> _decodeCachedItems(String data) {
 
 /// Encodes a list of item maps to JSON string (runs in background isolate).
 String _encodeCachedItems(List<Map<String, dynamic>> maps) => jsonEncode(maps);
-
-// ---------------------------------------------------------------------------
-// Concurrency limiter
-// ---------------------------------------------------------------------------
-
-/// Simple semaphore that gates access to at most [maxCount] concurrent slots.
-///
-/// Used to limit parallel HTTP requests so the device's connection pool and
-/// memory aren't overwhelmed when many feeds are subscribed.
-class _Semaphore {
-  final int maxCount;
-  int _current = 0;
-  final Queue<Completer<void>> _waitQueue = Queue();
-
-  _Semaphore(this.maxCount);
-
-  Future<void> acquire() async {
-    if (_current < maxCount) {
-      _current++;
-      return;
-    }
-    final c = Completer<void>();
-    _waitQueue.add(c);
-    await c.future;
-  }
-
-  void release() {
-    if (_waitQueue.isNotEmpty) {
-      _waitQueue.removeFirst().complete();
-    } else {
-      _current--;
-    }
-  }
-}

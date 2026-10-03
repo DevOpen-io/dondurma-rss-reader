@@ -90,15 +90,32 @@ Future<void> runBgFetch() async {
         .map((s) => s.url)
         .toSet();
 
-    // Fetch all feeds
+    // Fetch all feeds — at learned redirect URLs when the foreground learned
+    // one, so background passes skip the 301 hop too.
+    final rawRedirects = feedsBox.get('feedRedirects');
+    final redirects = <String, String>{};
+    if (rawRedirects is String && rawRedirects.isNotEmpty) {
+      try {
+        for (final e in (jsonDecode(rawRedirects) as Map).entries) {
+          redirects[e.key.toString()] = e.value.toString();
+        }
+      } catch (_) {}
+    }
     final feedService = FeedService();
     final results = await Future.wait(
       subscriptions.map((sub) async {
+        final fetchUrl = redirects[sub.url] ?? sub.url;
         try {
-          final result = await feedService.fetchFeed(sub.url, sub.category);
+          final result = await feedService.fetchFeed(fetchUrl, sub.category);
           return (
             subscription: sub,
-            items: result.items,
+            items: fetchUrl == sub.url
+                ? result.items
+                // Re-tag learned-URL items to canonical — the merge below is
+                // keyed by subscription URL.
+                : result.items
+                      .map((i) => i.copyWith(feedUrl: sub.url))
+                      .toList(),
             succeeded: true,
             fresh: !result.notModified,
             allowInitialization: !result.notModified,

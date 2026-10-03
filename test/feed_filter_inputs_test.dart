@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/services/feed_decisions.dart';
 
 void main() {
-  group('FeedProvider.filterInputsChanged', () {
+  group('feedFilterInputsChanged', () {
     const global = ['spam', 'clickbait'];
     const feedKw = {
       'https://a': ['crypto'],
@@ -11,7 +11,7 @@ void main() {
 
     test('reports changed when no previous snapshot exists', () {
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: null,
           nextGlobalKeywords: global,
           prevFeedKeywords: null,
@@ -25,7 +25,7 @@ void main() {
 
     test('reports unchanged for identical inputs', () {
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: ['spam', 'clickbait'],
           nextGlobalKeywords: global,
           prevFeedKeywords: {
@@ -41,7 +41,7 @@ void main() {
 
     test('detects global keyword change', () {
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: ['spam'],
           nextGlobalKeywords: global,
           prevFeedKeywords: feedKw,
@@ -55,7 +55,7 @@ void main() {
 
     test('detects per-feed keyword change', () {
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: global,
           nextGlobalKeywords: global,
           prevFeedKeywords: {
@@ -71,7 +71,7 @@ void main() {
 
     test('detects per-feed keyword map key change', () {
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: global,
           nextGlobalKeywords: global,
           prevFeedKeywords: {
@@ -87,7 +87,7 @@ void main() {
 
     test('detects bookmark toggle', () {
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: global,
           nextGlobalKeywords: global,
           prevFeedKeywords: feedKw,
@@ -103,7 +103,7 @@ void main() {
       // Theme/search-history style changes never reach these inputs, so
       // identical snapshots must report unchanged.
       expect(
-        FeedProvider.filterInputsChanged(
+        feedFilterInputsChanged(
           prevGlobalKeywords: const [],
           nextGlobalKeywords: const [],
           prevFeedKeywords: const {},

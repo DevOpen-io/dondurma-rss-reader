@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
-import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/services/feed_decisions.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/article_identity.dart';
+import 'package:ice_cream_rss_reader/services/feed_list_filter.dart';
 
 FeedItem _item(String id, {DateTime? pubDate}) => FeedItem(
   id: id,
@@ -81,14 +82,65 @@ void main() {
         'https://example.com/path/',
       );
     });
+
+    test('normalizeFeedUrl folds scheme/host/trailing-slash variants', () {
+      const canonical = 'https://example.com/feed';
+      for (final variant in [
+        'https://example.com/feed',
+        'https://example.com/feed/',
+        'HTTPS://EXAMPLE.COM/feed',
+        'https://example.com:443/feed/',
+      ]) {
+        expect(ArticleIdentity.normalizeFeedUrl(variant), canonical);
+      }
+      expect(
+        ArticleIdentity.normalizeFeedUrl('https://example.com/'),
+        'https://example.com',
+      );
+      // Different paths stay different.
+      expect(
+        ArticleIdentity.normalizeFeedUrl('https://example.com/a'),
+        isNot(ArticleIdentity.normalizeFeedUrl('https://example.com/b')),
+      );
+      // Query strings survive normalization.
+      expect(
+        ArticleIdentity.normalizeFeedUrl('https://example.com/f?x=1'),
+        'https://example.com/f?x=1',
+      );
+    });
+
+    test('sanitizeSiteTitle strips quoted search-query prefix', () {
+      expect(
+        ArticleIdentity.sanitizeSiteTitle(
+          '"site:ft.com (oil OR gas) when:1d" - Google News',
+        ),
+        'Google News',
+      );
+      expect(
+        ArticleIdentity.sanitizeSiteTitle('"site:apnews.com" - Google News'),
+        'Google News',
+      );
+    });
+
+    test('sanitizeSiteTitle leaves ordinary titles untouched', () {
+      expect(ArticleIdentity.sanitizeSiteTitle('BBC News'), 'BBC News');
+      expect(
+        ArticleIdentity.sanitizeSiteTitle('The Verge - All Posts'),
+        'The Verge - All Posts',
+      );
+      expect(
+        ArticleIdentity.sanitizeSiteTitle('"Quoted Title"'),
+        'Quoted Title',
+      );
+    });
   });
 
-  group('FeedProvider.shouldRunPeriodicSync', () {
+  group('feedShouldRunPeriodicSync', () {
     final now = DateTime(2026, 6, 24, 12, 0, 0);
 
     test('runs when no sync has ever happened', () {
       expect(
-        FeedProvider.shouldRunPeriodicSync(
+        feedShouldRunPeriodicSync(
           lastSyncTime: null,
           now: now,
           intervalSeconds: 300,
@@ -99,7 +151,7 @@ void main() {
 
     test('skips when a sync completed within the interval', () {
       expect(
-        FeedProvider.shouldRunPeriodicSync(
+        feedShouldRunPeriodicSync(
           lastSyncTime: now.subtract(const Duration(seconds: 30)),
           now: now,
           intervalSeconds: 300,
@@ -110,13 +162,58 @@ void main() {
 
     test('runs when the last sync is older than the interval', () {
       expect(
-        FeedProvider.shouldRunPeriodicSync(
+        feedShouldRunPeriodicSync(
           lastSyncTime: now.subtract(const Duration(seconds: 301)),
           now: now,
           intervalSeconds: 300,
         ),
         isTrue,
       );
+    });
+  });
+
+  group('deduplicateByLink', () {
+    FeedItem linked(String id, String link, {String feed = 'f1'}) =>
+        _item(id).copyWith(link: link, feedUrl: feed);
+
+    test('drops the later copy of a cross-feed duplicate', () {
+      final items = [
+        linked('a', 'https://x.com/story', feed: 'news'),
+        linked('b', 'https://x.com/story', feed: 'world'),
+        linked('c', 'https://x.com/other', feed: 'world'),
+      ];
+      final out = deduplicateByLink(items).toList();
+      expect(out.map((e) => e.id), ['a', 'c']);
+    });
+
+    test('normalizes link variants before comparing', () {
+      final items = [
+        linked('a', 'HTTPS://x.com:443/story'),
+        linked('b', 'https://x.com/story#comments'),
+        linked('c', 'https://x.com/story'),
+      ];
+      // #fragment is already dropped by normalizeArticleUrl; all three are
+      // the same article → only the first survives.
+      final out = deduplicateByLink(items).toList();
+      expect(out.map((e) => e.id), ['a']);
+    });
+
+    test('never collapses items without a usable link', () {
+      final items = [
+        _item('a').copyWith(feedUrl: 'f1'),
+        _item('b').copyWith(feedUrl: 'f2'),
+      ];
+      expect(deduplicateByLink(items).map((e) => e.id), ['a', 'b']);
+    });
+
+    test('junk non-URL links fall back to item id instead of merging', () {
+      final items = [
+        linked('a', '#'),
+        linked('b', 'about:blank'),
+        linked('c', 'javascript:void(0)'),
+        linked('d', '/relative/path'),
+      ];
+      expect(deduplicateByLink(items).map((e) => e.id), ['a', 'b', 'c', 'd']);
     });
   });
 }

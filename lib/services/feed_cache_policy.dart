@@ -18,10 +18,37 @@ class FeedCachePolicy {
     }
     for (final entry in freshItemsByFeed.entries) {
       if (groups.containsKey(entry.key)) {
-        groups[entry.key] = List<FeedItem>.of(entry.value);
+        groups[entry.key] = carryOverPrefetchedText(
+          existingItems: groups[entry.key] ?? const <FeedItem>[],
+          freshItems: List<FeedItem>.of(entry.value),
+        );
       }
     }
     return [for (final url in subscribed) ...groups[url] ?? const <FeedItem>[]];
+  }
+
+  /// Re-attaches prefetched full-text bodies onto freshly parsed items,
+  /// matched by (feedUrl, id). Fresh parses always carry null, so without
+  /// this every 200 merge erases offline content — both the foreground
+  /// refresher and the Workmanager merge must call it.
+  static List<FeedItem> carryOverPrefetchedText({
+    required Iterable<FeedItem> existingItems,
+    required List<FeedItem> freshItems,
+  }) {
+    final prefetched = <String, String>{
+      for (final i in existingItems)
+        if (i.prefetchedFullText != null)
+          '${i.feedUrl} ${i.id}': i.prefetchedFullText!,
+    };
+    if (prefetched.isEmpty) return freshItems;
+    for (var i = 0; i < freshItems.length; i++) {
+      final item = freshItems[i];
+      final body = prefetched['${item.feedUrl} ${item.id}'];
+      if (item.prefetchedFullText == null && body != null) {
+        freshItems[i] = item.copyWith(prefetchedFullText: body);
+      }
+    }
+    return freshItems;
   }
 
   /// Applies a global hard limit while sharing capacity across subscriptions.
@@ -47,7 +74,7 @@ class FeedCachePolicy {
     }
 
     for (final group in groups.values) {
-      group.sort(_newestFirst);
+      group.sort(_protectedThenNewest);
     }
 
     final selected = <FeedItem>[];
@@ -63,6 +90,15 @@ class FeedCachePolicy {
       if (!added) break;
     }
     return selected;
+  }
+
+  /// Items carrying a downloaded body sort before unprotected ones, then by
+  /// date — eviction drops a fetched full text last (decision #17).
+  static int _protectedThenNewest(FeedItem a, FeedItem b) {
+    final aProt = a.prefetchedFullText != null;
+    final bProt = b.prefetchedFullText != null;
+    if (aProt != bProt) return aProt ? -1 : 1;
+    return _newestFirst(a, b);
   }
 
   static int _newestFirst(FeedItem a, FeedItem b) {

@@ -327,7 +327,7 @@ void main() {
         'lib/widgets/add_feed_dialog.dart',
       ).readAsString();
       final suggested = await File(
-        'lib/widgets/explore_feeds_dialog.dart',
+        'lib/screens/explore_feeds_page.dart',
       ).readAsString();
 
       expect(manual.contains('await feeds.addSubscriptionAndRefresh('), isTrue);
@@ -442,6 +442,92 @@ void main() {
         contains('after-retry'),
       );
       expect(_persistedItems().map((item) => item.id), contains('after-retry'));
+      providers.feed.dispose();
+    },
+  );
+
+  test(
+    'cacheless 304 retried and still 304 drops the validator (issue #28)',
+    () async {
+      final url = server.url('/always-304.xml');
+      server.handlers['/always-304.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.notModified;
+        await request.response.close();
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: '304', category: 'Test'),
+      ]);
+      await Hive.box('feeds').put(
+        'feedValidators',
+        jsonEncode({
+          url: {'etag': '"v1"'},
+        }),
+      );
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+
+      // Conditional 304 + unconditional retry 304 → validator must be gone
+      // so the next pass is a plain GET instead of retry-looping.
+      expect(server.counts['/always-304.xml'], 2);
+      final raw = Hive.box('feeds').get('feedValidators') as String?;
+      final validators = raw == null
+          ? <String, dynamic>{}
+          : jsonDecode(raw) as Map;
+      expect(validators.containsKey(url), isFalse);
+      providers.feed.dispose();
+    },
+  );
+
+  test(
+    'redirected feed learns final URL and skips the hop next pass (#31)',
+    () async {
+      final oldUrl = server.url('/old.xml');
+      server.handlers['/new.xml'] = (request) async {
+        request.response.write('''<?xml version="1.0"?>
+<rss version="2.0"><channel><title>R</title>
+<item><title>R1</title><guid>r1</guid><link>https://x/r1</link></item>
+</channel></rss>''');
+        await request.response.close();
+      };
+      server.handlers['/old.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.movedPermanently;
+        request.response.headers.set(HttpHeaders.locationHeader, '/new.xml');
+        await request.response.close();
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: oldUrl, name: 'R', category: 'Test'),
+      ]);
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+
+      // Learned redirect persisted against the canonical subscription URL.
+      final raw = Hive.box('feeds').get('feedRedirects') as String?;
+      final redirects = raw == null
+          ? <String, dynamic>{}
+          : jsonDecode(raw) as Map;
+      expect(redirects[oldUrl], server.url('/new.xml'));
+      expect(providers.feed.items.map((i) => i.id), contains('r1'));
+
+      // Next pass fetches the resolved URL directly — no request to /old.xml.
+      final oldHits = server.counts['/old.xml'] ?? 0;
+      await providers.feed.refreshAll();
+      expect(server.counts['/old.xml'], oldHits);
+      expect(server.counts['/new.xml'], greaterThanOrEqualTo(2));
+
+      // Items fetched via the learned URL stay tagged with the canonical
+      // subscription URL — feed-scoped cache/filter lookups keep matching.
+      expect(
+        providers.feed.items.where((i) => i.id == 'r1').map((i) => i.feedUrl),
+        everyElement(oldUrl),
+      );
+
+      // A failing learned-URL pass keeps the feed's existing items.
+      server.handlers['/new.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.internalServerError;
+        await request.response.close();
+      };
+      await providers.feed.refreshAll();
+      expect(providers.feed.items.map((i) => i.id), contains('r1'));
       providers.feed.dispose();
     },
   );
@@ -614,4 +700,267 @@ void main() {
       expect(selected, hasLength(6));
     },
   );
+
+  test(
+    'hasFeedUrl rejects canonical duplicates and surfaces legacy dupes',
+    () async {
+      final subs = SubscriptionProvider();
+      expect(await subs.addFeed('https://x.com/feed', 'A', 'T'), isTrue);
+      // Scheme/host case, default port, and trailing slash all canonicalize
+      // to the stored URL → rejected as an already-subscribed feed.
+      expect(subs.hasFeedUrl('HTTPS://X.COM/feed/'), isTrue);
+      expect(await subs.addFeed('https://x.com/feed/', 'B', 'T'), isFalse);
+      expect(subs.subscriptions, hasLength(1));
+
+      // A different path is genuinely different.
+      expect(await subs.addFeed('https://x.com/other', 'C', 'T'), isTrue);
+
+      // Legacy dupes seeded directly still surface via duplicateFeedUrls.
+      await _seedSubscriptions([
+        FeedSubscription(url: 'https://x.com/feed', name: 'A', category: 'T'),
+        FeedSubscription(url: 'https://x.com/feed/', name: 'B', category: 'T'),
+      ]);
+      final seeded = SubscriptionProvider();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+      expect(seeded.duplicateFeedUrls, {'https://x.com/feed/'});
+    },
+  );
+
+  test(
+    'failed feed records a persisted error that clears on recovery',
+    () async {
+      final url = server.url('/flaky.xml');
+      var fail = true;
+      server.handlers['/flaky.xml'] = (request) async {
+        if (fail) {
+          request.response.statusCode = HttpStatus.internalServerError;
+          await request.response.close();
+        } else {
+          await _respond200(request, _rss('Flaky', ['ok-1']));
+        }
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'Flaky', category: 'Test'),
+      ]);
+
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+
+      // Recorded error keeps the real cause (HTTP 500), not a flattened
+      // "could not fetch" message — the action sheet shows this text.
+      expect(providers.feed.feedErrorFor(url), contains('500'));
+      // Persisted so a restart still shows the feed as unhealthy.
+      expect(
+        (Hive.box('feeds').get('feedErrors') as Map).containsKey(url),
+        isTrue,
+      );
+
+      fail = false;
+      await providers.feed.refreshAll();
+      await _waitForRefresh(providers.feed);
+      expect(providers.feed.feedErrorFor(url), isNull);
+      expect(
+        (Hive.box('feeds').get('feedErrors') as Map).containsKey(url),
+        isFalse,
+      );
+      providers.feed.dispose();
+    },
+  );
+
+  test(
+    'prefetch stores full text for full-text feeds only (issue #14 policy)',
+    () async {
+      final ftUrl = server.url('/ft.xml');
+      final plainUrl = server.url('/plain.xml');
+      final articleUrl = server.url('/a1.html');
+      final plainArticleUrl = server.url('/p1.html');
+      String feed(String link) =>
+          '''<?xml version="1.0"?>
+<rss version="2.0"><channel><title>F</title><link>https://x</link>
+<item><title>t</title><guid>g</guid><link>$link</link><pubDate>Wed, 26 Aug 2026 10:00:00 +0000</pubDate></item>
+</channel></rss>''';
+      Future<void> html(HttpRequest r) async {
+        r.response.headers.contentType = ContentType('text', 'html');
+        r.response.write(
+          '<html><body><article><p>${List.filled(40, 'Long paragraph of article body text for extraction.').join(' ')}</p></article></body></html>',
+        );
+        await r.response.close();
+      }
+
+      server.handlers['/ft.xml'] = (r) => _respond200(r, feed(articleUrl));
+      server.handlers['/plain.xml'] = (r) =>
+          _respond200(r, feed(plainArticleUrl));
+      server.handlers['/a1.html'] = html;
+      server.handlers['/p1.html'] = html;
+      await _seedSubscriptions([
+        FeedSubscription(
+          url: ftUrl,
+          name: 'FT',
+          category: 'T',
+          fullTextEnabled: true,
+        ),
+        FeedSubscription(url: plainUrl, name: 'Plain', category: 'T'),
+      ]);
+
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+
+      // Prefetch is fire-and-forget after refresh — poll for the FT item's
+      // prefetched body, then the same pass has finished so Plain asserts.
+      FeedItem find(String feedUrl) =>
+          providers.feed.items.firstWhere((i) => i.feedUrl == feedUrl);
+      await _waitUntil(
+        () => find(ftUrl).prefetchedFullText != null,
+        timeout: const Duration(seconds: 15),
+      );
+
+      expect(find(ftUrl).prefetchedFullText, contains('article body text'));
+      // Non-full-text feed shares the same pipeline but is never prefetched.
+      expect(find(plainUrl).prefetchedFullText, isNull);
+      // The feed-supplied body is untouched — prefetch lives in its own field.
+      expect(find(ftUrl).content, isNot(contains('article body text')));
+      // Persisted inside cachedItemsJson so it survives a restart.
+      expect(
+        _persistedItems()
+            .singleWhere((i) => i.feedUrl == ftUrl)
+            .prefetchedFullText,
+        contains('article body text'),
+      );
+      providers.feed.dispose();
+    },
+  );
+
+  test('prefetch caps at five, tolerates failures, and survives next refresh '
+      '(issue #14 policy)', () async {
+    final ftUrl = server.url('/cap.xml');
+    var articleRequests = 0;
+    final items = List.generate(
+      7,
+      (i) =>
+          '<item><title>a$i</title><guid>g$i</guid>'
+          '<link>${server.url('/cap$i.html')}</link>'
+          '<pubDate>Wed, 26 Aug 2026 10:${(59 - i).toString().padLeft(2, '0')}:00 +0000</pubDate></item>',
+    ).join();
+    server.handlers['/cap.xml'] = (r) => _respond200(
+      r,
+      '<?xml version="1.0"?><rss version="2.0"><channel>'
+      '<title>C</title><link>https://x</link>$items</channel></rss>',
+    );
+    for (var i = 0; i < 7; i++) {
+      final n = i;
+      server.handlers['/cap$i.html'] = (r) async {
+        articleRequests++;
+        if (n == 2) {
+          // g2's page is bot-blocked — extraction fails, item survives.
+          r.response.statusCode = HttpStatus.notFound;
+          await r.response.close();
+          return;
+        }
+        r.response.headers.contentType = ContentType('text', 'html');
+        r.response.write(
+          '<html><body><article><p>${List.filled(40, 'Body $n article text.').join(' ')}</p></article></body></html>',
+        );
+        await r.response.close();
+      };
+    }
+    await _seedSubscriptions([
+      FeedSubscription(
+        url: ftUrl,
+        name: 'Cap',
+        category: 'T',
+        fullTextEnabled: true,
+      ),
+    ]);
+
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    FeedItem? byId(String id) =>
+        providers.feed.items.where((i) => i.id == id).firstOrNull;
+
+    // Newest five attempted; g2 failed; four prefetched, two never touched.
+    // Wait on persistence (the pass's last step) so _isPrefetching has
+    // settled before the second refresh below — otherwise that pass is
+    // skipped by the in-flight guard and the counts drift.
+    await _waitUntil(
+      () =>
+          _persistedItems().where((i) => i.prefetchedFullText != null).length ==
+          4,
+      timeout: const Duration(seconds: 15),
+    );
+    expect(articleRequests, 5);
+    for (final id in ['g0', 'g1', 'g3', 'g4']) {
+      expect(byId(id)?.prefetchedFullText, isNotNull, reason: id);
+    }
+    for (final id in ['g5', 'g6']) {
+      expect(byId(id)?.prefetchedFullText, isNull, reason: id);
+    }
+    // Extraction failure leaves the RSS item intact, only without content.
+    expect(byId('g2'), isNotNull);
+    expect(byId('g2')!.prefetchedFullText, isNull);
+
+    // Second refresh: fresh parse must carry prefetched bodies over.
+    // Missing set is now [g2, g5, g6]; g2's URL is in the service's
+    // session failure cache, so only g5 and g6 hit the network.
+    await providers.feed.refreshAll();
+    await _waitForRefresh(providers.feed);
+    await _waitUntil(
+      () =>
+          byId('g5')?.prefetchedFullText != null &&
+          byId('g6')?.prefetchedFullText != null,
+      timeout: const Duration(seconds: 15),
+    );
+    expect(articleRequests, 7);
+    for (final id in ['g0', 'g1', 'g3', 'g4', 'g5', 'g6']) {
+      expect(byId(id)?.prefetchedFullText, isNotNull, reason: id);
+    }
+    expect(byId('g2')!.prefetchedFullText, isNull);
+    providers.feed.dispose();
+  });
+
+  test('connectivity-only failure does not flag the feed', () async {
+    // Bind then close a port so connecting yields a refused socket — the same
+    // connectivity class as airplane mode, not a dead feed.
+    final probe = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final port = probe.port;
+    await probe.close(force: true);
+    final url = 'http://127.0.0.1:$port/dead.xml';
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Dead', category: 'Test'),
+    ]);
+
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+
+    // Whole pass offline → the failure proves nothing → no error recorded.
+    expect(providers.feed.feedErrorFor(url), isNull);
+    providers.feed.dispose();
+  });
+
+  test('offline pass does not stamp lastSyncTime (issue #27)', () async {
+    // Only a dead feed → the whole pass fails connectivity → no stamp.
+    final probe = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+    final deadPort = probe.port;
+    await probe.close(force: true);
+    final deadUrl = 'http://127.0.0.1:$deadPort/dead.xml';
+    await _seedSubscriptions([
+      FeedSubscription(url: deadUrl, name: 'Dead', category: 'T'),
+    ]);
+
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    expect(providers.feed.lastSyncTime, isNull);
+
+    // Swap in a live feed → an online pass must stamp.
+    final liveUrl = server.url('/live.xml');
+    server.handlers['/live.xml'] = (r) => _respond200(r, _rss('Live', ['l1']));
+    await _seedSubscriptions([
+      FeedSubscription(url: liveUrl, name: 'Live', category: 'T'),
+    ]);
+    providers.feed.dispose();
+
+    final providers2 = _providers();
+    await _waitForRefresh(providers2.feed);
+    expect(providers2.feed.lastSyncTime, isNotNull);
+    providers2.feed.dispose();
+  });
 }

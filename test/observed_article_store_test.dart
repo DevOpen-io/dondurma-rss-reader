@@ -234,6 +234,42 @@ void main() {
     });
 
     test(
+      'claim flood is capped and un-claimed remainder never re-claims',
+      () async {
+        final now = DateTime.utc(2026, 8, 24);
+        const feed = 'https://a';
+        // Initialize the feed (no claims on first batch).
+        await store().claimFeedBatch(feedUrl: feed, items: const []);
+
+        // Simulate a post-gap refilled feed: 20 unseen articles at once.
+        final backlog = List.generate(
+          20,
+          (i) => _item(feed, 'a$i', now.add(Duration(minutes: i))),
+        );
+        final flood = await store().claimFeedBatch(
+          feedUrl: feed,
+          items: backlog,
+        );
+
+        expect(flood.claimedItems, hasLength(10));
+        // Cap keeps the newest — a19 (latest pubDate) must be claimed,
+        // a0 (oldest) must not.
+        expect(
+          flood.claimedItems.map((i) => i.id),
+          containsAll(List.generate(10, (i) => 'a${19 - i}')),
+        );
+        expect(flood.claimedItems.map((i) => i.id), isNot(contains('a0')));
+
+        // All 20 were recorded as observed — a repeat batch claims nothing.
+        final repeat = await store().claimFeedBatch(
+          feedUrl: feed,
+          items: backlog,
+        );
+        expect(repeat.claimedItems, isEmpty);
+      },
+    );
+
+    test(
       'new subscription epoch silently initializes same URL again',
       () async {
         final now = DateTime.utc(2026, 8, 24);

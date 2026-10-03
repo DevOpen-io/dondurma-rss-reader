@@ -1,13 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/services/feed_decisions.dart';
 
 void main() {
-  group('FeedProvider.shouldRefreshOnResume', () {
+  group('feedShouldRefreshOnResume', () {
     final now = DateTime(2026, 6, 24, 12, 0, 0);
 
     test('no refresh when dependencies are not wired yet', () {
       expect(
-        FeedProvider.shouldRefreshOnResume(
+        feedShouldRefreshOnResume(
           hasDependencies: false,
           isSyncing: false,
           lastSyncTime: null,
@@ -19,7 +19,7 @@ void main() {
 
     test('no refresh while a sync is already in flight', () {
       expect(
-        FeedProvider.shouldRefreshOnResume(
+        feedShouldRefreshOnResume(
           hasDependencies: true,
           isSyncing: true,
           lastSyncTime: null,
@@ -31,7 +31,7 @@ void main() {
 
     test('refreshes when no sync has ever happened', () {
       expect(
-        FeedProvider.shouldRefreshOnResume(
+        feedShouldRefreshOnResume(
           hasDependencies: true,
           isSyncing: false,
           lastSyncTime: null,
@@ -43,7 +43,7 @@ void main() {
 
     test('no refresh when last sync is within the throttle window', () {
       expect(
-        FeedProvider.shouldRefreshOnResume(
+        feedShouldRefreshOnResume(
           hasDependencies: true,
           isSyncing: false,
           lastSyncTime: now.subtract(const Duration(seconds: 30)),
@@ -55,7 +55,7 @@ void main() {
 
     test('refreshes when last sync is older than the throttle window', () {
       expect(
-        FeedProvider.shouldRefreshOnResume(
+        feedShouldRefreshOnResume(
           hasDependencies: true,
           isSyncing: false,
           lastSyncTime: now.subtract(const Duration(seconds: 90)),
