@@ -1,0 +1,8 @@
+name: "CodeQL config"
+
+# The only JavaScript in the repo is the vendored, minified DarkReader
+# bundle. Excluding it leaves no analyzable JS, so the javascript
+# language is not detected and the analyze job does not fail trying
+# to extract a 1-line minified file.
+paths-ignore:
+  - assets/js/**
