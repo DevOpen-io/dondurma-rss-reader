@@ -10,7 +10,7 @@ import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../services/image_cache_service.dart';
-import '../providers/subscription_provider.dart';
+import 'category_icon.dart';
 
 /// Cuts [text] to at most [maxChars] characters, ending with an ellipsis.
 /// Keeps both the site name and the category visible in the meta row: without
@@ -323,8 +323,6 @@ class _FeedItemIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final subscriptionProvider = context.watch<SubscriptionProvider>();
-    final categoryIcon = subscriptionProvider.getCategoryIcon(item.category);
     final colorScheme = Theme.of(context).colorScheme;
 
     // Theme-derived tile colors; item.iconColor/iconBackgroundColor are
@@ -339,8 +337,8 @@ class _FeedItemIcon extends StatelessWidget {
         borderRadius: BorderRadius.circular(11),
       ),
       child: Center(
-        child: Icon(
-          categoryIcon,
+        child: CategoryIcon(
+          category: item.category,
           size: 20,
           color: isRead
               ? colorScheme.onPrimaryContainer.withValues(alpha: 0.55)
@@ -510,6 +508,17 @@ class _FeedItemContent extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
+            // Offline-readiness prototype (#18): prefetched body means the
+            // article opens fully without a network.
+            if (item.prefetchedFullText != null)
+              Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.download_done,
+                  size: 14,
+                  color: colorScheme.secondary.withValues(alpha: 0.8),
+                ),
+              ),
             Text(
               _formatDate(item),
               style: TextStyle(

@@ -97,6 +97,10 @@ class FullTextExtractionService {
   // Public API
   // ---------------------------------------------------------------------------
 
+  /// Whether [url] already failed extraction this session. Prefetch uses it
+  /// to keep permanently-failing articles from consuming candidate slots.
+  bool hasFailedAttempt(String url) => _failedUrls.contains(url);
+
   /// Fetches [url], extracts the main article body, and returns its inner HTML.
   ///
   /// Returns `null` if the page cannot be fetched or no suitable content block

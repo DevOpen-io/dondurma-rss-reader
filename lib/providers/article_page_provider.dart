@@ -111,12 +111,21 @@ class ArticlePageProvider extends ChangeNotifier {
 
     _lastAttemptAutomatic = automatic;
     _fullTextActive = true;
-    _isLoadingFullText = true;
     _fullTextFailed = false;
     _autoFullTextFailed = false;
     _fullTextContent = null;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
+
+    // Offline path: a prefetched body renders instantly, no fetch needed.
+    if (item.prefetchedFullText != null) {
+      _fullTextContent = item.prefetchedFullText;
+      _isLoadingFullText = false;
+      notifyListeners();
+      return;
+    }
+
+    _isLoadingFullText = true;
     notifyListeners();
 
     final result = await _extractionService.extractFullText(

@@ -17,6 +17,7 @@ import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
+import '../utils/time_format.dart';
 import 'dart:math' as math;
 
 const _articleTransitionSettleDelay = Duration(milliseconds: 380);
@@ -200,7 +201,7 @@ class _ArticlePageState extends State<_ArticlePage> {
 
     final String dateStr = widget.item.pubDate != null
         ? DateFormat(
-            'MMM d, yyyy  h:mm a',
+            articleDatePattern(use24HourFormat(context, settings.timeFormat)),
           ).format(widget.item.pubDate!.toLocal())
         : '';
 
@@ -471,7 +472,8 @@ class _ArticlePageState extends State<_ArticlePage> {
                             colorScheme: colorScheme,
                             l10n: l10n,
                           ),
-                          if (provider.autoFullTextFailed) ...[
+                          if (provider.autoFullTextFailed ||
+                              provider.fullTextFailed) ...[
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -502,6 +504,25 @@ class _ArticlePageState extends State<_ArticlePage> {
                                         color: colorScheme.onPrimaryContainer
                                             .withValues(alpha: 0.8),
                                       ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  TextButton(
+                                    onPressed: provider.isLoadingFullText
+                                        ? null
+                                        : provider.activateFullText,
+                                    style: TextButton.styleFrom(
+                                      minimumSize: Size.zero,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                    ),
+                                    child: Text(
+                                      l10n.retry,
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
