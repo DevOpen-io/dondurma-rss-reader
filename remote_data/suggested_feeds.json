@@ -38,7 +38,7 @@
   {
     "category": "World News",
     "name": "CNN Top Stories",
-    "url": "http://rss.cnn.com/rss/edition.rss",
+    "url": "https://news.google.com/rss/search?q=site:cnn.com+when:1d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 9
   },
   {
@@ -704,7 +704,7 @@
   {
     "category": "Technology",
     "name": "Fast Company",
-    "url": "https://feeds.feedburner.com/fastcompany/headlines",
+    "url": "https://www.fastcompany.com/latest/rss",
     "popularity": 7
   },
   {
@@ -806,7 +806,7 @@
   {
     "category": "Technology",
     "name": "SlashDot",
-    "url": "http://rss.slashdot.org/Slashdot/slashdotMain",
+    "url": "https://rss.slashdot.org/Slashdot/slashdotMain",
     "popularity": 7
   },
   {
@@ -824,7 +824,7 @@
   {
     "category": "Technology",
     "name": "Tech in Asia",
-    "url": "https://feeds2.feedburner.com/PennOlson",
+    "url": "https://news.google.com/rss/search?q=site:techinasia.com+when:7d&hl=en-US&gl=US&ceid=US:en",
     "popularity": 7
   },
   {
@@ -974,7 +974,7 @@
   {
     "category": "AI & Machine Learning",
     "name": "The Berkeley Artificial Intelligence Research Blog",
-    "url": "http://bair.berkeley.edu/blog/feed.xml",
+    "url": "https://bair.berkeley.edu/blog/feed.xml",
     "popularity": 4
   },
   {
@@ -986,7 +986,7 @@
   {
     "category": "AI & Machine Learning",
     "name": "Eric Jang (Blogspot)",
-    "url": "http://blog.evjang.com/feeds/posts/default?alt=rss",
+    "url": "https://blog.evjang.com/feeds/posts/default?alt=rss",
     "popularity": 4
   },
   {
@@ -998,7 +998,7 @@
   {
     "category": "AI & Machine Learning",
     "name": "Magenta",
-    "url": "http://magenta.tensorflow.org/feed.xml",
+    "url": "https://magenta.tensorflow.org/feed.xml",
     "popularity": 4
   },
   {
@@ -1304,7 +1304,7 @@
   {
     "category": "Finance & Markets",
     "name": "Zero Hedge",
-    "url": "https://feeds.feedburner.com/zerohedge/feed",
+    "url": "https://cms.zerohedge.com/fullrss2.xml",
     "popularity": 5
   },
   {
@@ -2444,7 +2444,7 @@
   {
     "category": "Startups & Venture Capital",
     "name": "Steve Blank",
-    "url": "http://steveblank.com/feed/",
+    "url": "https://steveblank.com/feed/",
     "popularity": 5
   },
   {
@@ -2456,31 +2456,31 @@
   {
     "category": "Startups & Venture Capital",
     "name": "Guy Kawasaki",
-    "url": "http://guykawasaki.com/feed/",
+    "url": "https://guykawasaki.com/feed/",
     "popularity": 5
   },
   {
     "category": "Startups & Venture Capital",
     "name": "Essays - Benedict Evans",
-    "url": "http://ben-evans.com/benedictevans?format=rss",
+    "url": "https://www.ben-evans.com/benedictevans?format=RSS",
     "popularity": 5
   },
   {
     "category": "Startups & Venture Capital",
     "name": "Sam Altman",
-    "url": "http://blog.samaltman.com/posts.atom",
+    "url": "https://blog.samaltman.com/posts.atom",
     "popularity": 5
   },
   {
     "category": "Startups & Venture Capital",
     "name": "Andrew Chen",
-    "url": "http://andrewchen.co/feed/",
+    "url": "https://andrewchen.substack.com/feed",
     "popularity": 5
   },
   {
     "category": "Startups & Venture Capital",
     "name": "Both Sides of the Table",
-    "url": "http://feeds.feedburner.com/BothSidesOfTheTable",
+    "url": "https://bothsidesofthetable.com/feed",
     "popularity": 5
   },
   {
@@ -2990,13 +2990,13 @@
   {
     "category": "Programming",
     "name": "CodeNewbie Podcast",
-    "url": "http://feeds.codenewbie.org/cnpodcast.xml",
+    "url": "https://feeds.codenewbie.org/cnpodcast.xml",
     "popularity": 4
   },
   {
     "category": "Programming",
     "name": "Coding Horror",
-    "url": "https://feeds.feedburner.com/codinghorror",
+    "url": "https://blog.codinghorror.com/rss/",
     "popularity": 4
   },
   {
@@ -3032,7 +3032,7 @@
   {
     "category": "Programming",
     "name": "Google Developers Blog",
-    "url": "http://feeds.feedburner.com/GDBcode",
+    "url": "https://developers.googleblog.com/rss/",
     "popularity": 4
   },
   {
@@ -3092,13 +3092,13 @@
   {
     "category": "Programming",
     "name": "Android Developers Backstage",
-    "url": "http://feeds.feedburner.com/blogspot/androiddevelopersbackstage",
+    "url": "https://adbackstage.libsyn.com/rss",
     "popularity": 4
   },
   {
     "category": "Programming",
     "name": "Android Developers Blog",
-    "url": "http://feeds.feedburner.com/blogspot/hsDu",
+    "url": "https://android-developers.googleblog.com/feeds/posts/default?alt=rss",
     "popularity": 4
   },
   {
@@ -3170,7 +3170,7 @@
   {
     "category": "Programming",
     "name": "Grab Tech",
-    "url": "http://engineering.grab.com/feed.xml",
+    "url": "https://engineering.grab.com/feed.xml",
     "popularity": 4
   },
   {
@@ -3182,13 +3182,13 @@
   {
     "category": "Programming",
     "name": "Engineering – The GitHub Blog",
-    "url": "http://githubengineering.com/atom.xml",
+    "url": "https://github.blog/engineering/feed/",
     "popularity": 4
   },
   {
     "category": "Programming",
     "name": "eBay Tech Blog",
-    "url": "http://www.ebaytechblog.com/feed/",
+    "url": "https://www.ebaytechblog.com/feed/",
     "popularity": 4
   },
   {
@@ -3236,7 +3236,7 @@
   {
     "category": "Programming",
     "name": "Martin Kleppmann's blog",
-    "url": "https://feeds.feedburner.com/martinkl?format=xml",
+    "url": "https://martin.kleppmann.com/feed.rss",
     "popularity": 4
   },
   {
@@ -4076,7 +4076,7 @@
   {
     "category": "Science",
     "name": "Scientific American",
-    "url": "http://rss.sciam.com/ScientificAmerican-Global",
+    "url": "https://www.scientificamerican.com/platform/syndication/rss/",
     "popularity": 7
   },
   {
@@ -4100,19 +4100,7 @@
   {
     "category": "Science",
     "name": "PsyBlog",
-    "url": "http://feeds.feedburner.com/PsychologyBlog",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Psychology Blog",
-    "url": "http://www.all-about-psychology.com/psychology.xml",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
-    "name": "Psychology Headlines Around the World",
-    "url": "http://www.socialpsychology.org/headlines.rss",
+    "url": "https://www.spring.org.uk/feed",
     "popularity": 7
   },
   {
@@ -4124,7 +4112,7 @@
   {
     "category": "Science",
     "name": "Quanta Magazine",
-    "url": "http://www.quantamagazine.org/feed/",
+    "url": "https://www.quantamagazine.org/feed/",
     "popularity": 7
   },
   {
@@ -4646,7 +4634,7 @@
   {
     "category": "Design",
     "name": "UX Movement",
-    "url": "http://feeds.feedburner.com/uxmovement",
+    "url": "https://uxmovement.com/feed/",
     "popularity": 6
   },
   {
@@ -4838,7 +4826,7 @@
   {
     "category": "Sports",
     "name": "BBC Sport",
-    "url": "http://feeds.bbci.co.uk/sport/rss.xml",
+    "url": "https://feeds.bbci.co.uk/sport/rss.xml",
     "popularity": 8
   },
   {
@@ -5018,13 +5006,13 @@
   {
     "category": "Business",
     "name": "Moz",
-    "url": "http://feeds.feedburner.com/seomoz",
+    "url": "https://moz.com/posts/rss/blog",
     "popularity": 7
   },
   {
     "category": "Business",
     "name": "Social Media Examiner",
-    "url": "http://www.socialmediaexaminer.com/feed/",
+    "url": "https://www.socialmediaexaminer.com/feed/",
     "popularity": 7
   },
   {
@@ -5036,13 +5024,13 @@
   {
     "category": "Business",
     "name": "Hubspot",
-    "url": "http://blog.hubspot.com/CMS/UI/Modules/BizBlogger/rss.aspx?tabid=6307&moduleid=8441&maxcount=25",
+    "url": "https://blog.hubspot.com/marketing/rss.xml",
     "popularity": 7
   },
   {
     "category": "Business",
     "name": "Backlinko",
-    "url": "http://backlinko.com/feed",
+    "url": "https://backlinko.com/blog/feed/",
     "popularity": 7
   },
   {
@@ -5132,13 +5120,7 @@
   {
     "category": "Lifestyle",
     "name": "Digital Photography School",
-    "url": "https://feeds.feedburner.com/DigitalPhotographySchool",
-    "popularity": 8
-  },
-  {
-    "category": "Lifestyle",
-    "name": "One Big Photo",
-    "url": "http://feeds.feedburner.com/OneBigPhoto",
+    "url": "https://digital-photography-school.com/feed/",
     "popularity": 8
   },
   {
@@ -5150,13 +5132,13 @@
   {
     "category": "Lifestyle",
     "name": "Strobist",
-    "url": "http://feeds.feedburner.com/blogspot/WOBq",
+    "url": "https://strobist.blogspot.com/feeds/posts/default?alt=rss",
     "popularity": 8
   },
   {
     "category": "Lifestyle",
     "name": "The Sartorialist",
-    "url": "https://feeds.feedburner.com/TheSartorialist",
+    "url": "https://www.thesartorialist.com/feed/",
     "popularity": 8
   },
   {
@@ -5396,7 +5378,7 @@
   {
     "category": "Personal Finance",
     "name": "Budgets Are Sexy",
-    "url": "https://feeds2.feedburner.com/budgetsaresexy",
+    "url": "https://budgetsaresexy.com/feed/",
     "popularity": 7
   },
   {
@@ -5408,7 +5390,7 @@
   {
     "category": "Personal Finance",
     "name": "Frugalwoods",
-    "url": "https://feeds.feedburner.com/Frugalwoods",
+    "url": "https://www.frugalwoods.com/feed/",
     "popularity": 7
   },
   {
@@ -5426,7 +5408,7 @@
   {
     "category": "Personal Finance",
     "name": "MoneyNing",
-    "url": "http://feeds.feedburner.com/MoneyNing",
+    "url": "https://moneyning.com/feed/",
     "popularity": 7
   },
   {
@@ -5438,7 +5420,7 @@
   {
     "category": "Personal Finance",
     "name": "Nerd's Eye View",
-    "url": "http://feeds.feedblitz.com/kitcesnerdseyeview&x=1",
+    "url": "https://feeds.kitces.com/KitcesNerdsEyeView",
     "popularity": 7
   },
   {
@@ -5498,13 +5480,13 @@
   {
     "category": "Android",
     "name": "Android Central",
-    "url": "http://feeds.androidcentral.com/androidcentral",
+    "url": "https://www.androidcentral.com/rss.xml",
     "popularity": 5
   },
   {
     "category": "Android",
     "name": "Android Central Podcast",
-    "url": "http://feeds.feedburner.com/AndroidCentralPodcast",
+    "url": "https://androidcentral.libsyn.com/rss",
     "popularity": 5
   },
   {
@@ -5540,13 +5522,13 @@
   {
     "category": "Android",
     "name": "Phandroid",
-    "url": "http://feeds2.feedburner.com/AndroidPhoneFans",
+    "url": "https://feeds2.feedburner.com/AndroidPhoneFans",
     "popularity": 5
   },
   {
     "category": "Android",
     "name": "TalkAndroid",
-    "url": "http://feeds.feedburner.com/AndroidNewsGoogleAndroidForums",
+    "url": "https://feeds.feedburner.com/AndroidNewsGoogleAndroidForums",
     "popularity": 5
   },
   {
@@ -5588,13 +5570,13 @@
   {
     "category": "Learning",
     "name": "Scott H Young",
-    "url": "https://feeds.feedburner.com/scotthyoung/HAHx",
+    "url": "https://www.scotthyoung.com/blog/feed/",
     "popularity": 6
   },
   {
     "category": "Learning",
     "name": "Big Think",
-    "url": "https://feeds.feedburner.com/bigthink/main",
+    "url": "https://bigthink.com/feed/",
     "popularity": 6
   },
   {
@@ -5624,13 +5606,13 @@
   {
     "category": "Products & Ideas",
     "name": "Product Hunt — The best new products, every day",
-    "url": "http://www.producthunt.com/feed",
+    "url": "https://www.producthunt.com/feed",
     "popularity": 6
   },
   {
     "category": "Products & Ideas",
     "name": "Hacker News: Show HN",
-    "url": "http://hnrss.org/show",
+    "url": "https://hnrss.org/show",
     "popularity": 6
   },
   {
@@ -5654,13 +5636,13 @@
   {
     "category": "Others",
     "name": "TED Talks Daily (SD video)",
-    "url": "http://feeds.feedburner.com/tedtalks_video",
+    "url": "https://pa.tedcdn.com/feeds/talks.rss",
     "popularity": 9
   },
   {
     "category": "Others",
     "name": "HBR.org",
-    "url": "http://feeds.harvardbusiness.org/harvardbusiness/",
+    "url": "https://feeds.hbr.org/harvardbusiness",
     "popularity": 9
   },
   {
