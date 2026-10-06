@@ -2630,7 +2630,7 @@
   {
     "category": "Cybersecurity & Tech Policy",
     "name": "The Hacker News",
-    "url": "https://feeds.feedburner.com/TheHackersNews",
+    "url": "https://thehackernews.com/feeds/posts/default?alt=rss",
     "popularity": 3
   },
   {
@@ -5017,12 +5017,6 @@
   },
   {
     "category": "Business",
-    "name": "John Egan",
-    "url": "http://jwegan.com/feed/rss/",
-    "popularity": 7
-  },
-  {
-    "category": "Business",
     "name": "Hubspot",
     "url": "https://blog.hubspot.com/marketing/rss.xml",
     "popularity": 7
@@ -5450,7 +5444,7 @@
   {
     "category": "Personal Finance",
     "name": "Wise Bread",
-    "url": "http://feeds.killeraces.com/wisebread",
+    "url": "https://www.wisebread.com/feed",
     "popularity": 7
   },
   {
@@ -5492,7 +5486,7 @@
   {
     "category": "Android",
     "name": "Android Police",
-    "url": "http://feeds.feedburner.com/AndroidPolice",
+    "url": "https://www.androidpolice.com/feed/",
     "popularity": 5
   },
   {
@@ -5522,13 +5516,13 @@
   {
     "category": "Android",
     "name": "Phandroid",
-    "url": "https://feeds2.feedburner.com/AndroidPhoneFans",
+    "url": "https://phandroid.com/feed/",
     "popularity": 5
   },
   {
     "category": "Android",
     "name": "TalkAndroid",
-    "url": "https://feeds.feedburner.com/AndroidNewsGoogleAndroidForums",
+    "url": "https://www.talkandroid.com/feed/",
     "popularity": 5
   },
   {
