@@ -31,12 +31,6 @@
   },
   {
     "category": "World News",
-    "name": "BBC News",
-    "url": "http://feeds.bbci.co.uk/news/world/rss.xml",
-    "popularity": 9
-  },
-  {
-    "category": "World News",
     "name": "NYT World News",
     "url": "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
     "popularity": 9
@@ -668,7 +662,7 @@
   {
     "category": "Technology",
     "name": "Ars Technica",
-    "url": "https://feeds.arstechnica.com/arstechnica/technology-lab",
+    "url": "https://feeds.arstechnica.com/arstechnica/index",
     "popularity": 7
   },
   {
@@ -908,7 +902,7 @@
   {
     "category": "AI & Machine Learning",
     "name": "OpenAI News",
-    "url": "https://news.google.com/rss/search?q=OpenAI+ChatGPT+GPT-4+when:7d&hl=en-US&gl=US&ceid=US:en",
+    "url": "https://openai.com/news/rss.xml",
     "popularity": 4
   },
   {
@@ -967,8 +961,8 @@
   },
   {
     "category": "AI & Machine Learning",
-    "name": "Distill",
-    "url": "http://distill.pub/rss.xml",
+    "name": "Distill.pub",
+    "url": "https://distill.pub/rss.xml",
     "popularity": 4
   },
   {
@@ -1059,12 +1053,6 @@
     "category": "AI & Machine Learning",
     "name": "AI News (VentureBeat)",
     "url": "https://news.google.com/rss/search?q=site:venturebeat.com+AI&hl=en-US&gl=US&ceid=US:en",
-    "popularity": 4
-  },
-  {
-    "category": "AI & Machine Learning",
-    "name": "Distill.pub",
-    "url": "https://distill.pub/rss.xml",
     "popularity": 4
   },
   {
@@ -2678,7 +2666,7 @@
   {
     "category": "Cybersecurity & Tech Policy",
     "name": "Schneier on Security",
-    "url": "https://www.schneier.com/feed/atom/",
+    "url": "https://www.schneier.com/blog/index.rdf",
     "popularity": 3
   },
   {
@@ -2852,7 +2840,7 @@
   {
     "category": "Programming",
     "name": "Stack Overflow Blog",
-    "url": "https://stackoverflow.blog/feed/",
+    "url": "https://blog.stackoverflow.com/feed/",
     "popularity": 4
   },
   {
@@ -2888,7 +2876,7 @@
   {
     "category": "Programming",
     "name": "JavaScript Weekly",
-    "url": "https://javascriptweekly.com/rss/1a1oc1f6",
+    "url": "https://javascriptweekly.com/rss/",
     "popularity": 4
   },
   {
@@ -4129,12 +4117,6 @@
   },
   {
     "category": "Science",
-    "name": "Freakonomics",
-    "url": "http://freakonomics.blogs.nytimes.com/feed/",
-    "popularity": 7
-  },
-  {
-    "category": "Science",
     "name": "Neuroscience News -- ScienceDaily",
     "url": "https://sciencedaily.com/rss/mind_brain/neuroscience.xml",
     "popularity": 7
@@ -4148,7 +4130,7 @@
   {
     "category": "Science",
     "name": "Nature",
-    "url": "http://www.nature.com/nature/current_issue/rss",
+    "url": "https://www.nature.com/nature.rss",
     "popularity": 7
   },
   {
@@ -6160,5 +6142,599 @@
     "name": "Bored Panda",
     "url": "https://www.boredpanda.com/feed/",
     "popularity": 7
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "AI Musings by Mu",
+    "url": "https://kelvinmu.substack.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Apple Machine Learning Research",
+    "url": "https://machinelearning.apple.com/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Artificial Intelligence",
+    "url": "https://aws.amazon.com/blogs/amazon-ai/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "cs.AI updates on arXiv.org",
+    "url": "https://rss.arxiv.org/rss/cs.AI",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "cs.CL updates on arXiv.org",
+    "url": "https://export.arxiv.org/rss/cs.CL",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "cs.CV updates on arXiv.org",
+    "url": "https://export.arxiv.org/rss/cs.CV",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Hacker News - Newest: \"AI\"",
+    "url": "https://hnrss.org/newest?q=AI",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Hacker News - Newest: \"LLM\"",
+    "url": "https://hnrss.org/newest?q=LLM",
+    "popularity": 6
+  },
+  {
+    "category": "Technology",
+    "name": "Last Week in AI",
+    "url": "https://lastweekin.ai/feed",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "MIT News - Artificial intelligence",
+    "url": "https://news.mit.edu/rss/topic/artificial-intelligence2",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Recent Commits to openclaw:main",
+    "url": "https://github.com/openclaw/openclaw/commits/main.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from claude-code",
+    "url": "https://github.com/anthropics/claude-code/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from codex",
+    "url": "https://github.com/openai/codex/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from gemini-cli",
+    "url": "https://github.com/google-gemini/gemini-cli/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from langchain",
+    "url": "https://github.com/langchain-ai/langchain/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from modelcontextprotocol",
+    "url": "https://github.com/modelcontextprotocol/specification/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from openclaw",
+    "url": "https://github.com/openclaw/openclaw/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Release notes from servers",
+    "url": "https://github.com/modelcontextprotocol/servers/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "Simon Willison's Weblog",
+    "url": "https://simonwillison.net/atom/everything/",
+    "popularity": 8
+  },
+  {
+    "category": "AI & Machine Learning",
+    "name": "The latest research from Google",
+    "url": "https://research.google/blog/rss/",
+    "popularity": 8
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Reddit · Linux, Self-Hosted, DevOps & AI",
+    "url": "https://www.reddit.com/r/linux+selfhosted+devops+LocalLLaMA+MachineLearning/new/.rss",
+    "popularity": 6
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Lobsters",
+    "url": "https://lobste.rs/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Python Core Development",
+    "url": "https://discuss.python.org/c/core-dev/23.rss?order=created",
+    "popularity": 6
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Rust Internals · Language Design",
+    "url": "https://internals.rust-lang.org/c/language-design/21.rss?order=created",
+    "popularity": 6
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "NixOS Development",
+    "url": "https://discourse.nixos.org/c/dev/14.rss?order=created",
+    "popularity": 8
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "OpenAI Developer Community · API",
+    "url": "https://community.openai.com/c/api/7.rss?order=created",
+    "popularity": 6
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Kubernetes · General Discussions",
+    "url": "https://discuss.kubernetes.io/c/general-discussions/6.rss?order=created",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Alberto De Bortoli",
+    "url": "https://albertodebortoli.com/rss/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Apple Newsroom",
+    "url": "https://www.apple.com/newsroom/rss-feed.rss",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "AppleInsider News",
+    "url": "https://appleinsider.com/rss/news/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Archive: 2026 - GitHub Changelog",
+    "url": "https://github.blog/changelog/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Articles on Smashing Magazine — For Web Designers And Developers",
+    "url": "https://rss1.smashingmagazine.com/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "AWS Architecture Blog",
+    "url": "https://www.awsarchitectureblog.com/atom.xml",
+    "popularity": 7
+  },
+  {
+    "category": "Programming",
+    "name": "Canva - Engineering Blog",
+    "url": "https://www.canva.dev/blog/engineering/feed.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Cloud Blog",
+    "url": "https://cloudblog.withgoogle.com/rss/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Company | The JetBrains Blog",
+    "url": "https://blog.jetbrains.com/blog/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Cult of Mac",
+    "url": "https://www.cultofmac.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Databricks",
+    "url": "https://www.databricks.com/feed",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Elastic Blog - Elasticsearch, Kibana, and ELK Stack",
+    "url": "https://www.elastic.co/blog/feed",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Environment + Energy – The Conversation",
+    "url": "https://theconversation.com/au/environment/articles.atom",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Feld Thoughts",
+    "url": "https://feld.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "inessential.com",
+    "url": "https://inessential.com/xml/rss.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "IntelliJ IDEA : IntelliJ IDEA – the Leading IDE for Professional Development in Java and Kotlin | The JetBrains Blog",
+    "url": "https://blogs.jetbrains.com/idea/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "ZDNET Security",
+    "url": "https://www.zdnet.com/topic/security/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Microsoft Azure Blog",
+    "url": "https://azure.microsoft.com/en-us/blog/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "NPR Topics: Environment",
+    "url": "https://feeds.npr.org/1025/rss.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "NYT > Climate and Environment",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Climate.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Prakati India",
+    "url": "https://www.prakati.in/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "ProAndroidDev - Medium",
+    "url": "https://proandroiddev.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Public Object",
+    "url": "https://publicobject.com/rss/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Redis Blog",
+    "url": "https://redis.io/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Release notes from biome",
+    "url": "https://github.com/biomejs/biome/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Release notes from bun",
+    "url": "https://github.com/oven-sh/bun/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Release notes from NetNewsWire",
+    "url": "https://github.com/Ranchero-Software/NetNewsWire/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Release notes from zed",
+    "url": "https://github.com/zed-industries/zed/releases.atom",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Replicate's blog",
+    "url": "https://replicate.com/blog/rss",
+    "popularity": 6
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "Security Affairs",
+    "url": "https://securityaffairs.co/wordpress/feed",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Supabase Blog",
+    "url": "https://supabase.com/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Swift by Sundell",
+    "url": "https://www.swiftbysundell.com/feed.rss",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "The ASF Blog",
+    "url": "https://news.apache.org/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "The Intercom Blog",
+    "url": "https://www.intercom.com/blog/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "The Loop",
+    "url": "https://www.loopinsight.com/feed",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Turing Post",
+    "url": "https://rss.beehiiv.com/feeds/UJIoBuf5BX.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Use Case: copilot - GitHub Changelog",
+    "url": "https://github.blog/changelog/label/copilot/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Vercel News",
+    "url": "https://vercel.com/atom",
+    "popularity": 8
+  },
+  {
+    "category": "Programming",
+    "name": "Visual Studio Blog",
+    "url": "https://devblogs.microsoft.com/visualstudio/feed/",
+    "popularity": 6
+  },
+  {
+    "category": "Technology",
+    "name": "AIGC Weekly",
+    "url": "https://quaily.com/op7418/feed/atom",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "Cointelegraph.com News",
+    "url": "https://cointelegraph.com/rss/tag/blockchain",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "News from Google",
+    "url": "https://blog.google/rss",
+    "popularity": 6
+  },
+  {
+    "category": "World News",
+    "name": "NYT > Technology",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Technology.xml",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "ProPublica",
+    "url": "https://www.propublica.org/feeds/propublica/main",
+    "popularity": 8
+  },
+  {
+    "category": "World News",
+    "name": "Top stories - Google News",
+    "url": "https://news.google.com/rss",
+    "popularity": 6
+  },
+  {
+    "category": "World News",
+    "name": "World News, Today World News, Latest International News, World Breaking News, Trending News of World - Times of India",
+    "url": "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
+    "popularity": 6
+  },
+  {
+    "category": "Programming",
+    "name": "Spring",
+    "url": "https://spring.io/blog.atom",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "30 for 30 Podcasts",
+    "url": "https://feeds.megaphone.fm/ESP5765452710",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Darknet Diaries",
+    "url": "https://feeds.megaphone.fm/darknetdiaries",
+    "popularity": 8
+  },
+  {
+    "category": "Podcasts",
+    "name": "Discovery",
+    "url": "https://podcasts.files.bbci.co.uk/p002w557.rss",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Gastropod",
+    "url": "https://www.omnycontent.com/d/playlist/aaea4e69-af51-495e-afc9-a9760146922b/2a195077-f014-41d2-8313-ab190186b4c2/277bcd5c-0a05-4c14-8ba6-ab190186b4d5/podcast.rss",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Hacking Humans",
+    "url": "https://feeds.megaphone.fm/hacking-humans",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Invest Like the Best with Patrick O'Shaughnessy",
+    "url": "https://investlikethebest.libsyn.com/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Podcasts",
+    "name": "Invisibilia",
+    "url": "https://feeds.npr.org/510307/podcast.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Planet Money",
+    "url": "https://feeds.npr.org/510289/podcast.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Reply All",
+    "url": "https://feeds.megaphone.fm/replyall",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "The Cynical Developer",
+    "url": "https://cynicaldeveloper.com/feed/podcast",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "The Startup Junkies Podcast",
+    "url": "https://startupjunkie.libsyn.com/rss",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "The Vergecast",
+    "url": "https://feeds.megaphone.fm/vergecast",
+    "popularity": 6
+  },
+  {
+    "category": "Podcasts",
+    "name": "Throughline",
+    "url": "https://feeds.npr.org/510333/podcast.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Science",
+    "name": "AAAS: Science: Table of Contents",
+    "url": "https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "All Top News -- ScienceDaily",
+    "url": "https://www.sciencedaily.com/rss/top/science.xml",
+    "popularity": 6
+  },
+  {
+    "category": "Science",
+    "name": "BBC News — Science",
+    "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "eLife: latest articles",
+    "url": "https://elifesciences.org/rss/recent.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "FlowingData",
+    "url": "https://flowingdata.com/feed",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "NYT > Science",
+    "url": "https://rss.nytimes.com/services/xml/rss/nyt/Science.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "PLOS One",
+    "url": "https://journals.plos.org/plosone/feed/atom",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "Space | The Guardian",
+    "url": "https://www.theguardian.com/science/space/rss",
+    "popularity": 8
+  },
+  {
+    "category": "Science",
+    "name": "Space – latest in science and technology | New Scientist",
+    "url": "https://www.newscientist.com/subject/space/feed/",
+    "popularity": 8
+  },
+  {
+    "category": "Open Source & Dev Trends",
+    "name": "Ask HN",
+    "url": "https://hnrss.org/ask",
+    "popularity": 6
+  },
+  {
+    "category": "Cybersecurity & Tech Policy",
+    "name": "CISA",
+    "url": "https://www.cisa.gov/news.xml",
+    "popularity": 8
+  },
+  {
+    "category": "Technology",
+    "name": "This Week in Rust",
+    "url": "https://this-week-in-rust.org/atom.xml",
+    "popularity": 8
   }
 ]
