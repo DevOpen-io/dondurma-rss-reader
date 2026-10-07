@@ -1,0 +1,128 @@
+require 'json'
+require 'openssl'
+require 'shellwords'
+require 'fileutils'
+require 'tmpdir'
+require 'plist'
+
+APP_ID = 'io.devopen.dondurma'
+TEAM_ID = '6NLKUNN3FH'
+ROOT = File.expand_path('..', __dir__)
+
+def asc_key
+  app_store_connect_api_key(
+    key_id: ENV.fetch('ASC_KEY_ID'), issuer_id: ENV.fetch('ASC_ISSUER_ID'),
+    key_filepath: File.join(ENV.fetch('CREDENTIAL_DIR'), 'AuthKey.p8'),
+    in_house: false
+  )
+end
+
+platform :android do
+  desc 'Read-only Play API authentication check'
+  lane :verify_access do
+    validate_play_store_json_key(json_key: ENV.fetch('PLAY_JSON_PATH'))
+  end
+
+  desc 'Submit the signed bundle to production review'
+  lane :release do
+    UI.user_error!('Disable managed publishing first') unless ENV['PLAY_MANAGED_PUBLISHING_DISABLED'] == 'true'
+    upload_to_play_store(
+      package_name: APP_ID, json_key: ENV.fetch('PLAY_JSON_PATH'),
+      aab: File.expand_path('../artifacts/app-release.aab', __dir__),
+      track: 'production', release_status: 'completed',
+      version_name: ENV.fetch('RELEASE_VERSION'),
+      metadata_path: File.join(ROOT, 'fastlane/metadata/android'),
+      changes_not_sent_for_review: false,
+      rescue_changes_not_sent_for_review: false,
+      skip_upload_metadata: true, skip_upload_images: true,
+      skip_upload_screenshots: true, skip_upload_changelogs: false
+    )
+  end
+end
+
+platform :ios do
+  desc 'Import existing signing assets and build a manually signed App Store IPA'
+  lane :build do
+    dir = ENV.fetch('CREDENTIAL_DIR')
+    profile_file = File.join(dir, 'app.mobileprovision')
+    profile = FastlaneCore::ProvisioningProfile.parse(profile_file)
+    UI.user_error!('Profile team/app mismatch') unless
+      profile['TeamIdentifier'].include?(TEAM_ID) &&
+      profile['Entitlements']['application-identifier'] == "#{TEAM_ID}.#{APP_ID}"
+    UI.user_error!('Profile must be unexpired App Store distribution') if
+      profile['ExpirationDate'].to_time <= Time.now || profile['ProvisionedDevices'] ||
+      profile['ProvisionsAllDevices'] || profile['Entitlements']['get-task-allow']
+    cert = OpenSSL::PKCS12.new(File.binread(File.join(dir, 'distribution.p12')), ENV.fetch('APPLE_CERTIFICATE_PASSWORD'))
+    UI.user_error!('Certificate expired or missing private key') unless cert.key && cert.certificate.not_after > Time.now
+    UI.user_error!('Certificate is not in provisioning profile') unless
+      profile['DeveloperCertificates'].any? { |data| OpenSSL::X509::Certificate.new(data.respond_to?(:string) ? data.string : data).to_der == cert.certificate.to_der }
+    keychain = File.join(ENV.fetch('RUNNER_TEMP'), 'store-release.keychain-db')
+    password = OpenSSL::Random.random_bytes(32).unpack1('H*')
+    create_keychain(path: keychain, password: password, default_keychain: false,
+                    unlock: true, timeout: 7200, lock_when_sleeps: false)
+    import_certificate(certificate_path: File.join(dir, 'distribution.p12'),
+                       certificate_password: ENV.fetch('APPLE_CERTIFICATE_PASSWORD'),
+                       keychain_path: keychain, keychain_password: password)
+    installed = install_provisioning_profile(path: profile_file)
+    File.write(File.join(dir, 'profile-path'), installed)
+    build_app(
+      workspace: File.join(ROOT, 'ios/Runner.xcworkspace'), scheme: 'Runner', configuration: 'Release',
+      export_method: 'app-store-connect', output_directory: File.join(ROOT, 'build/ios/ipa'),
+      output_name: 'Dondurma.ipa', archive_path: File.join(ROOT, 'build/ios/archive/Runner.xcarchive'),
+      codesigning_identity: 'Apple Distribution',
+      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM=#{TEAM_ID} PROVISIONING_PROFILE_SPECIFIER=#{profile['Name'].shellescape} CODE_SIGN_IDENTITY='Apple Distribution'",
+      export_options: { method: 'app-store-connect', signingStyle: 'manual', teamID: TEAM_ID,
+                        provisioningProfiles: { APP_ID => profile['Name'] } }
+    )
+    # Verify the exported IPA, not just the archive used to produce it.
+    Dir.mktmpdir('ipa-verification') do |unpacked|
+      sh('unzip', '-q', File.join(ROOT, 'build/ios/ipa/Dondurma.ipa'), '-d', unpacked)
+      app = Dir.glob(File.join(unpacked, 'Payload/*.app')).first
+      UI.user_error!('IPA contains no application') unless app
+      sh('codesign', '--verify', '--deep', '--strict', app)
+      info = Plist.parse_xml(File.join(app, 'Info.plist'))
+      UI.user_error!('IPA bundle ID mismatch') unless info['CFBundleIdentifier'] == APP_ID
+      UI.user_error!('IPA version mismatch') unless info['CFBundleShortVersionString'] == ENV.fetch('RELEASE_VERSION')
+      UI.user_error!('IPA build mismatch') unless info['CFBundleVersion'] == ENV.fetch('RELEASE_BUILD')
+      UI.user_error!('IPA export-compliance declaration missing or incorrect') unless info['ITSAppUsesNonExemptEncryption'] == false
+    end
+  end
+
+  desc 'Read-only App Store Connect authentication check'
+  lane :verify_access do
+    asc_key
+    UI.user_error!('App not found') unless Spaceship::ConnectAPI::App.find(APP_ID)
+  end
+
+  desc 'Upload exact version/build and submit for automatic release after review'
+  lane :release do
+    key = asc_key
+    app = Spaceship::ConnectAPI::App.find(APP_ID)
+    UI.user_error!('App not found') unless app
+    # deliver skips binary upload when build_number is provided. Upload first,
+    # wait for processing, then explicitly select that build for App Review.
+    existing = app.get_builds(filter: { version: ENV.fetch('RELEASE_BUILD'),
+                                       'preReleaseVersion.version' => ENV.fetch('RELEASE_VERSION') }, limit: 1)
+    if existing.empty?
+      upload_to_testflight(
+        api_key: key, app_identifier: APP_ID,
+        ipa: File.join(ROOT, 'artifacts/Dondurma.ipa'),
+        skip_submission: true, skip_waiting_for_build_processing: false,
+        distribute_external: false
+      )
+    end
+    app.ensure_version!(ENV.fetch('RELEASE_VERSION'), platform: Spaceship::ConnectAPI::Platform::IOS)
+    store_version = app.get_edit_app_store_version
+    UI.user_error!('Editable App Store version mismatch') unless store_version&.version_string == ENV.fetch('RELEASE_VERSION')
+    # skip_metadata also bypasses deliver's automatic_release update, so set
+    # only releaseType through the API while preserving all listing content.
+    store_version.update(attributes: { releaseType: 'AFTER_APPROVAL' })
+    upload_to_app_store(
+      api_key: key, app_identifier: APP_ID,
+      app_version: ENV.fetch('RELEASE_VERSION'), build_number: ENV.fetch('RELEASE_BUILD'),
+      skip_binary_upload: true, submit_for_review: true, automatic_release: true,
+      force: true, skip_metadata: true, skip_screenshots: true,
+      precheck_include_in_app_purchases: false
+    )
+  end
+end

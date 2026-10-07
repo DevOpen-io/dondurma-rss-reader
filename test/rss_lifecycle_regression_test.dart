@@ -224,7 +224,9 @@ void main() {
         providers.settings,
         providers.bookmarks,
       );
-      await Future<void>.delayed(const Duration(milliseconds: 100));
+      await _waitUntil(
+        () => providers.feed.items.any((item) => item.id == 'snapshot-article'),
+      );
 
       expect(server.counts['/snapshot.xml'], 1);
       expect(
@@ -820,6 +822,11 @@ void main() {
       // The feed-supplied body is untouched — prefetch lives in its own field.
       expect(find(ftUrl).content, isNot(contains('article body text')));
       // Persisted inside cachedItemsJson so it survives a restart.
+      await _waitUntil(
+        () => _persistedItems()
+            .singleWhere((item) => item.feedUrl == ftUrl)
+            .prefetchedFullText != null,
+      );
       expect(
         _persistedItems()
             .singleWhere((i) => i.feedUrl == ftUrl)

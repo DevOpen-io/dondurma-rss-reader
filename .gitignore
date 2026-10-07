@@ -43,3 +43,12 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release tooling and signing credentials
+.bundle/
+vendor/bundle/
+fastlane/report.xml
+fastlane/Preview.html
+*.p12
+*.mobileprovision
+AuthKey*.p8

@@ -1,21 +1,34 @@
 import java.util.Properties
 import java.io.FileInputStream
 
-// 1. Keystore ayarlarını okuma kısmı (Kotlin DSL uyumlu)
-val keystoreProperties = Properties()
-val keystorePropertiesFile = rootProject.file("key.properties")
-val keystoreExists = keystorePropertiesFile.exists()
-
-if (!keystoreExists) {
-    println("⚠️  WARNING: key.properties not found. Release signing disabled.")
-    println("    Place key.properties in android/ directory or builds will use debug config.")
-} else {
-    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
-}
-
 plugins {
     id("com.android.application")
     id("dev.flutter.flutter-gradle-plugin")
+}
+
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
+if (keystorePropertiesFile.exists()) {
+    FileInputStream(keystorePropertiesFile).use { keystoreProperties.load(it) }
+}
+fun signingValue(property: String, environment: String): String? =
+    System.getenv(environment)?.takeIf { it.isNotBlank() }
+        ?: keystoreProperties.getProperty(property)?.takeIf { it.isNotBlank() }
+
+val releaseStore = signingValue("storeFile", "ANDROID_KEYSTORE_PATH")?.let { file(it) }
+val releaseAlias = signingValue("keyAlias", "ANDROID_KEY_ALIAS")
+val releaseStorePassword = signingValue("storePassword", "ANDROID_KEYSTORE_PASSWORD")
+val releaseKeyPassword = signingValue("keyPassword", "ANDROID_KEY_PASSWORD")
+val releaseSigningReady = releaseStore?.isFile == true && releaseAlias != null &&
+    releaseStorePassword != null && releaseKeyPassword != null
+// Check the actual task graph: debug builds and IDE configuration need no key.
+gradle.taskGraph.whenReady {
+    if (allTasks.any { it.project == project && it.name.contains("Release", ignoreCase = true) } &&
+        !releaseSigningReady) {
+        throw GradleException("Release signing missing. Set storeFile, storePassword, keyAlias and " +
+            "keyPassword in android/key.properties, or the ANDROID_KEYSTORE_PATH, " +
+            "ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS and ANDROID_KEY_PASSWORD environment variables.")
+    }
 }
 
 android {
@@ -30,17 +43,11 @@ android {
     }
 
     signingConfigs {
-        // 2. İmzalama ayarları (Kotlin DSL'de atamalar '=' ile yapılır)
         create("release") {
-            if (keystoreExists) {
-                keyAlias = keystoreProperties["keyAlias"] as String?
-                keyPassword = keystoreProperties["keyPassword"] as String?
-                storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-                storePassword = keystoreProperties["storePassword"] as String?
-            } else {
-                // key.properties yoksa debug imzalama kullanılır
-                println("⚠️  WARNING: Release signing config will use debug keystore (key.properties missing)")
-            }
+            storeFile = releaseStore
+            storePassword = releaseStorePassword
+            keyAlias = releaseAlias
+            keyPassword = releaseKeyPassword
         }
     }
 
@@ -61,15 +68,7 @@ android {
                 "proguard-rules.pro",
             )
 
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            if (keystorePropertiesFile.exists()) {
-                signingConfig = signingConfigs.getByName("release")
-            } else {
-                // Warning: Using the debug keys for release. This is not recommended for production.
-                println("Warning: Keystore properties are not set properly. Using debug signing config.")
-                signingConfig = signingConfigs.getByName("debug")
-            }
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }
