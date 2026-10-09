@@ -362,7 +362,7 @@
   {
     "category": "Teknoloji",
     "name": "Teknoloji Haberleri (Google)",
-    "url": "https://news.google.com/rss/search?q=teknoloji+haberleri+son+dakika+2025&hl=tr&gl=TR&ceid=TR:tr",
+    "url": "https://news.google.com/rss/search?q=teknoloji+haberleri+son+dakika+when:7d&hl=tr&gl=TR&ceid=TR:tr",
     "popularity": 7
   },
   {
@@ -3111,6 +3111,18 @@
     "category": "Sağlık ve Yaşam",
     "name": "TRT Yaşam",
     "url": "https://www.trthaber.com/yasam_articles.rss",
+    "popularity": 7
+  },
+  {
+    "category": "Bilim ve İnovasyon",
+    "name": "TRT Haber Bilim ve Teknoloji",
+    "url": "https://www.trthaber.com/bilim_teknoloji_articles.rss",
+    "popularity": 7
+  },
+  {
+    "category": "Kültür ve Sanat",
+    "name": "TRT Haber Kültür ve Sanat",
+    "url": "https://www.trthaber.com/kultur_sanat_articles.rss",
     "popularity": 7
   }
 ]
