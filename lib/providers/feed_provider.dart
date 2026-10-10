@@ -17,6 +17,7 @@ import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
 import '../services/feed_refresh.dart';
+import '../services/article_preparation_service.dart';
 import '../services/feed_service.dart';
 import '../services/full_text_extraction_service.dart';
 import '../services/image_cache_service.dart';
@@ -184,7 +185,11 @@ class FeedProvider extends ChangeNotifier {
   // Initialization & dependency updates
   // ---------------------------------------------------------------------------
 
-  FeedProvider({ObservedArticleStore? observedArticleStore}) {
+  FeedProvider({
+    ObservedArticleStore? observedArticleStore,
+    ArticlePreparationService? preparation,
+  }) : _preparation = preparation ?? ArticlePreparationService(),
+       _ownsPreparation = preparation == null {
     _observedArticleStore =
         observedArticleStore ?? ObservedArticleStore.forBox(_box);
     _refresher = FeedRefresher(
@@ -197,6 +202,14 @@ class FeedProvider extends ChangeNotifier {
       onError: (_) {},
     );
   }
+
+  /// Offline preparation engine — sweeps durable pending work after each
+  /// online refresh, on the transport eligibility terms of the moment.
+  final ArticlePreparationService _preparation;
+
+  /// An injected service belongs to its owner (Provider disposes it); a
+  /// default-constructed one is this provider's to release.
+  final bool _ownsPreparation;
 
   /// Re-sync as soon as connectivity returns after an offline stretch —
   /// otherwise a device that sat through a flap waits for the next timer tick.
@@ -891,7 +904,24 @@ class FeedProvider extends ChangeNotifier {
 
     // Offline-first: fetch article bodies for full-text feeds so they read
     // without a network. Runs after the refresh settles — never blocks it.
-    if (result.online) _prefetchFullText().ignore();
+    if (result.online) {
+      _prefetchFullText().ignore();
+      // Sweep durable preparation work on the CURRENT transport's terms —
+      // metered/unknown waits for the next unmetered opportunity. The
+      // verdict is queried fresh here: the cached stream value can be
+      // stale right after resume (wifi→mobile handoff).
+      unawaited(() async {
+        try {
+          final results = await Connectivity().checkConnectivity();
+          await _preparation.preparePending(
+            unmetered: ArticlePreparationService.unmeteredNetwork(results),
+          );
+        } catch (_) {
+          // Connectivity plugin absence or a storage error simply defers
+          // the sweep to the next refresh — never a crash path.
+        }
+      }());
+    }
   }
 
   /// Whether a full-text prefetch pass is already in flight.
@@ -1164,6 +1194,7 @@ class FeedProvider extends ChangeNotifier {
     _cacheTimer?.cancel();
     _connectivitySub?.cancel();
     _feedService.dispose();
+    if (_ownsPreparation) _preparation.dispose();
     super.dispose();
   }
 }

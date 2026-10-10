@@ -1,11 +1,14 @@
 import 'dart:convert';
 
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
+import 'article_preparation_service.dart';
+import 'article_record_store.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'notification_delivery_policy.dart';
@@ -181,24 +184,43 @@ Future<void> runBgFetch() async {
       mutedFeedUrls: mutedUrls,
     );
 
+    // Deliver claimed notifications BEFORE any long-running work — a task
+    // killed mid-preparation must not lose articles the durable claim already
+    // marked as delivered.
     debugPrint('[BG] ${newItems.length} new items, sending notification');
-    if (newItems.isEmpty) return;
+    if (newItems.isNotEmpty) {
+      // Sort newest-first so the notification headline and its tap target are
+      // the most recent article — `allItems` arrives in feed-iteration order,
+      // not by date, so `.first` would otherwise be an arbitrary new item.
+      newItems.sort((a, b) => b.pubDate!.compareTo(a.pubDate!));
 
-    // Sort newest-first so the notification headline and its tap target are the
-    // most recent article — `allItems` arrives in feed-iteration order, not by
-    // date, so `.first` would otherwise be an arbitrary new item.
-    newItems.sort((a, b) => b.pubDate!.compareTo(a.pubDate!));
+      final latestJson = jsonEncode(newItems.first.toJson());
+      await NotificationService.instance.showNewArticlesNotification(
+        newItems: newItems,
+        notificationsEnabled: true,
+        digestMode: 'instant',
+        quietHoursEnabled: false, // already checked above
+        quietHoursStart: 0,
+        quietHoursEnd: 0,
+        latestItemJson: latestJson,
+      );
+    }
 
-    final latestJson = jsonEncode(newItems.first.toJson());
-    await NotificationService.instance.showNewArticlesNotification(
-      newItems: newItems,
-      notificationsEnabled: true,
-      digestMode: 'instant',
-      quietHoursEnabled: false, // already checked above
-      quietHoursStart: 0,
-      quietHoursEnd: 0,
-      latestItemJson: latestJson,
-    );
+    // Permitted background opportunity: prepare durable offline work, but
+    // only when the current transport is unmetered — Workmanager's plain
+    // `connected` constraint does not distinguish transport cost. Progress is
+    // durable, so a task killed mid-sweep simply resumes next time.
+    final connectivity = await Connectivity().checkConnectivity();
+    if (ArticlePreparationService.unmeteredNetwork(connectivity)) {
+      final preparation = ArticlePreparationService(
+        recordStore: ArticleRecordStore.forBox(feedsBox),
+      );
+      try {
+        await preparation.preparePending(unmetered: true);
+      } finally {
+        preparation.dispose();
+      }
+    }
   } catch (e) {
     debugPrint('Background fetch error: $e');
   }

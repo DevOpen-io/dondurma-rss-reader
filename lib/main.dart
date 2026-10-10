@@ -17,6 +17,8 @@ import 'providers/bookmark_provider.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
+import 'services/article_preparation_service.dart';
+import 'services/article_record_store.dart';
 import 'services/background_fetch_service.dart';
 import 'services/notification_service.dart';
 import 'services/widget_update_service.dart';
@@ -86,14 +88,25 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
-        ChangeNotifierProvider(create: (_) => BookmarkProvider()),
+        Provider<ArticlePreparationService>(
+          create: (_) => ArticlePreparationService(
+            recordStore: ArticleRecordStore.forBox(Hive.box('feeds')),
+          ),
+          dispose: (_, service) => service.dispose(),
+        ),
+        ChangeNotifierProvider(
+          create: (ctx) => BookmarkProvider(
+            preparation: ctx.read<ArticlePreparationService>(),
+          ),
+        ),
         ChangeNotifierProxyProvider3<
           SubscriptionProvider,
           SettingsProvider,
           BookmarkProvider,
           FeedProvider
         >(
-          create: (_) => FeedProvider(),
+          create: (ctx) =>
+              FeedProvider(preparation: ctx.read<ArticlePreparationService>()),
           update: (_, subscription, settings, bookmark, feed) =>
               (feed ?? FeedProvider())
                 ..update(subscription, settings, bookmark),

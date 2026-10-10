@@ -8,7 +8,9 @@ import 'observed_article_persistence_stub.dart'
     if (dart.library.io) 'observed_article_persistence_io.dart'
     as persistence_factory;
 
-enum MediaState { pending, ready, failed }
+/// [gone] marks a permanently failed piece (404/410, non-image payload,
+/// oversize) — durable, never retried automatically.
+enum MediaState { pending, ready, failed, gone }
 
 /// Outcome of a mutation on [ArticleRecordStore]: [applied] the write
 /// landed, [rejected] the fence or contract refused it (drop the write),
@@ -77,6 +79,7 @@ class ArticleRecord {
   const ArticleRecord({
     required this.id,
     required this.feedUrl,
+    this.link = '',
     this.title,
     this.siteName,
     this.body,
@@ -108,6 +111,7 @@ class ArticleRecord {
     return ArticleRecord(
       id: json['id'] as String? ?? '',
       feedUrl: json['feedUrl'] as String? ?? '',
+      link: json['link'] as String? ?? '',
       title: json['title'] as String?,
       siteName: json['siteName'] as String?,
       body: json['body'] as String?,
@@ -137,6 +141,9 @@ class ArticleRecord {
   /// Normalized article id (see [ArticleIdentity.normalizeItemId]).
   final String id;
   final String feedUrl;
+
+  /// The article's page URL — the target for full-text extraction.
+  final String link;
   final String? title;
   final String? siteName;
 
@@ -166,6 +173,7 @@ class ArticleRecord {
   ArticleRecord copyWith({
     String? id,
     String? feedUrl,
+    String? link,
     String? Function()? title,
     String? Function()? siteName,
     String? Function()? body,
@@ -182,6 +190,7 @@ class ArticleRecord {
   }) => ArticleRecord(
     id: id ?? this.id,
     feedUrl: feedUrl ?? this.feedUrl,
+    link: link ?? this.link,
     title: title != null ? title() : this.title,
     siteName: siteName != null ? siteName() : this.siteName,
     body: body != null ? body() : this.body,
@@ -200,6 +209,7 @@ class ArticleRecord {
   Map<String, dynamic> toJson() => {
     'id': id,
     'feedUrl': feedUrl,
+    'link': link,
     'title': title,
     'siteName': siteName,
     'body': body,
@@ -292,15 +302,27 @@ class ArticleRecordStore {
 
   /// Advisory snapshot — callers that write must re-check inside
   /// [writeIfGeneration]/[mutate]; this read is not a consistent base.
+  /// Fails closed (returns `null`) on storage errors so unawaited callers
+  /// never surface an async exception.
   Future<ArticleRecord?> read(String id) async {
-    final state = _tryDecode(await _persistence.read()) ?? _emptyState;
-    return _decodeRecord(state, id);
+    try {
+      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
+      return _decodeRecord(state, id);
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Every decodable record. Corrupt entries are skipped — callers doing
   /// media GC must treat "absent here" as "unknown", not "safe to delete".
+  /// Fails closed (returns empty) on storage errors.
   Future<List<ArticleRecord>> listRecords() async {
-    final state = _tryDecode(await _persistence.read()) ?? _emptyState;
+    final Map<String, dynamic> state;
+    try {
+      state = _tryDecode(await _persistence.read()) ?? _emptyState;
+    } catch (_) {
+      return const [];
+    }
     final records = <ArticleRecord>[];
     for (final raw in (state['records'] as Map).values) {
       if (raw is Map) {

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
+import '../services/article_preparation_service.dart';
+import '../services/article_record_store.dart';
 
 /// Manages the user's bookmarked (saved) articles with Hive persistence.
 ///
@@ -21,7 +23,12 @@ class BookmarkProvider extends ChangeNotifier {
   /// Lazily cached reference to the `'bookmarks'` Hive box.
   Box get _box => Hive.box('bookmarks');
 
-  BookmarkProvider() {
+  /// Offline preparation engine — persists the durable record when a
+  /// bookmark is saved, then prepares its content in one permitted pass.
+  final ArticlePreparationService? _preparation;
+
+  BookmarkProvider({ArticlePreparationService? preparation})
+    : _preparation = preparation {
     _loadBookmarks();
   }
 
@@ -67,6 +74,27 @@ class BookmarkProvider extends ChangeNotifier {
       // Remove previously loaded if exists to avoid duplicates
       _savedBookmarks.removeWhere((b) => b.id == id);
       _savedBookmarks.add(updatedItem);
+      // New bookmark → persist the minimal record, then prepare this one
+      // article in a single pass (the explicit-action metered permit).
+      final prep = _preparation;
+      if (prep != null) {
+        unawaited(() async {
+          var result = await prep.registerArticle(updatedItem, const {
+            'bookmark',
+          });
+          // One immediate retry on storage failure — a rejected/failed
+          // register would otherwise leave a bookmark with no durable
+          // record and no later reconciliation.
+          if (result == StoreWriteResult.failed) {
+            result = await prep.registerArticle(updatedItem, const {
+              'bookmark',
+            });
+          }
+          if (result == StoreWriteResult.applied) {
+            unawaited(prep.prepareArticle(updatedItem.id));
+          }
+        }());
+      }
     }
 
     notifyListeners();
