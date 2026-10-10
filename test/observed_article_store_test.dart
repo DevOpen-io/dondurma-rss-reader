@@ -436,10 +436,12 @@ void main() {
       expect(finalCheck.claimedItems, isEmpty);
     });
 
-    test('pre-existing orphan lock is never stolen', () async {
+    test('pre-existing fresh orphan lock is never stolen', () async {
       final lock = File('${stateFile.path}.lock');
       await lock.create(recursive: true, exclusive: true);
-      await lock.writeAsString('orphan\n2000-01-01T00:00:00Z');
+      await lock.writeAsString(
+        'orphan\n${DateTime.now().toUtc().toIso8601String()}',
+      );
 
       final result = await store(timeout: const Duration(milliseconds: 30))
           .claimFeedBatch(

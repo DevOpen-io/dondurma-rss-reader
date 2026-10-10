@@ -1,0 +1,167 @@
+import 'dart:async';
+import 'dart:io';
+import 'dart:math';
+import 'dart:typed_data';
+
+import 'package:path_provider/path_provider.dart';
+
+import 'article_record_store.dart';
+
+/// Permanent media pool shared across article records.
+///
+/// Files live in app documents (not the OS-evictable temp cache) and are
+/// named by a stable hash of the remote URL, so two records referencing the
+/// same image share one file — [unreferencedFiles] is what keeps a shared
+/// file from being treated as orphaned.
+class ArticleMediaStore {
+  ArticleMediaStore({Directory? root}) : _root = root;
+
+  static final RegExp _fileNamePattern = RegExp(r'^m_[0-9a-f]{16}$');
+
+  final Directory? _root;
+  Directory? _resolved;
+
+  Future<Directory> _dir() async {
+    final resolved =
+        _resolved ??
+        (_root ??
+            Directory(
+              '${(await getApplicationDocumentsDirectory()).path}/offline_media',
+            ));
+    if (!await resolved.exists()) await resolved.create(recursive: true);
+    unawaited(_sweepTempFiles(resolved));
+    return _resolved = resolved;
+  }
+
+  /// Best-effort cleanup of torn `put` temp files older than a day — a crash
+  /// between write and rename leaves one behind, and nothing else can see it.
+  Future<void> _sweepTempFiles(Directory dir) async {
+    try {
+      final cutoff = DateTime.now().subtract(const Duration(days: 1));
+      await for (final entity in dir.list()) {
+        if (entity is! File ||
+            !entity.uri.pathSegments.last.contains('.tmp.')) {
+          continue;
+        }
+        if ((await entity.lastModified()).isBefore(cutoff)) {
+          await entity.delete();
+        }
+      }
+    } on FileSystemException {
+      // Sweeping is best-effort; leftovers are invisible and harmless.
+    }
+  }
+
+  static bool _isValidFileName(String name) => _fileNamePattern.hasMatch(name);
+
+  /// 64-bit FNV-1a hash of the UTF-16 code units — deterministic,
+  /// dependency-free file naming. Public so callers can commit a `pending`
+  /// manifest entry BEFORE bytes land on disk (see [pendingEntry]): the
+  /// record lock cannot be held across a network download, so a
+  /// manifest-after-file protocol would let cleanup collect a file whose
+  /// manifest commit was still in flight.
+  static String fileNameFor(String url) {
+    var hash = 0xcbf29ce484222325;
+    for (final byte in url.codeUnits) {
+      hash = (hash ^ byte) * 0x100000001b3;
+    }
+    // BigInt needed: Dart ints are always signed 64-bit, so toUnsigned(64)
+    // cannot produce the unsigned interpretation of a negative hash.
+    final unsigned = BigInt.from(hash).toUnsigned(64).toRadixString(16);
+    return 'm_${unsigned.padLeft(16, '0')}';
+  }
+
+  /// Manifest entry to commit before downloading: `pending` with size 0 —
+  /// cleanup then always sees the file as referenced and [verify] stays
+  /// false until real bytes arrive.
+  static MediaEntry pendingEntry(String url) => MediaEntry(
+    file: fileNameFor(url),
+    byteSize: 0,
+    state: MediaState.pending,
+  );
+
+  static int _tempCounter = 0;
+
+  /// Writes [bytes] for [imageUrl] via temp-file + rename so a torn write
+  /// can never surface as a ready file. Same URL resolves to the same file;
+  /// a newer same-URL write replaces content while existing manifests still
+  /// carry the old [MediaEntry.byteSize] — re-verify before trusting them.
+  Future<MediaEntry> put(String imageUrl, List<int> bytes) async {
+    if (bytes.isEmpty) {
+      throw ArgumentError.value(
+        imageUrl,
+        'imageUrl',
+        'refusing to persist an empty payload as ready media',
+      );
+    }
+    final dir = await _dir();
+    final name = fileNameFor(imageUrl);
+    final random = Random().nextInt(1 << 32);
+    final temp = File(
+      '${dir.path}/$name.tmp.${DateTime.now().microsecondsSinceEpoch}_'
+      '${_tempCounter++}_$random',
+    );
+    try {
+      await temp.writeAsBytes(bytes, flush: true);
+      await temp.rename('${dir.path}/$name');
+    } finally {
+      if (await temp.exists()) await temp.delete();
+    }
+    return MediaEntry(
+      file: name,
+      byteSize: bytes.length,
+      state: MediaState.ready,
+    );
+  }
+
+  Future<Uint8List?> read(MediaEntry entry) async {
+    if (!_isValidFileName(entry.file)) return null;
+    final file = File('${(await _dir()).path}/${entry.file}');
+    if (!await file.exists()) return null;
+    return file.readAsBytes();
+  }
+
+  /// A media entry is only "ready" when the file is really on disk with the
+  /// expected size — the durable-readability check behind the `ready` label.
+  Future<bool> verify(MediaEntry entry) async {
+    if (!_isValidFileName(entry.file)) return false;
+    final file = File('${(await _dir()).path}/${entry.file}');
+    if (!await file.exists()) return false;
+    return await file.length() == entry.byteSize;
+  }
+
+  /// Files on disk that no record manifest references. Shared files stay
+  /// referenced as long as any record lists them; anything not matching the
+  /// generated `m_` naming scheme is left alone.
+  ///
+  /// Scan and delete must be one decision, taken only when no writer can be
+  /// mid-commit — a record snapshot taken before the scan can miss a
+  /// manifest that commits during it.
+  Future<List<String>> unreferencedFiles(
+    Iterable<ArticleRecord> records,
+  ) async {
+    final referenced = <String>{
+      for (final record in records)
+        for (final entry in record.media.values) entry.file,
+    };
+    final dir = await _dir();
+    final orphans = <String>[];
+    await for (final entity in dir.list()) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.last;
+      if (!_isValidFileName(name)) continue;
+      if (!referenced.contains(name)) orphans.add(name);
+    }
+    return orphans;
+  }
+
+  Future<void> delete(String file) async {
+    if (!_isValidFileName(file)) return;
+    final target = File('${(await _dir()).path}/$file');
+    try {
+      if (await target.exists()) await target.delete();
+    } on FileSystemException {
+      // A racing delete or rename already handled it.
+    }
+  }
+}

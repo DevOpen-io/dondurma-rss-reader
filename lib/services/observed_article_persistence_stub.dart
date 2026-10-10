@@ -4,24 +4,33 @@ import 'package:hive_ce/hive.dart';
 
 import 'observed_article_persistence.dart';
 
-ObservedArticlePersistence createObservedArticlePersistence(Box box) =>
-    _HiveObservedArticlePersistence(box);
+ObservedArticlePersistence createObservedArticlePersistence(
+  Box box, {
+  String fileSuffix = '.observed-articles.json',
+}) => _HiveObservedArticlePersistence(
+  box,
+  // Keep the legacy key for the default suffix so existing stored state is
+  // preserved; only alternate state files get a distinct key.
+  stateKey: fileSuffix == '.observed-articles.json'
+      ? 'observedArticlesV1'
+      : 'observedArticlesV1:$fileSuffix',
+);
 
 class _HiveObservedArticlePersistence implements ObservedArticlePersistence {
-  _HiveObservedArticlePersistence(this.box);
+  _HiveObservedArticlePersistence(this.box, {required this.stateKey});
 
-  static const _stateKey = 'observedArticlesV1';
   static final Map<String, Future<void>> _tails = {};
 
   final Box box;
+  final String stateKey;
 
   String get _lockKey => box.name;
 
   @override
-  Future<String?> read() async => box.get(_stateKey) as String?;
+  Future<String?> read() async => box.get(stateKey) as String?;
 
   @override
-  Future<void> write(String value) => box.put(_stateKey, value);
+  Future<void> write(String value) => box.put(stateKey, value);
 
   @override
   Future<ExclusiveResult<T>> runExclusive<T>(

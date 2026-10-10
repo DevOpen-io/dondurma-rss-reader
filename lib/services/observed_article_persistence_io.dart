@@ -6,16 +6,17 @@ import 'package:hive_ce/hive.dart';
 
 import 'observed_article_persistence.dart';
 
-ObservedArticlePersistence createObservedArticlePersistence(Box box) {
+ObservedArticlePersistence createObservedArticlePersistence(
+  Box box, {
+  String fileSuffix = '.observed-articles.json',
+}) {
   final boxPath = box.path;
   if (boxPath == null || boxPath.isEmpty) {
     throw StateError(
       'Observed article storage requires a file-backed Hive box.',
     );
   }
-  return FileObservedArticlePersistence(
-    stateFile: File('$boxPath.observed-articles.json'),
-  );
+  return FileObservedArticlePersistence(stateFile: File('$boxPath$fileSuffix'));
 }
 
 class FileObservedArticlePersistence implements ObservedArticlePersistence {
@@ -23,12 +24,18 @@ class FileObservedArticlePersistence implements ObservedArticlePersistence {
     required this.stateFile,
     this.lockTimeout = const Duration(seconds: 2),
     this.retryDelay = const Duration(milliseconds: 20),
+    this.staleLockAge = const Duration(minutes: 2),
     this.afterLockAcquired,
   });
 
   final File stateFile;
   final Duration lockTimeout;
   final Duration retryDelay;
+
+  /// A lock file older than this is presumed orphaned (its owner was killed)
+  /// and may be stolen. Comfortably above [lockTimeout] so a live holder's
+  /// fresh lock is never stolen.
+  final Duration staleLockAge;
 
   /// Test seam used to hold the critical section after ownership is acquired.
   final Future<void> Function()? afterLockAcquired;
@@ -83,7 +90,11 @@ class FileObservedArticlePersistence implements ObservedArticlePersistence {
         await afterLockAcquired?.call();
         return ExclusiveResult<T>.acquired(await action());
       } on FileSystemException {
-        if (acquired || !await lockFile.exists()) rethrow;
+        if (acquired) rethrow;
+        // Fail closed: a lock that vanished between the failed create and
+        // this check, or any persistent error, surfaces as a timeout — never
+        // as an exception escaping the bool-style contract of callers.
+        if (await _stealIfStale()) continue;
         if (stopwatch.elapsed >= lockTimeout) {
           return ExclusiveResult<T>.timeout();
         }
@@ -91,6 +102,31 @@ class FileObservedArticlePersistence implements ObservedArticlePersistence {
       } finally {
         if (acquired) await _releaseOwnedLock(token);
       }
+    }
+  }
+
+  /// Deletes the lock file when its embedded timestamp (or mtime fallback)
+  /// is older than [staleLockAge]. Returns true so the caller retries the
+  /// exclusive create immediately.
+  Future<bool> _stealIfStale() async {
+    try {
+      if (!await lockFile.exists()) return false;
+      DateTime stamped;
+      try {
+        final lines = (await lockFile.readAsString()).split('\n');
+        stamped =
+            DateTime.tryParse(lines.length > 1 ? lines[1] : '')?.toUtc() ??
+            (await lockFile.lastModified()).toUtc();
+      } on FileSystemException {
+        return false;
+      }
+      if (DateTime.now().toUtc().difference(stamped) <= staleLockAge) {
+        return false;
+      }
+      await lockFile.delete();
+      return true;
+    } on FileSystemException {
+      return false;
     }
   }
 
