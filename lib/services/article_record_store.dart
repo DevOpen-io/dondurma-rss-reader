@@ -98,6 +98,20 @@ class ArticleRecord {
 
   factory ArticleRecord.fromJson(Map<String, dynamic> json) {
     final rawMedia = json['media'];
+    final rawOwners = json['owners'];
+    final rawImages = json['imageUrls'];
+    // Ownership/manifest fields that exist but carry a wrong type are
+    // corruption, not absence — decoding them as empty would silently
+    // strip claims and let GC free bytes it can't prove unreferenced.
+    if (rawMedia != null && rawMedia is! Map) {
+      throw const FormatException('media must be a map');
+    }
+    if (rawOwners != null && rawOwners is! List) {
+      throw const FormatException('owners must be a list');
+    }
+    if (rawImages != null && rawImages is! List) {
+      throw const FormatException('imageUrls must be a list');
+    }
     final media = <String, MediaEntry>{};
     if (rawMedia is Map) {
       for (final entry in rawMedia.entries) {
@@ -125,12 +139,10 @@ class ArticleRecord {
       )?.toUtc(),
       savedAt: DateTime.tryParse(json['savedAt'] as String? ?? '')?.toUtc(),
       imageUrls:
-          (json['imageUrls'] as List?)?.map((e) => e.toString()).toList() ??
-          const [],
+          (rawImages as List?)?.map((e) => e.toString()).toList() ?? const [],
       media: media,
       owners:
-          (json['owners'] as List?)?.map((e) => e.toString()).toSet() ??
-          const {},
+          (rawOwners as List?)?.map((e) => e.toString()).toSet() ?? const {},
       attempts: (json['attempts'] as num?)?.toInt() ?? 0,
       nextRetryAt: DateTime.tryParse(
         json['nextRetryAt'] as String? ?? '',
@@ -262,16 +274,24 @@ class ArticleRecordStore {
   static const Map<String, dynamic> _emptyState = {
     'records': <String, dynamic>{},
     'seen': <String, dynamic>{},
+    'epoch': 0,
   };
 
   /// Decodes persisted state. Returns null when the file holds non-empty but
   /// undecodable or foreign-schema content — mutations must refuse to
-  /// overwrite it rather than destroy unknown user data.
+  /// overwrite it rather than destroy unknown user data. A `records`/`seen`
+  /// container of the wrong type also fails closed: coercing it to empty
+  /// would let a GC pass "prove" every file unreferenced (#40 fail-closed).
   Map<String, dynamic>? _tryDecode(String? raw) {
     if (raw == null || raw.isEmpty) return null;
     try {
       final decoded = jsonDecode(raw);
       if (decoded is Map && decoded['schema'] == schemaVersion) {
+        for (final key in const ['records', 'seen']) {
+          if (decoded.containsKey(key) && decoded[key] is! Map) {
+            return null;
+          }
+        }
         return {
           'schema': schemaVersion,
           'records': decoded['records'] is Map
@@ -280,11 +300,15 @@ class ArticleRecordStore {
           'seen': decoded['seen'] is Map
               ? Map<String, dynamic>.from(decoded['seen'] as Map)
               : <String, dynamic>{},
+          'epoch': decoded['epoch'] is int ? decoded['epoch'] as int : 0,
         };
       }
     } catch (_) {}
     return null;
   }
+
+  static int _epochOf(Map<String, dynamic> state) =>
+      state['epoch'] is int ? state['epoch'] as int : 0;
 
   /// State for a mutation: empty when the file is absent, null when the file
   /// exists but cannot be decoded (fail closed — never rewrite blindly).
@@ -295,6 +319,7 @@ class ArticleRecordStore {
         'schema': schemaVersion,
         'records': <String, dynamic>{},
         'seen': <String, dynamic>{},
+        'epoch': 0,
       };
     }
     return _tryDecode(raw);
@@ -324,6 +349,50 @@ class ArticleRecordStore {
     }
   }
 
+  /// Current lifecycle epoch — bumped by [wipeAll]. Units of work capture
+  /// this once and pass it as `expectedEpoch` to mutations so nothing
+  /// started before a reset can write after it.
+  Future<int> currentEpoch() async {
+    try {
+      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
+      return _epochOf(state);
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// GC-facing snapshot: the decodable records plus whether the read was
+  /// fully clean. `clean == false` means the state was undecodable or at
+  /// least one record entry was skipped — a cleanup pass must then treat
+  /// "unreferenced" as "unknown" and delete nothing (#40).
+  Future<({List<ArticleRecord> records, bool clean})> listRecordsForGc() async {
+    final Map<String, dynamic> state;
+    try {
+      final raw = await _persistence.read();
+      final decoded = _tryDecode(raw);
+      if (raw != null && raw.isNotEmpty && decoded == null) {
+        return (records: const <ArticleRecord>[], clean: false);
+      }
+      state = decoded ?? _emptyState;
+    } catch (_) {
+      return (records: const <ArticleRecord>[], clean: false);
+    }
+    var clean = true;
+    final records = <ArticleRecord>[];
+    for (final raw in (state['records'] as Map).values) {
+      if (raw is Map) {
+        try {
+          records.add(ArticleRecord.fromJson(Map<String, dynamic>.from(raw)));
+        } catch (_) {
+          clean = false;
+        }
+      } else {
+        clean = false;
+      }
+    }
+    return (records: records, clean: clean);
+  }
+
   /// Every decodable record. Corrupt entries are skipped — callers doing
   /// media GC must treat "absent here" as "unknown", not "safe to delete".
   /// Fails closed (returns empty) on storage errors.
@@ -349,15 +418,24 @@ class ArticleRecordStore {
   /// the write lock. Returning `null` deletes the record; returning the
   /// unchanged [ArticleRecord] instance skips the write. The stored id is
   /// coerced to the normalized key so map key and payload never diverge.
+  ///
+  /// [expectedEpoch] fences a unit of work against [wipeAll]: callers capture
+  /// [currentEpoch] before starting, and any mutation landing after a reset
+  /// sees a different epoch and is rejected — a reset can never resurrect a
+  /// record through a queued write.
   Future<StoreWriteResult> mutate(
     String id,
-    ArticleRecord? Function(ArticleRecord? current) update,
-  ) async {
+    ArticleRecord? Function(ArticleRecord? current) update, {
+    int? expectedEpoch,
+  }) async {
     if (_norm(id).isEmpty) return StoreWriteResult.rejected;
     try {
       final result = await _persistence.runExclusive(() async {
         final state = await _stateForMutation();
         if (state == null) return StoreWriteResult.failed;
+        if (expectedEpoch != null && _epochOf(state) != expectedEpoch) {
+          return StoreWriteResult.rejected;
+        }
         final current = _decodeRecord(state, id);
         final next = update(current);
         if (identical(next, current)) return StoreWriteResult.applied;
@@ -437,8 +515,9 @@ class ArticleRecordStore {
   /// Fences [id] off: content is dropped, generation bumped, and later
   /// generation-checked writes are rejected. Tombstoning a never-existing id
   /// still records the fence.
-  Future<StoreWriteResult> tombstone(String id) => mutate(
+  Future<StoreWriteResult> tombstone(String id, {int? expectedEpoch}) => mutate(
     id,
+    expectedEpoch: expectedEpoch,
     (current) => ArticleRecord(
       id: _norm(id),
       feedUrl: current?.feedUrl ?? '',
@@ -460,14 +539,18 @@ class ArticleRecordStore {
   /// must not stamp every article in every sync.
   Future<StoreWriteResult> recordFirstSeen(
     String id,
-    DateTime observedAt,
-  ) async {
+    DateTime observedAt, {
+    int? expectedEpoch,
+  }) async {
     if (_norm(id).isEmpty) return StoreWriteResult.rejected;
     final at = observedAt.toUtc();
     try {
       final result = await _persistence.runExclusive(() async {
         final state = await _stateForMutation();
         if (state == null) return StoreWriteResult.failed;
+        if (expectedEpoch != null && _epochOf(state) != expectedEpoch) {
+          return StoreWriteResult.rejected;
+        }
         final seen = state['seen'] as Map<String, dynamic>;
         final raw = seen[_norm(id)];
         final existing = raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
@@ -484,9 +567,13 @@ class ArticleRecordStore {
   }
 
   Future<DateTime?> firstSeen(String id) async {
-    final state = _tryDecode(await _persistence.read()) ?? _emptyState;
-    final raw = (state['seen'] as Map)[_norm(id)];
-    return raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
+    try {
+      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
+      final raw = (state['seen'] as Map)[_norm(id)];
+      return raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// Snapshot of every recorded first-observation time — one storage read
@@ -509,12 +596,18 @@ class ArticleRecordStore {
     }
   }
 
-  Future<StoreWriteResult> deleteFirstSeen(String id) async {
+  Future<StoreWriteResult> deleteFirstSeen(
+    String id, {
+    int? expectedEpoch,
+  }) async {
     if (_norm(id).isEmpty) return StoreWriteResult.rejected;
     try {
       final result = await _persistence.runExclusive(() async {
         final state = await _stateForMutation();
         if (state == null) return StoreWriteResult.failed;
+        if (expectedEpoch != null && _epochOf(state) != expectedEpoch) {
+          return StoreWriteResult.rejected;
+        }
         final seen = state['seen'] as Map<String, dynamic>;
         if (!seen.containsKey(_norm(id))) return StoreWriteResult.applied;
         seen.remove(_norm(id));
@@ -527,23 +620,67 @@ class ArticleRecordStore {
     }
   }
 
+  /// Bumps the lifecycle epoch without touching records — the clearCache
+  /// fence: any fenced write captured before the bump is rejected, so a
+  /// background-isolate registration in flight during the clear cannot
+  /// re-add an owner the strip just removed (#40 §1 cross-isolate case).
+  /// Records and stamps stay exactly as they were.
+  Future<bool> bumpEpoch() async {
+    try {
+      final result = await _persistence.runExclusive(() async {
+        final state = await _stateForMutation();
+        if (state == null) return false;
+        state['epoch'] = _nextEpoch(_epochOf(state));
+        await _persistence.write(jsonEncode(state));
+        return true;
+      });
+      return result.acquired && (result.value ?? false);
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Next epoch value: a timestamp beats every fence captured from any
+  /// past era, but never regresses below `previous + 1` — two writes in
+  /// the same microsecond must not tie and let a stale fence pass.
+  static int _nextEpoch(int previous) {
+    final now = DateTime.now().microsecondsSinceEpoch;
+    return now > previous ? now : previous + 1;
+  }
+
   /// Wipes every record and observation stamp — the factory-reset path.
   /// Orphaned media files left behind are the S5 sweep's job; the durable
-  /// claims that would resurrect or drive downloads are gone here.
-  Future<void> wipeAll() async {
-    try {
-      await _persistence.runExclusive(() async {
-        await _persistence.write(
-          jsonEncode({
-            'schema': schemaVersion,
-            'records': <String, dynamic>{},
-            'seen': <String, dynamic>{},
-          }),
-        );
-      });
-    } catch (_) {
-      // A reset that can't rewrite the store leaves stale claims — the next
-      // reconcile rewrites survivors anyway; never escalate to a crash.
+  /// claims that would resurrect or drive downloads are gone here. The
+  /// lifecycle epoch is bumped so writes carrying a pre-reset fence are
+  /// rejected instead of resurrecting content.
+  ///
+  /// Returns `false` when the lock/write could not be completed even after
+  /// one retry — the caller must not report a reset it couldn't enforce.
+  Future<bool> wipeAll() async {
+    for (var attempt = 0; attempt < 2; attempt++) {
+      try {
+        final result = await _persistence.runExclusive(() async {
+          // A timestamp, not a counter: the pre-wipe state may be corrupt
+          // or absent, and any fence captured from it must still lose —
+          // only a monotonically fresh value guarantees that.
+          final previous = _epochOf(
+            _tryDecode(await _persistence.read()) ?? _emptyState,
+          );
+          await _persistence.write(
+            jsonEncode({
+              'schema': schemaVersion,
+              'records': <String, dynamic>{},
+              'seen': <String, dynamic>{},
+              'epoch': _nextEpoch(previous),
+            }),
+          );
+          return true;
+        });
+        if (result.acquired) return result.value ?? false;
+      } catch (_) {
+        // Retry once below; a second failure reports honestly.
+      }
     }
+    return false;
   }
 }

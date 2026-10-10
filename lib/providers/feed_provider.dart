@@ -18,6 +18,7 @@ import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
 import '../services/feed_refresh.dart';
 import '../services/article_preparation_service.dart';
+import '../services/article_media_store.dart';
 import '../services/article_record_store.dart';
 import '../services/temp_cache_membership.dart';
 import '../services/feed_service.dart';
@@ -751,11 +752,16 @@ class FeedProvider extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
     final previousKnownUrls = _knownSubscriptionUrls;
+    // A factoryReset landing mid-transaction voids the whole add: the
+    // subscription, its articles, validators, claims and cache writes all
+    // belong to the wiped era (#40).
+    final resetGeneration = _resetGeneration;
     try {
       final prefetched = await _feedService.fetchFeed(url, category);
       if (prefetched.notModified) {
         throw Exception('Authoritative subscription fetch returned 304.');
       }
+      if (resetGeneration != _resetGeneration) return false;
 
       // ProxyProvider may rebuild after addFeed returns. Pre-advance this
       // provider-owned snapshot so that delayed update does not start a second,
@@ -771,6 +777,13 @@ class FeedProvider extends ChangeNotifier {
       // before applying the authoritative new-feed result so it cannot overwrite
       // the transaction's articles with an older subscription snapshot.
       if (_isSyncing) await refreshAll();
+      if (resetGeneration != _resetGeneration) {
+        // The reset landed after addFeed — compensate the subscription
+        // write so the wiped box stays wiped.
+        await subscriptions.removeFeed(url);
+        _knownSubscriptionUrls = previousKnownUrls;
+        return false;
+      }
       final subscription = subscriptions.subscriptions.firstWhere(
         (item) => item.url == url,
       );
@@ -889,6 +902,10 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
 
     final stopwatch = Stopwatch()..start();
+    // A factoryReset landing mid-fetch must void the whole apply phase:
+    // subscriptions, items, validators, notifications, and the widget all
+    // belong to the era being wiped (#40).
+    final resetGeneration = _resetGeneration;
 
     final result = await _refresher.refresh(
       subscriptions: subscriptionProvider!.subscriptions,
@@ -897,6 +914,12 @@ class FeedProvider extends ChangeNotifier {
       bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
       redirects: _loadFeedRedirects(),
     );
+
+    if (resetGeneration != _resetGeneration) {
+      _isLoading = false;
+      if (!_disposed) notifyListeners();
+      return;
+    }
 
     _saveFeedValidators(result.validators);
     _saveFeedRedirects(result.redirects);
@@ -1156,13 +1179,22 @@ class FeedProvider extends ChangeNotifier {
   /// its stale snapshot after the delete.
   int _cacheGeneration = 0;
 
+  /// Bumped only by [factoryReset]: an in-flight refresh that started before
+  /// the reset must void its entire apply phase — items, validators,
+  /// notifications and widget data all belong to the wiped era (#40).
+  int _resetGeneration = 0;
+
   Future<void> _bumpCacheEpoch() => _box.put(
     tempCacheEpochKey,
     DateTime.now().toUtc().microsecondsSinceEpoch,
   );
 
   Future<void> _saveCachedItems() {
-    final run = _saveChain.then((_) => _writeCachedItems());
+    // The fence is captured at ENQUEUE time, not when the link runs —
+    // a clearCache landing while this link is still queued must kill it,
+    // and the execution-time read would let it slip through post-clear.
+    final generation = _cacheGeneration;
+    final run = _saveChain.then((_) => _writeCachedItems(generation));
     // Keep the chain usable after a failed write instead of poisoning it.
     _saveChain = run.catchError((_) {});
     return run;
@@ -1181,7 +1213,7 @@ class FeedProvider extends ChangeNotifier {
   /// Recomputes temp membership per #37 and persists the transient item
   /// cache. Membership changes happen here — not at download time — so an
   /// N change or keyword edit takes effect without waiting for a refresh.
-  Future<void> _writeCachedItems() async {
+  Future<void> _writeCachedItems(int generation) async {
     // Wait out the startup load: an update()-triggered save reconciling an
     // empty _items would strip every owner and write '[]' over the still-
     // unread persisted snapshot.
@@ -1192,11 +1224,14 @@ class FeedProvider extends ChangeNotifier {
     if (settings == null || subscriptions == null || bookmarks == null) {
       return;
     }
-    // Fenced BEFORE the reconcile awaits: a clearCache/factoryReset landing
-    // mid-write must void both the badge ids and the file write below —
-    // capturing the generation later would let a pre-clear snapshot
-    // resurrect the wiped cache.
-    final generation = _cacheGeneration;
+    // [generation] was captured when the caller enqueued this write —
+    // a clearCache/factoryReset landing before this link ran already
+    // bumped it, voiding both the badge ids and the file write below.
+    if (generation != _cacheGeneration) return;
+    // Persisted lifecycle epoch — carried by every record mutation this
+    // pass issues, so a factoryReset landing mid-reconcile rejects the
+    // remaining writes instead of resurrecting wiped members (#40).
+    final recordEpoch = await _preparation.currentRecordEpoch();
     final int limit = settings.offlineCacheLimit;
     final bookmarkedIds = bookmarks.bookmarkedItemIds;
     final items = List<FeedItem>.of(_items);
@@ -1219,9 +1254,20 @@ class FeedProvider extends ChangeNotifier {
         }
         return settings.autoFullText;
       },
+      epoch: recordEpoch,
     );
-    if (generation != _cacheGeneration) return;
     String canon(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
+    // Lifecycle hygiene rides the same pass: whatever membership just
+    // released gets its bytes evaluated for collection (#40). The predicate
+    // reads the LIVE bookmark set at commit time — a materialized snapshot
+    // could wrongly strip a claim toggled on after enqueue.
+    _preparation
+        .sweepCleanup(
+          isBookmarked: (id) =>
+              bookmarks.bookmarkedItemIds.any((b) => canon(b) == id),
+        )
+        .ignore();
+    if (generation != _cacheGeneration) return;
     // Snapshot membership = selected temp members (canon ids) plus bookmarked
     // items still present — same semantic the load path restores at startup.
     _cachedItemIds = {
@@ -1253,36 +1299,62 @@ class FeedProvider extends ChangeNotifier {
   }
 
   /// Clears all cached offline articles — temp membership included (#40):
-  /// records keep other owners and contents; S5 decides physical cleanup.
+  /// records keep other owners and contents; the sweep reclaims the bytes
+  /// that lose their last owner.
   Future<void> clearCache() async {
     _cacheGeneration++;
     _cachedItemIds.clear();
+    // bump → delete → bump: a bg write that validated the first epoch can
+    // still lose to the delete, so the second bump fences it entirely —
+    // the same pattern factoryReset uses around box.clear().
+    await _bumpCacheEpoch();
     await _box.delete('cachedItemsJson');
     await _bumpCacheEpoch();
-    final subscriptions = subscriptionProvider;
-    if (subscriptions != null) {
-      // The strip rides the save chain: an in-flight write's step-4
-      // registrations must finish BEFORE owners are removed, or a queued
-      // registerArticle would resurrect the owner the strip just dropped.
-      final run = _saveChain.then(
-        (_) => _membership.reconcile(
-          items: const [],
-          bookmarkedIds: const {},
-          subscribedFeedUrls: subscriptions.subscriptions.map((s) => s.url),
-          globalKeywords: const [],
-          feedKeywordsMap: const {},
-          limit: 0,
-          fullTextFor: (_) => false,
-        ),
+    // Cross-isolate fence on the RECORD side too: a background task's
+    // fenced mutations captured before this bump are now rejected, so an
+    // in-flight bg reconcile can't re-add owners the strip removes (#40).
+    await ArticleRecordStore.forBox(_box).bumpEpoch();
+    // The strip rides the save chain: an in-flight write's step-4
+    // registrations must finish BEFORE owners are removed, or a queued
+    // registerArticle would resurrect the owner the strip just dropped.
+    // The record epoch fences the strips against a mid-strip wipe.
+    final run = _saveChain.then((_) async {
+      final stripEpoch = await _preparation.currentRecordEpoch();
+      return _membership.reconcile(
+        items: const [],
+        bookmarkedIds: const {},
+        subscribedFeedUrls:
+            subscriptionProvider?.subscriptions.map((s) => s.url) ??
+            const <String>[],
+        globalKeywords: const [],
+        feedKeywordsMap: const {},
+        limit: 0,
+        fullTextFor: (_) => false,
+        epoch: stripEpoch,
       );
-      _saveChain = run.catchError((_) => <String>{});
-      await run.catchError((_) => <String>{});
-    }
+    });
+    _saveChain = run.catchError((_) => <String>{});
+    await run.catchError((_) => <String>{});
+    // The strip just released every tempCache claim — collect the bytes
+    // that are now unreferenced (#40: clearCache frees temp-only media).
+    // The predicate reads the LIVE bookmark set at commit time so a claim
+    // toggled on after this call is never wrongly stripped.
+    String canon(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
+    _preparation
+        .sweepCleanup(
+          isBookmarked: (id) =>
+              (bookmarkProvider?.bookmarkedItemIds ?? const <String>{}).any(
+                (b) => canon(b) == id,
+              ),
+        )
+        .ignore();
     notifyListeners();
   }
 
   /// Clears all feed data, caches, and read states, resetting to default.
-  Future<void> factoryReset() async {
+  /// Returns false when the durable record sidecar could not be wiped —
+  /// the caller must not claim a clean erase then (#40 honesty rule).
+  Future<bool> factoryReset() async {
     _items.clear();
     _selectedCategory = null;
     _selectedFeedUrl = null;
@@ -1300,14 +1372,39 @@ class FeedProvider extends ChangeNotifier {
     _lastNotificationTime = null;
 
     _cacheGeneration++;
+    _resetGeneration++; // an in-flight refresh's apply phase is now void
+    _needsInitialReconcile = true; // the next era bootstraps owners again
+    _knownSubscriptionUrls = const {};
     await _bumpCacheEpoch(); // fence bg writers before the wipe…
     await _box.clear();
     await _bumpCacheEpoch(); // …and after — clear() erased the first bump.
+    // Queued record writes enqueued before the reset must no-op — a delayed
+    // registration can never resurrect a wiped record (#40).
+    _preparation.resetFence();
     // Records + firstSeen live in a sidecar file outside the box — reset
     // must drop durable claims too, or ghost owners keep driving downloads.
-    await ArticleRecordStore.forBox(_box).wipeAll();
+    // wipeAll also bumps the store's lifecycle epoch, fencing bg-isolate
+    // mutations that captured the old epoch.
+    var recordsWiped = await ArticleRecordStore.forBox(_box).wipeAll();
+    // Notification observation history is personal reading metadata —
+    // same reset boundary, same requirement to not resurface (#40). A
+    // failed observed wipe is reported through the same honesty channel.
+    recordsWiped = await _observedArticleStore.wipeAll() && recordsWiped;
+    // Managed media pool: every m_*/tmp file the app created goes, foreign
+    // content in the directory stays.
+    await ArticleMediaStore().deleteAllManaged();
+    if (!recordsWiped) {
+      debugPrint(
+        'FeedProvider.factoryReset: record sidecar wipe failed — durable '
+        'claims may persist and self-heal on the next reconcile.',
+      );
+    }
+    // Widgets read from shared storage — publish the empty state so stale
+    // articles/categories don't survive the reset.
+    unawaited(WidgetUpdateService.updateFeedWidgets(const []));
     _invalidateFilterCache();
     notifyListeners();
+    return recordsWiped;
   }
 
   @override

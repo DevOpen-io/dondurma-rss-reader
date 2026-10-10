@@ -182,6 +182,17 @@ class NotificationService {
     }
   }
 
+  /// Cancels every pending and shown local notification — the factory-reset
+  /// boundary (#40): wiped articles must never resurface as notifications.
+  Future<void> cancelAll() async {
+    if (!isSupported) return;
+    try {
+      await _plugin.cancelAll();
+    } catch (e) {
+      debugPrint('NotificationService: failed to cancel notifications: $e');
+    }
+  }
+
   static bool isInQuietHours(int currentHour, int start, int end) =>
       _isInQuietHours(currentHour, start, end);
 

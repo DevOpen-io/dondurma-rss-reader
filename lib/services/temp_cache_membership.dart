@@ -41,6 +41,10 @@ class TempCacheMembership {
   /// [items] is the raw candidate list (view filters never apply here;
   /// permanent keyword exclusions do). [fullTextFor] resolves each feed's
   /// effective extraction preference (`fullTextEnabled ?? autoFullText`).
+  /// [epoch] is the record store's lifecycle epoch captured by the caller
+  /// before this pass began — every mutation carries it, so a factory reset
+  /// landing mid-reconcile rejects the rest of the writes instead of
+  /// resurrecting members the reset just wiped (#40).
   Future<Set<String>> reconcile({
     required List<FeedItem> items,
     required Set<String> bookmarkedIds,
@@ -50,6 +54,7 @@ class TempCacheMembership {
     required int limit,
     required bool Function(String feedUrl) fullTextFor,
     DateTime? now,
+    int? epoch,
   }) async {
     final at = (now ?? DateTime.now()).toUtc();
     final subscribed = subscribedFeedUrls.toSet();
@@ -87,7 +92,7 @@ class TempCacheMembership {
         if (sortTime == null) {
           sortTime = at;
           firstSeen[id] = at;
-          await _records.recordFirstSeen(item.id, at);
+          await _records.recordFirstSeen(item.id, at, expectedEpoch: epoch);
         }
       }
       candidates[id] = _Candidate(
@@ -152,16 +157,21 @@ class TempCacheMembership {
     for (final c in ranked) {
       final item = c.item;
       if (item == null || !selectedIds.contains(c.id)) continue;
-      await _preparation.registerArticle(item, const {
-        owner,
-      }, fullText: fullTextFor(item.feedUrl));
+      await _preparation.registerArticle(
+        item,
+        const {owner},
+        fullText: fullTextFor(item.feedUrl),
+        expectedEpoch: epoch,
+      );
     }
 
     // 5. Members pushed out lose only the tempCache owner — other owners
     //    (e.g. bookmark) and all content are preserved for S5 to evaluate.
-    //    A failed strip likewise self-heals on the next pass.
+    //    A failed strip likewise self-heals on the next pass. Strips ride
+    //    the same register queue as step 4 so queued registrations can
+    //    never re-add an owner this step just removed.
     for (final id in ownedIds.difference(selectedIds)) {
-      await _records.mutate(id, (current) {
+      await _preparation.mutateRecord(id, expectedEpoch: epoch, (current) {
         if (current == null || !current.owners.contains(owner)) {
           return current;
         }

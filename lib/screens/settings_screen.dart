@@ -1,7 +1,10 @@
+import 'dart:async' show unawaited;
+
 import 'package:flutter/foundation.dart'
     show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../router/onboarding_state.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../l10n/supported_languages.dart';
@@ -11,6 +14,7 @@ import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 import '../utils/app_toast.dart';
 import '../utils/time_format.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -875,8 +879,31 @@ class SettingsScreen extends StatelessWidget {
 
               await bookmarks.factoryReset();
               await subs.factoryReset();
-              await feeds.factoryReset();
+              final bool wiped = await feeds.factoryReset();
               await settings.factoryReset();
+              if (!wiped) {
+                // The sidecar wipe failed — durable claims may persist
+                // until the next reconcile. Say so instead of claiming a
+                // clean erase (#40).
+                showAppToast(
+                  l10n.factoryResetPartialError,
+                  type: AppToastType.error,
+                );
+              }
+
+              // The reset boundary also covers session state that would
+              // otherwise suppress the onboarding redirect later (#40).
+              sessionOnboardingBypassed = false;
+              // The reset boundary also covers what outlives the boxes:
+              // local notifications and the app-owned WebView session
+              // (#40). External browser/OS state is untouched.
+              unawaited(NotificationService.instance.cancelAll());
+              if (!kIsWeb &&
+                  (defaultTargetPlatform == TargetPlatform.android ||
+                      defaultTargetPlatform == TargetPlatform.iOS ||
+                      defaultTargetPlatform == TargetPlatform.macOS)) {
+                unawaited(WebViewCookieManager().clearCookies());
+              }
 
               if (context.mounted) {
                 context.go('/onboarding');

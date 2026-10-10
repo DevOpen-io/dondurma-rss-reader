@@ -620,6 +620,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get factoryResetSuccess => 'All data and settings have been erased.';
 
   @override
+  String get factoryResetPartialError =>
+      'Reset completed, but some offline data could not be erased. It will be cleaned up automatically later.';
+
+  @override
   String get browserMode => 'Browser Mode';
 
   @override

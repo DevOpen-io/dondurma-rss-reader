@@ -194,6 +194,7 @@
   "factoryResetConfirmTitle": "¿Estás seguro?",
   "factoryResetConfirmDesc": "Esto borrará permanentemente todas tus fuentes, categorías, marcadores y ajustes. La aplicación se restaurará a su estado de instalación predeterminado. Esta acción no se puede deshacer.",
   "factoryResetSuccess": "Se han borrado todos los datos y ajustes.",
+  "factoryResetPartialError": "El restablecimiento se completó, pero algunos datos sin conexión no se pudieron borrar. Se limpiarán automáticamente más tarde.",
   "browserMode": "Modo de navegador",
   "browserBuiltin": "Navegador integrado",
   "browserExternal": "Navegador externo",

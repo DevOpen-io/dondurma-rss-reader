@@ -194,6 +194,7 @@
   "factoryResetConfirmTitle": "Emin misiniz?",
   "factoryResetConfirmDesc": "Bu işlem takip ettiğiniz tüm haber kaynaklarını, kategorileri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.",
   "factoryResetSuccess": "Tüm veri ve ayarlar silindi.",
+  "factoryResetPartialError": "Sıfırlama tamamlandı ancak bazı çevrimdışı veriler silinemedi. Daha sonra otomatik olarak temizlenecek.",
   "browserMode": "Tarayıcı Modu",
   "browserBuiltin": "Dahili Tarayıcı",
   "browserExternal": "Harici Tarayıcı",

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
+import '../services/article_identity.dart';
 import '../services/article_preparation_service.dart';
 import '../services/article_record_store.dart';
 
@@ -40,24 +41,44 @@ class BookmarkProvider extends ChangeNotifier {
 
   /// Drops the durable 'bookmark' claim after an un-bookmark. The bookmark
   /// set is re-checked inside the store's locked mutation so a re-bookmark
-  /// racing this call can never lose its owner. The article itself stays —
-  /// other owners and content are S5's call.
+  /// racing this call can never lose its owner. When a preparation service
+  /// is attached the strip rides its register queue — FIFO with delayed
+  /// registrations means the toggle order IS the durable order, and a
+  /// queued registerArticle can never re-add the owner being stripped.
   void _stripBookmarkOwner(String id) {
+    final prep = _preparation;
     unawaited(() async {
       for (var attempt = 0; attempt < 2; attempt++) {
-        final result = await _recordStore.mutate(id, (current) {
-          if (current == null || _bookmarkedItemIds.contains(id)) {
-            return current;
-          }
-          final owners = {...current.owners}..remove('bookmark');
-          return owners.length == current.owners.length
-              ? current
-              : current.copyWith(owners: owners);
-        });
-        if (result != StoreWriteResult.failed) return;
+        final result = prep != null
+            ? await prep.mutateRecord(id, _stripBookmarkMutation(id))
+            : await _recordStore.mutate(id, _stripBookmarkMutation(id));
+        if (result != StoreWriteResult.failed) {
+          // The record may have just become ownerless — release its bytes.
+          // The live bookmark set goes along so stale claims elsewhere
+          // self-heal in the same pass.
+          prep
+              ?.sweepCleanup(
+                isBookmarked: (recordId) => _bookmarkedItemIds.any(
+                  (b) => (ArticleIdentity.normalizeItemId(b) ?? b) == recordId,
+                ),
+              )
+              .ignore();
+          return;
+        }
       }
     }());
   }
+
+  ArticleRecord? Function(ArticleRecord?) _stripBookmarkMutation(String id) =>
+      (current) {
+        if (current == null || _bookmarkedItemIds.contains(id)) {
+          return current;
+        }
+        final owners = {...current.owners}..remove('bookmark');
+        return owners.length == current.owners.length
+            ? current
+            : current.copyWith(owners: owners);
+      };
 
   void _loadBookmarks() {
     final String? bookmarkedItemsData = _box.get('bookmarkedItemsJson');
@@ -106,19 +127,25 @@ class BookmarkProvider extends ChangeNotifier {
       // article in a single pass (the explicit-action metered permit).
       final prep = _preparation;
       if (prep != null) {
+        // claimCheck runs INSIDE the store lock at mutation time: an
+        // un-bookmark racing this delayed registration leaves no ghost
+        // 'bookmark' owner behind — including on the retry.
+        bool claimStillLive() => _bookmarkedItemIds.contains(id);
         unawaited(() async {
           var result = await prep.registerArticle(updatedItem, const {
             'bookmark',
-          });
+          }, claimCheck: claimStillLive);
           // One immediate retry on storage failure — a rejected/failed
           // register would otherwise leave a bookmark with no durable
           // record and no later reconciliation.
-          if (result == StoreWriteResult.failed) {
+          if (result == StoreWriteResult.failed &&
+              _bookmarkedItemIds.contains(id)) {
             result = await prep.registerArticle(updatedItem, const {
               'bookmark',
-            });
+            }, claimCheck: claimStillLive);
           }
-          if (result == StoreWriteResult.applied) {
+          if (result == StoreWriteResult.applied &&
+              _bookmarkedItemIds.contains(id)) {
             unawaited(prep.prepareArticle(updatedItem.id));
           }
         }());

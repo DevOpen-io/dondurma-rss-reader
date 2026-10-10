@@ -630,6 +630,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get factoryResetSuccess => 'Se han borrado todos los datos y ajustes.';
 
   @override
+  String get factoryResetPartialError =>
+      'El restablecimiento se completó, pero algunos datos sin conexión no se pudieron borrar. Se limpiarán automáticamente más tarde.';
+
+  @override
   String get browserMode => 'Modo de navegador';
 
   @override

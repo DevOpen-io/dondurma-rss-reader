@@ -136,32 +136,73 @@ class ArticleMediaStore {
   ///
   /// Scan and delete must be one decision, taken only when no writer can be
   /// mid-commit — a record snapshot taken before the scan can miss a
-  /// manifest that commits during it.
+  /// manifest that commits during it. [minAge] shrinks that window to
+  /// effectively zero for a different reason: a file renamed into place
+  /// moments ago may be racing its manifest commit on another queue, so
+  /// callers that can't serialize with writers pass a grace period and only
+  /// stale orphans are reported.
   Future<List<String>> unreferencedFiles(
-    Iterable<ArticleRecord> records,
-  ) async {
+    Iterable<ArticleRecord> records, {
+    Duration minAge = Duration.zero,
+  }) async {
     final referenced = <String>{
       for (final record in records)
         for (final entry in record.media.values) entry.file,
     };
+    final cutoff = DateTime.now().subtract(minAge);
     final dir = await _dir();
     final orphans = <String>[];
     await for (final entity in dir.list()) {
       if (entity is! File) continue;
       final name = entity.uri.pathSegments.last;
       if (!_isValidFileName(name)) continue;
-      if (!referenced.contains(name)) orphans.add(name);
+      if (referenced.contains(name)) continue;
+      if (minAge > Duration.zero) {
+        // A file that can't be stat'd — raced away or permission-denied —
+        // reads as "unknown age", never as a safe delete.
+        try {
+          if ((await entity.lastModified()).isAfter(cutoff)) continue;
+        } on FileSystemException {
+          continue;
+        }
+      }
+      orphans.add(name);
     }
     return orphans;
   }
 
-  Future<void> delete(String file) async {
-    if (!_isValidFileName(file)) return;
+  /// Deletes every managed file — `m_*` media and torn `*.tmp.*` staging —
+  /// while leaving foreign content alone. The factory-reset path uses this;
+  /// files the pool did not create are not ours to remove.
+  Future<int> deleteAllManaged() async {
+    final dir = await _dir();
+    var deleted = 0;
+    await for (final entity in dir.list()) {
+      if (entity is! File) continue;
+      final name = entity.uri.pathSegments.last;
+      if (!_isValidFileName(name) && !name.contains('.tmp.')) continue;
+      try {
+        await entity.delete();
+        deleted++;
+      } on FileSystemException {
+        // A racing delete already handled it, or the OS refused — the file
+        // is reported best-effort either way.
+      }
+    }
+    return deleted;
+  }
+
+  /// Deletes one managed file. Returns `false` on an I/O failure so GC can
+  /// report a partial pass instead of counting attempted deletes as freed
+  /// space — a file that merely doesn't exist counts as done.
+  Future<bool> delete(String file) async {
+    if (!_isValidFileName(file)) return false;
     final target = File('${(await _dir()).path}/$file');
     try {
       if (await target.exists()) await target.delete();
+      return true;
     } on FileSystemException {
-      // A racing delete or rename already handled it.
+      return false;
     }
   }
 }

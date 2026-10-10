@@ -620,6 +620,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get factoryResetSuccess => 'Tüm veri ve ayarlar silindi.';
 
   @override
+  String get factoryResetPartialError =>
+      'Sıfırlama tamamlandı ancak bazı çevrimdışı veriler silinemedi. Daha sonra otomatik olarak temizlenecek.';
+
+  @override
   String get browserMode => 'Tarayıcı Modu';
 
   @override

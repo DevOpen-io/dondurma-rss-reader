@@ -280,6 +280,7 @@
   "factoryResetConfirmTitle": "Are you sure?",
   "factoryResetConfirmDesc": "This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.",
   "factoryResetSuccess": "All data and settings have been erased.",
+  "factoryResetPartialError": "Reset completed, but some offline data could not be erased. It will be cleaned up automatically later.",
   "browserMode": "Browser Mode",
   "browserBuiltin": "Built-in Browser",
   "browserExternal": "External Browser",

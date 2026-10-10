@@ -945,6 +945,73 @@ void main() {
     providers2.feed.dispose();
   });
 
+  test(
+    'factory reset during an in-flight refresh voids the whole apply phase',
+    () async {
+      final url = server.url('/reset-mid-fetch.xml');
+      final requested = Completer<void>();
+      final release = Completer<void>();
+      server.handlers['/reset-mid-fetch.xml'] = (request) async {
+        if (!requested.isCompleted) requested.complete();
+        await release.future;
+        await _respond200(request, _rss('F', ['a1']));
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'F', category: 'Test'),
+      ]);
+      final providers = _providers(); // update() kicks the initial refresh
+      await requested.future; // the fetch is in flight, response pending
+
+      // The reset completes while the network response is still pending —
+      // everything the refresh would apply belongs to the wiped era (#40).
+      final wiped = await providers.feed.factoryReset();
+      expect(wiped, isTrue);
+
+      release.complete();
+      await _waitForRefresh(providers.feed);
+
+      // Voided apply: no items, no snapshot, no validators — the wiped
+      // box stays wiped.
+      expect(providers.feed.items, isEmpty);
+      expect(Hive.box('feeds').get('cachedItemsJson'), isNull);
+      expect(Hive.box('feeds').get('feedValidators'), isNull);
+      providers.feed.dispose();
+    },
+  );
+
+  test(
+    'factory reset during add-subscription voids the whole transaction',
+    () async {
+      final url = server.url('/reset-mid-add.xml');
+      final requested = Completer<void>();
+      final release = Completer<void>();
+      server.handlers['/reset-mid-add.xml'] = (request) async {
+        if (!requested.isCompleted) requested.complete();
+        await release.future;
+        await _respond200(request, _rss('F', ['a1']));
+      };
+      // No seed — the gated handler must only see the add's fetch, so
+      // nothing else may trigger a refresh that would park on `release`.
+      final providers = _providers();
+
+      final addFuture = providers.feed.addSubscriptionAndRefresh(
+        url,
+        'New',
+        'Test',
+      );
+      await requested.future; // the authoritative fetch is in flight
+
+      await providers.feed.factoryReset();
+      release.complete();
+
+      expect(await addFuture, isFalse);
+      expect(providers.subscriptions.hasFeedUrl(url), isFalse);
+      expect(providers.feed.items, isEmpty);
+      expect(Hive.box('feeds').get('cachedItemsJson'), isNull);
+      providers.feed.dispose();
+    },
+  );
+
   test('un-bookmark strips the durable bookmark owner', () async {
     final store = ArticleRecordStore.forBox(Hive.box('feeds'));
     final url = server.url('/bm-strip.xml');

@@ -132,6 +132,23 @@ class ObservedArticleStore {
     }
   }
 
+  /// Erases all observation history — the factory-reset boundary (#40):
+  /// wiped articles must never re-observe as if claimed before.
+  /// Returns false when the locked write could not complete.
+  Future<bool> wipeAll() async {
+    try {
+      final result = await _persistence.runExclusive(() async {
+        await _persistence.write(
+          jsonEncode({'schema': schemaVersion, 'feeds': <String, dynamic>{}}),
+        );
+        return true;
+      });
+      return result.acquired;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Map<String, dynamic> _decodeState(String? raw) {
     if (raw != null && raw.isNotEmpty) {
       try {

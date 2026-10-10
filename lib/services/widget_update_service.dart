@@ -49,16 +49,16 @@ class WidgetUpdateService {
   }
 
   /// Writes per-category article buckets so the native category widget can
-  /// render whichever category the user picked at configuration time.
+  /// render whichever category the user picked at configuration time. Empty
+  /// input writes empty keys — early-returning here would leave the last
+  /// pre-wipe categories visible on the home screen (#40).
   static Future<void> _saveCategory(List<FeedItem> sorted) async {
-    if (sorted.isEmpty) return;
     final byCategory = <String, List<Map<String, String>>>{};
     for (final item in sorted) {
       if (item.category == 'Uncategorized') continue;
       final bucket = byCategory.putIfAbsent(item.category, () => []);
       if (bucket.length < 50) bucket.add(_toMap(item));
     }
-    if (byCategory.isEmpty) return;
     await HomeWidget.saveWidgetData<String>(
       'widget_category_list',
       jsonEncode(byCategory.keys.toList()),

@@ -1234,6 +1234,12 @@ abstract class AppLocalizations {
   /// **'All data and settings have been erased.'**
   String get factoryResetSuccess;
 
+  /// No description provided for @factoryResetPartialError.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset completed, but some offline data could not be erased. It will be cleaned up automatically later.'**
+  String get factoryResetPartialError;
+
   /// No description provided for @browserMode.
   ///
   /// In en, this message translates to:

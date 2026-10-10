@@ -2,12 +2,14 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:html/parser.dart' show parse;
 import 'package:http/http.dart' as http;
 
 import '../models/feed_item.dart';
 import '../utils/async_semaphore.dart';
+import 'article_cleanup_service.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
 import 'full_text_extraction_service.dart';
@@ -92,6 +94,85 @@ class ArticlePreparationService {
     return result;
   }
 
+  /// In-memory write fence: bumped by [resetFence] so mutations ENQUEUED
+  /// before a factory reset no-op instead of resurrecting wiped records.
+  /// Cross-isolate writers (Workmanager) can't see this — they carry the
+  /// store's persisted epoch instead (see `expectedEpoch`).
+  var _queueEpoch = 0;
+
+  /// No-ops every register-queue mutation enqueued before this call. Run on
+  /// factory reset before the stores are wiped.
+  void resetFence() => _queueEpoch++;
+
+  Future<StoreWriteResult> _enqueueGuarded(
+    Future<StoreWriteResult> Function() work,
+  ) {
+    final enqueuedAt = _queueEpoch;
+    return _enqueueRegister(
+      () async =>
+          enqueuedAt == _queueEpoch ? work() : StoreWriteResult.rejected,
+    );
+  }
+
+  /// Runs [update] on the register queue so owner strips serialize FIFO
+  /// with [registerArticle] — the user's toggle order IS the durable order,
+  /// and a queued registration can never re-add an owner already stripped.
+  Future<StoreWriteResult> mutateRecord(
+    String id,
+    ArticleRecord? Function(ArticleRecord? current) update, {
+    int? expectedEpoch,
+  }) => _enqueueGuarded(
+    () => _records.mutate(id, update, expectedEpoch: expectedEpoch),
+  );
+
+  /// One lifecycle sweep on the register queue: tombstones ownerless
+  /// records, deletes unreferenced media, prunes dead observation stamps.
+  /// Serialized with registrations so no manifest commits mid-scan.
+  /// Deliberately NOT queue-epoch guarded — post-reset hygiene is exactly
+  /// what a queued pass should still do. Repeat callers coalesce onto the
+  /// in-flight pass plus at most one re-run.
+  Future<CleanupResult> sweepCleanup({bool Function(String id)? isBookmarked}) {
+    final inFlight = _sweepInFlight;
+    if (inFlight != null) {
+      _sweepAgain = true;
+      return inFlight;
+    }
+    final run = _enqueueRegister(() async {
+      try {
+        var result = await _cleanup.sweep(isBookmarked: isBookmarked);
+        while (_sweepAgain) {
+          _sweepAgain = false;
+          result = await _cleanup.sweep(isBookmarked: isBookmarked);
+        }
+        if (result.failed) {
+          debugPrint(
+            'ArticlePreparationService: lifecycle sweep reported failure — '
+            'unclaimed media stays put until a clean pass succeeds.',
+          );
+        }
+        return result;
+      } finally {
+        // Never leave the dead future behind — a throwing pass would
+        // otherwise park _sweepInFlight forever and silently disable
+        // every subsequent sweep this session.
+        _sweepInFlight = null;
+      }
+    });
+    return _sweepInFlight = run;
+  }
+
+  Future<CleanupResult>? _sweepInFlight;
+  var _sweepAgain = false;
+
+  late final ArticleCleanupService _cleanup = ArticleCleanupService(
+    records: _records,
+    media: _media,
+  );
+
+  /// The store's persisted lifecycle epoch — capture before a unit of work
+  /// and pass to mutations as `expectedEpoch` to fence out resets.
+  Future<int> currentRecordEpoch() => _records.currentEpoch();
+
   /// 1→2→4→8… minute doubling, capped at 60 — the earliest next attempt, not
   /// a guaranteed run time.
   static Duration backoffFor(int attempts) {
@@ -151,19 +232,35 @@ class ArticlePreparationService {
   /// [fullText] is the caller's effective extraction preference: `false`
   /// means the RSS body is the final content — a still-pending or failed
   /// extraction intent on an existing record is cancelled, never retried.
+  /// [expectedEpoch] fences this registration against a mid-flight factory
+  /// reset: the caller captured [currentRecordEpoch] before its async work
+  /// began, and a wipe in between rejects the write instead of resurrecting
+  /// a record the reset already erased.
+  ///
+  /// [claimCheck] is evaluated INSIDE the store lock at mutation time — a
+  /// caller whose claim may have been rescinded between enqueue and
+  /// execution (e.g. an un-bookmark racing this registration) passes its
+  /// live-state check so a delayed register can never resurrect an owner
+  /// that was already stripped.
   Future<StoreWriteResult> registerArticle(
     FeedItem item,
     Set<String> owners, {
     bool fullText = true,
+    int? expectedEpoch,
+    bool Function()? claimCheck,
   }) {
     if (owners.isEmpty) return Future.value(StoreWriteResult.rejected);
-    return _enqueueRegister(() => _registerArticle(item, owners, fullText));
+    return _enqueueGuarded(
+      () => _registerArticle(item, owners, fullText, expectedEpoch, claimCheck),
+    );
   }
 
   Future<StoreWriteResult> _registerArticle(
     FeedItem item,
     Set<String> owners,
     bool fullText,
+    int? expectedEpoch,
+    bool Function()? claimCheck,
   ) async {
     final imageUrls = <String>{
       if (item.imageUrl != null && item.imageUrl!.isNotEmpty) item.imageUrl!,
@@ -189,7 +286,10 @@ class ArticlePreparationService {
       media: manifest,
       owners: owners,
     );
-    return _records.mutate(item.id, (current) {
+    return _records.mutate(item.id, expectedEpoch: expectedEpoch, (current) {
+      // The claim must still be live inside the lock — a rescinded claim
+      // (un-bookmark, strip) must not be re-added by this delayed write.
+      if (claimCheck != null && !claimCheck()) return current;
       if (current != null && !current.tombstoned) {
         final mergedOwners = {...current.owners, ...owners};
         final mergedMedia = {...manifest, ...current.media};
@@ -264,7 +364,8 @@ class ArticlePreparationService {
     if (record == null || record.tombstoned || record.owners.isEmpty) {
       return 0;
     }
-    await _prepareRecord(record, _now().toUtc());
+    final epoch = await _records.currentEpoch();
+    await _prepareRecord(record, _now().toUtc(), epoch);
     return 1;
   }
 
@@ -279,13 +380,17 @@ class ArticlePreparationService {
   Future<int> _preparePending() async {
     final now = _now().toUtc();
     final records = await _records.listRecords();
+    // Fence the whole pass: a factory reset landing mid-sweep must reject
+    // every remaining commit — a stale `ready` write into the new era
+    // could mark a manifest ready for bytes wipeAll already deleted.
+    final epoch = await _records.currentEpoch();
     var attempted = 0;
     for (final record in records) {
       if (record.tombstoned || record.owners.isEmpty) continue;
       if (!_hasDueWork(record, now)) continue;
       attempted++;
       try {
-        await _prepareRecord(record, now);
+        await _prepareRecord(record, now, epoch);
       } catch (_) {
         // One bad record never forfeits the rest of the sweep — its durable
         // state is retried at the next eligible opportunity.
@@ -312,7 +417,11 @@ class ArticlePreparationService {
     return false;
   }
 
-  Future<void> _prepareRecord(ArticleRecord record, DateTime now) async {
+  Future<void> _prepareRecord(
+    ArticleRecord record,
+    DateTime now,
+    int epoch,
+  ) async {
     final id = record.id;
 
     // 1. Body: full-text upgrade. The RSS body is kept when extraction fails.
@@ -324,7 +433,7 @@ class ArticlePreparationService {
         try {
           html = await _extract(record.link);
         } catch (_) {}
-        await _records.mutate(id, (current) {
+        await _records.mutate(id, expectedEpoch: epoch, (current) {
           if (current == null || current.tombstoned) return current;
           if (current.owners.isEmpty) return current;
           // A slower overlapping pass that already succeeded never gets
@@ -368,15 +477,20 @@ class ArticlePreparationService {
           e,
     ];
     await Future.wait([
-      for (final piece in pending) _preparePiece(id, piece.key, now),
+      for (final piece in pending) _preparePiece(id, piece.key, now, epoch),
     ]);
   }
 
-  Future<void> _preparePiece(String id, String url, DateTime now) async {
+  Future<void> _preparePiece(
+    String id,
+    String url,
+    DateTime now,
+    int epoch,
+  ) async {
     await _semaphore.acquire();
     try {
       final outcome = await _fetchAndStore(url, now);
-      await _records.mutate(id, (current) {
+      await _records.mutate(id, expectedEpoch: epoch, (current) {
         if (current == null || current.tombstoned) return current;
         if (current.owners.isEmpty) return current;
         final existing = current.media[url];

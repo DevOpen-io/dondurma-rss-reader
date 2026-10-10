@@ -7,6 +7,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
+import 'article_identity.dart';
 import 'article_preparation_service.dart';
 import 'article_record_store.dart';
 import 'temp_cache_membership.dart';
@@ -287,6 +288,10 @@ Future<List<FeedItem>> _persistBgCache(
   // clearCache/factoryReset, so a write started before the wipe must not
   // land after it (the foreground's in-memory generation can't reach here).
   final cacheEpoch = feedsBox.get(tempCacheEpochKey);
+  // The record store carries its own lifecycle epoch — every mutation this
+  // isolate issues is fenced to it, so a factory reset landing mid-pass
+  // rejects the rest of the record writes, not just the snapshot put.
+  final recordEpoch = await store.currentEpoch();
 
   final Set<String> selectedIds;
   try {
@@ -308,23 +313,41 @@ Future<List<FeedItem>> _persistBgCache(
         }
         return autoFullText;
       },
+      epoch: recordEpoch,
     );
+    // Same lifecycle hygiene as the foreground pass — dropped members'
+    // bytes are collected here too. The bookmark reconcile is deliberately
+    // NOT run here: this isolate's bookmarkedIds is stale at box-open
+    // granularity, and a wrongly-stripped live claim loses user data while
+    // a wrongly-kept stale one self-heals on the next foreground sweep.
+    await preparation.sweepCleanup();
   } finally {
     preparation.dispose();
   }
 
   // Snapshot candidates = fresh merge plus bookmarked articles the merge
   // dropped (unsubscribed feeds) — bookmarks ride along uncounted (#37).
+  // selectedIds are canonical; item.id is raw — compare on the same side.
   final inMerge = items.map((e) => e.id).toSet();
   final selected = [
     for (final item in items)
-      if (selectedIds.contains(item.id) || bookmarkedIds.contains(item.id))
+      if (selectedIds.contains(
+            ArticleIdentity.normalizeItemId(item.id) ?? item.id,
+          ) ||
+          bookmarkedIds.contains(item.id))
         item,
     for (final item in bookmarkedItems)
       if (!inMerge.contains(item.id)) item,
   ];
-  if (feedsBox.get(tempCacheEpochKey) != cacheEpoch) {
-    return selected; // a wipe landed mid-work — the snapshot stays dropped.
+  // Two fences before the snapshot write: the persisted cache epoch is a
+  // best-effort check (this isolate's box view may be stale), so the
+  // record lifecycle epoch — always a fresh disk read — is the real one.
+  // A mismatch means a clear/reset landed mid-task: return EMPTY, not the
+  // wiped-era snapshot — the caller publishes this to the widget and must
+  // not resurrect articles the reset just removed.
+  if (feedsBox.get(tempCacheEpochKey) != cacheEpoch ||
+      await store.currentEpoch() != recordEpoch) {
+    return const <FeedItem>[];
   }
   final maps = selected.map((e) => e.toJson()).toList();
   await feedsBox.put('cachedItemsJson', jsonEncode(maps));
