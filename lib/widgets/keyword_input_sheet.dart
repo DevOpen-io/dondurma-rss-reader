@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/motion.dart';
 
 class KeywordInputSheet extends StatefulWidget {
   final String title;
@@ -119,7 +120,10 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: motionDuration(
+                context,
+                const Duration(milliseconds: 200),
+              ),
               curve: Curves.easeOutCubic,
               decoration: BoxDecoration(
                 color: cs.surfaceContainerHigh,
@@ -170,7 +174,10 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
                       builder: (_, val, _) {
                         final hasText = val.text.trim().isNotEmpty;
                         return AnimatedOpacity(
-                          duration: const Duration(milliseconds: 160),
+                          duration: motionDuration(
+                            context,
+                            const Duration(milliseconds: 160),
+                          ),
                           opacity: hasText ? 1.0 : 0.35,
                           child: FilledButton(
                             onPressed: hasText ? _addKeyword : null,

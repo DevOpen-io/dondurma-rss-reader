@@ -5,6 +5,7 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/suggested_feed.dart';
 import '../../providers/subscription_provider.dart';
+import '../../utils/motion.dart';
 
 /// Sub-widgets for the Explore Feeds page: search bar, active-filter bar,
 /// category sheet chip, suggested-feed tile, and small badge/button states.
@@ -103,7 +104,10 @@ class ExploreFilterBar extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 180),
+              duration: motionDuration(
+                context,
+                const Duration(milliseconds: 180),
+              ),
               child: Text(
                 key: ValueKey(label),
                 label,
@@ -180,7 +184,7 @@ class ExploreSheetChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
+        duration: motionDuration(context, const Duration(milliseconds: 150)),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected

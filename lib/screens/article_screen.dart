@@ -17,6 +17,7 @@ import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
+import '../utils/motion.dart';
 import '../utils/time_format.dart';
 import 'dart:math' as math;
 
@@ -512,13 +513,11 @@ class _ArticlePageState extends State<_ArticlePage> {
                                         ? null
                                         : provider.activateFullText,
                                     style: TextButton.styleFrom(
-                                      minimumSize: Size.zero,
+                                      // 48dp touch target.
+                                      minimumSize: const Size(48, 48),
                                       padding: const EdgeInsets.symmetric(
                                         horizontal: 8,
-                                        vertical: 4,
                                       ),
-                                      tapTargetSize:
-                                          MaterialTapTargetSize.shrinkWrap,
                                     ),
                                     child: Text(
                                       l10n.retry,
@@ -725,7 +724,10 @@ class _ArticlePageState extends State<_ArticlePage> {
                     value: '${(progress * 100).round()}%',
                     child: TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: progress),
-                      duration: const Duration(milliseconds: 150),
+                      duration: motionDuration(
+                        context,
+                        const Duration(milliseconds: 150),
+                      ),
                       curve: Curves.easeOut,
                       builder: (context, animatedProgress, _) {
                         return LinearProgressIndicator(

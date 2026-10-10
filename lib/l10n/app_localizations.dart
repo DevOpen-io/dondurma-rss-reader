@@ -1324,6 +1324,24 @@ abstract class AppLocalizations {
   /// **'Remove bookmark'**
   String get semanticRemoveBookmark;
 
+  /// No description provided for @removeBookmarkTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove bookmark?'**
+  String get removeBookmarkTitle;
+
+  /// No description provided for @removeBookmarkConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanent protection will be removed. The last copy may no longer be available from the source; a normal temporary or shared copy may remain.'**
+  String get removeBookmarkConfirm;
+
+  /// No description provided for @bookmarkRemoveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t remove the bookmark. Please try again.'**
+  String get bookmarkRemoveFailed;
+
   /// No description provided for @semanticArticleRead.
   ///
   /// In en, this message translates to:

@@ -1,6 +1,7 @@
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../../services/image_cache_service.dart';
+import '../../utils/motion.dart';
 
 class ArticleImageCarousel extends StatefulWidget {
   final List<String> imageUrls;
@@ -74,7 +75,10 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
               ...List.generate(imageCount, (index) {
                 final isActive = index == _currentPage;
                 return AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
+                  duration: motionDuration(
+                    context,
+                    const Duration(milliseconds: 250),
+                  ),
                   margin: const EdgeInsets.symmetric(horizontal: 3),
                   width: isActive ? 20 : 8,
                   height: 8,

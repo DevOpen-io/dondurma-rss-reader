@@ -8,6 +8,7 @@ import 'package:adblocker_webview/adblocker_webview.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/motion.dart';
 
 /// Returns `true` when the current platform supports WebView.
 ///
@@ -290,7 +291,10 @@ class _InAppBrowserState extends State<InAppBrowser> {
           preferredSize: const Size.fromHeight(3.0),
           child: AnimatedOpacity(
             opacity: _isLoading ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 300),
+            duration: motionDuration(
+              context,
+              const Duration(milliseconds: 300),
+            ),
             child: LinearProgressIndicator(
               value: _loadingProgress,
               minHeight: 3.0,

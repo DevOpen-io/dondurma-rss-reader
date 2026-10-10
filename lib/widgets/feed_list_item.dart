@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
@@ -10,22 +12,88 @@ import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../services/image_cache_service.dart';
+import '../utils/app_toast.dart';
+import '../utils/motion.dart';
 import 'category_icon.dart';
+
+const int _articleNavigationWindowRadius = 25;
 
 /// Cuts [text] to at most [maxChars] characters, ending with an ellipsis.
 /// Keeps both the site name and the category visible in the meta row: without
 /// per-segment limits a long site name pushes the category off screen.
-const int _articleNavigationWindowRadius = 25;
-
 String truncateLabel(String text, int maxChars) {
   if (text.length <= maxChars) return text;
   return '${text.substring(0, maxChars - 1)}…';
 }
 
+/// Computes the article-screen slice around [item] inside [allItems].
+///
+/// When [item] is not part of [allItems] (e.g. a bookmark that is filtered
+/// out of the feed list), the window falls back to just that item — opening
+/// index 0 of an unrelated list would show the wrong article.
+({List<FeedItem> items, int initialIndex}) articleNavigationWindow(
+  List<FeedItem> allItems,
+  FeedItem item,
+) {
+  final index = allItems.indexWhere((i) => i.id == item.id);
+  if (index < 0) return (items: [item], initialIndex: 0);
+  final start = (index - _articleNavigationWindowRadius).clamp(
+    0,
+    allItems.length,
+  );
+  final end = (index + _articleNavigationWindowRadius + 1).clamp(
+    0,
+    allItems.length,
+  );
+  return (items: allItems.sublist(start, end), initialIndex: index - start);
+}
+
+/// Bookmarking is immediate; unbookmarking asks for the same short explicit
+/// confirmation no matter which path (swipe, semantics action, visible
+/// control) triggered it. Cancelling leaves every record untouched.
+Future<void> confirmBookmarkToggle(BuildContext context, FeedItem item) async {
+  final bookmarks = context.read<BookmarkProvider>();
+  if (!bookmarks.isBookmarked(item.id)) {
+    bookmarks.toggleBookmark(item);
+    return;
+  }
+  final l10n = AppLocalizations.of(context);
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) => AlertDialog(
+      title: Text(l10n.removeBookmarkTitle),
+      content: Text(l10n.removeBookmarkConfirm),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogContext).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogContext).pop(true),
+          child: Text(l10n.remove),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  // The record may have been removed while the dialog was open; never apply
+  // the action to a stale or different record.
+  final provider = context.read<BookmarkProvider>();
+  if (!provider.isBookmarked(item.id)) return;
+  final ok = await provider.removeBookmark(item);
+  if (!ok) {
+    showAppToast(l10n.bookmarkRemoveFailed, type: AppToastType.error);
+  }
+}
+
 class FeedListItem extends StatefulWidget {
   final FeedItem item;
 
-  const FeedListItem({super.key, required this.item});
+  /// The collection this item is navigated within (e.g. the bookmarks list).
+  /// Defaults to the feed's [FeedProvider.filteredItems].
+  final List<FeedItem>? navigationItems;
+
+  const FeedListItem({super.key, required this.item, this.navigationItems});
 
   @override
   State<FeedListItem> createState() => _FeedListItemState();
@@ -86,13 +154,17 @@ class _FeedListItemState extends State<FeedListItem>
     final velocity = details.primaryVelocity ?? 0.0;
 
     if (_dragExtent > 0 && (_dragExtent > threshold || velocity > 1500)) {
-      context.read<FeedProvider>().toggleReadStatus(widget.item.id);
+      unawaited(context.read<FeedProvider>().toggleReadStatus(widget.item.id));
     } else if (_dragExtent < 0 &&
         (_dragExtent < -threshold || velocity < -1500)) {
-      context.read<BookmarkProvider>().toggleBookmark(widget.item);
+      unawaited(confirmBookmarkToggle(context, widget.item));
     }
 
     _actionTriggered = false;
+    if (MediaQuery.disableAnimationsOf(context)) {
+      setState(() => _dragExtent = 0);
+      return;
+    }
     _snapBackAnimation = Tween<double>(
       begin: _dragExtent,
       end: 0.0,
@@ -133,14 +205,15 @@ class _FeedListItemState extends State<FeedListItem>
               label: isRead
                   ? l10n.semanticMarkAsUnread
                   : l10n.semanticMarkAsRead,
-            ): () =>
-                context.read<FeedProvider>().toggleReadStatus(widget.item.id),
+            ): () => unawaited(
+              context.read<FeedProvider>().toggleReadStatus(widget.item.id),
+            ),
             CustomSemanticsAction(
               label: isBookmarked
                   ? l10n.semanticRemoveBookmark
                   : l10n.semanticBookmark,
             ): () =>
-                context.read<BookmarkProvider>().toggleBookmark(widget.item),
+                unawaited(confirmBookmarkToggle(context, widget.item)),
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 10.0),
@@ -163,6 +236,7 @@ class _FeedListItemState extends State<FeedListItem>
                       isRead: isRead,
                       isBookmarked: isBookmarked,
                       isCached: isCached,
+                      navigationItems: widget.navigationItems,
                     ),
                   ),
                 ),
@@ -184,12 +258,14 @@ class _ArticleCard extends StatelessWidget {
   final bool isRead;
   final bool isBookmarked;
   final bool isCached;
+  final List<FeedItem>? navigationItems;
 
   const _ArticleCard({
     required this.item,
     required this.isRead,
     required this.isBookmarked,
     required this.isCached,
+    this.navigationItems,
   });
 
   bool get _hasThumbnail => item.imageUrl != null && item.imageUrl!.isNotEmpty;
@@ -206,22 +282,16 @@ class _ArticleCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
         onTap: () {
           final feedProvider = context.read<FeedProvider>();
-          final allItems = feedProvider.filteredItems;
-          final index = allItems.indexWhere((i) => i.id == item.id);
-          final safeIndex = index >= 0 ? index : 0;
-          final start = (safeIndex - _articleNavigationWindowRadius)
-              .clamp(0, allItems.length)
-              .toInt();
-          final end = (safeIndex + _articleNavigationWindowRadius + 1)
-              .clamp(0, allItems.length)
-              .toInt();
-          final articleItems = allItems.sublist(start, end);
+          final window = articleNavigationWindow(
+            navigationItems ?? feedProvider.filteredItems,
+            item,
+          );
           context.push(
             '/article',
-            extra: {'items': articleItems, 'initialIndex': safeIndex - start},
+            extra: {'items': window.items, 'initialIndex': window.initialIndex},
           );
           Future<void>.delayed(const Duration(milliseconds: 400), () {
-            if (context.mounted) feedProvider.markAsRead(item.id);
+            if (context.mounted) unawaited(feedProvider.markAsRead(item.id));
           });
         },
         child: Padding(
@@ -296,7 +366,7 @@ class _SwipeBackground extends StatelessWidget {
         ),
         child: AnimatedScale(
           scale: actionTriggered ? 1.2 : 1.0,
-          duration: const Duration(milliseconds: 150),
+          duration: motionDuration(context, const Duration(milliseconds: 150)),
           curve: Curves.easeOutBack,
           child: Icon(
             isSwipingRight
@@ -411,24 +481,30 @@ class _FeedItemThumbnail extends StatelessWidget {
         Positioned(
           bottom: -8,
           right: -8,
-          child: GestureDetector(
-            onTap: () => context.read<BookmarkProvider>().toggleBookmark(item),
-            behavior: HitTestBehavior.opaque,
-            child: Padding(
-              padding: const EdgeInsets.all(12),
-              child: Container(
-                width: 24,
-                height: 24,
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Icon(
-                  isBookmarked ? Icons.bookmark : Icons.bookmark_border,
-                  size: 14,
-                  color: isBookmarked
-                      ? colorScheme.primary
-                      : colorScheme.onSurface.withValues(alpha: 0.6),
+          child: Semantics(
+            label: isBookmarked
+                ? AppLocalizations.of(context).semanticRemoveBookmark
+                : AppLocalizations.of(context).semanticBookmark,
+            button: true,
+            child: GestureDetector(
+              onTap: () => unawaited(confirmBookmarkToggle(context, item)),
+              behavior: HitTestBehavior.opaque,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: BoxDecoration(
+                    color: colorScheme.surface.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Icon(
+                    isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+                    size: 14,
+                    color: isBookmarked
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
             ),
@@ -438,17 +514,20 @@ class _FeedItemThumbnail extends StatelessWidget {
           Positioned(
             top: 4,
             right: 4,
-            child: Container(
-              width: 20,
-              height: 20,
-              decoration: BoxDecoration(
-                color: colorScheme.surface.withValues(alpha: 0.85),
-                borderRadius: BorderRadius.circular(5),
-              ),
-              child: Icon(
-                Icons.offline_pin,
-                size: 12,
-                color: colorScheme.secondary.withValues(alpha: 0.7),
+            child: Semantics(
+              label: AppLocalizations.of(context).semanticOfflineCached,
+              child: Container(
+                width: 20,
+                height: 20,
+                decoration: BoxDecoration(
+                  color: colorScheme.surface.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Icon(
+                  Icons.offline_pin,
+                  size: 12,
+                  color: colorScheme.secondary.withValues(alpha: 0.7),
+                ),
               ),
             ),
           ),
@@ -600,7 +679,7 @@ class _FeedItemActions extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           _ActionIcon(
-            onTap: () => context.read<BookmarkProvider>().toggleBookmark(item),
+            onTap: () => unawaited(confirmBookmarkToggle(context, item)),
             icon: isBookmarked ? Icons.bookmark : Icons.bookmark_border,
             color: isBookmarked
                 ? colorScheme.primary

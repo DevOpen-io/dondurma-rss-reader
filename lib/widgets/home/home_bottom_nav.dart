@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/motion.dart';
+
 class NavBarItem extends StatelessWidget {
   const NavBarItem({
     super.key,
@@ -29,7 +31,10 @@ class NavBarItem extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
+              duration: motionDuration(
+                context,
+                const Duration(milliseconds: 200),
+              ),
               curve: Curves.easeInOut,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(

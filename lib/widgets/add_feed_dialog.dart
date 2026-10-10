@@ -7,6 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../utils/app_toast.dart';
+import '../utils/motion.dart';
 
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
@@ -407,7 +408,7 @@ class _UrlCard extends StatelessWidget {
     final borderWidth = focused || validationError != null ? 2.0 : 1.0;
 
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: motionDuration(context, const Duration(milliseconds: 200)),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
         color: cs.surfaceContainerHighest,
@@ -437,7 +438,10 @@ class _UrlCard extends StatelessWidget {
               const Spacer(),
               if (hasInput)
                 AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
+                  duration: motionDuration(
+                    context,
+                    const Duration(milliseconds: 180),
+                  ),
                   child: isValid
                       ? Icon(
                           Icons.check_circle_rounded,
@@ -669,7 +673,10 @@ class _CategorySheetState extends State<_CategorySheet> {
                 return GestureDetector(
                   onTap: () => widget.onSelect(cat),
                   child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 160),
+                    duration: motionDuration(
+                      context,
+                      const Duration(milliseconds: 160),
+                    ),
                     curve: Curves.easeOutCubic,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 14,
@@ -735,7 +742,10 @@ class _CategorySheetState extends State<_CategorySheet> {
 
           // New category input + add button
           AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
+            duration: motionDuration(
+              context,
+              const Duration(milliseconds: 200),
+            ),
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               color: cs.surfaceContainerHigh,
@@ -787,7 +797,10 @@ class _CategorySheetState extends State<_CategorySheet> {
                     builder: (_, val, _) {
                       final hasText = val.text.trim().isNotEmpty;
                       return AnimatedOpacity(
-                        duration: const Duration(milliseconds: 160),
+                        duration: motionDuration(
+                          context,
+                          const Duration(milliseconds: 160),
+                        ),
                         opacity: hasText ? 1.0 : 0.35,
                         child: FilledButton(
                           onPressed: hasText ? _submit : null,

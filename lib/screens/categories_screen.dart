@@ -555,7 +555,8 @@ class _FeedRow extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                   onTap: onNavigate,
                   child: Padding(
-                    padding: const EdgeInsets.all(8.0),
+                    // 16px icon + 16px padding = 48dp minimum touch target.
+                    padding: const EdgeInsets.all(16.0),
                     child: Icon(
                       Icons.chevron_right_rounded,
                       size: 16,

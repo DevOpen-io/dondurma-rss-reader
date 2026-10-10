@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -71,6 +72,39 @@ class BookmarkProvider extends ChangeNotifier {
     notifyListeners();
     // Fire-and-forget: persist bookmark states.
     _saveBookmarkStates();
+  }
+
+  /// Persistence seam so tests can simulate write failures without a real
+  /// Hive box (box writes cannot be forced to fail deterministically in
+  /// widget tests).
+  @visibleForTesting
+  Future<void> persistBookmarks() => _saveBookmarkStates();
+
+  /// Removes [item] from bookmarks, awaiting persistence.
+  ///
+  /// Returns `false` and restores the in-memory record if the write fails so
+  /// the article stays visibly bookmarked instead of silently rolling back.
+  Future<bool> removeBookmark(FeedItem item) async {
+    final index = _savedBookmarks.indexWhere((b) => b.id == item.id);
+    if (index < 0) return true;
+    final removed = _savedBookmarks.removeAt(index);
+    _bookmarkedItemIds.remove(item.id);
+    notifyListeners();
+    try {
+      await persistBookmarks();
+      return true;
+    } catch (_) {
+      // De-dupe in case the item was re-bookmarked while the write was in
+      // flight, then restore the record at its original position.
+      _savedBookmarks.removeWhere((b) => b.id == item.id);
+      _savedBookmarks.insert(index.clamp(0, _savedBookmarks.length), removed);
+      _bookmarkedItemIds.add(item.id);
+      notifyListeners();
+      // The failed write may have been partially applied (first put ok,
+      // second failed); converge disk with the restored state.
+      unawaited(persistBookmarks().catchError((_) {}));
+      return false;
+    }
   }
 
   /// Returns `true` if the article with [id] is bookmarked.

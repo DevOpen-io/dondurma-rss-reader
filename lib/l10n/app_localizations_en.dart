@@ -667,6 +667,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get semanticRemoveBookmark => 'Remove bookmark';
 
   @override
+  String get removeBookmarkTitle => 'Remove bookmark?';
+
+  @override
+  String get removeBookmarkConfirm =>
+      'Permanent protection will be removed. The last copy may no longer be available from the source; a normal temporary or shared copy may remain.';
+
+  @override
+  String get bookmarkRemoveFailed =>
+      'Couldn\'t remove the bookmark. Please try again.';
+
+  @override
   String get semanticArticleRead => 'Read article';
 
   @override

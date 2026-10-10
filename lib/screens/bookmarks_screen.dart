@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/bookmark_provider.dart';
+import '../providers/feed_provider.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/constrained_width.dart';
 
@@ -67,7 +68,18 @@ class BookmarksScreen extends StatelessWidget {
         ),
         itemCount: bookmarkedItems.length,
         itemBuilder: (context, index) {
-          return FeedListItem(item: bookmarkedItems[index]);
+          final item = bookmarkedItems[index];
+          // Bookmarks show the live read state — the stored JSON freezes
+          // isRead at save time, which would disagree with the feed list on
+          // the same record. A per-row Selector avoids rebuilding the whole
+          // list on every FeedProvider notify.
+          return Selector<FeedProvider, bool>(
+            selector: (_, feed) => feed.isRead(item.id),
+            builder: (_, isRead, _) => FeedListItem(
+              item: item.copyWith(isRead: isRead),
+              navigationItems: bookmarkedItems,
+            ),
+          );
         },
       ),
     );

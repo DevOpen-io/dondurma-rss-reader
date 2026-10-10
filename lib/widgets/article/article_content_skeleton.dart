@@ -13,11 +13,15 @@ class ArticleContentSkeleton extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Skeletonizer(
-          effect: ShimmerEffect(
-            baseColor: colorScheme.onSurface.withValues(alpha: 0.08),
-            highlightColor: colorScheme.onSurface.withValues(alpha: 0.15),
-            duration: const Duration(milliseconds: 1500),
-          ),
+          effect: MediaQuery.disableAnimationsOf(context)
+              ? SolidColorEffect(
+                  color: colorScheme.onSurface.withValues(alpha: 0.08),
+                )
+              : ShimmerEffect(
+                  baseColor: colorScheme.onSurface.withValues(alpha: 0.08),
+                  highlightColor: colorScheme.onSurface.withValues(alpha: 0.15),
+                  duration: const Duration(milliseconds: 1500),
+                ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -15,6 +15,7 @@ import '../widgets/home/feed_list_skeleton.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/constrained_width.dart';
+import '../utils/motion.dart';
 import 'categories_screen.dart';
 import 'bookmarks_screen.dart';
 import 'settings_screen.dart';
@@ -310,7 +311,7 @@ class _HomeScreenState extends State<HomeScreen> {
       extendBody: true,
       appBar: AppBar(
         title: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
+          duration: motionDuration(context, const Duration(milliseconds: 300)),
           transitionBuilder: (Widget child, Animation<double> animation) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -499,7 +500,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: AnimatedOpacity(
                           opacity: _selectedIndex <= 1 ? 1.0 : 0.0,
-                          duration: const Duration(milliseconds: 150),
+                          duration: motionDuration(
+                            context,
+                            const Duration(milliseconds: 150),
+                          ),
                           child: IgnorePointer(
                             ignoring: _selectedIndex > 1,
                             child: Tooltip(
@@ -511,8 +515,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ? _showAddFeedDialog
                                     : _showAddFolderDialog,
                                 child: Container(
-                                  width: 44,
-                                  height: 44,
+                                  width: 48,
+                                  height: 48,
                                   decoration: BoxDecoration(
                                     color: Theme.of(
                                       context,

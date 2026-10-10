@@ -13,16 +13,19 @@ class FeedListSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final baseColor = Theme.of(
+      context,
+    ).colorScheme.onSurface.withValues(alpha: 0.08);
     return Skeletonizer(
-      effect: ShimmerEffect(
-        baseColor: Theme.of(
-          context,
-        ).colorScheme.onSurface.withValues(alpha: 0.08),
-        highlightColor: Theme.of(
-          context,
-        ).colorScheme.onSurface.withValues(alpha: 0.15),
-        duration: const Duration(milliseconds: 1500),
-      ),
+      effect: MediaQuery.disableAnimationsOf(context)
+          ? SolidColorEffect(color: baseColor)
+          : ShimmerEffect(
+              baseColor: baseColor,
+              highlightColor: Theme.of(
+                context,
+              ).colorScheme.onSurface.withValues(alpha: 0.15),
+              duration: const Duration(milliseconds: 1500),
+            ),
       child: ListView.builder(
         physics: const NeverScrollableScrollPhysics(),
         shrinkWrap: true,

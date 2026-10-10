@@ -668,6 +668,17 @@ class AppLocalizationsTr extends AppLocalizations {
   String get semanticRemoveBookmark => 'Yer işaretini kaldır';
 
   @override
+  String get removeBookmarkTitle => 'Yer işareti kaldırılsın mı?';
+
+  @override
+  String get removeBookmarkConfirm =>
+      'Kalıcı koruma kalkar. Son kopya kaynakta artık bulunmayabilir; normal geçici veya ortak kopya kalabilir.';
+
+  @override
+  String get bookmarkRemoveFailed =>
+      'Yer işareti kaldırılamadı. Lütfen tekrar deneyin.';
+
+  @override
   String get semanticArticleRead => 'Okunmuş makale';
 
   @override

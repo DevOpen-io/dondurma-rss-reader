@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../utils/motion.dart';
 
 class FeedActionSheet extends StatelessWidget {
   const FeedActionSheet({
@@ -316,24 +317,29 @@ class _FullTextChip extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? colorScheme.primary
-              : colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
-          borderRadius: BorderRadius.circular(20),
-          border: isSelected
-              ? null
-              : Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        // Visual chip stays compact; the padded hit area reaches 48dp.
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: AnimatedContainer(
+          duration: motionDuration(context, const Duration(milliseconds: 200)),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? colorScheme.primary
+                : colorScheme.surfaceContainerHighest.withValues(alpha: 0.7),
+            borderRadius: BorderRadius.circular(20),
+            border: isSelected
+                ? null
+                : Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
+            ),
           ),
         ),
       ),

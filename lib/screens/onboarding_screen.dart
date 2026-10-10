@@ -9,6 +9,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../router/onboarding_state.dart';
+import '../utils/motion.dart';
 import '../widgets/constrained_width.dart';
 
 const _globalFeedsUrl =
@@ -80,6 +81,21 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
     _loadGlobalFeeds();
     _loadTrFeeds();
+  }
+
+  bool _motionPreferenceApplied = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_motionPreferenceApplied) return;
+    _motionPreferenceApplied = true;
+    // Reduced motion: skip the looping blob background and jump the entrance
+    // animation straight to its end state instead of animating content in.
+    if (MediaQuery.disableAnimationsOf(context)) {
+      _bgController.stop();
+      _entranceController.value = 1.0;
+    }
   }
 
   @override
@@ -538,7 +554,7 @@ class _CategoryChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
+        duration: motionDuration(context, const Duration(milliseconds: 200)),
         curve: Curves.easeInOut,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(

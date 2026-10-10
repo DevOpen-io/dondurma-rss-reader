@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
+import '../../utils/motion.dart';
 
 class ArticleReadingModeToggle extends StatelessWidget {
   final bool isFullText;
@@ -101,7 +102,8 @@ class _ModeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
+      duration: motionDuration(context, const Duration(milliseconds: 200)),
+      constraints: const BoxConstraints(minHeight: 48),
       decoration: BoxDecoration(
         color: isSelected
             ? colorScheme.primaryContainer
