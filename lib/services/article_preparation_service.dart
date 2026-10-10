@@ -74,9 +74,21 @@ class ArticlePreparationService {
   /// sweep already completed.
   Future<dynamic> _tail = Future<void>.value();
 
+  /// Registrations ride a second queue: each is a single atomic record
+  /// mutation, so it can't interleave destructively with a sweep — and a
+  /// multi-minute sweep must never stall membership reconciliation (#37),
+  /// which awaits every registration it issues.
+  Future<dynamic> _registerTail = Future<void>.value();
+
   Future<T> _enqueue<T>(Future<T> Function() work) {
     final result = _tail.then((_) => work());
     _tail = result.then((_) => null, onError: (_) => null);
+    return result;
+  }
+
+  Future<T> _enqueueRegister<T>(Future<T> Function() work) {
+    final result = _registerTail.then((_) => work());
+    _registerTail = result.then((_) => null, onError: (_) => null);
     return result;
   }
 
@@ -135,14 +147,23 @@ class ArticlePreparationService {
   ///
   /// Callers racing an un-bookmark (S5 tombstone) must re-check bookmark
   /// state before calling — a delayed register revives a deleted record.
-  Future<StoreWriteResult> registerArticle(FeedItem item, Set<String> owners) {
+  ///
+  /// [fullText] is the caller's effective extraction preference: `false`
+  /// means the RSS body is the final content — a still-pending or failed
+  /// extraction intent on an existing record is cancelled, never retried.
+  Future<StoreWriteResult> registerArticle(
+    FeedItem item,
+    Set<String> owners, {
+    bool fullText = true,
+  }) {
     if (owners.isEmpty) return Future.value(StoreWriteResult.rejected);
-    return _enqueue(() => _registerArticle(item, owners));
+    return _enqueueRegister(() => _registerArticle(item, owners, fullText));
   }
 
   Future<StoreWriteResult> _registerArticle(
     FeedItem item,
     Set<String> owners,
+    bool fullText,
   ) async {
     final imageUrls = <String>{
       if (item.imageUrl != null && item.imageUrl!.isNotEmpty) item.imageUrl!,
@@ -158,7 +179,10 @@ class ArticlePreparationService {
       title: item.title,
       siteName: item.siteName,
       body: item.content,
-      bodyState: item.link.isEmpty ? MediaState.ready : MediaState.pending,
+      bodyState: (item.link.isEmpty || !fullText)
+          ? MediaState.ready
+          : MediaState.pending,
+      bodySource: 'rss',
       publishedAt: item.pubDate,
       savedAt: _now().toUtc(),
       imageUrls: imageUrls,
@@ -167,14 +191,54 @@ class ArticlePreparationService {
     );
     return _records.mutate(item.id, (current) {
       if (current != null && !current.tombstoned) {
+        final mergedOwners = {...current.owners, ...owners};
         final mergedMedia = {...manifest, ...current.media};
-        final mergedImages = {...current.imageUrls, ...imageUrls}.toList();
+        final mergedImages = {...current.imageUrls, ...imageUrls};
+        // Extraction switched off → unfinished extraction intent (pending
+        // or failed-with-retry) settles on the RSS body. Switched back on →
+        // a ready record whose body was never extracted regains intent.
+        final nextBodyState = !fullText && current.bodyState != MediaState.ready
+            ? MediaState.ready
+            : fullText &&
+                  current.bodyState == MediaState.ready &&
+                  current.bodySource != 'extracted' &&
+                  current.link.isNotEmpty
+            ? MediaState.pending
+            : current.bodyState;
+        final nextTitle = (draft.title ?? '').isNotEmpty
+            ? draft.title
+            : current.title;
+        final nextPublishedAt = draft.publishedAt ?? current.publishedAt;
+        final nextBodySource = current.body == null && draft.body != null
+            ? 'rss'
+            : current.bodySource;
+        // Skip the locked file write when the merge is a no-op — reconcile
+        // re-registers every member each pass.
+        if (mergedOwners.length == current.owners.length &&
+            mergedMedia.length == current.media.length &&
+            mergedImages.length == current.imageUrls.length &&
+            nextBodyState == current.bodyState &&
+            (current.body != null || draft.body == null) &&
+            current.link.isNotEmpty &&
+            nextTitle == current.title &&
+            nextPublishedAt == current.publishedAt &&
+            nextBodySource == current.bodySource) {
+          return current;
+        }
         return current.copyWith(
-          owners: {...current.owners, ...owners},
+          owners: mergedOwners,
           media: mergedMedia,
-          imageUrls: mergedImages,
+          imageUrls: mergedImages.toList(),
           body: current.body == null ? () => draft.body : null,
+          bodySource: nextBodySource != current.bodySource
+              ? () => nextBodySource
+              : null,
           link: current.link.isEmpty ? draft.link : current.link,
+          title: nextTitle != current.title ? () => nextTitle : null,
+          publishedAt: nextPublishedAt != current.publishedAt
+              ? () => nextPublishedAt
+              : null,
+          bodyState: nextBodyState,
         );
       }
       if (current?.tombstoned == true) {
@@ -277,6 +341,7 @@ class ArticlePreparationService {
             return current.copyWith(
               body: () => html,
               bodyState: MediaState.ready,
+              bodySource: () => 'extracted',
               nextRetryAt: () => null,
               imageUrls: {...current.imageUrls, ...newImages}.toList(),
               media: mergedMedia,

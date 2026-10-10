@@ -84,6 +84,7 @@ class ArticleRecord {
     this.siteName,
     this.body,
     this.bodyState = MediaState.pending,
+    this.bodySource,
     this.publishedAt,
     this.savedAt,
     this.imageUrls = const [],
@@ -118,6 +119,7 @@ class ArticleRecord {
       bodyState:
           MediaState.values.asNameMap()[json['bodyState']] ??
           MediaState.pending,
+      bodySource: json['bodySource'] as String?,
       publishedAt: DateTime.tryParse(
         json['publishedAt'] as String? ?? '',
       )?.toUtc(),
@@ -150,6 +152,12 @@ class ArticleRecord {
   /// Best saved body — extracted full text when available, else the RSS body.
   final String? body;
   final MediaState bodyState;
+
+  /// Provenance of [body]: `'rss'` (feed body) or `'extracted'` (full-text
+  /// result). Lets a full-text preference flip re-pend only records whose
+  /// ready body was never extracted — absent in older records, where it
+  /// reads as `'rss'` and costs at most one re-extraction.
+  final String? bodySource;
   final DateTime? publishedAt;
   final DateTime? savedAt;
   final List<String> imageUrls;
@@ -178,6 +186,7 @@ class ArticleRecord {
     String? Function()? siteName,
     String? Function()? body,
     MediaState? bodyState,
+    String? Function()? bodySource,
     DateTime? Function()? publishedAt,
     DateTime? Function()? savedAt,
     List<String>? imageUrls,
@@ -195,6 +204,7 @@ class ArticleRecord {
     siteName: siteName != null ? siteName() : this.siteName,
     body: body != null ? body() : this.body,
     bodyState: bodyState ?? this.bodyState,
+    bodySource: bodySource != null ? bodySource() : this.bodySource,
     publishedAt: publishedAt != null ? publishedAt() : this.publishedAt,
     savedAt: savedAt != null ? savedAt() : this.savedAt,
     imageUrls: imageUrls ?? this.imageUrls,
@@ -214,6 +224,7 @@ class ArticleRecord {
     'siteName': siteName,
     'body': body,
     'bodyState': bodyState.name,
+    'bodySource': bodySource,
     'publishedAt': publishedAt?.toIso8601String(),
     'savedAt': savedAt?.toIso8601String(),
     'imageUrls': imageUrls,
@@ -478,6 +489,26 @@ class ArticleRecordStore {
     return raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
   }
 
+  /// Snapshot of every recorded first-observation time — one storage read
+  /// for callers that sort many candidates at once (temp-cache selection).
+  Future<Map<String, DateTime>> allFirstSeen() async {
+    try {
+      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
+      final seen = state['seen'] as Map;
+      final result = <String, DateTime>{};
+      for (final entry in seen.entries) {
+        final value = entry.value;
+        if (entry.key is String && value is String) {
+          final parsed = DateTime.tryParse(value);
+          if (parsed != null) result[entry.key as String] = parsed.toUtc();
+        }
+      }
+      return result;
+    } catch (_) {
+      return const {};
+    }
+  }
+
   Future<StoreWriteResult> deleteFirstSeen(String id) async {
     if (_norm(id).isEmpty) return StoreWriteResult.rejected;
     try {
@@ -493,6 +524,26 @@ class ArticleRecordStore {
       return result.acquired ? result.value! : StoreWriteResult.failed;
     } catch (_) {
       return StoreWriteResult.failed;
+    }
+  }
+
+  /// Wipes every record and observation stamp — the factory-reset path.
+  /// Orphaned media files left behind are the S5 sweep's job; the durable
+  /// claims that would resurrect or drive downloads are gone here.
+  Future<void> wipeAll() async {
+    try {
+      await _persistence.runExclusive(() async {
+        await _persistence.write(
+          jsonEncode({
+            'schema': schemaVersion,
+            'records': <String, dynamic>{},
+            'seen': <String, dynamic>{},
+          }),
+        );
+      });
+    } catch (_) {
+      // A reset that can't rewrite the store leaves stale claims — the next
+      // reconcile rewrites survivors anyway; never escalate to a crash.
     }
   }
 }

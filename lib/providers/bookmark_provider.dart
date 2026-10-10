@@ -32,6 +32,33 @@ class BookmarkProvider extends ChangeNotifier {
     _loadBookmarks();
   }
 
+  /// Durable records live on the feeds-box archive — the same file the
+  /// feed/background reconcilers share, so owner writes serialize globally.
+  ArticleRecordStore? _records;
+  ArticleRecordStore get _recordStore =>
+      _records ??= ArticleRecordStore.forBox(Hive.box('feeds'));
+
+  /// Drops the durable 'bookmark' claim after an un-bookmark. The bookmark
+  /// set is re-checked inside the store's locked mutation so a re-bookmark
+  /// racing this call can never lose its owner. The article itself stays —
+  /// other owners and content are S5's call.
+  void _stripBookmarkOwner(String id) {
+    unawaited(() async {
+      for (var attempt = 0; attempt < 2; attempt++) {
+        final result = await _recordStore.mutate(id, (current) {
+          if (current == null || _bookmarkedItemIds.contains(id)) {
+            return current;
+          }
+          final owners = {...current.owners}..remove('bookmark');
+          return owners.length == current.owners.length
+              ? current
+              : current.copyWith(owners: owners);
+        });
+        if (result != StoreWriteResult.failed) return;
+      }
+    }());
+  }
+
   void _loadBookmarks() {
     final String? bookmarkedItemsData = _box.get('bookmarkedItemsJson');
     if (bookmarkedItemsData != null) {
@@ -68,6 +95,7 @@ class BookmarkProvider extends ChangeNotifier {
     if (isPresent) {
       _bookmarkedItemIds.remove(id);
       _savedBookmarks.removeWhere((b) => b.id == id);
+      _stripBookmarkOwner(id);
     } else {
       _bookmarkedItemIds.add(id);
       final updatedItem = originalItem.copyWith(isBookmarked: true);
@@ -120,6 +148,7 @@ class BookmarkProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await persistBookmarks();
+      _stripBookmarkOwner(item.id);
       return true;
     } catch (_) {
       // De-dupe in case the item was re-bookmarked while the write was in

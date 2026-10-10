@@ -9,6 +9,7 @@ import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import 'article_preparation_service.dart';
 import 'article_record_store.dart';
+import 'temp_cache_membership.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'notification_delivery_policy.dart';
@@ -54,11 +55,40 @@ Future<void> registerBgFetch() async {
 Future<void> runBgFetch() async {
   try {
     await Hive.initFlutter();
-    await Future.wait([Hive.openBox('settings'), Hive.openBox('feeds')]);
+    await Future.wait([
+      Hive.openBox('settings'),
+      Hive.openBox('feeds'),
+      Hive.openBox('bookmarks'),
+    ]);
     await NotificationService.instance.init();
 
     final settingsBox = Hive.box('settings');
     final feedsBox = Hive.box('feeds');
+    // Read-only in this isolate — bookmark ids exclude articles from temp
+    // slots so a saved article never consumes a transient one (#37).
+    final bookmarksBox = Hive.box('bookmarks');
+    final bookmarkedIds =
+        (bookmarksBox.get('bookmarkedItemIds') as List<dynamic>?)
+            ?.cast<String>()
+            .toSet() ??
+        const <String>{};
+    // Bookmarked articles ride the transient snapshot uncounted — including
+    // ones whose feeds are no longer subscribed, which the merge below would
+    // otherwise evict (#37).
+    var bookmarkedItems = const <FeedItem>[];
+    try {
+      bookmarkedItems = <FeedItem>[
+        for (final entry
+            in (jsonDecode(
+                  bookmarksBox.get('bookmarkedItemsJson') as String? ?? '[]',
+                )
+                as List<dynamic>))
+          FeedItem.fromJson(entry as Map<String, dynamic>),
+      ];
+    } catch (_) {
+      // Malformed persisted bookmarks degrade to none rather than failing
+      // the whole background pass.
+    }
 
     debugPrint('[BG] task started');
 
@@ -169,7 +199,9 @@ Future<void> runBgFetch() async {
         feedsBox,
         settingsBox,
         merged,
-        subscriptions.map((sub) => sub.url),
+        subscriptions,
+        bookmarkedIds,
+        bookmarkedItems,
       );
       await WidgetUpdateService.updateFeedWidgets(persisted);
     }
@@ -226,23 +258,74 @@ Future<void> runBgFetch() async {
   }
 }
 
-/// Writes the freshly fetched items into the `'feeds'` box `cachedItemsJson`
-/// key, sorted newest-first and capped to the user's offline cache limit, using
-/// the same format [FeedProvider] reads on startup.
+/// Recomputes temp membership and persists the transient snapshot under the
+/// same contract as the foreground (#37): global newest-N unique,
+/// non-bookmarked, keyword-clean members; bookmarked items ride along
+/// uncounted so they stay browsable offline.
 Future<List<FeedItem>> _persistBgCache(
   Box feedsBox,
   Box settingsBox,
   List<FeedItem> items,
-  Iterable<String> subscribedFeedUrls,
+  List<FeedSubscription> subscriptions,
+  Set<String> bookmarkedIds,
+  List<FeedItem> bookmarkedItems,
 ) async {
   final int limit = settingsBox.get('offlineCacheLimit', defaultValue: 50);
-  if (limit == 0) return const []; // offline cache disabled
+  final autoFullText = settingsBox.get('autoFullText', defaultValue: false);
+  final globalKeywords =
+      (settingsBox.get('globalExcludedKeywords') as List<dynamic>?)
+          ?.cast<String>() ??
+      const <String>[];
 
-  final selected = FeedCachePolicy.fairTrim(
-    items: items,
-    subscribedFeedUrls: subscribedFeedUrls,
-    limit: limit,
+  final store = ArticleRecordStore.forBox(feedsBox);
+  final preparation = ArticlePreparationService(recordStore: store);
+  final membership = TempCacheMembership(
+    records: store,
+    preparation: preparation,
   );
+  // Fenced against a foreground cache wipe: the epoch key changes under
+  // clearCache/factoryReset, so a write started before the wipe must not
+  // land after it (the foreground's in-memory generation can't reach here).
+  final cacheEpoch = feedsBox.get(tempCacheEpochKey);
+
+  final Set<String> selectedIds;
+  try {
+    selectedIds = await membership.reconcile(
+      items: items,
+      bookmarkedIds: bookmarkedIds,
+      subscribedFeedUrls: subscriptions.map((s) => s.url),
+      globalKeywords: globalKeywords,
+      feedKeywordsMap: {
+        for (final sub in subscriptions)
+          if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
+      },
+      limit: limit,
+      fullTextFor: (feedUrl) {
+        for (final sub in subscriptions) {
+          if (sub.url == feedUrl) {
+            return sub.fullTextEnabled ?? autoFullText;
+          }
+        }
+        return autoFullText;
+      },
+    );
+  } finally {
+    preparation.dispose();
+  }
+
+  // Snapshot candidates = fresh merge plus bookmarked articles the merge
+  // dropped (unsubscribed feeds) — bookmarks ride along uncounted (#37).
+  final inMerge = items.map((e) => e.id).toSet();
+  final selected = [
+    for (final item in items)
+      if (selectedIds.contains(item.id) || bookmarkedIds.contains(item.id))
+        item,
+    for (final item in bookmarkedItems)
+      if (!inMerge.contains(item.id)) item,
+  ];
+  if (feedsBox.get(tempCacheEpochKey) != cacheEpoch) {
+    return selected; // a wipe landed mid-work — the snapshot stays dropped.
+  }
   final maps = selected.map((e) => e.toJson()).toList();
   await feedsBox.put('cachedItemsJson', jsonEncode(maps));
   return selected;

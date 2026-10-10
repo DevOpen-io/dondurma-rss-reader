@@ -63,34 +63,46 @@ Iterable<FeedItem> applyFeedFilters({
   return deduplicateByLink(filtered);
 }
 
+/// The dedup key used by [deduplicateByLink]: the normalized absolute
+/// http(s) link when usable, otherwise the item's own id — which can never
+/// collide across genuinely different articles. Junk links (`#`,
+/// `about:blank`, relative paths) fall back to the id path.
+String dedupeKey({required String? link, required String id}) {
+  var key = ArticleIdentity.normalizeArticleUrl(link);
+  if (key != null) {
+    final uri = Uri.tryParse(key);
+    if (uri == null ||
+        (uri.scheme != 'http' && uri.scheme != 'https') ||
+        uri.host.isEmpty) {
+      key = null;
+    }
+  }
+  return key ?? id;
+}
+
 /// Drops later items whose normalized article link was already yielded —
 /// the list arrives date-sorted, so the newest copy wins. Items with no
-/// usable link dedup on their own id, which can never collide. Junk links
-/// (`#`, `about:blank`, relative paths) are not absolute http(s) URLs, so
-/// they fall back to the id path rather than collapsing unrelated items.
+/// usable link dedup on their own id, which can never collide.
 Iterable<FeedItem> deduplicateByLink(Iterable<FeedItem> items) sync* {
   final seen = <String>{};
   for (final item in items) {
-    var key = ArticleIdentity.normalizeArticleUrl(item.link);
-    if (key != null) {
-      final uri = Uri.tryParse(key);
-      if (uri == null ||
-          (uri.scheme != 'http' && uri.scheme != 'https') ||
-          uri.host.isEmpty) {
-        key = null;
-      }
-    }
-    if (seen.add(key ?? item.id)) yield item;
+    if (seen.add(dedupeKey(link: item.link, id: item.id))) yield item;
   }
 }
 
-Iterable<FeedItem> _applyKeywordFilters(
-  Iterable<FeedItem> filtered, {
-  required List<String> globalKeywords,
-  required Map<String, List<String>> feedKeywordsMap,
-}) {
-  // Pre-compile global keyword patterns once
-  final globalPatterns = globalKeywords
+/// Pre-compiled permanent keyword exclusion (global + per-feed), usable
+/// outside the display pipeline — e.g. when cache candidates come from
+/// durable records rather than live [FeedItem]s (#37).
+class KeywordExcluder {
+  KeywordExcluder({
+    required List<String> globalKeywords,
+    required Map<String, List<String>> feedKeywordsMap,
+  }) : _globalPatterns = _compile(globalKeywords),
+       _feedPatternsMap = {
+         for (final e in feedKeywordsMap.entries) e.key: _compile(e.value),
+       };
+
+  static List<RegExp> _compile(List<String> keywords) => keywords
       .map(
         (kw) => RegExp(
           r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
@@ -99,38 +111,46 @@ Iterable<FeedItem> _applyKeywordFilters(
       )
       .toList();
 
-  // Pre-compile per-feed keyword patterns once
-  final Map<String, List<RegExp>> feedPatternsMap = {};
-  for (final entry in feedKeywordsMap.entries) {
-    feedPatternsMap[entry.key] = entry.value
-        .map(
-          (kw) => RegExp(
-            r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
-            caseSensitive: false,
-          ),
-        )
-        .toList();
-  }
+  final List<RegExp> _globalPatterns;
+  final Map<String, List<RegExp>> _feedPatternsMap;
 
-  return filtered.where((item) {
-    final feedPatterns = feedPatternsMap[item.feedUrl];
-    if (globalPatterns.isEmpty && feedPatterns == null) return true;
+  /// Whether [title]/[description] match a global or feed-scoped exclusion.
+  bool excludes({
+    required String title,
+    required String description,
+    required String feedUrl,
+  }) {
+    final feedPatterns = _feedPatternsMap[feedUrl];
+    if (_globalPatterns.isEmpty && feedPatterns == null) return false;
 
     bool matchesAny(List<RegExp> patterns) {
       for (final regex in patterns) {
-        if (regex.hasMatch(item.title) || regex.hasMatch(item.description)) {
+        if (regex.hasMatch(title) || regex.hasMatch(description)) {
           return true;
         }
       }
       return false;
     }
 
-    if (globalPatterns.isNotEmpty && matchesAny(globalPatterns)) {
-      return false;
-    }
-    if (feedPatterns != null && matchesAny(feedPatterns)) {
-      return false;
-    }
-    return true;
-  });
+    return (_globalPatterns.isNotEmpty && matchesAny(_globalPatterns)) ||
+        (feedPatterns != null && matchesAny(feedPatterns));
+  }
+}
+
+Iterable<FeedItem> _applyKeywordFilters(
+  Iterable<FeedItem> filtered, {
+  required List<String> globalKeywords,
+  required Map<String, List<String>> feedKeywordsMap,
+}) {
+  final excluder = KeywordExcluder(
+    globalKeywords: globalKeywords,
+    feedKeywordsMap: feedKeywordsMap,
+  );
+  return filtered.where(
+    (item) => !excluder.excludes(
+      title: item.title,
+      description: item.description,
+      feedUrl: item.feedUrl,
+    ),
+  );
 }

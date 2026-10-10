@@ -12,12 +12,14 @@ import 'package:html/parser.dart' show parse;
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
-import '../services/feed_cache_policy.dart';
+import '../services/article_identity.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
 import '../services/feed_refresh.dart';
 import '../services/article_preparation_service.dart';
+import '../services/article_record_store.dart';
+import '../services/temp_cache_membership.dart';
 import '../services/feed_service.dart';
 import '../services/full_text_extraction_service.dart';
 import '../services/image_cache_service.dart';
@@ -116,6 +118,7 @@ class FeedProvider extends ChangeNotifier {
   List<String>? _lastGlobalKeywords;
   Map<String, List<String>>? _lastFeedKeywords;
   Set<String>? _lastBookmarkIds;
+  Map<String, bool?>? _knownFullTextPrefs;
 
   /// Memoized unread tallies powering the drawer badges. Rebuilt lazily from
   /// [_items] + [_readItemIds] and invalidated alongside the filter cache, so
@@ -232,6 +235,10 @@ class FeedProvider extends ChangeNotifier {
     // Snapshot sync settings before overwrite to decide if timer needs reset.
     final int prevInterval = settingsProvider?.cacheIntervalSeconds ?? -1;
     final bool prevSync = settingsProvider?.syncBackground ?? false;
+    // Cache-membership inputs (#37): a change here must recompute selection
+    // immediately — no network wait — so snapshot them for comparison.
+    final int prevCacheLimit = settingsProvider?.offlineCacheLimit ?? -1;
+    final bool prevAutoFullText = settingsProvider?.autoFullText ?? false;
 
     subscriptionProvider = sub;
     settingsProvider = set;
@@ -266,6 +273,15 @@ class FeedProvider extends ChangeNotifier {
     );
     _knownSubscriptionUrls = Set.unmodifiable(currentUrls);
 
+    // A same-URL tri-state flip (on/off/follow-global) changes each feed's
+    // effective extraction preference — a membership input (#37) that the
+    // URL-set comparison above cannot see.
+    final nextFullText = <String, bool?>{
+      for (final s in sub.subscriptions) s.url: s.fullTextEnabled,
+    };
+    final fullTextPrefsChanged = !mapEquals(_knownFullTextPrefs, nextFullText);
+    _knownFullTextPrefs = nextFullText;
+
     if (isFirstUpdate) {
       refreshAll();
       _manageCacheTimer();
@@ -285,6 +301,19 @@ class FeedProvider extends ChangeNotifier {
         prevSync != set.syncBackground;
     if (timerSettingsChanged) {
       _manageCacheTimer();
+    }
+
+    // Membership inputs changed (limit, keywords, bookmark set, full-text
+    // preference, subscriptions) → recompute temp membership + snapshot now,
+    // without waiting for a network pass (#37). Runs through the serialized
+    // save chain so it can't interleave with an in-flight refresh write.
+    // (isFirstUpdate already returned above.)
+    if (inputsChanged ||
+        subscriptionsChanged ||
+        fullTextPrefsChanged ||
+        prevCacheLimit != set.offlineCacheLimit ||
+        prevAutoFullText != set.autoFullText) {
+      _saveCachedItems().ignore();
     }
 
     // If subscriptions were added/removed, kick off a fresh fetch.
@@ -885,8 +914,11 @@ class FeedProvider extends ChangeNotifier {
     }
     _hasLoadedOnce = true;
 
-    // Only persist a new cache snapshot when a feed actually returned new data.
-    if (result.anyFreshBody) {
+    // Persist a new cache snapshot when a feed returned new data — and once
+    // unconditionally, so the durable owner layer bootstraps even when the
+    // very first pass is all-304 or fully offline (#37).
+    if (result.anyFreshBody || _needsInitialReconcile) {
+      _needsInitialReconcile = false;
       await _saveCachedItems();
     }
 
@@ -1115,10 +1147,19 @@ class FeedProvider extends ChangeNotifier {
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
 
+  /// True until the first refresh completes one membership pass — an
+  /// all-304/offline first load must still establish durable owners.
+  bool _needsInitialReconcile = true;
+
   /// Bumped by cache-clearing operations ([clearCache], [factoryReset]) so an
   /// in-flight [cachedItemsJson] write started before the reset cannot land
   /// its stale snapshot after the delete.
   int _cacheGeneration = 0;
+
+  Future<void> _bumpCacheEpoch() => _box.put(
+    tempCacheEpochKey,
+    DateTime.now().toUtc().microsecondsSinceEpoch,
+  );
 
   Future<void> _saveCachedItems() {
     final run = _saveChain.then((_) => _writeCachedItems());
@@ -1127,28 +1168,83 @@ class FeedProvider extends ChangeNotifier {
     return run;
   }
 
+  /// Lazily-built temp membership reconciler — shares this provider's
+  /// preparation service so registration rides the same op queue.
+  TempCacheMembership? _tempMembership;
+
+  TempCacheMembership get _membership =>
+      _tempMembership ??= TempCacheMembership(
+        records: ArticleRecordStore.forBox(_box),
+        preparation: _preparation,
+      );
+
+  /// Recomputes temp membership per #37 and persists the transient item
+  /// cache. Membership changes happen here — not at download time — so an
+  /// N change or keyword edit takes effect without waiting for a refresh.
   Future<void> _writeCachedItems() async {
-    if (settingsProvider == null) return;
-    final int limit = settingsProvider!.offlineCacheLimit;
-
-    // offlineCacheLimit == 0 means "no offline cache"
-    if (limit == 0) return;
-
+    // Wait out the startup load: an update()-triggered save reconciling an
+    // empty _items would strip every owner and write '[]' over the still-
+    // unread persisted snapshot.
+    await _initialization;
+    final settings = settingsProvider;
     final subscriptions = subscriptionProvider;
-    if (subscriptions == null) return;
-    final itemsToCache = FeedCachePolicy.fairTrim(
-      items: _items,
-      subscribedFeedUrls: subscriptions.subscriptions.map((sub) => sub.url),
+    final bookmarks = bookmarkProvider;
+    if (settings == null || subscriptions == null || bookmarks == null) {
+      return;
+    }
+    // Fenced BEFORE the reconcile awaits: a clearCache/factoryReset landing
+    // mid-write must void both the badge ids and the file write below —
+    // capturing the generation later would let a pre-clear snapshot
+    // resurrect the wiped cache.
+    final generation = _cacheGeneration;
+    final int limit = settings.offlineCacheLimit;
+    final bookmarkedIds = bookmarks.bookmarkedItemIds;
+    final items = List<FeedItem>.of(_items);
+
+    final selectedIds = await _membership.reconcile(
+      items: items,
+      bookmarkedIds: bookmarkedIds,
+      subscribedFeedUrls: subscriptions.subscriptions.map((s) => s.url),
+      globalKeywords: settings.globalExcludedKeywords,
+      feedKeywordsMap: {
+        for (final sub in subscriptions.subscriptions)
+          if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
+      },
       limit: limit,
+      fullTextFor: (feedUrl) {
+        for (final sub in subscriptions.subscriptions) {
+          if (sub.url == feedUrl) {
+            return sub.fullTextEnabled ?? settings.autoFullText;
+          }
+        }
+        return settings.autoFullText;
+      },
     );
-    _cachedItemIds = itemsToCache.map((e) => e.id).toSet();
+    if (generation != _cacheGeneration) return;
+    String canon(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
+    // Snapshot membership = selected temp members (canon ids) plus bookmarked
+    // items still present — same semantic the load path restores at startup.
+    _cachedItemIds = {
+      for (final item in items)
+        if (selectedIds.contains(canon(item.id)) ||
+            bookmarkedIds.contains(item.id))
+          item.id,
+    };
     // No notifyListeners() here — cachedItemIds is only used for badge display
     // and the next normal rebuild will pick it up, avoiding an unnecessary
     // full widget tree rebuild during a background write.
 
+    // The transient snapshot = selected members plus bookmarked items
+    // (bookmarks never consume a temp slot but must stay browsable offline).
+    final itemsToCache = [
+      for (final item in items)
+        if (selectedIds.contains(canon(item.id)) ||
+            bookmarkedIds.contains(item.id))
+          item,
+    ];
+
     // Encode JSON in a background isolate — avoids blocking scroll/animation
     // while serializing potentially hundreds of items.
-    final generation = _cacheGeneration;
     final maps = itemsToCache.map((e) => e.toJson()).toList();
     final String encodedData = await compute(_encodeCachedItems, maps);
     // A reset landed while encoding — dropping the write preserves the wipe.
@@ -1156,11 +1252,32 @@ class FeedProvider extends ChangeNotifier {
     await _box.put('cachedItemsJson', encodedData);
   }
 
-  /// Clears all cached offline articles.
+  /// Clears all cached offline articles — temp membership included (#40):
+  /// records keep other owners and contents; S5 decides physical cleanup.
   Future<void> clearCache() async {
     _cacheGeneration++;
     _cachedItemIds.clear();
     await _box.delete('cachedItemsJson');
+    await _bumpCacheEpoch();
+    final subscriptions = subscriptionProvider;
+    if (subscriptions != null) {
+      // The strip rides the save chain: an in-flight write's step-4
+      // registrations must finish BEFORE owners are removed, or a queued
+      // registerArticle would resurrect the owner the strip just dropped.
+      final run = _saveChain.then(
+        (_) => _membership.reconcile(
+          items: const [],
+          bookmarkedIds: const {},
+          subscribedFeedUrls: subscriptions.subscriptions.map((s) => s.url),
+          globalKeywords: const [],
+          feedKeywordsMap: const {},
+          limit: 0,
+          fullTextFor: (_) => false,
+        ),
+      );
+      _saveChain = run.catchError((_) => <String>{});
+      await run.catchError((_) => <String>{});
+    }
     notifyListeners();
   }
 
@@ -1183,7 +1300,12 @@ class FeedProvider extends ChangeNotifier {
     _lastNotificationTime = null;
 
     _cacheGeneration++;
+    await _bumpCacheEpoch(); // fence bg writers before the wipe…
     await _box.clear();
+    await _bumpCacheEpoch(); // …and after — clear() erased the first bump.
+    // Records + firstSeen live in a sidecar file outside the box — reset
+    // must drop durable claims too, or ghost owners keep driving downloads.
+    await ArticleRecordStore.forBox(_box).wipeAll();
     _invalidateFilterCache();
     notifyListeners();
   }

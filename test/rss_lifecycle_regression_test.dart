@@ -12,8 +12,8 @@ import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
-import 'package:ice_cream_rss_reader/services/feed_cache_policy.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
 
@@ -186,6 +186,9 @@ void main() {
     await Hive.box('settings').clear();
     await Hive.box('feeds').clear();
     await Hive.box('bookmarks').clear();
+    // The durable record/seen sidecar lives outside the boxes — wipe it too,
+    // or members from earlier tests would leak slots into this one.
+    await ArticleRecordStore.forBox(Hive.box('feeds')).wipeAll();
     await Hive.box('settings').put('syncBackground', false);
     await Hive.box('settings').put('offlineCacheLimit', 50);
     server = await _FeedServer.start();
@@ -635,8 +638,11 @@ void main() {
   });
 
   test(
-    'offline cache limit uses deterministic round-robin across feeds',
+    'offline cache limit selects the globally newest items across feeds',
     () async {
+      // #37: no per-feed fair share — the limit is the newest N unique
+      // articles globally, so a busier feed can hold more slots and the
+      // oldest candidates drop regardless of source.
       await Hive.box('settings').put('offlineCacheLimit', 6);
       final aUrl = server.url('/fair-a.xml');
       final bUrl = server.url('/fair-b.xml');
@@ -646,60 +652,26 @@ void main() {
         FeedSubscription(url: bUrl, name: 'B', category: 'Test'),
         FeedSubscription(url: cUrl, name: 'C', category: 'Test'),
       ]);
-      server.handlers['/fair-a.xml'] = (request) => _respond200(
-        request,
-        _rss('A', ['a1', 'a2', 'a3', 'a4', 'a5', 'a6'], hour: 12),
-      );
+      server.handlers['/fair-a.xml'] = (request) =>
+          _respond200(request, _rss('A', ['a1', 'a2', 'a3'], hour: 12));
       server.handlers['/fair-b.xml'] = (request) =>
-          _respond200(request, _rss('B', ['b1', 'b2'], hour: 10));
+          _respond200(request, _rss('B', ['b1', 'b2'], hour: 11));
       server.handlers['/fair-c.xml'] = (request) =>
-          _respond200(request, _rss('C', ['c1', 'c2'], hour: 8));
+          _respond200(request, _rss('C', ['c1', 'c2'], hour: 10));
 
       final providers = _providers();
       await _waitForRefresh(providers.feed);
 
+      // Seven candidates, six slots: only the globally oldest (c2) drops.
       expect(_persistedItems().map((item) => item.id).toList(), <String>[
         'a1',
-        'b1',
-        'c1',
         'a2',
+        'a3',
+        'b1',
         'b2',
-        'c2',
+        'c1',
       ]);
       providers.feed.dispose();
-    },
-  );
-
-  test(
-    'fair cache trim fills unused rounds without exceeding global limit',
-    () {
-      const a = 'https://a.test/rss';
-      const b = 'https://b.test/rss';
-      const c = 'https://c.test/rss';
-      final base = DateTime.utc(2026, 8, 26, 12);
-      final selected = FeedCachePolicy.fairTrim(
-        items: [
-          _item(b, 'b4', date: base.subtract(const Duration(minutes: 4))),
-          _item(c, 'c2', date: base.subtract(const Duration(minutes: 2))),
-          _item(a, 'a1', date: base),
-          _item(b, 'b2', date: base.subtract(const Duration(minutes: 2))),
-          _item(c, 'c1', date: base),
-          _item(b, 'b1', date: base),
-          _item(b, 'b3', date: base.subtract(const Duration(minutes: 3))),
-        ],
-        subscribedFeedUrls: const [a, b, c],
-        limit: 6,
-      );
-
-      expect(selected.map((item) => item.id), [
-        'a1',
-        'b1',
-        'c1',
-        'b2',
-        'c2',
-        'b3',
-      ]);
-      expect(selected, hasLength(6));
     },
   );
 
@@ -823,9 +795,11 @@ void main() {
       expect(find(ftUrl).content, isNot(contains('article body text')));
       // Persisted inside cachedItemsJson so it survives a restart.
       await _waitUntil(
-        () => _persistedItems()
-            .singleWhere((item) => item.feedUrl == ftUrl)
-            .prefetchedFullText != null,
+        () =>
+            _persistedItems()
+                .singleWhere((item) => item.feedUrl == ftUrl)
+                .prefetchedFullText !=
+            null,
       );
       expect(
         _persistedItems()
@@ -969,5 +943,27 @@ void main() {
     await _waitForRefresh(providers2.feed);
     expect(providers2.feed.lastSyncTime, isNotNull);
     providers2.feed.dispose();
+  });
+
+  test('un-bookmark strips the durable bookmark owner', () async {
+    final store = ArticleRecordStore.forBox(Hive.box('feeds'));
+    final url = server.url('/bm-strip.xml');
+    final item = _item(url, 'b1');
+    await store.write(
+      ArticleRecord(id: 'b1', feedUrl: url, owners: const {'bookmark'}),
+    );
+
+    final bookmarks = BookmarkProvider();
+    bookmarks.toggleBookmark(item); // add
+    await _waitUntil(() => bookmarks.isBookmarked('b1'));
+    bookmarks.toggleBookmark(item); // remove → owner strip is unawaited
+    final deadline = DateTime.now().add(const Duration(seconds: 4));
+    ArticleRecord? record;
+    do {
+      record = await store.read('b1');
+      if (record == null || !record.owners.contains('bookmark')) break;
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    } while (DateTime.now().isBefore(deadline));
+    expect(record?.owners ?? const <String>{}, isNot(contains('bookmark')));
   });
 }
