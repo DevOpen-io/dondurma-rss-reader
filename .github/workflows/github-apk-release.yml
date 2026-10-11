@@ -1,0 +1,159 @@
+# GitHub APK distribution is separate from v* store-submission tags.
+name: Publish GitHub APK
+
+on:
+  workflow_run:
+    workflows: ['CI and store releases']
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-apk-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' && github.event.workflow_run.head_branch == 'main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      ANDROID_KEYSTORE_PATH: /tmp/dondurma-upload.jks
+    steps:
+      - name: Checkout exactly the commit that passed CI
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Skip superseded main commits
+        id: current
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin main
+          if [[ "$(git rev-parse FETCH_HEAD)" == "$TESTED_SHA" ]]; then
+            echo 'publish=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'publish=false' >> "$GITHUB_OUTPUT"
+            echo "Skipping older CI commit $TESTED_SHA: main has moved." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Read version and build from pubspec.yaml
+        id: version
+        if: steps.current.outputs.publish == 'true'
+        run: |
+          ruby <<'RUBY'
+          source = File.read('pubspec.yaml')
+          match = source.match(/^version:\s*([0-9]+\.[0-9]+\.[0-9]+)\+([1-9][0-9]*)\s*$/)
+          abort 'pubspec.yaml must contain version: MAJOR.MINOR.PATCH+POSITIVE_BUILD' unless match
+          version, build = match.captures
+          abort 'Android build number exceeds limit' if build.to_i > 2_100_000_000
+          File.open(ENV.fetch('GITHUB_OUTPUT'), 'a') do |f|
+            f.puts "version=#{version}", "build=#{build}"
+          end
+          puts "GitHub APK version: #{version}+#{build}"
+          RUBY
+
+      - name: Set up Java
+        if: steps.current.outputs.publish == 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        if: steps.current.outputs.publish == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.47.4'
+          channel: stable
+          cache: true
+
+      - name: Restore Android upload keystore
+        if: steps.current.outputs.publish == 'true'
+        run: |
+          set -euo pipefail
+          for key in ANDROID_KEYSTORE_BASE64 ANDROID_KEYSTORE_PASSWORD ANDROID_KEY_ALIAS ANDROID_KEY_PASSWORD; do
+            if [[ -z "${!key:-}" ]]; then
+              echo "::error::Missing $key repository secret; signed GitHub APK cannot be built."
+              exit 1
+            fi
+          done
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$ANDROID_KEYSTORE_PATH"
+          chmod 600 "$ANDROID_KEYSTORE_PATH"
+          keytool -list -keystore "$ANDROID_KEYSTORE_PATH" -alias "$ANDROID_KEY_ALIAS" -storepass:env ANDROID_KEYSTORE_PASSWORD >/dev/null
+
+      - name: Build signed APK using pubspec version
+        if: steps.current.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+        run: |
+          set -euo pipefail
+          flutter pub get --enforce-lockfile
+          flutter build apk --release --no-tree-shake-icons --build-name="$VERSION" --build-number="$BUILD"
+
+      - name: Verify APK signing certificate
+        if: steps.current.outputs.publish == 'true'
+        run: |
+          set -euo pipefail
+          keytool -exportcert -keystore "$ANDROID_KEYSTORE_PATH" -alias "$ANDROID_KEY_ALIAS" \
+            -storepass:env ANDROID_KEYSTORE_PASSWORD -file "$RUNNER_TEMP/dondurma-upload.der" >/dev/null
+          expected=$(openssl x509 -inform DER -in "$RUNNER_TEMP/dondurma-upload.der" -noout -fingerprint -sha256 | cut -d= -f2 | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          apksigner=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$apksigner" verify --print-certs build/app/outputs/flutter-apk/app-release.apk > "$RUNNER_TEMP/dondurma-apk-verification.txt"
+          grep -qi "certificate SHA-256 digest: $expected" "$RUNNER_TEMP/dondurma-apk-verification.txt"
+
+      - name: Stage versioned APK
+        if: steps.current.outputs.publish == 'true'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          BUILD: ${{ steps.version.outputs.build }}
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          short_sha="${TESTED_SHA:0:7}"
+          filename="Dondurma-v${VERSION}+${BUILD}-${short_sha}.apk"
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/$filename"
+          echo "Signed GitHub APK: $filename" >> "$GITHUB_STEP_SUMMARY"
+          sha256sum "dist/$filename" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Archive APK in Actions
+        if: steps.current.outputs.publish == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: github-release-apk
+          path: dist/*.apk
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        if: steps.current.outputs.publish == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          # Prefix apk- avoids starting the existing store workflow's v* tag trigger.
+          tag_name: apk-v${{ steps.version.outputs.version }}+${{ steps.version.outputs.build }}-ci${{ github.event.workflow_run.run_number }}
+          target_commitish: ${{ github.event.workflow_run.head_sha }}
+          name: Dondurma v${{ steps.version.outputs.version }}+${{ steps.version.outputs.build }} (GitHub APK)
+          body: |
+            Signed Android APK built from CI-tested commit ${{ github.event.workflow_run.head_sha }}.
+            Version and build number are read from pubspec.yaml.
+            GitHub distribution only; no Google Play or App Store submission.
+          generate_release_notes: true
+          make_latest: true
+          files: dist/*.apk
+          fail_on_unmatched_files: true
+
+      - name: Remove temporary signing credentials
+        if: always()
+        run: |
+          rm -f "$ANDROID_KEYSTORE_PATH" "$RUNNER_TEMP/dondurma-upload.der" "$RUNNER_TEMP/dondurma-apk-verification.txt"
