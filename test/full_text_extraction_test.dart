@@ -1,6 +1,8 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
+import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/full_text_extraction_service.dart';
 
 /// Transient-vs-permanent failure classification in
@@ -40,6 +42,7 @@ void main() {
     handlers.clear();
     FullTextExtractionService.debugClearSession();
     FullTextExtractionService.transientFailureTtl = const Duration(minutes: 5);
+    FullTextExtractionService.instance.backoff = null;
   });
 
   test('404 marks the URL permanently failed — no second request', () async {
@@ -169,6 +172,78 @@ void main() {
       isNull,
     );
     expect(counts['/dated'], 1);
+  });
+
+  group('shared feed backoff', () {
+    FeedFetchException rateLimit({DateTime? retryAfter}) => FeedFetchException(
+      FeedFetchErrorKind.httpStatus,
+      'status 429',
+      retryAfter: retryAfter,
+      statusCode: 429,
+    );
+
+    test('a host cooldown learned by feed refresh blocks extraction', () async {
+      handlers['/art'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write('<html><body>never fetched</body></html>');
+      };
+      // The RSS feed on the same host was rate-limited — the article URL
+      // must not be hit while the shared cooldown is active.
+      final backoff = FeedBackoff()
+        ..recordFailure(url('/feed.xml'), rateLimit(), DateTime.now());
+      FullTextExtractionService.instance.backoff = backoff;
+
+      expect(
+        await FullTextExtractionService.instance.extractFullText(url('/art')),
+        isNull,
+      );
+      expect(counts['/art'], isNull); // zero HTTP requests
+    });
+
+    test('forceRefresh bypasses a local host estimate but honors a server '
+        'mandate', () async {
+      handlers['/art'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(
+          '<html><body><article>'
+          '<p>${'enough text to extract. ' * 40}</p>'
+          '</article></body></html>',
+        );
+      };
+      // Local estimate (no Retry-After): a manual retry may bypass it.
+      final local = FeedBackoff()
+        ..recordFailure(url('/feed.xml'), rateLimit(), DateTime.now());
+      FullTextExtractionService.instance.backoff = local;
+      expect(
+        await FullTextExtractionService.instance.extractFullText(
+          url('/art'),
+          forceRefresh: true,
+        ),
+        isNotNull,
+      );
+      expect(counts['/art'], 1);
+
+      // Server-mandated host cooldown: forceRefresh must still wait.
+      FullTextExtractionService.debugClearSession();
+      counts.clear();
+      final mandated = FeedBackoff()
+        ..recordFailure(
+          url('/feed.xml'),
+          rateLimit(
+            retryAfter: DateTime.now().add(const Duration(minutes: 10)),
+          ),
+          DateTime.now(),
+        );
+      FullTextExtractionService.instance.backoff = mandated;
+      expect(
+        await FullTextExtractionService.instance.extractFullText(
+          url('/art'),
+          forceRefresh: true,
+        ),
+        isNull,
+      );
+      expect(counts['/art'], isNull);
+    });
   });
 
   test('a page with no extractable content is a permanent failure', () async {

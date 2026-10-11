@@ -282,14 +282,16 @@ class FeedProvider extends ChangeNotifier {
     ArticlePreparationService? preparation,
   }) : _ownsPreparation = preparation == null {
     _preparation =
-        preparation ?? ArticlePreparationService(hostPacer: _hostPacer);
+        preparation ??
+        ArticlePreparationService(hostPacer: _hostPacer, backoff: _feedBackoff);
     _observedArticleStore =
         observedArticleStore ?? ObservedArticleStore.forBox(_box);
-    // One pacing schedule per isolate: feed fetches, full-text
-    // extraction, and media downloads to the same host all serialize
-    // through it, so a burst at one origin is impossible regardless of
-    // which service initiates the request.
+    // One pacing schedule and one cooldown policy per isolate: feed
+    // fetches, full-text extraction, and media downloads to the same
+    // host all serialize through the pacer and respect the same
+    // rate-limit records.
     FullTextExtractionService.instance.pacer = _hostPacer;
+    FullTextExtractionService.instance.backoff = _feedBackoff;
     _refresher = FeedRefresher(
       feedService: _feedService,
       observedArticleStore: _observedArticleStore,

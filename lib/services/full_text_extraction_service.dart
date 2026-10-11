@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show compute;
 
 import '../utils/host_pacer.dart';
 import '../utils/retry_after.dart';
+import 'feed_backoff.dart';
 import 'package:flutter/material.dart' hide Element;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
@@ -55,6 +56,12 @@ class FullTextExtractionService {
   /// wired by the owning provider. Falls back to a private pacer so the
   /// service still works standalone (tests, direct use).
   HostPacer pacer = HostPacer(minGap: const Duration(seconds: 1));
+
+  /// Shared rate-limit policy — a host cooldown learned by feed refresh
+  /// (e.g. a Reddit 429) must also hold article fetches back. Assigned
+  /// by the owning provider / background runner; null means extraction
+  /// only honors its own failure tracking.
+  FeedBackoff? backoff;
 
   // Failure cache — remembers URLs where extraction failed so we don't
   // waste bandwidth retrying on every article open. Transient failures
@@ -166,6 +173,15 @@ class FullTextExtractionService {
     // Skip inside a failure cooldown — a forced retry bypasses the local
     // heuristic TTL, but a server-issued Retry-After wait still applies.
     if (forceRefresh ? _inServerCooldown(url) : hasFailedAttempt(url)) {
+      return null;
+    }
+    // Skip inside the shared host cooldown — same rule: a manual retry
+    // may bypass a local estimate, never a server-issued mandate.
+    final b = backoff;
+    if (b != null &&
+        (forceRefresh
+            ? b.isMandatedBackedOff(url, DateTime.now())
+            : b.isBackedOff(url, DateTime.now()))) {
       return null;
     }
 

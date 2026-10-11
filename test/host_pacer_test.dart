@@ -52,4 +52,22 @@ void main() {
     ]);
     expect(sw.elapsedMilliseconds, lessThan(60));
   });
+
+  test('equivalent host spellings share one pacing bucket', () async {
+    final pacer = HostPacer(minGap: const Duration(milliseconds: 60));
+    final sw = Stopwatch()..start();
+
+    // www.reddit.com and reddit.com answer to the same rate limiter —
+    // they must serialize through one bucket, not race as two hosts.
+    await Future.wait([
+      pacer.pace('https://www.reddit.com/r/a/.rss'),
+      pacer.pace('https://reddit.com/r/b/.rss'),
+    ]);
+    expect(sw.elapsedMilliseconds, greaterThanOrEqualTo(55));
+
+    // …but a genuinely different host stays independent.
+    final sw2 = Stopwatch()..start();
+    await pacer.pace('https://old.reddit.com/r/c/.rss');
+    expect(sw2.elapsedMilliseconds, lessThan(60));
+  });
 }

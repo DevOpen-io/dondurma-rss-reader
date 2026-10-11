@@ -12,6 +12,8 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
+import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
+import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
 
 void main() {
@@ -63,6 +65,7 @@ void main() {
     http_testing.MockClient? client,
     Future<String?> Function(String url)? extract,
     Duration? minHostGap,
+    FeedBackoff? backoff,
   }) => ArticlePreparationService(
     recordStore: newStore(),
     mediaStore: ArticleMediaStore(root: mediaDir),
@@ -70,6 +73,7 @@ void main() {
         client ?? http_testing.MockClient((_) async => http.Response('', 404)),
     extractFullText: extract,
     minHostGap: minHostGap ?? Duration.zero,
+    backoff: backoff,
   );
 
   group('registerArticle', () {
@@ -308,6 +312,124 @@ void main() {
     test('a missing record is a no-op', () async {
       expect(await service().prepareArticle('ghost'), 0);
     });
+
+    test('a host cooldown learned by feed refresh skips extraction and '
+        'media without counting failures; the RSS body stays', () async {
+      var extractCalls = 0;
+      var httpCalls = 0;
+      final client = http_testing.MockClient((_) async {
+        httpCalls++;
+        return http.Response('x', 200);
+      });
+      // The RSS feed on this origin was rate-limited — article body
+      // extraction and image downloads on the same host must wait out
+      // the shared cooldown instead of piling on.
+      final backoff = FeedBackoff()
+        ..recordFailure(
+          'https://example.com/feed.xml',
+          FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'status 429',
+            statusCode: 429,
+          ),
+          DateTime.now(),
+        );
+      final svc = service(
+        client: client,
+        extract: (_) async {
+          extractCalls++;
+          return '<p>ok</p>';
+        },
+        backoff: backoff,
+      );
+      await svc.registerArticle(
+        item(imageUrl: 'https://example.com/a.png', content: '<p>rss body</p>'),
+        const {'bookmark'},
+      );
+      await svc.preparePending(unmetered: true);
+
+      expect(extractCalls, 0); // extraction skipped
+      expect(httpCalls, 0); // media download skipped
+      final record = (await newStore().read('art-1'))!;
+      // Nothing was attempted → no failure recorded; pieces stay
+      // pending for a later pass and the RSS body is untouched.
+      expect(record.bodyState, MediaState.pending);
+      expect(record.attempts, 0);
+      expect(record.body, '<p>rss body</p>');
+      expect(
+        record.media['https://example.com/a.png']!.state,
+        MediaState.pending,
+      );
+    });
+
+    test('a manual retry still honors a mandated host cooldown', () async {
+      var httpCalls = 0;
+      final client = http_testing.MockClient((_) async {
+        httpCalls++;
+        return http.Response('x', 200);
+      });
+      final backoff = FeedBackoff()
+        ..recordFailure(
+          'https://example.com/feed.xml',
+          FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'status 429',
+            retryAfter: DateTime.now().add(const Duration(minutes: 10)),
+            statusCode: 429,
+          ),
+          DateTime.now(),
+        );
+      final svc = service(
+        client: client,
+        extract: (_) async => '<p>ok</p>',
+        backoff: backoff,
+      );
+      await svc.registerArticle(
+        item(imageUrl: 'https://example.com/a.png'),
+        const {'bookmark'},
+      );
+      // prepareArticle is the explicit (manual) path.
+      await svc.prepareArticle('art-1');
+      expect(httpCalls, 0); // server mandate survives the explicit retry
+    });
+
+    test(
+      'a manual retry may bypass a locally estimated host cooldown',
+      () async {
+        var extractCalls = 0;
+        var httpCalls = 0;
+        final client = http_testing.MockClient((_) async {
+          httpCalls++;
+          return http.Response('img', 200);
+        });
+        // 429 without Retry-After → local estimate, bypassable by the user.
+        final backoff = FeedBackoff()
+          ..recordFailure(
+            'https://example.com/feed.xml',
+            FeedFetchException(
+              FeedFetchErrorKind.httpStatus,
+              'status 429',
+              statusCode: 429,
+            ),
+            DateTime.now(),
+          );
+        final svc = service(
+          client: client,
+          extract: (_) async {
+            extractCalls++;
+            return '<p>ok</p>';
+          },
+          backoff: backoff,
+        );
+        await svc.registerArticle(
+          item(imageUrl: 'https://example.com/a.png'),
+          const {'bookmark'},
+        );
+        await svc.prepareArticle('art-1');
+        expect(extractCalls, 1);
+        expect(httpCalls, 1);
+      },
+    );
 
     test('a ready piece is never re-fetched on a later pass', () async {
       var calls = 0;

@@ -13,6 +13,7 @@ import '../utils/retry_after.dart';
 import 'article_cleanup_service.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
+import 'feed_backoff.dart';
 import 'full_text_extraction_service.dart';
 
 /// Offline preparation engine: ensures a saved article's full text and all of
@@ -38,8 +39,10 @@ class ArticlePreparationService {
     this.maxParallelTransfers = 3,
     this.minHostGap = const Duration(milliseconds: 1500),
     HostPacer? hostPacer,
+    FeedBackoff? backoff,
     DateTime Function()? now,
-  }) : _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
+  }) : _backoff = backoff,
+       _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
        _media = mediaStore ?? ArticleMediaStore(),
        _client = client ?? http.Client(),
        _ownsClient = client == null,
@@ -75,6 +78,20 @@ class ArticlePreparationService {
   /// injected by the provider.
   final Duration minHostGap;
   late final HostPacer _hostPacer;
+
+  /// Shared rate-limit policy — a host cooldown learned by feed refresh
+  /// (e.g. a Reddit 429) holds extraction and media downloads back too.
+  /// Skipped pieces simply stay pending; cooldown is not a failure.
+  final FeedBackoff? _backoff;
+
+  /// Skipped pieces simply stay pending — a cooldown is not a failure.
+  /// A manual retry may bypass a locally estimated host cooldown, but
+  /// never a server-issued `Retry-After` mandate.
+  bool _hostCooled(String url, DateTime now, {bool manual = false}) {
+    final b = _backoff;
+    if (b == null) return false;
+    return manual ? b.isMandatedBackedOff(url, now) : b.isBackedOff(url, now);
+  }
 
   final DateTime Function() _now;
   late final AsyncSemaphore _semaphore;
@@ -440,9 +457,12 @@ class ArticlePreparationService {
       // A body wait is only ever the local doubling backoff — an explicit
       // user retry may bypass it (server waits only exist on media).
       final retryDue =
-          manual ||
-          record.nextRetryAt == null ||
-          !record.nextRetryAt!.isAfter(now);
+          (manual ||
+              record.nextRetryAt == null ||
+              !record.nextRetryAt!.isAfter(now)) &&
+          // A host cooldown learned elsewhere (feed 429) skips the
+          // extraction attempt without counting it as a failure.
+          !_hostCooled(record.link, now, manual: manual);
       if (retryDue) {
         String? html;
         try {
@@ -490,6 +510,7 @@ class ArticlePreparationService {
       for (final e in fresh.media.entries)
         if (e.value.state != MediaState.ready &&
             e.value.state != MediaState.gone &&
+            !_hostCooled(e.key, now, manual: manual) &&
             (e.value.nextRetryAt == null ||
                 !e.value.nextRetryAt!.isAfter(now) ||
                 // A manual retry may bypass the local backoff — but never a

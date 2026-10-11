@@ -35,17 +35,45 @@ void main() {
     expect(b.isBackedOff('https://x.com/b.xml', now), isFalse);
   });
 
-  test('a sibling success clears a locally estimated host cooldown', () {
+  test('a sibling success cannot clear an active host cooldown', () {
     final b = FeedBackoff();
-    // 429 without Retry-After → locally estimated backoff.
+    // 429 WITHOUT Retry-After — even a locally estimated host cooldown
+    // is origin-wide evidence: an in-flight sibling's 200 cannot remove
+    // it before expiry.
     b.recordFailure('https://x.com/a.xml', rateLimit(), now);
     expect(b.isBackedOff('https://x.com/b.xml', now), isTrue);
 
-    // A 200 from the same origin disproves a *local* estimate — siblings
-    // are fetchable again. The failed feed keeps its own entry.
     b.recordSuccess('https://x.com/b.xml');
-    expect(b.isBackedOff('https://x.com/b.xml', now), isFalse);
+    expect(b.isBackedOff('https://x.com/b.xml', now), isTrue);
     expect(b.isBackedOff('https://x.com/a.xml', now), isTrue);
+  });
+
+  test('equivalent host spellings share one cooldown (www vs apex, '
+      'default vs explicit port)', () {
+    final b = FeedBackoff();
+    b.recordFailure('https://www.reddit.com/r/a/.rss', rateLimit(), now);
+    // www.reddit.com ↔ reddit.com — the same rate limiter answers both.
+    expect(b.isBackedOff('https://reddit.com/r/b/.rss', now), isTrue);
+    expect(b.isBackedOff('https://www.reddit.com/r/c/.rss', now), isTrue);
+    // Explicit default port is the same origin.
+    expect(b.isBackedOff('https://www.reddit.com:443/r/d/.rss', now), isTrue);
+    // A genuinely different host is unaffected.
+    expect(b.isBackedOff('https://old.reddit.com/r/e/.rss', now), isFalse);
+  });
+
+  test('isMandatedBackedOff distinguishes server and local cooldowns', () {
+    final b = FeedBackoff();
+    b.recordFailure(
+      'https://m.com/a.xml',
+      rateLimit(retryAfter: now.add(const Duration(minutes: 10))),
+      now,
+    );
+    b.recordFailure('https://l.com/a.xml', rateLimit(), now);
+
+    expect(b.isMandatedBackedOff('https://m.com/b.xml', now), isTrue);
+    expect(b.isMandatedBackedOff('https://l.com/b.xml', now), isFalse);
+    // Both are still blocked for automatic passes.
+    expect(b.isBackedOff('https://l.com/b.xml', now), isTrue);
   });
 
   test('a sibling success cannot cut a server-mandated host cooldown', () {
@@ -112,22 +140,37 @@ void main() {
   });
 
   group('persistence ordering', () {
-    test('failure → success → stale snapshot does not resurrect', () {
+    test('failure → success → stale snapshot does not resurrect the '
+        'cleared feed record', () {
       final b = FeedBackoff();
-      // 10:00 — plain 429 → local estimate, record since=10:00.
+      // 10:00 — plain 429 → feed AND host records, since=10:00.
       b.recordFailure('https://x.com/a.xml', rateLimit(), now);
-      // Snapshot written before the success carries the record.
+      // Snapshot written before the success carries the records.
       final stale = b.snapshot();
-      // 10:06 — success clears it locally.
+      // 10:06 — success clears the feed record; the host cooldown
+      // stays (success never clears host cooldowns).
       final clearAt = now.add(const Duration(minutes: 6));
       b.recordSuccess('https://x.com/a.xml', at: clearAt);
-      expect(b.isBackedOff('https://x.com/a.xml', clearAt), isFalse);
 
-      // 10:07 — the stale snapshot reloads. Its deadline sits in the
-      // future but its *creation* predates the clear → no resurrection.
+      // 10:07 — the stale snapshot reloads: the feed record's
+      // *creation* predates the clear → it must not come back.
       b.load(stale);
-      expect(b.isBackedOff('https://x.com/a.xml', clearAt), isFalse);
-      expect(b.isBackedOff('https://x.com/b.xml', clearAt), isFalse);
+      final merged = b.snapshot();
+      expect(
+        (merged['feeds'] as Map).containsKey('https://x.com/a.xml'),
+        isFalse,
+      );
+      // The host cooldown legitimately survives — that is policy, not
+      // resurrection — and it is what still backs off the URL while
+      // its (short, local) window lasts.
+      expect((merged['hosts'] as Map).containsKey('x.com:443'), isTrue);
+      expect(
+        b.isBackedOff(
+          'https://x.com/b.xml',
+          now.add(const Duration(seconds: 30)),
+        ),
+        isTrue,
+      );
     });
 
     test('a stale snapshot of a server-mandated record still cannot resurrect '
@@ -170,10 +213,9 @@ void main() {
       );
     });
 
-    test('a clear learned from another isolate retires local records', () {
+    test('a clear learned from another isolate retires the feed record; '
+        'the host cooldown still stands', () {
       final bg = FeedBackoff();
-      // A locally estimated cooldown — a success is legitimate evidence
-      // against it, and the clear must propagate across slots.
       bg.recordFailure('https://x.com/a.xml', rateLimit(), now);
       // Foreground succeeds and persists its clear.
       final fg = FeedBackoff();
@@ -181,15 +223,23 @@ void main() {
         'https://x.com/a.xml',
         at: now.add(const Duration(minutes: 5)),
       );
-      // Background loads the foreground slot → its superseded in-memory
-      // record is dropped too, not just skipped at merge time.
+      // Background loads the foreground slot → the superseded feed
+      // record is dropped from memory AND from the next snapshot; the
+      // host cooldown is origin policy and is untouched by success.
       bg.load(fg.snapshot());
+      final merged = bg.snapshot();
+      expect(
+        (merged['feeds'] as Map).containsKey('https://x.com/a.xml'),
+        isFalse,
+      );
+      // Host record survives the success — still within its window.
+      expect((merged['hosts'] as Map).containsKey('x.com:443'), isTrue);
       expect(
         bg.isBackedOff(
-          'https://x.com/a.xml',
-          now.add(const Duration(minutes: 5)),
+          'https://x.com/b.xml',
+          now.add(const Duration(seconds: 30)),
         ),
-        isFalse,
+        isTrue,
       );
     });
 
@@ -234,10 +284,24 @@ void main() {
 
       final restarted = FeedBackoff()..load(first.snapshot());
       final t = now.add(const Duration(minutes: 6));
-      // Cleared feed stays clear — the marker survived the restart.
-      expect(restarted.isBackedOff('https://x.com/a.xml', t), isFalse);
-      expect(restarted.isBackedOff('https://x.com/b.xml', t), isFalse);
-      // The still-active cooldown on the other host survived too.
+      // The cleared FEED record stays cleared — the marker round-tripped.
+      final snap = restarted.snapshot();
+      expect(
+        (snap['feeds'] as Map).containsKey('https://x.com/a.xml'),
+        isFalse,
+      );
+      // The host cooldown survived the success AND the restart — still
+      // inside its local window it backs off every feed on the host.
+      expect((snap['hosts'] as Map).containsKey('x.com:443'), isTrue);
+      expect(
+        restarted.isBackedOff(
+          'https://x.com/b.xml',
+          now.add(const Duration(seconds: 30)),
+        ),
+        isTrue,
+      );
+      // The still-active mandated cooldown on the other host survived
+      // too — and its deadline reaches past t.
       expect(restarted.isBackedOff('https://y.com/c.xml', t), isTrue);
     });
 

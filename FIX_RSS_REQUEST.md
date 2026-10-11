@@ -41,21 +41,32 @@ Dürüst garanti: yakınsama her iki tarafın bir sonraki load döngüsünde sa�
 
 ## 3. Değişen Dosyalar
 
-`lib/services/feed_backoff.dart` (v3 model), `lib/providers/feed_provider.dart` (iki-slot okuma), `lib/services/background_fetch_service.dart` (kendi slotu, paylaşılan pacer, post-pace recheck), `lib/services/feed_refresh.dart` (post-pace recheck), `test/feed_backoff_test.dart` (16 senaryo), `test/rss_lifecycle_regression_test.dart` (+2 senaryo).
+`lib/services/feed_backoff.dart` (v3 model, `isMandatedBackedOff`), `lib/providers/feed_provider.dart` (iki-slot okuma + backoff enjeksiyonu), `lib/services/background_fetch_service.dart` (kendi slotu, paylaşılan pacer+backoff, post-pace recheck), `lib/services/feed_refresh.dart` (post-pace recheck), `lib/services/full_text_extraction_service.dart` (paylaşılan backoff sorgusu), `lib/services/article_preparation_service.dart` (`backoff` ctor parametresi + `_hostCooled` kapıları), `lib/utils/host_key.dart` (yeni — kanonik host anahtarı), `lib/utils/host_pacer.dart` (`hostKey` kullanımı), `test/feed_backoff_test.dart` (20 senaryo), `test/full_text_extraction_test.dart` (+2), `test/s3_preparation_engine_test.dart` (+3), `test/host_pacer_test.dart` (+1), `test/rss_lifecycle_regression_test.dart` (+2 senaryo).
+
+## 3a. Son Tur — Üç Davranışın Kapanışı
+
+Bu turda önceki mimari korunarak üç davranış kapatıldı:
+
+1. **`recordSuccess` artık host kaydına hiç dokunmuyor.** Local-estimate host cooldown'ları da kardeş 200 ile silinemez — 429 `Retry-After` taşısın taşımasın, origin-çapı sinyal sona erme anına kadar yürürlükte. Başarı yalnız feed'in kendi kaydını siler ve feed-anahtarlı clear marker üretir (host marker üretilmez → snapshot'a sızıp karşı isolate'in mandated kaydını bastıramaz).
+2. **Extraction ve medya hazırlığı aynı `FeedBackoff`'a bağlandı.** `FullTextExtractionService.backoff` ve `ArticlePreparationService(backoff:)` — feed 429'undan öğrenilen host cooldown iki serviste de ağa çıkmadan önce denetlenir. Atlanan parçalar `pending` kalır, failure sayılmaz; **RSS body'si korunur** (extraction yalnız upgrade). Manuel retry: local tahmini atlayabilir (`isMandatedBackedOff`), server mandate'ini asla.
+3. **`hostKey` kanonikleştirmesi** — lowercase + `www.` strip + etkin port: `reddit.com` ↔ `www.reddit.com` ↔ `:443` aynı kova (`reddit.com:443`), `old.reddit.com` gibi gerçekten farklı host'lar etkilenmez. `FeedBackoff._authority` ve `HostPacer` aynı anahtarı kullanır → cooldown ve pacing tek politikada birleşir, persist slot'ları da aynı anahtarla yazılır.
 
 ## 4. Yeni Regresyon Testleri
 
-- Kardeş başarı local host cooldown'unu siler; **server-mandated** cooldown'u silemez (deadline'a kadar blok, sonra açılır)
-- Failure→success→stale snapshot: `since < clearedAt` → dirilme yok (local + mandated varyantları)
-- Başka isolate'ten öğrenilen clear bellek kayıtlarını da düşürür; eşzamanlı yazarlar union'a yakınsar
-- Restart: kayıtlar + clear marker'ları round-trip; mandated host cooldown başarı+restart'a rağmen kalır
+- Kardeş başarı **hiçbir** aktif host cooldown'unu silemez — Retry-After'lı da olmasa da (deadline'a kadar blok, sonra açılır)
+- Failure→success→stale snapshot: `since < clearedAt` → feed kaydı dirilmez; host kaydı politika gereği ayakta (local + mandated varyantları)
+- Başka isolate'ten öğrenilen clear feed kaydını bellekten de düşürür; host cooldown durur
+- Eşzamanlı yazarlar union'a yakınsar; restart'ta kayıtlar + clear marker'ları round-trip
 - Legacy flat + v2 snapshot uyumluluğu; expired kayıtlar snapshot'tan düşer
 - Refresh'te: A yavaş 429 → pacer kuyruğundaki B hiç ağa çıkmaz (`unprovenUrls`'te)
 - `runBgFetch`: aynı senaryo bg'de; cooldown `feedBackoffUntil.bg`'ye yazılır, ikinci pass sıfır istek
+- `www.reddit.com`↔`reddit.com`↔`:443` tek cooldown kovası + tek pacing kovası; `old.reddit.com` bağımsız
+- Extraction: feed-kaynaklı host cooldown'da **sıfır HTTP isteği**; forceRefresh local tahmini atlar, server mandate'ine uyar
+- Prep: cooldown'da extraction+medya atlanır, failure sayılmaz, RSS body'si korunur; manuel retry mandated'da 0 istek, local'de çalışır
 
 ## 5. Doğrulama
 
-- `flutter test` → **413/413 geçti** (önceki 402 + 11 yeni)
+- `flutter test` → **421/421 geçti** (önceki 413 + 8 yeni)
 - `flutter analyze` → temiz
 - `dart format --set-exit-if-changed` → temiz
 - `flutter build apk --debug` → **başarılı** (`app-debug.apk`)

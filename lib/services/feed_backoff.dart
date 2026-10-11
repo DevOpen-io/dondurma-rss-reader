@@ -1,5 +1,6 @@
 import 'dart:math' show Random;
 
+import '../utils/host_key.dart';
 import 'article_preparation_service.dart';
 import 'feed_service.dart';
 
@@ -60,7 +61,7 @@ class FeedBackoff {
   /// number of distinct feeds/hosts ever seen.
   final Map<String, DateTime> _cleared = {};
 
-  static String _authority(String url) => Uri.tryParse(url)?.authority ?? '';
+  static String _authority(String url) => hostKey(url);
 
   /// Whether [url] is inside a cooldown — its own or its host's. Callers
   /// must skip the fetch and keep the feed's cached items and last
@@ -70,6 +71,18 @@ class FeedBackoff {
     if (feed != null && feed.until.isAfter(now)) return true;
     final host = _hosts[_authority(url)];
     return host != null && host.until.isAfter(now);
+  }
+
+  /// Whether [url] is inside a cooldown that carries a server-issued
+  /// deadline (`Retry-After`). Explicit user retries may bypass local
+  /// estimates but must still respect this.
+  bool isMandatedBackedOff(String url, DateTime now) {
+    final feed = _feeds[url];
+    if (feed != null && feed.serverMandated && feed.until.isAfter(now)) {
+      return true;
+    }
+    final host = _hosts[_authority(url)];
+    return host != null && host.serverMandated && host.until.isAfter(now);
   }
 
   /// Records a fetch failure. Rate-limit signals (429, 503, or an explicit
@@ -111,25 +124,15 @@ class FeedBackoff {
   }
 
   /// A successful fetch clears the feed's own failure history — the
-  /// server just answered it. The host cooldown is cleared only when it
-  /// is a locally estimated backoff (or already expired): a sibling 200
-  /// cannot shorten a still-active server-mandated `Retry-After`.
+  /// server just answered it. The host cooldown is NEVER touched: a
+  /// sibling's 200 — even one whose request started before the 429 —
+  /// cannot disprove an origin-wide restriction, whether it was
+  /// server-mandated or a local estimate. Host cooldowns end at expiry.
   void recordSuccess(String url, {DateTime? at}) {
     final now = at ?? _now();
     _attempts.remove(url);
     _feeds.remove(url);
     _cleared[url] = now;
-    final host = _authority(url);
-    final hostCooldown = _hosts[host];
-    if (hostCooldown == null ||
-        !hostCooldown.serverMandated ||
-        !hostCooldown.until.isAfter(now)) {
-      _hosts.remove(host);
-      _cleared[host] = now;
-    }
-    // When a mandated host cooldown survives, no host-level clear is
-    // emitted either — otherwise the marker would leak into snapshots
-    // and suppress other isolates' server restrictions on load.
   }
 
   /// Merges [until] into [key]'s record. `since` is always the event

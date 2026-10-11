@@ -296,6 +296,7 @@ Future<void> runBgFetch() async {
         bookmarkedIds,
         bookmarkedItems,
         pacer,
+        backoff,
       );
       await WidgetUpdateService.updateFeedWidgets(persisted);
     }
@@ -338,14 +339,16 @@ Future<void> runBgFetch() async {
     // durable, so a task killed mid-sweep simply resumes next time.
     final connectivity = await Connectivity().checkConnectivity();
     if (ArticlePreparationService.unmeteredNetwork(connectivity)) {
-      // Inside this isolate all same-host traffic shares one schedule —
-      // feed fetches above, article extraction, and media downloads.
-      // (Extraction is a singleton here, so its pacer is assigned, not
-      // injected through the ctor.)
+      // Inside this isolate all same-host traffic shares one schedule
+      // and one cooldown policy — feed fetches above, article
+      // extraction, and media downloads. (Extraction is a singleton
+      // here, so its pacer/backoff are assigned, not injected.)
       FullTextExtractionService.instance.pacer = pacer;
+      FullTextExtractionService.instance.backoff = backoff;
       final preparation = ArticlePreparationService(
         recordStore: ArticleRecordStore.forBox(feedsBox),
         hostPacer: pacer,
+        backoff: backoff,
       );
       try {
         await preparation.preparePending(unmetered: true);
@@ -370,6 +373,7 @@ Future<List<FeedItem>> _persistBgCache(
   Set<String> bookmarkedIds,
   List<FeedItem> bookmarkedItems,
   HostPacer pacer,
+  FeedBackoff backoff,
 ) async {
   final int limit = settingsBox.get('offlineCacheLimit', defaultValue: 50);
   final autoFullText = settingsBox.get('autoFullText', defaultValue: false);
@@ -382,6 +386,7 @@ Future<List<FeedItem>> _persistBgCache(
   final preparation = ArticlePreparationService(
     recordStore: store,
     hostPacer: pacer,
+    backoff: backoff,
   );
   final membership = TempCacheMembership(
     records: store,

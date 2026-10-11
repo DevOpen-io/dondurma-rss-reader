@@ -1,3 +1,5 @@
+import 'host_key.dart';
+
 /// Minimum spacing between requests to the same host.
 ///
 /// A global concurrency cap is not enough: a burst of requests at one
@@ -33,7 +35,7 @@ class HostPacer {
   /// shortens a stricter reservation already in place. Calls to the same
   /// host serialize FIFO; different hosts never block each other.
   Future<void> pace(String url, {Duration? gap}) {
-    final host = Uri.tryParse(url)?.authority ?? '';
+    final host = hostKey(url);
     final effective = gap ?? minGap;
     if (host.isEmpty || effective == Duration.zero) {
       return Future<void>.value();
