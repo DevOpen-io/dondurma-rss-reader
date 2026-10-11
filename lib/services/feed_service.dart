@@ -14,7 +14,18 @@ import 'article_identity.dart';
 
 /// Why a feed fetch failed — lets health reporting tell a dead feed apart
 /// from a dead network.
-enum FeedFetchErrorKind { connectivity, httpStatus, parse, other }
+enum FeedFetchErrorKind {
+  connectivity,
+  httpStatus,
+
+  /// 401/403 — the source refuses this client; retrying blindly won't help.
+  accessRestricted,
+
+  /// 404/410 — the feed URL no longer exists.
+  gone,
+  parse,
+  other,
+}
 
 class FeedFetchException implements Exception {
   FeedFetchException(
@@ -224,7 +235,11 @@ class FeedService {
       }
       if (statusCode != 200) {
         throw FeedFetchException(
-          FeedFetchErrorKind.httpStatus,
+          switch (statusCode) {
+            401 || 403 => FeedFetchErrorKind.accessRestricted,
+            404 || 410 => FeedFetchErrorKind.gone,
+            _ => FeedFetchErrorKind.httpStatus,
+          },
           'Failed to load RSS feed (Status: $statusCode)',
           retryAfter: _parseRetryAfter(
             responseHeaders['retry-after'],

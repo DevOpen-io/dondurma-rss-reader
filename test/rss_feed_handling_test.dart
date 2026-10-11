@@ -296,6 +296,26 @@ void main() {
       expect(items.single.siteName, 'Prefixed');
     });
 
+    test('Reddit-shaped Atom fixture parses entries', () {
+      // Reddit .rss endpoints serve Atom: entries carry escaped HTML in
+      // <content type="html"> and the comments page as alternate link.
+      final items = parse('''<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>r/example</title>
+<entry><title>Post title</title><id>t3_abc123</id>
+<link href="https://www.reddit.com/r/example/comments/abc123/post/"/>
+<updated>2026-08-26T10:00:00+00:00</updated>
+<content type="html">&lt;table&gt;&lt;tr&gt;&lt;td&gt;&lt;a href="https://ext.example/article"&gt;link&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</content>
+</entry></feed>''');
+      expect(items.single.id, 't3_abc123');
+      expect(items.single.title, 'Post title');
+      expect(
+        items.single.link,
+        'https://www.reddit.com/r/example/comments/abc123/post/',
+      );
+      expect(items.single.content, contains('ext.example/article'));
+    });
+
     test('prefixed Atom keeps non-feed namespaces untouched', () {
       // media:thumbnail inside a prefixed feed must survive — only the
       // feed prefix is stripped, other prefixes stay namespaced.
@@ -439,6 +459,27 @@ void main() {
             r.response.statusCode = HttpStatus.notFound;
           case '/boom.xml':
             r.response.statusCode = HttpStatus.internalServerError;
+          case '/forbidden.xml':
+            r.response.statusCode = HttpStatus.forbidden;
+          case '/gone.xml':
+            r.response.statusCode = HttpStatus.gone;
+          case '/empty.xml':
+            r.response.headers.contentType = ContentType(
+              'application',
+              'rss+xml',
+            );
+            r.response.write('''<?xml version="1.0"?>
+<rss version="2.0"><channel><title>Quiet</title></channel></rss>''');
+          case '/huge.xml':
+            r.response.headers.contentType = ContentType(
+              'application',
+              'rss+xml',
+            );
+            // 8 MiB cap + 1 byte of padding so the bounded reader trips.
+            r.response.contentLength = FeedService.maxFeedBytes + 1;
+            r.response.add(
+              List<int>.filled(FeedService.maxFeedBytes + 1, 0x20),
+            );
           case '/redirect.xml':
             r.response.statusCode = HttpStatus.movedPermanently;
             r.response.headers.set(HttpHeaders.locationHeader, '/ok.xml');
@@ -505,13 +546,13 @@ void main() {
       service.dispose();
     });
 
-    test('404 throws httpStatus-kind error', () async {
+    test('404 throws gone-kind error', () async {
       final service = FeedService();
       try {
         await service.fetchFeed(url('/notfound.xml'), 'T');
         fail('should have thrown');
       } on FeedFetchException catch (e) {
-        expect(e.kind, FeedFetchErrorKind.httpStatus);
+        expect(e.kind, FeedFetchErrorKind.gone);
         expect(e.message, contains('404'));
       }
       service.dispose();
@@ -524,6 +565,50 @@ void main() {
         fail('should have thrown');
       } on FeedFetchException catch (e) {
         expect(e.kind, FeedFetchErrorKind.httpStatus);
+      }
+      service.dispose();
+    });
+
+    test('403 throws accessRestricted-kind error', () async {
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/forbidden.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.kind, FeedFetchErrorKind.accessRestricted);
+        expect(e.statusCode, HttpStatus.forbidden);
+      }
+      service.dispose();
+    });
+
+    test('410 throws gone-kind error', () async {
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/gone.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.kind, FeedFetchErrorKind.gone);
+      }
+      service.dispose();
+    });
+
+    test(
+      'a legitimate empty feed parses to zero items, not an error',
+      () async {
+        final service = FeedService();
+        final result = await service.fetchFeed(url('/empty.xml'), 'T');
+        expect(result.items, isEmpty);
+        service.dispose();
+      },
+    );
+
+    test('a body beyond the size cap is rejected before parse', () async {
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/huge.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.message, contains('too large'));
       }
       service.dispose();
     });

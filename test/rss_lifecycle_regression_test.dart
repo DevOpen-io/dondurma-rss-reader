@@ -16,6 +16,7 @@ import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
+import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
@@ -856,60 +857,99 @@ void main() {
     },
   );
 
-  test(
-    'subscriptions on the same host are fetch-paced',
-    () async {
-      final hitTimes = <String, List<DateTime>>{};
-      void paced(String path) {
-        server.handlers[path] = (request) async {
-          (hitTimes[path] ??= []).add(DateTime.now());
-          await _respond200(request, _rss(path, ['i-$path']));
-        };
-      }
+  test('a persisted cooldown survives into a fresh refresher', () async {
+    // Foreground records a 429; the background isolate — which builds
+    // its own FeedRefresher — must honor the same deadline via Hive.
+    final url = server.url('/rate.xml');
+    server.handlers['/rate.xml'] = (request) async {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '60');
+      await request.response.close();
+    };
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Rate', category: 'Test'),
+    ]);
 
-      paced('/s1.xml');
-      paced('/s2.xml');
-      paced('/s3.xml');
-      final subs = [
-        FeedSubscription(
-          url: server.url('/s1.xml'),
-          name: 'S1',
-          category: 'Test',
-        ),
-        FeedSubscription(
-          url: server.url('/s2.xml'),
-          name: 'S2',
-          category: 'Test',
-        ),
-        FeedSubscription(
-          url: server.url('/s3.xml'),
-          name: 'S3',
-          category: 'Test',
-        ),
-      ];
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    expect(server.counts['/rate.xml'], 1);
+    providers.feed.dispose();
 
-      final refresher = FeedRefresher(
-        feedService: FeedService(),
-        observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
-        hostGap: const Duration(milliseconds: 300),
-      );
-      await refresher.refresh(
-        subscriptions: subs,
-        existingItems: const [],
-        validators: const {},
-        bookmarkedItems: const [],
-        redirects: const {},
-      );
+    final persisted = Hive.box('feeds').get('feedBackoffUntil');
+    expect(persisted, isNotNull);
 
-      // All three share one authority — hits must be spread by ~300ms.
-      final all = hitTimes.values.expand((t) => t).toList()..sort();
-      expect(all, hasLength(3));
-      expect(
-        all.last.difference(all.first),
-        greaterThanOrEqualTo(const Duration(milliseconds: 550)),
-      );
-    },
-  );
+    // A brand-new refresher — stand-in for the background isolate —
+    // loads the persisted deadline and skips the fetch entirely.
+    final backoff = FeedBackoff()
+      ..load((jsonDecode(persisted as String) as Map).cast<String, dynamic>());
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      backoff: backoff,
+    );
+    final sub = FeedSubscription(url: url, name: 'Rate', category: 'Test');
+    final result = await refresher.refresh(
+      subscriptions: [sub],
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+    );
+    expect(server.counts['/rate.xml'], 1);
+    expect(result.unprovenUrls, contains(url));
+  });
+
+  test('subscriptions on the same host are fetch-paced', () async {
+    final hitTimes = <String, List<DateTime>>{};
+    void paced(String path) {
+      server.handlers[path] = (request) async {
+        (hitTimes[path] ??= []).add(DateTime.now());
+        await _respond200(request, _rss(path, ['i-$path']));
+      };
+    }
+
+    paced('/s1.xml');
+    paced('/s2.xml');
+    paced('/s3.xml');
+    final subs = [
+      FeedSubscription(
+        url: server.url('/s1.xml'),
+        name: 'S1',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/s2.xml'),
+        name: 'S2',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/s3.xml'),
+        name: 'S3',
+        category: 'Test',
+      ),
+    ];
+
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      hostGap: const Duration(milliseconds: 300),
+    );
+    await refresher.refresh(
+      subscriptions: subs,
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+    );
+
+    // All three share one authority — hits must be spread by ~300ms.
+    final all = hitTimes.values.expand((t) => t).toList()..sort();
+    expect(all, hasLength(3));
+    expect(
+      all.last.difference(all.first),
+      greaterThanOrEqualTo(const Duration(milliseconds: 550)),
+    );
+  });
 
   test(
     'prefetch stores full text for full-text feeds only (issue #14 policy)',
