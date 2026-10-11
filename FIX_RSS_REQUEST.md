@@ -83,7 +83,7 @@ Bu turda önceki mimari korunarak üç davranış kapatıldı:
 
 ```
 Branch: fix/rss-engine-reliability
-Commit: 57076dc
+Commit: d058a24
 PR:     https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
-Testler: 413/413 geçti
+Testler: 421/421 geçti
 ```
