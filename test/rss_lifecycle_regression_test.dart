@@ -819,6 +819,41 @@ void main() {
   );
 
   test(
+    '429 response backs the feed off — no refetch until Retry-After passes',
+    () async {
+      final url = server.url('/rate.xml');
+      server.handlers['/rate.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '1');
+        await request.response.close();
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'Rate', category: 'Test'),
+      ]);
+
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/rate.xml'], 1);
+      expect(providers.feed.feedErrorFor(url), contains('429'));
+
+      // Backoff active — an immediate second refresh must not hit the server.
+      await providers.feed.refreshAll();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/rate.xml'], 1);
+      // The stored error survives the skipped pass — the feed still reads
+      // as unhealthy instead of flipping to a phantom "all good".
+      expect(providers.feed.feedErrorFor(url), contains('429'));
+
+      // Once the server-issued wait elapses the feed is fetched again.
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+      await providers.feed.refreshAll();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/rate.xml'], 2);
+      providers.feed.dispose();
+    },
+  );
+
+  test(
     'prefetch stores full text for full-text feeds only (issue #14 policy)',
     () async {
       final ftUrl = server.url('/ft.xml');

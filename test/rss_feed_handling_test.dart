@@ -277,6 +277,37 @@ void main() {
       expect(items.single.pubDate, isNotNull);
     });
 
+    test('Atom under an arbitrary namespace prefix parses (HBR ns6:)', () {
+      // Feedburner serves HBR with <ns6:feed xmlns:ns6="...Atom"> — the
+      // prefix name is random, only the namespace URI matters.
+      final items = parse('''<?xml version="1.0" encoding="utf-8"?>
+<ns6:feed xmlns:ns6="http://www.w3.org/2005/Atom">
+<ns6:title>Prefixed</ns6:title>
+<ns6:entry><ns6:title>P1</ns6:title><ns6:id>tag:x,2026:p1</ns6:id>
+<ns6:link rel="alternate" href="https://x/p1"/>
+<ns6:updated>2026-08-26T10:00:00Z</ns6:updated>
+<ns6:summary>Body</ns6:summary></ns6:entry>
+</ns6:feed>''');
+      expect(items.single.id, 'tag:x,2026:p1');
+      expect(items.single.title, 'P1');
+      expect(items.single.link, 'https://x/p1');
+      expect(items.single.siteName, 'Prefixed');
+    });
+
+    test('prefixed Atom keeps non-feed namespaces untouched', () {
+      // media:thumbnail inside a prefixed feed must survive — only the
+      // feed prefix is stripped, other prefixes stay namespaced.
+      final items = parse('''<?xml version="1.0"?>
+<z:feed xmlns:z="http://www.w3.org/2005/Atom"
+ xmlns:media="http://search.yahoo.com/mrss/">
+<z:title>S</z:title>
+<z:entry><z:title>V</z:title><z:id>e1</z:id><z:link href="https://x/a"/>
+<z:updated>2026-08-26T10:00:00Z</z:updated>
+<media:thumbnail url="https://img/z.jpg"/>
+</z:entry></z:feed>''');
+      expect(items.single.imageUrl, 'https://img/z.jpg');
+    });
+
     test('content type="xhtml" keeps markup and images (issue #22)', () {
       final items = parse('''<?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">

@@ -35,6 +35,7 @@ class ArticlePreparationService {
     http.Client? client,
     Future<String?> Function(String url)? extractFullText,
     this.maxParallelTransfers = 3,
+    this.minHostGap = const Duration(milliseconds: 1500),
     DateTime Function()? now,
   }) : _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
        _media = mediaStore ?? ArticleMediaStore(),
@@ -64,8 +65,37 @@ class ArticlePreparationService {
   final bool _ownsClient;
   final Future<String?> Function(String url) _extract;
   final int maxParallelTransfers;
+
+  /// Minimum spacing between requests to the same host. Parallelism is
+  /// bounded globally by the semaphore, but without per-host pacing a sweep
+  /// still bursts dozens of requests at one origin (an article body plus
+  /// all its images) — exactly the pattern that trips rate limiters
+  /// (Reddit answers 429 within seconds of a burst). Different hosts keep
+  /// running in parallel; only same-host requests serialize with a gap.
+  final Duration minHostGap;
+  final Map<String, DateTime> _hostIdleAfter = {};
+  final Map<String, Future<void>> _hostTurn = {};
+
   final DateTime Function() _now;
   late final AsyncSemaphore _semaphore;
+
+  /// Waits until [url]'s host is allowed another request, then reserves
+  /// the next slot. Serializes per host: concurrent pieces to the same
+  /// origin queue instead of bursting.
+  Future<void> _paceHost(String url) {
+    final host = Uri.tryParse(url)?.authority ?? '';
+    if (host.isEmpty) return Future<void>.value();
+    final turn = (_hostTurn[host] ?? Future<void>.value()).then((_) async {
+      final notBefore = _hostIdleAfter[host];
+      final now = _now();
+      if (notBefore != null && notBefore.isAfter(now)) {
+        await Future<void>.delayed(notBefore.difference(now));
+      }
+      _hostIdleAfter[host] = _now().add(minHostGap);
+    });
+    _hostTurn[host] = turn;
+    return turn;
+  }
 
   /// Serializes every public operation on this instance so overlapping
   /// sweeps/permits can't double-attempt a piece in the same logical pass.
@@ -443,6 +473,7 @@ class ArticlePreparationService {
       if (retryDue) {
         String? html;
         try {
+          await _paceHost(record.link);
           html = await _extract(record.link);
         } catch (_) {}
         await _records.mutate(id, expectedEpoch: epoch, (current) {
@@ -569,6 +600,7 @@ class ArticlePreparationService {
     DateTime now,
   ) async {
     try {
+      await _paceHost(url);
       final response = await _client
           .get(
             Uri.parse(url),

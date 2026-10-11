@@ -62,12 +62,14 @@ void main() {
   ArticlePreparationService service({
     http_testing.MockClient? client,
     Future<String?> Function(String url)? extract,
+    Duration? minHostGap,
   }) => ArticlePreparationService(
     recordStore: newStore(),
     mediaStore: ArticleMediaStore(root: mediaDir),
     client:
         client ?? http_testing.MockClient((_) async => http.Response('', 404)),
     extractFullText: extract,
+    minHostGap: minHostGap ?? Duration.zero,
   );
 
   group('registerArticle', () {
@@ -204,6 +206,56 @@ void main() {
         expect(record.nextRetryAt, isNotNull);
       },
     );
+
+    test('same-host media requests are spaced by minHostGap', () async {
+      const gap = Duration(milliseconds: 300);
+      final hits = <DateTime>[];
+      final client = http_testing.MockClient((req) async {
+        hits.add(DateTime.now());
+        return http.Response(
+          'IMG',
+          200,
+          headers: {'content-type': 'image/png'},
+        );
+      });
+      final svc = service(
+        client: client,
+        minHostGap: gap,
+        extract: (_) async =>
+            '<p>b</p><img src="https://h.example/1.png">'
+            '<img src="https://h.example/2.png">',
+      );
+      await svc.registerArticle(item(), const {'bookmark'});
+      await svc.prepareArticle('art-1');
+
+      expect(hits.length, 2);
+      expect(hits[1].difference(hits[0]), greaterThanOrEqualTo(gap * 0.8));
+    });
+
+    test('different hosts are not paced against each other', () async {
+      const gap = Duration(milliseconds: 400);
+      final hits = <DateTime>[];
+      final client = http_testing.MockClient((req) async {
+        hits.add(DateTime.now());
+        return http.Response(
+          'IMG',
+          200,
+          headers: {'content-type': 'image/png'},
+        );
+      });
+      final svc = service(
+        client: client,
+        minHostGap: gap,
+        extract: (_) async =>
+            '<p>b</p><img src="https://a.example/1.png">'
+            '<img src="https://b.example/2.png">',
+      );
+      await svc.registerArticle(item(), const {'bookmark'});
+      await svc.prepareArticle('art-1');
+
+      expect(hits.length, 2);
+      expect(hits[1].difference(hits[0]), lessThan(gap));
+    });
 
     test('each piece is attempted at most once per pass', () async {
       var calls = 0;

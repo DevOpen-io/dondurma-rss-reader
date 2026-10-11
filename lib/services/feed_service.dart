@@ -17,10 +17,23 @@ import 'article_identity.dart';
 enum FeedFetchErrorKind { connectivity, httpStatus, parse, other }
 
 class FeedFetchException implements Exception {
-  FeedFetchException(this.kind, this.message);
+  FeedFetchException(
+    this.kind,
+    this.message, {
+    this.retryAfter,
+    this.statusCode,
+  });
 
   final FeedFetchErrorKind kind;
   final String message;
+
+  /// Earliest instant the server allows another request, taken from a
+  /// `Retry-After` response header. Null when the server gave no hint.
+  final DateTime? retryAfter;
+
+  /// HTTP status for [FeedFetchErrorKind.httpStatus] failures — lets the
+  /// refresher tell a rate-limit (429/503) from a dead feed (404).
+  final int? statusCode;
 
   @override
   String toString() => message;
@@ -185,6 +198,11 @@ class FeedService {
         throw FeedFetchException(
           FeedFetchErrorKind.httpStatus,
           'Failed to load RSS feed (Status: $statusCode)',
+          retryAfter: _parseRetryAfter(
+            responseHeaders['retry-after'],
+            DateTime.now(),
+          ),
+          statusCode: statusCode,
         );
       }
 
@@ -221,6 +239,22 @@ class FeedService {
         FeedFetchErrorKind.other,
         'Could not fetch or parse feed: $e',
       );
+    }
+  }
+
+  /// Parses a `Retry-After` header into an absolute instant — integer
+  /// seconds or an HTTP-date. Unparseable or past values yield null.
+  static DateTime? _parseRetryAfter(String? header, DateTime now) {
+    if (header == null) return null;
+    final seconds = int.tryParse(header.trim());
+    if (seconds != null && seconds >= 0) {
+      return now.add(Duration(seconds: seconds));
+    }
+    try {
+      final date = HttpDate.parse(header);
+      return date.isAfter(now) ? date : null;
+    } catch (_) {
+      return null;
     }
   }
 
@@ -282,13 +316,18 @@ class FeedService {
           ),
         );
       } catch (e2) {
-        // Namespace-prefixed Atom (<atom:feed>) — strip the atom: tag prefix
-        // and retry once before declaring the feed unparseable.
-        if (bodyString.contains('<atom:feed')) {
+        // Namespace-prefixed Atom — the prefix is arbitrary (atom:, ns6:,
+        // z:…); only the namespace URI identifies Atom. Detect whatever
+        // prefix the root <prefix:feed> uses, strip it, and retry once.
+        final prefixMatch = RegExp(
+          r'<([A-Za-z_][\w.-]*):feed[\s/>]',
+        ).firstMatch(bodyString);
+        if (prefixMatch != null) {
+          final prefix = prefixMatch.group(1)!;
           try {
             final stripped = bodyString
-                .replaceAll('<atom:', '<')
-                .replaceAll('</atom:', '</');
+                .replaceAll('<$prefix:', '<')
+                .replaceAll('</$prefix:', '</');
             final atomFeed = AtomFeed.parse(stripped);
             return capItems(
               _mapAtomItems(

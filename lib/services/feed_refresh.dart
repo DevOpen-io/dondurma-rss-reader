@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../utils/async_semaphore.dart';
+import 'article_preparation_service.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'observed_article_store.dart';
@@ -59,6 +60,13 @@ class FeedRefresher {
   }) : _feedService = feedService,
        _observedArticleStore = observedArticleStore;
 
+  /// Per-feed rate-limit backoff, session-scoped. A feed answering 429/503 —
+  /// or carrying a `Retry-After` — is not refetched until its wait passes.
+  /// Without this a rate-limited feed (Reddit answers 429 aggressively) is
+  /// hit on every sync cycle, keeping the limit permanently exhausted.
+  final Map<String, DateTime> _retryAt = {};
+  final Map<String, int> _failAttempts = {};
+
   Future<FeedRefreshResult> refresh({
     required List<FeedSubscription> subscriptions,
     required List<FeedItem> existingItems,
@@ -78,6 +86,26 @@ class FeedRefresher {
     // TCP resets on constrained devices.
     final semaphore = AsyncSemaphore(_fetchConcurrency);
     final futures = subscriptions.map((sub) async {
+      // A backed-off feed keeps its cached items and its last error without
+      // touching the network — same treatment as an unproven failure.
+      final backoffUntil = _retryAt[sub.url];
+      if (backoffUntil != null && backoffUntil.isAfter(DateTime.now())) {
+        return (
+          url: sub.url,
+          observationEpoch: sub.notificationEpoch,
+          items: existingByFeed[sub.url] ?? const <FeedItem>[],
+          succeeded: false,
+          fresh: false,
+          etag: null as String?,
+          lastModified: null as String?,
+          dropValidator: false,
+          finalUrl: null as String?,
+          fetchUrl: sub.url,
+          error: null as String?,
+          connectivity: false,
+          skipped: true,
+        );
+      }
       await semaphore.acquire();
       final v = validators[sub.url];
       // Fetch at the learned redirect URL when one exists — skips a hop.
@@ -106,6 +134,8 @@ class FeedRefresher {
             dropValidator = true;
           }
         }
+        _failAttempts.remove(sub.url);
+        _retryAt.remove(sub.url);
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -126,9 +156,28 @@ class FeedRefresher {
           fetchUrl: fetchUrl,
           error: null as String?,
           connectivity: false,
+          skipped: false,
         );
       } catch (e) {
         debugPrint('Error fetching feed ${sub.url}: $e');
+        final isConnectivity =
+            e is FeedFetchException &&
+            e.kind == FeedFetchErrorKind.connectivity;
+        // Rate-limit signals (429, 503, or an explicit Retry-After) earn a
+        // backoff: refetching them every cycle keeps the limiter exhausted.
+        // Other failures are not penalized — a single transient 500 should
+        // recover on the very next sync, not sit out a minute.
+        final serverWait = e is FeedFetchException ? e.retryAfter : null;
+        final status = e is FeedFetchException ? e.statusCode : null;
+        if (!isConnectivity &&
+            (status == 429 || status == 503 || serverWait != null)) {
+          final attempts = (_failAttempts[sub.url] ?? 0) + 1;
+          _failAttempts[sub.url] = attempts;
+          final now = DateTime.now();
+          _retryAt[sub.url] = serverWait != null && serverWait.isAfter(now)
+              ? serverWait
+              : now.add(ArticlePreparationService.backoffFor(attempts));
+        }
         // Transient failure: keep the feed's existing items so one error doesn't
         // blank it out, and leave its validators untouched.
         return (
@@ -146,6 +195,7 @@ class FeedRefresher {
           connectivity:
               e is FeedFetchException &&
               e.kind == FeedFetchErrorKind.connectivity,
+          skipped: false,
         );
       } finally {
         semaphore.release();
@@ -255,6 +305,11 @@ class FeedRefresher {
     final feedErrors = <String, String>{};
     final unprovenUrls = <String>{};
     for (final o in outcomes) {
+      if (o.skipped) {
+        // Backed off before the network — the stored verdict stays as-is.
+        unprovenUrls.add(o.url);
+        continue;
+      }
       if (o.succeeded || o.error == null) continue;
       if (o.connectivity && !online) {
         unprovenUrls.add(o.url);
