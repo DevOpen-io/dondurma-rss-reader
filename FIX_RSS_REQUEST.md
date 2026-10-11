@@ -63,7 +63,7 @@
 
 ```
 Branch:       fix/rss-engine-reliability
-Son commit:   de4f997 (aşağıda doğrulanacak)
+Uygulama:     de4f997 · Rapor: 068079d (HEAD)
 PR:           https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
 Testler:      402/402 geçti, 0 başarısız
 ```
