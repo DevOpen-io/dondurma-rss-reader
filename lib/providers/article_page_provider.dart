@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/article_identity.dart';
+import '../services/article_media_store.dart';
+import '../services/article_record_store.dart';
+import '../services/article_status.dart';
 import '../services/full_text_extraction_service.dart';
 
 /// Per-article-page state managed as a [ChangeNotifier].
@@ -65,11 +70,133 @@ class ArticlePageProvider extends ChangeNotifier {
   /// rebuilds on every scroll tick.
   final ValueNotifier<double> readingProgress = ValueNotifier(0.0);
 
+  /// The durable record's saved body, when one is ready on disk (#41).
+  String? _savedBody;
+
+  /// Durable-state summary for the status strip — null until [loadSavedCopy]
+  /// resolves (or when no record exists).
+  ArticleStatus? _recordStatus;
+  ArticleStatus? get recordStatus => _recordStatus;
+
+  /// Remote image URL → local `file://` path for media entries that are
+  /// `ready` in the record manifest. Exposed so the HTML renderer can
+  /// whitelist `file://` srcs — only paths this map produced are trusted
+  /// (#41: feed HTML is untrusted input).
+  Map<String, String> _localImages = const {};
+  Map<String, String> get localImages => _localImages;
+
+  /// True when the feed item has no current readable body and the saved
+  /// copy is shown instead (#41 archived-copy rule).
+  bool _archivedFallback = false;
+  bool get usingArchivedCopy => _archivedFallback;
+
+  /// True once [loadSavedCopy] finished its store read — distinguishes
+  /// "still loading" from "verified absent" so a missing record is not
+  /// flashed as a failed save (#41 honesty).
+  bool _savedCopySettled = false;
+  bool get savedCopyLoaded => _savedCopySettled;
+
+  /// Monotonic guard: a superseded read discards its results so a slow
+  /// earlier load can never overwrite a newer one.
+  int _savedCopyGeneration = 0;
+
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
 
   ArticlePageProvider({required this.item});
+
+  // ---------------------------------------------------------------------------
+  // Durable saved copy (#41)
+  // ---------------------------------------------------------------------------
+
+  /// Loads this article's durable record once: the saved body, the status
+  /// summary for the strip, and local paths for `ready` media entries.
+  /// Injectable stores keep the method testable off-device.
+  Future<void> loadSavedCopy({
+    ArticleRecordStore? records,
+    ArticleMediaStore? media,
+  }) async {
+    if (_savedCopySettled) return;
+    final generation = ++_savedCopyGeneration;
+    final store = records ?? ArticleRecordStore.forBox(Hive.box('feeds'));
+    final mediaStore = media ?? ArticleMediaStore();
+    final id = ArticleIdentity.normalizeItemId(item.id) ?? item.id;
+    ArticleRecord? record;
+    try {
+      record = await store.read(id);
+    } catch (_) {
+      // A store-level read error fails closed to "no offline claim".
+      record = null;
+    }
+    if (_disposed || generation != _savedCopyGeneration) return;
+    _savedBody = null;
+    _recordStatus = null;
+    _localImages = const {};
+    _archivedFallback = false;
+    if (record != null && !record.tombstoned) {
+      // The durable body counts regardless of extraction state — the RSS
+      // body survives a failed full-text attempt (#41 readability rule).
+      if (record.body?.isNotEmpty ?? false) {
+        _savedBody = record.body;
+      }
+      final local = <String, String>{};
+      var checked = record;
+      for (final entry in record.media.entries) {
+        if (entry.value.state != MediaState.ready) continue;
+        // Existence AND byte size — a truncated/vanished file must not be
+        // rewritten in as "ready", and must not back a ready label either
+        // (#41 verify-before-ready). I/O failures count as unverified.
+        String? path;
+        var verified = false;
+        try {
+          verified = await mediaStore.verify(entry.value);
+          if (verified) path = await mediaStore.pathFor(entry.value.file);
+        } catch (_) {
+          verified = false;
+        }
+        if (_disposed || generation != _savedCopyGeneration) return;
+        if (!verified || path == null) {
+          final m = {...checked.media};
+          final e = m[entry.key];
+          if (e != null && e.state == MediaState.ready) {
+            m[entry.key] = e.copyWith(state: MediaState.pending);
+            checked = checked.copyWith(media: m);
+          }
+          continue;
+        }
+        local[entry.key] = 'file://$path';
+      }
+      _localImages = local;
+      // The strip derives from the VERIFIED record — a manifest claiming
+      // bytes the disk lacks never produces a ready label here, same rule
+      // as the list surface's demote-repair.
+      _recordStatus = ArticleStatus.fromRecord(checked);
+      // Archived-copy rule: the feed item's own readable body wins; the
+      // saved copy only takes over when the current body is absent (#41).
+      final current = item.content;
+      _archivedFallback =
+          !item.isBookmarked &&
+          (current == null || current.trim().isEmpty) &&
+          _savedBody != null;
+    }
+    _savedCopySettled = true;
+    _cachedDisplayContent = null;
+    _cachedReadingMinutes = null;
+    notifyListeners();
+  }
+
+  /// Re-reads durable state after a manual preparation pass so the strip
+  /// and media map reflect the new commits.
+  Future<void> refreshSavedCopy({
+    ArticleRecordStore? records,
+    ArticleMediaStore? media,
+  }) async {
+    // Resetting the settled flag bumps the generation on the next load —
+    // any read still in flight discards its stale result.
+    _savedCopySettled = false;
+    await loadSavedCopy(records: records, media: media);
+  }
 
   // ---------------------------------------------------------------------------
   // Content ready
@@ -195,9 +322,19 @@ class ArticlePageProvider extends ChangeNotifier {
   // Content preprocessing & reading time (cached)
   // ---------------------------------------------------------------------------
 
-  /// Returns the raw HTML to display — full-text if available, otherwise
-  /// the item's content or description.
-  String get rawContent => _fullTextContent ?? item.content ?? item.description;
+  /// Returns the raw HTML to display. Priority (#41): a live extraction
+  /// from this session; the saved copy when the item is a bookmark or has
+  /// no current readable body of its own; the feed item's body last.
+  String get rawContent {
+    if (_fullTextContent != null) return _fullTextContent!;
+    if (item.isBookmarked) {
+      return _savedBody ?? item.content ?? item.description;
+    }
+    final current = item.content;
+    if (current != null && current.trim().isNotEmpty) return current;
+    if (_savedBody != null) return _savedBody!;
+    return item.description;
+  }
 
   String get displayContent {
     _cachedDisplayContent ??= _preprocessHtml(rawContent);
@@ -234,8 +371,30 @@ class ArticlePageProvider extends ChangeNotifier {
     _removeEmptyElements(body);
     _deduplicateImages(body);
     _groupConsecutiveImages(body);
+    _rewriteLocalImages(body);
 
     return body.innerHtml;
+  }
+
+  /// Points ready media entries at their durable local files so offline
+  /// reading shows stored bytes instead of a dead remote URL (#41).
+  /// Attribute-scoped — link hrefs, captions, and other markup sharing the
+  /// URL string are never touched.
+  void _rewriteLocalImages(html_dom.Element body) {
+    if (_localImages.isEmpty) return;
+    for (final img in body.querySelectorAll('img')) {
+      final src = img.attributes['src'];
+      final local = src == null ? null : _localImages[src];
+      if (local != null) img.attributes['src'] = local;
+    }
+    for (final carousel in body.querySelectorAll('img-carousel')) {
+      final raw = carousel.attributes['data-urls'];
+      if (raw == null) continue;
+      carousel.attributes['data-urls'] = raw
+          .split('|')
+          .map((u) => _localImages[u] ?? u)
+          .join('|');
+    }
   }
 
   // ----------- Inline style stripping -----------

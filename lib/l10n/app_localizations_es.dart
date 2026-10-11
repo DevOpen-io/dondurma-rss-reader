@@ -295,7 +295,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get clearCacheDesc =>
-      'Elimina los artículos descargados para liberar espacio';
+      'Borra el texto y las imágenes de artículos guardados temporalmente para liberar espacio. Los marcadores se conservan. Si el límite de caché sigue por encima de cero, el contenido puede prepararse de nuevo en la próxima actualización.';
 
   @override
   String get cacheClearedSuccess => 'Caché vaciada correctamente.';
@@ -624,7 +624,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get factoryResetConfirmDesc =>
-      'Esto borrará permanentemente todas tus fuentes, categorías, marcadores y ajustes. La aplicación se restaurará a su estado de instalación predeterminado. Esta acción no se puede deshacer.';
+      'Borra permanentemente fuentes y carpetas, marcadores con su texto e imágenes guardadas, ajustes, historial, descargas pendientes, contenido de widgets y notificaciones, y sesiones del navegador integrado — las sesiones de sitios pueden cerrarse. Los permisos del sistema, la ubicación del widget, el navegador externo y los archivos exportados no se ven afectados. No se puede deshacer.';
 
   @override
   String get factoryResetSuccess => 'Se han borrado todos los datos y ajustes.';
@@ -632,6 +632,72 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get factoryResetPartialError =>
       'El restablecimiento se completó, pero algunos datos sin conexión no se pudieron borrar. Se limpiarán automáticamente más tarde.';
+
+  @override
+  String get articleStatusReadyInCache => 'Listo en caché';
+
+  @override
+  String get articleStatusSavedCopyReady => 'Copia guardada lista';
+
+  @override
+  String get articleStatusTextSaved => 'Texto guardado';
+
+  @override
+  String get articleStatusTextCached => 'Texto en caché';
+
+  @override
+  String get articleStatusSaveRequested => 'Guardado solicitado';
+
+  @override
+  String get articleStatusCouldNotSave => 'No se pudo guardar';
+
+  @override
+  String get articleStatusRssSaved => 'Texto RSS guardado';
+
+  @override
+  String get articleStatusRssCached => 'Texto RSS en caché';
+
+  @override
+  String get articleStatusReadableSession => 'Se puede leer en esta sesión';
+
+  @override
+  String get articleWaitPreparing => 'Preparando partes faltantes';
+
+  @override
+  String get articleWaitUnmetered => 'Esperando red sin límite';
+
+  @override
+  String articleWaitRetryEarliest(String time) {
+    return 'Reintento permitido a lo más pronto a las $time';
+  }
+
+  @override
+  String get articleWaitServer => 'Esperando la fuente';
+
+  @override
+  String get articleWaitUnavailable => 'Contenido no disponible';
+
+  @override
+  String articleImagesCount(int done, int total) {
+    return 'Imágenes $done/$total';
+  }
+
+  @override
+  String get articleRetryMissing => 'Reintentar partes faltantes';
+
+  @override
+  String get articleRetrySave => 'Reintentar guardar';
+
+  @override
+  String get articleSavedCopyNotice =>
+      'Copia guardada — no se pudo obtener la versión actual';
+
+  @override
+  String get articleSavedDateUnknown => 'Fecha de guardado desconocida';
+
+  @override
+  String get articleSessionOnlyNote =>
+      'El texto actual solo se puede leer en esta sesión; falló el guardado permanente';
 
   @override
   String get browserMode => 'Modo de navegador';

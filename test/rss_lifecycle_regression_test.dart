@@ -12,6 +12,8 @@ import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/services/article_media_store.dart';
+import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
 
@@ -1032,5 +1034,129 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     } while (DateTime.now().isBefore(deadline));
     expect(record?.owners ?? const <String>{}, isNot(contains('bookmark')));
+  });
+
+  group('S6 offline status wiring', () {
+    ArticlePreparationService newPrep() => ArticlePreparationService(
+      recordStore: ArticleRecordStore.forBox(Hive.box('feeds')),
+      mediaStore: ArticleMediaStore(),
+      // Deterministic: no real network for extraction or media.
+      extractFullText: (_) async => null,
+    );
+
+    test('status map reports loaded only after the first read', () async {
+      final providers = _providers(wire: false);
+      final prep = newPrep();
+      providers.feed.dispose();
+      final feed = FeedProvider(preparation: prep);
+      expect(feed.articleStatusesLoaded, isFalse);
+      feed.update(
+        providers.subscriptions,
+        providers.settings,
+        providers.bookmarks,
+      );
+      await _waitUntil(() => feed.articleStatusesLoaded);
+      feed.dispose();
+    });
+
+    test(
+      'a committed bookmark claim refreshes the status map on its own',
+      () async {
+        final prep = newPrep();
+        final providers = _providers(wire: false);
+        providers.feed.dispose();
+        final bookmarks = BookmarkProvider(preparation: prep);
+        final feed = FeedProvider(preparation: prep);
+        feed.update(providers.subscriptions, providers.settings, bookmarks);
+        // Mirror what ChangeNotifierProxyProvider does in the app: every
+        // upstream notify re-runs update(), where the claimVersion diff
+        // picks up landed claim mutations.
+        bookmarks.addListener(
+          () => feed.update(
+            providers.subscriptions,
+            providers.settings,
+            bookmarks,
+          ),
+        );
+        await _waitUntil(() => feed.articleStatusesLoaded);
+
+        // The register+prepare chain is unawaited inside toggleBookmark —
+        // the claimVersion bump is what must carry the fresh label into
+        // the feed's status map (#41 ordering).
+        bookmarks.toggleBookmark(_item(server.url('/f.xml'), 'st1'));
+        await _waitUntil(() => feed.articleStatus('st1') != null);
+        expect(feed.articleStatus('st1')!.hasBookmark, isTrue);
+        feed.dispose();
+      },
+    );
+
+    test('retrySaveArticle keeps the feed full-text preference', () async {
+      // Per-feed fullTextEnabled=false with global extraction ON — the
+      // retry path must not silently re-arm extraction (#41).
+      await Hive.box('settings').put('autoFullText', true);
+      final url = server.url('/save-pref.xml');
+      await _seedSubscriptions([
+        FeedSubscription(
+          url: url,
+          name: 'Pref',
+          category: 'Test',
+          fullTextEnabled: false,
+        ),
+      ]);
+      final prep = newPrep();
+      final providers = _providers(wire: false);
+      providers.feed.dispose();
+      final bookmarks = BookmarkProvider(preparation: prep);
+      final feed = FeedProvider(preparation: prep);
+      feed.update(providers.subscriptions, providers.settings, bookmarks);
+      await _waitUntil(() => feed.articleStatusesLoaded);
+
+      final item = _item(url, 'rs1');
+      bookmarks.toggleBookmark(item);
+      await _waitUntil(() => bookmarks.isBookmarked('rs1'));
+      await feed.retrySaveArticle(item.copyWith(isBookmarked: true));
+
+      final record = await ArticleRecordStore.forBox(
+        Hive.box('feeds'),
+      ).read('rs1');
+      expect(record, isNotNull);
+      expect(
+        record!.bodyState,
+        MediaState.ready,
+        reason:
+            'fullText=false settles the RSS body — a dropped preference '
+            'would leave extraction intent pending',
+      );
+      feed.dispose();
+    });
+
+    test('bookmark save honors the feed full-text preference', () async {
+      // The SAVE path must respect the same tri-state the retry path does:
+      // fullTextFor=false → the RSS body settles, no extraction armed.
+      final prep = newPrep();
+      final providers = _providers(wire: false);
+      providers.feed.dispose();
+      final bookmarks = BookmarkProvider(
+        preparation: prep,
+        fullTextFor: (_) => false,
+      );
+      final feed = FeedProvider(preparation: prep);
+      feed.update(providers.subscriptions, providers.settings, bookmarks);
+      bookmarks.addListener(
+        () =>
+            feed.update(providers.subscriptions, providers.settings, bookmarks),
+      );
+      await _waitUntil(() => feed.articleStatusesLoaded);
+
+      bookmarks.toggleBookmark(_item(server.url('/f.xml'), 'pf1'));
+      // The claim lands async; the status map appearing proves the record
+      // committed (status derives only from durable records).
+      await _waitUntil(() => feed.articleStatus('pf1') != null);
+      final record = await ArticleRecordStore.forBox(
+        Hive.box('feeds'),
+      ).read('pf1');
+      expect(record!.bodyState, MediaState.ready);
+      feed.dispose();
+    });
   });
 }

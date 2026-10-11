@@ -1,5 +1,6 @@
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../services/article_media_store.dart';
 import '../../services/image_cache_service.dart';
 import '../../utils/motion.dart';
 
@@ -28,6 +29,11 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
     super.dispose();
   }
 
+  Widget _brokenImage(BuildContext context) => Container(
+    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.05),
+    child: const Center(child: Icon(Icons.broken_image_outlined, size: 40)),
+  );
+
   @override
   Widget build(BuildContext context) {
     final imageCount = widget.imageUrls.length;
@@ -46,23 +52,33 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
                 setState(() => _currentPage = index);
               },
               itemBuilder: (context, index) {
+                final url = widget.imageUrls[index];
+                // Durable media (#41): the rewrite may point ready entries
+                // at managed local files — only `m_`-scheme paths resolve.
+                if (url.startsWith('file://')) {
+                  final file = ArticleMediaStore.managedFileFromSrc(url);
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: file == null
+                        ? _brokenImage(context)
+                        : Image.file(
+                            file,
+                            fit: BoxFit.cover,
+                            width: double.infinity,
+                            errorBuilder: (_, _, _) => _brokenImage(context),
+                          ),
+                  );
+                }
                 return ClipRRect(
                   borderRadius: BorderRadius.circular(10),
                   child: CachedNetworkImage(
-                    imageUrl: widget.imageUrls[index],
+                    imageUrl: url,
                     cacheManager: ArticleCacheManager.instance,
                     memCacheWidth: 800,
                     maxWidthDiskCache: 800,
                     fit: BoxFit.cover,
                     width: double.infinity,
-                    errorWidget: (context, url, error) => Container(
-                      color: Theme.of(
-                        context,
-                      ).colorScheme.onSurface.withValues(alpha: 0.05),
-                      child: const Center(
-                        child: Icon(Icons.broken_image_outlined, size: 40),
-                      ),
-                    ),
+                    errorWidget: (context, url, error) => _brokenImage(context),
                   ),
                 );
               },

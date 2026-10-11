@@ -15,6 +15,25 @@ class BookmarkProvider extends ChangeNotifier {
   List<FeedItem> _savedBookmarks = [];
   Set<String> _bookmarkedItemIds = {};
 
+  /// Bumped each time a durable bookmark-claim mutation lands — strip or
+  /// prepare. FeedProvider diffs it in update() so the offline-status map
+  /// is only read AFTER claim changes commit, never before (#41 ordering).
+  int _claimVersion = 0;
+  int get claimVersion => _claimVersion;
+
+  bool _disposed = false;
+
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
+  }
+
+  void _claimLanded() {
+    _claimVersion++;
+    if (!_disposed) notifyListeners();
+  }
+
   /// The full list of bookmarked articles.
   List<FeedItem> get bookmarkedItems => _savedBookmarks;
 
@@ -28,8 +47,16 @@ class BookmarkProvider extends ChangeNotifier {
   /// bookmark is saved, then prepares its content in one permitted pass.
   final ArticlePreparationService? _preparation;
 
-  BookmarkProvider({ArticlePreparationService? preparation})
-    : _preparation = preparation {
+  /// The effective full-text preference for a bookmark's feed — the save
+  /// path must respect the same tri-state rule the membership pass and
+  /// the save-retry path use (#41 consistency).
+  final bool Function(String feedUrl)? _fullTextFor;
+
+  BookmarkProvider({
+    ArticlePreparationService? preparation,
+    bool Function(String feedUrl)? fullTextFor,
+  }) : _preparation = preparation,
+       _fullTextFor = fullTextFor {
     _loadBookmarks();
   }
 
@@ -53,6 +80,8 @@ class BookmarkProvider extends ChangeNotifier {
             ? await prep.mutateRecord(id, _stripBookmarkMutation(id))
             : await _recordStore.mutate(id, _stripBookmarkMutation(id));
         if (result != StoreWriteResult.failed) {
+          // Claim is durable now — listeners may re-derive status labels.
+          _claimLanded();
           // The record may have just become ownerless — release its bytes.
           // The live bookmark set goes along so stale claims elsewhere
           // self-heal in the same pass.
@@ -131,22 +160,34 @@ class BookmarkProvider extends ChangeNotifier {
         // un-bookmark racing this delayed registration leaves no ghost
         // 'bookmark' owner behind — including on the retry.
         bool claimStillLive() => _bookmarkedItemIds.contains(id);
+        final fullText = _fullTextFor?.call(updatedItem.feedUrl) ?? true;
         unawaited(() async {
-          var result = await prep.registerArticle(updatedItem, const {
-            'bookmark',
-          }, claimCheck: claimStillLive);
+          var result = await prep.registerArticle(
+            updatedItem,
+            const {'bookmark'},
+            fullText: fullText,
+            claimCheck: claimStillLive,
+          );
           // One immediate retry on storage failure — a rejected/failed
           // register would otherwise leave a bookmark with no durable
           // record and no later reconciliation.
           if (result == StoreWriteResult.failed &&
               _bookmarkedItemIds.contains(id)) {
-            result = await prep.registerArticle(updatedItem, const {
-              'bookmark',
-            }, claimCheck: claimStillLive);
+            result = await prep.registerArticle(
+              updatedItem,
+              const {'bookmark'},
+              fullText: fullText,
+              claimCheck: claimStillLive,
+            );
           }
           if (result == StoreWriteResult.applied &&
               _bookmarkedItemIds.contains(id)) {
-            unawaited(prep.prepareArticle(updatedItem.id));
+            // The claim landed — labels may already read "save requested".
+            _claimLanded();
+            // Prepare commits land inside this same call; the version bump
+            // afterwards lets status readers observe the finished state.
+            await prep.prepareArticle(updatedItem.id);
+            _claimLanded();
           }
         }());
       }

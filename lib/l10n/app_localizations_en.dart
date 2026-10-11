@@ -291,7 +291,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get clearCache => 'Clear Cache';
 
   @override
-  String get clearCacheDesc => 'Remove downloaded articles to free up space';
+  String get clearCacheDesc =>
+      'Clears temporarily stored article text and media to free up space. Bookmarks are kept. If the cache limit stays above zero, content may be prepared again on the next refresh.';
 
   @override
   String get cacheClearedSuccess => 'Cache cleared successfully.';
@@ -614,7 +615,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get factoryResetConfirmDesc =>
-      'This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.';
+      'Permanently erases feeds and folders, bookmarks with their saved text and images, settings, history, pending downloads, widget and notification content, and in-app browser sessions — site logins may be signed out. Operating-system permissions, widget placement, the external browser, and exported files are not affected. This cannot be undone.';
 
   @override
   String get factoryResetSuccess => 'All data and settings have been erased.';
@@ -622,6 +623,72 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get factoryResetPartialError =>
       'Reset completed, but some offline data could not be erased. It will be cleaned up automatically later.';
+
+  @override
+  String get articleStatusReadyInCache => 'Ready in cache';
+
+  @override
+  String get articleStatusSavedCopyReady => 'Saved copy ready';
+
+  @override
+  String get articleStatusTextSaved => 'Text saved';
+
+  @override
+  String get articleStatusTextCached => 'Text cached';
+
+  @override
+  String get articleStatusSaveRequested => 'Save requested';
+
+  @override
+  String get articleStatusCouldNotSave => 'Could not save';
+
+  @override
+  String get articleStatusRssSaved => 'RSS text saved';
+
+  @override
+  String get articleStatusRssCached => 'RSS text cached';
+
+  @override
+  String get articleStatusReadableSession => 'Readable in this session';
+
+  @override
+  String get articleWaitPreparing => 'Preparing missing parts';
+
+  @override
+  String get articleWaitUnmetered => 'Waiting for unmetered network';
+
+  @override
+  String articleWaitRetryEarliest(String time) {
+    return 'Retry allowed earliest at $time';
+  }
+
+  @override
+  String get articleWaitServer => 'Waiting on the source';
+
+  @override
+  String get articleWaitUnavailable => 'Some content unavailable';
+
+  @override
+  String articleImagesCount(int done, int total) {
+    return 'Images $done/$total';
+  }
+
+  @override
+  String get articleRetryMissing => 'Retry missing parts';
+
+  @override
+  String get articleRetrySave => 'Retry save';
+
+  @override
+  String get articleSavedCopyNotice =>
+      'Saved copy — the current version could not be fetched';
+
+  @override
+  String get articleSavedDateUnknown => 'Save date unknown';
+
+  @override
+  String get articleSessionOnlyNote =>
+      'Current text is only readable in this session; the persistent save failed';
 
   @override
   String get browserMode => 'Browser Mode';

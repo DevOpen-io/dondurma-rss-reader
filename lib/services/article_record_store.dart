@@ -26,6 +26,7 @@ class MediaEntry {
     required this.state,
     this.attempts = 0,
     this.nextRetryAt,
+    this.waitSource,
   });
 
   factory MediaEntry.fromJson(Map<String, dynamic> json) => MediaEntry(
@@ -36,6 +37,7 @@ class MediaEntry {
     nextRetryAt: DateTime.tryParse(
       json['nextRetryAt'] as String? ?? '',
     )?.toUtc(),
+    waitSource: json['waitSource'] as String?,
   );
 
   /// File name inside the shared media pool (never a path).
@@ -49,18 +51,26 @@ class MediaEntry {
   /// Earliest time this piece may be retried (server `Retry-After` wins).
   final DateTime? nextRetryAt;
 
+  /// What set [nextRetryAt]: `'server'` when a `Retry-After` header drove
+  /// the wait (a manual retry must not bypass it), `'backoff'` for the
+  /// local doubling backoff (manual retry may bypass). `null` marks a
+  /// legacy wait of unknown origin — protected like a server wait.
+  final String? waitSource;
+
   MediaEntry copyWith({
     String? file,
     int? byteSize,
     MediaState? state,
     int? attempts,
     DateTime? Function()? nextRetryAt,
+    String? Function()? waitSource,
   }) => MediaEntry(
     file: file ?? this.file,
     byteSize: byteSize ?? this.byteSize,
     state: state ?? this.state,
     attempts: attempts ?? this.attempts,
     nextRetryAt: nextRetryAt != null ? nextRetryAt() : this.nextRetryAt,
+    waitSource: waitSource != null ? waitSource() : this.waitSource,
   );
 
   Map<String, dynamic> toJson() => {
@@ -69,6 +79,7 @@ class MediaEntry {
     'state': state.name,
     'attempts': attempts,
     'nextRetryAt': nextRetryAt?.toIso8601String(),
+    'waitSource': waitSource,
   };
 }
 

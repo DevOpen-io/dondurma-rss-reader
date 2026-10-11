@@ -92,7 +92,7 @@
   "oneMinute": "1 minuto",
   "fiveMinutes": "5 minutos",
   "clearCache": "Vaciar caché",
-  "clearCacheDesc": "Elimina los artículos descargados para liberar espacio",
+  "clearCacheDesc": "Borra el texto y las imágenes de artículos guardados temporalmente para liberar espacio. Los marcadores se conservan. Si el límite de caché sigue por encima de cero, el contenido puede prepararse de nuevo en la próxima actualización.",
   "cacheClearedSuccess": "Caché vaciada correctamente.",
   "syncBackground": "Sincronización automática",
   "syncBackgroundDesc": "Obtiene automáticamente artículos nuevos en la app y en segundo plano",
@@ -192,9 +192,46 @@
   "factoryReset": "Restablecer de fábrica",
   "factoryResetDesc": "Borra todos los datos y restaura la configuración predeterminada",
   "factoryResetConfirmTitle": "¿Estás seguro?",
-  "factoryResetConfirmDesc": "Esto borrará permanentemente todas tus fuentes, categorías, marcadores y ajustes. La aplicación se restaurará a su estado de instalación predeterminado. Esta acción no se puede deshacer.",
+  "factoryResetConfirmDesc": "Borra permanentemente fuentes y carpetas, marcadores con su texto e imágenes guardadas, ajustes, historial, descargas pendientes, contenido de widgets y notificaciones, y sesiones del navegador integrado — las sesiones de sitios pueden cerrarse. Los permisos del sistema, la ubicación del widget, el navegador externo y los archivos exportados no se ven afectados. No se puede deshacer.",
   "factoryResetSuccess": "Se han borrado todos los datos y ajustes.",
   "factoryResetPartialError": "El restablecimiento se completó, pero algunos datos sin conexión no se pudieron borrar. Se limpiarán automáticamente más tarde.",
+  "articleStatusReadyInCache": "Listo en caché",
+  "articleStatusSavedCopyReady": "Copia guardada lista",
+  "articleStatusTextSaved": "Texto guardado",
+  "articleStatusTextCached": "Texto en caché",
+  "articleStatusSaveRequested": "Guardado solicitado",
+  "articleStatusCouldNotSave": "No se pudo guardar",
+  "articleStatusRssSaved": "Texto RSS guardado",
+  "articleStatusRssCached": "Texto RSS en caché",
+  "articleStatusReadableSession": "Se puede leer en esta sesión",
+  "articleWaitPreparing": "Preparando partes faltantes",
+  "articleWaitUnmetered": "Esperando red sin límite",
+  "articleWaitRetryEarliest": "Reintento permitido a lo más pronto a las {time}",
+  "@articleWaitRetryEarliest": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "articleWaitServer": "Esperando la fuente",
+  "articleWaitUnavailable": "Contenido no disponible",
+  "articleImagesCount": "Imágenes {done}/{total}",
+  "@articleImagesCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "articleRetryMissing": "Reintentar partes faltantes",
+  "articleRetrySave": "Reintentar guardar",
+  "articleSavedCopyNotice": "Copia guardada — no se pudo obtener la versión actual",
+  "articleSavedDateUnknown": "Fecha de guardado desconocida",
+  "articleSessionOnlyNote": "El texto actual solo se puede leer en esta sesión; falló el guardado permanente",
   "browserMode": "Modo de navegador",
   "browserBuiltin": "Navegador integrado",
   "browserExternal": "Navegador externo",

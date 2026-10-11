@@ -20,6 +20,7 @@ import '../services/feed_refresh.dart';
 import '../services/article_preparation_service.dart';
 import '../services/article_media_store.dart';
 import '../services/article_record_store.dart';
+import '../services/article_status.dart';
 import '../services/temp_cache_membership.dart';
 import '../services/feed_service.dart';
 import '../services/full_text_extraction_service.dart';
@@ -52,7 +53,6 @@ class FeedProvider extends ChangeNotifier {
   String? _selectedCategory;
   String? _selectedFeedUrl;
   Set<String> _readItemIds = {};
-  Set<String> _cachedItemIds = {};
   bool _isLoading = false;
   bool _isOffline = false;
 
@@ -120,6 +120,7 @@ class FeedProvider extends ChangeNotifier {
   Map<String, List<String>>? _lastFeedKeywords;
   Set<String>? _lastBookmarkIds;
   Map<String, bool?>? _knownFullTextPrefs;
+  int _lastClaimVersion = -1;
 
   /// Memoized unread tallies powering the drawer badges. Rebuilt lazily from
   /// [_items] + [_readItemIds] and invalidated alongside the filter cache, so
@@ -143,10 +144,90 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   List<FeedItem> get items => _items;
-  Set<String> get cachedItemIds => _cachedItemIds;
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get isOffline => _isOffline;
+
+  /// Per-article durable-state summaries (#41): rows and the article
+  /// surface derive their offline labels from these — never from prefetch
+  /// flags or image-cache guesses. Refreshed after each membership pass.
+  Map<String, ArticleStatus> _articleStatuses = const {};
+
+  /// True once the first status-map read settled — distinguishes "still
+  /// loading" from "verified absent" so a missing entry is not flashed as
+  /// a failed save (#41 honesty).
+  bool _articleStatusesLoaded = false;
+  bool get articleStatusesLoaded => _articleStatusesLoaded;
+
+  /// Current transport verdict from the connectivity plugin; `true` until
+  /// the first check lands.
+  bool _unmetered = true;
+  bool get unmetered => _unmetered;
+
+  /// Status summary for [id] (canonicalized), or null when the article has
+  /// no durable record — meaning "no offline claim", never "ready".
+  ArticleStatus? articleStatus(String id) =>
+      _articleStatuses[ArticleIdentity.normalizeItemId(id) ?? id];
+
+  /// The effective full-text preference for [item]'s feed — per-feed
+  /// tri-state falling back to the global setting, same rule as the
+  /// membership pass's `fullTextFor`.
+  bool _effectiveFullText(FeedItem item) {
+    final auto = settingsProvider?.autoFullText ?? false;
+    for (final sub
+        in subscriptionProvider?.subscriptions ?? const <FeedSubscription>[]) {
+      if (sub.url == item.feedUrl) return sub.fullTextEnabled ?? auto;
+    }
+    return auto;
+  }
+
+  /// Explicit single-article preparation pass (#41): one foreground pass
+  /// for that article's missing pieces — allowed on metered transport but
+  /// never bypasses a server `Retry-After` wait.
+  Future<int> prepareArticleNow(String id) async {
+    final attempted = await _preparation.prepareArticle(id);
+    await _refreshArticleStatuses();
+    return attempted;
+  }
+
+  /// Re-asserts a bookmark's durable claim and runs one foreground pass —
+  /// the "retry save" path when the minimum persistent write failed (#41).
+  /// The live bookmark predicate is rechecked inside the store lock.
+  Future<void> retrySaveArticle(FeedItem item) async {
+    final epoch = await _preparation.currentRecordEpoch();
+    await _preparation.registerArticle(
+      item,
+      const {'bookmark'},
+      expectedEpoch: epoch,
+      // The feed's effective full-text preference must survive a save
+      // retry — registerArticle's default (true) would silently re-arm
+      // extraction for a feed the user set to RSS-only (#41).
+      fullText: _effectiveFullText(item),
+      claimCheck: () =>
+          bookmarkProvider?.bookmarkedItemIds.contains(item.id) ?? false,
+    );
+    await _preparation.prepareArticle(item.id);
+    await _refreshArticleStatuses();
+  }
+
+  /// Monotonic guard on the status map: overlapping refreshes must apply
+  /// in call order — a read started before a cache clear or owner strip
+  /// must never overwrite the post-change truth (#41 freshness).
+  int _statusGeneration = 0;
+
+  Future<void> _refreshArticleStatuses() async {
+    final gen = ++_statusGeneration;
+    final map = await listArticleStatuses(
+      ArticleRecordStore.forBox(_box),
+      // Files that vanished or are truncated must not back a "ready"
+      // label — verify() demotes them for repair (#41).
+      media: ArticleMediaStore(),
+    );
+    if (_disposed || gen != _statusGeneration) return;
+    _articleStatuses = map;
+    _articleStatusesLoaded = true;
+    notifyListeners();
+  }
 
   /// Last fetch failure per feed, persisted across restarts so a dead feed
   /// stays visibly unhealthy instead of silently showing stale cache.
@@ -205,6 +286,14 @@ class FeedProvider extends ChangeNotifier {
       _onConnectivityChanged,
       onError: (_) {},
     );
+    // Seed the transport verdict used by status labels — a stale guess
+    // would mislabel "waiting for unmetered" articles as "preparing".
+    unawaited(
+      Connectivity()
+          .checkConnectivity()
+          .then((r) => _setUnmetered(r))
+          .catchError((_) => false),
+    );
   }
 
   /// Offline preparation engine — sweeps durable pending work after each
@@ -215,11 +304,23 @@ class FeedProvider extends ChangeNotifier {
   /// default-constructed one is this provider's to release.
   final bool _ownsPreparation;
 
+  /// Applies the transport verdict; notifies when it actually flips so a
+  /// "waiting for unmetered" label re-renders as "preparing" (or back)
+  /// without waiting for the next refresh (#41 freshness).
+  void _setUnmetered(List<ConnectivityResult> results) {
+    final next = ArticlePreparationService.unmeteredNetwork(results);
+    if (next == _unmetered || _disposed) return;
+    _unmetered = next;
+    notifyListeners();
+  }
+
   /// Re-sync as soon as connectivity returns after an offline stretch —
   /// otherwise a device that sat through a flap waits for the next timer tick.
   /// Gated on `_isOffline` so a momentary blip while online stays free.
   void _onConnectivityChanged(List<ConnectivityResult> results) {
-    if (_disposed || !_isOffline) return;
+    if (_disposed) return;
+    _setUnmetered(results);
+    if (!_isOffline) return;
     final hasNetwork = results.any((r) => r != ConnectivityResult.none);
     if (hasNetwork) refreshAll();
   }
@@ -267,6 +368,13 @@ class FeedProvider extends ChangeNotifier {
     _lastFeedKeywords = nextFeedKeywords;
     _lastBookmarkIds = nextBookmarkIds;
 
+    // A durable bookmark-claim mutation (strip/prepare) lands AFTER the
+    // bookmark set already changed — its completion bumps this version.
+    // Re-running membership + status refresh on the bump keeps labels from
+    // reading a record mid-strip (#41 ordering).
+    final claimsChanged = book.claimVersion != _lastClaimVersion;
+    _lastClaimVersion = book.claimVersion;
+
     final currentUrls = sub.subscriptions.map((s) => s.url).toSet();
     final subscriptionsChanged = !setEquals(
       _knownSubscriptionUrls,
@@ -312,6 +420,7 @@ class FeedProvider extends ChangeNotifier {
     if (inputsChanged ||
         subscriptionsChanged ||
         fullTextPrefsChanged ||
+        claimsChanged ||
         prevCacheLimit != set.offlineCacheLimit ||
         prevAutoFullText != set.autoFullText) {
       _saveCachedItems().ignore();
@@ -398,7 +507,6 @@ class FeedProvider extends ChangeNotifier {
         // main thread for users with many feeds.
         final maps = await compute(_decodeCachedItems, cachedItemsData);
         _items = maps.map(FeedItem.fromJson).toList();
-        _cachedItemIds = _items.map((e) => e.id).toSet();
         _invalidateFilterCache();
         notifyListeners();
       } catch (e) {
@@ -968,9 +1076,10 @@ class FeedProvider extends ChangeNotifier {
       unawaited(() async {
         try {
           final results = await Connectivity().checkConnectivity();
-          await _preparation.preparePending(
-            unmetered: ArticlePreparationService.unmeteredNetwork(results),
-          );
+          _setUnmetered(results);
+          await _preparation.preparePending(unmetered: _unmetered);
+          // Preparation commits landed — labels may now claim ready.
+          await _refreshArticleStatuses();
         } catch (_) {
           // Connectivity plugin absence or a storage error simply defers
           // the sweep to the next refresh — never a crash path.
@@ -1268,18 +1377,6 @@ class FeedProvider extends ChangeNotifier {
         )
         .ignore();
     if (generation != _cacheGeneration) return;
-    // Snapshot membership = selected temp members (canon ids) plus bookmarked
-    // items still present — same semantic the load path restores at startup.
-    _cachedItemIds = {
-      for (final item in items)
-        if (selectedIds.contains(canon(item.id)) ||
-            bookmarkedIds.contains(item.id))
-          item.id,
-    };
-    // No notifyListeners() here — cachedItemIds is only used for badge display
-    // and the next normal rebuild will pick it up, avoiding an unnecessary
-    // full widget tree rebuild during a background write.
-
     // The transient snapshot = selected members plus bookmarked items
     // (bookmarks never consume a temp slot but must stay browsable offline).
     final itemsToCache = [
@@ -1296,6 +1393,8 @@ class FeedProvider extends ChangeNotifier {
     // A reset landed while encoding — dropping the write preserves the wipe.
     if (generation != _cacheGeneration) return;
     await _box.put('cachedItemsJson', encodedData);
+    // Membership/ownership settled for this pass — refresh row labels.
+    unawaited(_refreshArticleStatuses());
   }
 
   /// Clears all cached offline articles — temp membership included (#40):
@@ -1303,7 +1402,11 @@ class FeedProvider extends ChangeNotifier {
   /// that lose their last owner.
   Future<void> clearCache() async {
     _cacheGeneration++;
-    _cachedItemIds.clear();
+    // Back to "loading": an empty+loaded map would flash "could not save"
+    // on every bookmarked row until the refresh lands.
+    _statusGeneration++;
+    _articleStatuses = const {};
+    _articleStatusesLoaded = false;
     // bump → delete → bump: a bg write that validated the first epoch can
     // still lose to the delete, so the second bump fences it entirely —
     // the same pattern factoryReset uses around box.clear().
@@ -1348,6 +1451,7 @@ class FeedProvider extends ChangeNotifier {
               ),
         )
         .ignore();
+    unawaited(_refreshArticleStatuses());
     notifyListeners();
   }
 
@@ -1359,7 +1463,9 @@ class FeedProvider extends ChangeNotifier {
     _selectedCategory = null;
     _selectedFeedUrl = null;
     _readItemIds.clear();
-    _cachedItemIds.clear();
+    _statusGeneration++;
+    _articleStatuses = const {};
+    _articleStatusesLoaded = false;
     _feedErrors = {};
     _searchQuery = '';
     _readFilter = 'all';

@@ -5,12 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
+import '../services/article_status.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
@@ -179,22 +181,42 @@ class _FeedListItemState extends State<FeedListItem>
     return Selector2<
       FeedProvider,
       BookmarkProvider,
-      ({bool isCached, bool isBookmarked})
+      ({
+        bool isBookmarked,
+        bool unmetered,
+        ArticleStatus? status,
+        bool statusLoaded,
+      })
     >(
       selector: (context, feedProvider, bookmarkProvider) => (
-        isCached: feedProvider.cachedItemIds.contains(widget.item.id),
         isBookmarked: bookmarkProvider.bookmarkedItemIds.contains(
           widget.item.id,
         ),
+        unmetered: feedProvider.unmetered,
+        status: feedProvider.articleStatus(widget.item.id),
+        statusLoaded: feedProvider.articleStatusesLoaded,
       ),
       builder: (context, state, child) {
         final bool isBookmarked = state.isBookmarked;
-        final bool isCached = state.isCached;
+        final ArticleStatus? status = state.status;
         final bool isRead = widget.item.isRead;
         final l10n = AppLocalizations.of(context);
+        final String? scopeLabel = _statusLabel(
+          l10n,
+          status,
+          isBookmarked,
+          state.statusLoaded,
+        );
+        final String? waitLabel = _waitLabel(l10n, status, state.unmetered);
+        final String statusSemantics = [
+          scopeLabel,
+          waitLabel,
+        ].whereType<String>().join('. ');
 
         return Semantics(
-          label: l10n.semanticOpenArticle(widget.item.title),
+          label: statusSemantics.isEmpty
+              ? l10n.semanticOpenArticle(widget.item.title)
+              : '${l10n.semanticOpenArticle(widget.item.title)}. $statusSemantics',
           hint: isRead ? l10n.semanticArticleRead : l10n.semanticArticleUnread,
           button: false,
           // Swipe gestures are invisible to screen readers; expose both swipe
@@ -235,7 +257,9 @@ class _FeedListItemState extends State<FeedListItem>
                       item: widget.item,
                       isRead: isRead,
                       isBookmarked: isBookmarked,
-                      isCached: isCached,
+                      status: status,
+                      scopeLabel: scopeLabel,
+                      waitLabel: waitLabel,
                       navigationItems: widget.navigationItems,
                     ),
                   ),
@@ -257,14 +281,18 @@ class _ArticleCard extends StatelessWidget {
   final FeedItem item;
   final bool isRead;
   final bool isBookmarked;
-  final bool isCached;
+  final ArticleStatus? status;
+  final String? scopeLabel;
+  final String? waitLabel;
   final List<FeedItem>? navigationItems;
 
   const _ArticleCard({
     required this.item,
     required this.isRead,
     required this.isBookmarked,
-    required this.isCached,
+    required this.status,
+    required this.scopeLabel,
+    required this.waitLabel,
     this.navigationItems,
   });
 
@@ -302,7 +330,13 @@ class _ArticleCard extends StatelessWidget {
               _FeedItemIcon(item: item, isRead: isRead),
               const SizedBox(width: 12),
               Expanded(
-                child: _FeedItemContent(item: item, isRead: isRead),
+                child: _FeedItemContent(
+                  item: item,
+                  isRead: isRead,
+                  status: status,
+                  scopeLabel: scopeLabel,
+                  waitLabel: waitLabel,
+                ),
               ),
               if (_hasThumbnail) ...[
                 const SizedBox(width: 12),
@@ -310,14 +344,14 @@ class _ArticleCard extends StatelessWidget {
                   item: item,
                   isRead: isRead,
                   isBookmarked: isBookmarked,
-                  isCached: isCached,
+                  hasLocalCopy: _hasOfflineCopy(status),
                 ),
               ] else ...[
                 const SizedBox(width: 4),
                 _FeedItemActions(
                   item: item,
                   isBookmarked: isBookmarked,
-                  isCached: isCached,
+                  hasLocalCopy: _hasOfflineCopy(status),
                   isRead: isRead,
                 ),
               ],
@@ -427,13 +461,13 @@ class _FeedItemThumbnail extends StatelessWidget {
   final FeedItem item;
   final bool isRead;
   final bool isBookmarked;
-  final bool isCached;
+  final bool hasLocalCopy;
 
   const _FeedItemThumbnail({
     required this.item,
     required this.isRead,
     required this.isBookmarked,
-    required this.isCached,
+    required this.hasLocalCopy,
   });
 
   @override
@@ -510,7 +544,7 @@ class _FeedItemThumbnail extends StatelessWidget {
             ),
           ),
         ),
-        if (isCached)
+        if (hasLocalCopy)
           Positioned(
             top: 4,
             right: 4,
@@ -537,14 +571,106 @@ class _FeedItemThumbnail extends StatelessWidget {
 }
 
 // =============================================================================
+// Status labels (#41)
+// =============================================================================
+
+/// The "available offline" pin mirrors what the label may claim: a readable
+/// body under a real claim — never an ownerless residue (#41).
+bool _hasOfflineCopy(ArticleStatus? status) =>
+    status != null &&
+    status.scope != ArticleScope.none &&
+    status.hasReadableBody;
+
+/// Short scope label for a row — distinguishes temporary cache from
+/// permanent bookmark claims. A bookmarked item whose status map has
+/// settled with no durable record reads "could not save", never "ready";
+/// while the map is still loading the row shows nothing rather than
+/// flashing a false failure (#41 honesty).
+String? _statusLabel(
+  AppLocalizations l10n,
+  ArticleStatus? status,
+  bool isBookmarked,
+  bool statusLoaded,
+) {
+  if (status == null) {
+    return isBookmarked && statusLoaded ? l10n.articleStatusCouldNotSave : null;
+  }
+  final rss = status.bodySource == 'rss';
+  switch (status.scope) {
+    case ArticleScope.savedReady:
+      return l10n.articleStatusSavedCopyReady;
+    case ArticleScope.savedText:
+      return rss ? l10n.articleStatusRssSaved : l10n.articleStatusTextSaved;
+    case ArticleScope.saveRequested:
+      return l10n.articleStatusSaveRequested;
+    case ArticleScope.cachedReady:
+      return l10n.articleStatusReadyInCache;
+    case ArticleScope.cachedText:
+      return rss ? l10n.articleStatusRssCached : l10n.articleStatusTextCached;
+    case ArticleScope.none:
+      return null;
+  }
+}
+
+/// Optional second reason line — why preparation is still incomplete.
+String? _waitLabel(
+  AppLocalizations l10n,
+  ArticleStatus? status,
+  bool unmetered,
+) {
+  if (status == null) return null;
+  final wait = status.waitFor(
+    unmeteredNow: unmetered,
+    now: DateTime.now().toUtc(),
+  );
+  final serverEarliest = status.earliestServerRetryAt;
+  final serverText = serverEarliest == null
+      ? null
+      : l10n.articleWaitRetryEarliest(
+          DateFormat.Hm().format(serverEarliest.toLocal()),
+        );
+  final earliest = status.earliestRetryAt;
+  final earliestText = earliest == null
+      ? null
+      : l10n.articleWaitRetryEarliest(
+          DateFormat.Hm().format(earliest.toLocal()),
+        );
+  switch (wait) {
+    case ArticleWait.unavailable:
+      return l10n.articleWaitUnavailable;
+    case ArticleWait.serverWait:
+      return serverText == null
+          ? l10n.articleWaitServer
+          : '${l10n.articleWaitServer} · $serverText';
+    case ArticleWait.retry:
+      return earliestText;
+    case ArticleWait.unmetered:
+      return l10n.articleWaitUnmetered;
+    case ArticleWait.preparing:
+      return l10n.articleWaitPreparing;
+    case ArticleWait.none:
+      return null;
+  }
+}
+
+// =============================================================================
 // Content column
 // =============================================================================
 
 class _FeedItemContent extends StatelessWidget {
   final FeedItem item;
   final bool isRead;
+  final ArticleStatus? status;
+  final String? scopeLabel;
+  final String? waitLabel;
 
-  const _FeedItemContent({required this.item, required this.isRead});
+  const _FeedItemContent({
+    required this.item,
+    required this.isRead,
+    required this.status,
+    required this.scopeLabel,
+    required this.waitLabel,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -587,17 +713,6 @@ class _FeedItemContent extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 8),
-            // Offline-readiness prototype (#18): prefetched body means the
-            // article opens fully without a network.
-            if (item.prefetchedFullText != null)
-              Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Icon(
-                  Icons.download_done,
-                  size: 14,
-                  color: colorScheme.secondary.withValues(alpha: 0.8),
-                ),
-              ),
             Text(
               _formatDate(item),
               style: TextStyle(
@@ -634,6 +749,40 @@ class _FeedItemContent extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
+        // Scope line first, wait reason second (#41) — a real text label,
+        // not an icon-only hint.
+        if (scopeLabel != null || waitLabel != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Row(
+              children: [
+                Icon(
+                  (status?.fullyReady ?? false)
+                      ? Icons.offline_pin
+                      : Icons.schedule,
+                  size: 12,
+                  color: (status?.fullyReady ?? false)
+                      ? colorScheme.secondary.withValues(alpha: 0.8)
+                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    [?scopeLabel, ?waitLabel].join(' · '),
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.9,
+                      ),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -658,13 +807,13 @@ class _FeedItemContent extends StatelessWidget {
 class _FeedItemActions extends StatelessWidget {
   final FeedItem item;
   final bool isBookmarked;
-  final bool isCached;
+  final bool hasLocalCopy;
   final bool isRead;
 
   const _FeedItemActions({
     required this.item,
     required this.isBookmarked,
-    required this.isCached,
+    required this.hasLocalCopy,
     required this.isRead,
   });
 
@@ -689,7 +838,7 @@ class _FeedItemActions extends StatelessWidget {
                 ? AppLocalizations.of(context).semanticRemoveBookmark
                 : AppLocalizations.of(context).semanticBookmark,
           ),
-          if (isCached)
+          if (hasLocalCopy)
             Padding(
               padding: const EdgeInsets.only(top: 8.0),
               child: Semantics(

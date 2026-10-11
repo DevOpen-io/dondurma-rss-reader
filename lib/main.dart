@@ -97,6 +97,15 @@ void main() async {
         ChangeNotifierProvider(
           create: (ctx) => BookmarkProvider(
             preparation: ctx.read<ArticlePreparationService>(),
+            // Evaluated at save time — the same per-feed tri-state +
+            // global fallback the membership pass uses (#41 consistency).
+            fullTextFor: (feedUrl) {
+              final auto = ctx.read<SettingsProvider>().autoFullText;
+              for (final s in ctx.read<SubscriptionProvider>().subscriptions) {
+                if (s.url == feedUrl) return s.fullTextEnabled ?? auto;
+              }
+              return auto;
+            },
           ),
         ),
         ChangeNotifierProxyProvider3<

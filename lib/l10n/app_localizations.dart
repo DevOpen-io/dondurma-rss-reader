@@ -625,7 +625,7 @@ abstract class AppLocalizations {
   /// No description provided for @clearCacheDesc.
   ///
   /// In en, this message translates to:
-  /// **'Remove downloaded articles to free up space'**
+  /// **'Clears temporarily stored article text and media to free up space. Bookmarks are kept. If the cache limit stays above zero, content may be prepared again on the next refresh.'**
   String get clearCacheDesc;
 
   /// No description provided for @cacheClearedSuccess.
@@ -1225,7 +1225,7 @@ abstract class AppLocalizations {
   /// No description provided for @factoryResetConfirmDesc.
   ///
   /// In en, this message translates to:
-  /// **'This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.'**
+  /// **'Permanently erases feeds and folders, bookmarks with their saved text and images, settings, history, pending downloads, widget and notification content, and in-app browser sessions — site logins may be signed out. Operating-system permissions, widget placement, the external browser, and exported files are not affected. This cannot be undone.'**
   String get factoryResetConfirmDesc;
 
   /// No description provided for @factoryResetSuccess.
@@ -1239,6 +1239,126 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reset completed, but some offline data could not be erased. It will be cleaned up automatically later.'**
   String get factoryResetPartialError;
+
+  /// No description provided for @articleStatusReadyInCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready in cache'**
+  String get articleStatusReadyInCache;
+
+  /// No description provided for @articleStatusSavedCopyReady.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved copy ready'**
+  String get articleStatusSavedCopyReady;
+
+  /// No description provided for @articleStatusTextSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Text saved'**
+  String get articleStatusTextSaved;
+
+  /// No description provided for @articleStatusTextCached.
+  ///
+  /// In en, this message translates to:
+  /// **'Text cached'**
+  String get articleStatusTextCached;
+
+  /// No description provided for @articleStatusSaveRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Save requested'**
+  String get articleStatusSaveRequested;
+
+  /// No description provided for @articleStatusCouldNotSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save'**
+  String get articleStatusCouldNotSave;
+
+  /// No description provided for @articleStatusRssSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'RSS text saved'**
+  String get articleStatusRssSaved;
+
+  /// No description provided for @articleStatusRssCached.
+  ///
+  /// In en, this message translates to:
+  /// **'RSS text cached'**
+  String get articleStatusRssCached;
+
+  /// No description provided for @articleStatusReadableSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Readable in this session'**
+  String get articleStatusReadableSession;
+
+  /// No description provided for @articleWaitPreparing.
+  ///
+  /// In en, this message translates to:
+  /// **'Preparing missing parts'**
+  String get articleWaitPreparing;
+
+  /// No description provided for @articleWaitUnmetered.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for unmetered network'**
+  String get articleWaitUnmetered;
+
+  /// No description provided for @articleWaitRetryEarliest.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry allowed earliest at {time}'**
+  String articleWaitRetryEarliest(String time);
+
+  /// No description provided for @articleWaitServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting on the source'**
+  String get articleWaitServer;
+
+  /// No description provided for @articleWaitUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Some content unavailable'**
+  String get articleWaitUnavailable;
+
+  /// No description provided for @articleImagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Images {done}/{total}'**
+  String articleImagesCount(int done, int total);
+
+  /// No description provided for @articleRetryMissing.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry missing parts'**
+  String get articleRetryMissing;
+
+  /// No description provided for @articleRetrySave.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry save'**
+  String get articleRetrySave;
+
+  /// No description provided for @articleSavedCopyNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved copy — the current version could not be fetched'**
+  String get articleSavedCopyNotice;
+
+  /// No description provided for @articleSavedDateUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Save date unknown'**
+  String get articleSavedDateUnknown;
+
+  /// No description provided for @articleSessionOnlyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Current text is only readable in this session; the persistent save failed'**
+  String get articleSessionOnlyNote;
 
   /// No description provided for @browserMode.
   ///

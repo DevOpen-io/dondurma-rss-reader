@@ -92,7 +92,7 @@
   "oneMinute": "1 Dakika",
   "fiveMinutes": "5 Dakika",
   "clearCache": "Önbelleği Temizle",
-  "clearCacheDesc": "Alan açmak için indirilen makaleleri kaldır",
+  "clearCacheDesc": "Alan açmak için geçici saklanan yazı metinlerini ve görselleri temizler. Yer imleri korunur. Önbellek sınırı sıfırın üstündeyse içerik bir sonraki yenilemede yeniden hazırlanabilir.",
   "cacheClearedSuccess": "Önbellek başarıyla temizlendi.",
   "syncBackground": "Otomatik Senkronizasyon",
   "syncBackgroundDesc": "Yeni makaleleri uygulamada ve arka planda otomatik getir",
@@ -192,9 +192,46 @@
   "factoryReset": "Fabrika Ayarlarına Sıfırla",
   "factoryResetDesc": "Tüm verileri silin ve varsayılan ayarlara dönün",
   "factoryResetConfirmTitle": "Emin misiniz?",
-  "factoryResetConfirmDesc": "Bu işlem takip ettiğiniz tüm haber kaynaklarını, kategorileri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.",
+  "factoryResetConfirmDesc": "Kaynakları ve klasörleri, yer imlerini kaydedilmiş metin ve görselleriyle birlikte, ayarları, geçmişi, bekleyen indirmeleri, widget ve bildirim içeriklerini ve uygulama içi tarayıcı oturumlarını kalıcı olarak siler — site oturumları kapanabilir. İşletim sistemi izinleri, widget yerleşimi, harici tarayıcı ve dışa aktarılmış dosyalar etkilenmez. Bu işlem geri alınamaz.",
   "factoryResetSuccess": "Tüm veri ve ayarlar silindi.",
   "factoryResetPartialError": "Sıfırlama tamamlandı ancak bazı çevrimdışı veriler silinemedi. Daha sonra otomatik olarak temizlenecek.",
+  "articleStatusReadyInCache": "Önbellekte hazır",
+  "articleStatusSavedCopyReady": "Kaydedilmiş kopya hazır",
+  "articleStatusTextSaved": "Metin saklandı",
+  "articleStatusTextCached": "Metin önbellekte",
+  "articleStatusSaveRequested": "Saklama isteği",
+  "articleStatusCouldNotSave": "Kaydedilemedi",
+  "articleStatusRssSaved": "RSS metni saklandı",
+  "articleStatusRssCached": "RSS metni önbellekte",
+  "articleStatusReadableSession": "Bu oturumda okunabilir",
+  "articleWaitPreparing": "Eksikler hazırlanıyor",
+  "articleWaitUnmetered": "Kotasız ağ bekleniyor",
+  "articleWaitRetryEarliest": "En erken {time} sonra",
+  "@articleWaitRetryEarliest": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "articleWaitServer": "Kaynak beklemesi",
+  "articleWaitUnavailable": "Bazı içerik alınamadı",
+  "articleImagesCount": "Görseller {done}/{total}",
+  "@articleImagesCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "articleRetryMissing": "Eksikleri yeniden dene",
+  "articleRetrySave": "Kaydetmeyi yeniden dene",
+  "articleSavedCopyNotice": "Kaydedilmiş kopya, güncel sürüm alınamadı",
+  "articleSavedDateUnknown": "Kaydetme tarihi bilinmiyor",
+  "articleSessionOnlyNote": "Mevcut metin yalnız bu oturumda; kalıcı yazım başarısız",
   "browserMode": "Tarayıcı Modu",
   "browserBuiltin": "Dahili Tarayıcı",
   "browserExternal": "Harici Tarayıcı",

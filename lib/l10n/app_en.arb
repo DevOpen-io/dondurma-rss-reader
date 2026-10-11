@@ -147,7 +147,7 @@
   "oneMinute": "1 Minute",
   "fiveMinutes": "5 Minutes",
   "clearCache": "Clear Cache",
-  "clearCacheDesc": "Remove downloaded articles to free up space",
+  "clearCacheDesc": "Clears temporarily stored article text and media to free up space. Bookmarks are kept. If the cache limit stays above zero, content may be prepared again on the next refresh.",
   "cacheClearedSuccess": "Cache cleared successfully.",
   "syncBackground": "Automatic Sync",
   "syncBackgroundDesc": "Automatically fetch new articles in the app and in the background",
@@ -278,9 +278,46 @@
   "factoryReset": "Factory Reset",
   "factoryResetDesc": "Erase all data and restore default settings",
   "factoryResetConfirmTitle": "Are you sure?",
-  "factoryResetConfirmDesc": "This will permanently erase all your feeds, categories, bookmarks, and settings. The application will be restored to its default fresh install state. This action cannot be undone.",
+  "factoryResetConfirmDesc": "Permanently erases feeds and folders, bookmarks with their saved text and images, settings, history, pending downloads, widget and notification content, and in-app browser sessions — site logins may be signed out. Operating-system permissions, widget placement, the external browser, and exported files are not affected. This cannot be undone.",
   "factoryResetSuccess": "All data and settings have been erased.",
   "factoryResetPartialError": "Reset completed, but some offline data could not be erased. It will be cleaned up automatically later.",
+  "articleStatusReadyInCache": "Ready in cache",
+  "articleStatusSavedCopyReady": "Saved copy ready",
+  "articleStatusTextSaved": "Text saved",
+  "articleStatusTextCached": "Text cached",
+  "articleStatusSaveRequested": "Save requested",
+  "articleStatusCouldNotSave": "Could not save",
+  "articleStatusRssSaved": "RSS text saved",
+  "articleStatusRssCached": "RSS text cached",
+  "articleStatusReadableSession": "Readable in this session",
+  "articleWaitPreparing": "Preparing missing parts",
+  "articleWaitUnmetered": "Waiting for unmetered network",
+  "articleWaitRetryEarliest": "Retry allowed earliest at {time}",
+  "@articleWaitRetryEarliest": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "articleWaitServer": "Waiting on the source",
+  "articleWaitUnavailable": "Some content unavailable",
+  "articleImagesCount": "Images {done}/{total}",
+  "@articleImagesCount": {
+    "placeholders": {
+      "done": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "articleRetryMissing": "Retry missing parts",
+  "articleRetrySave": "Retry save",
+  "articleSavedCopyNotice": "Saved copy — the current version could not be fetched",
+  "articleSavedDateUnknown": "Save date unknown",
+  "articleSessionOnlyNote": "Current text is only readable in this session; the persistent save failed",
   "browserMode": "Browser Mode",
   "browserBuiltin": "Built-in Browser",
   "browserExternal": "External Browser",

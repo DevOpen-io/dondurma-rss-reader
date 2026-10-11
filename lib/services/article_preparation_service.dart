@@ -339,6 +339,14 @@ class ArticlePreparationService {
               ? () => nextPublishedAt
               : null,
           bodyState: nextBodyState,
+          // Settling onto the RSS body cancels the extraction wait — a
+          // stale nextRetryAt would otherwise label the record "retry
+          // pending" forever (#41 phantom-wait fix).
+          nextRetryAt:
+              (nextBodyState == MediaState.ready &&
+                  nextBodyState != current.bodyState)
+              ? () => null
+              : null,
         );
       }
       if (current?.tombstoned == true) {
@@ -353,9 +361,8 @@ class ArticlePreparationService {
 
   /// Explicit single-article permit: one preparation pass for [articleId]
   /// regardless of transport cost — this is the "one article, one pass"
-  /// mobile-data license an explicit user action grants. Still honors the
-  /// stored `nextRetryAt` of each piece — a manual retry never bypasses a
-  /// server `Retry-After` wait.
+  /// mobile-data license an explicit user action grants. Local backoff
+  /// waits may be bypassed here; a server `Retry-After` wait never is.
   Future<int> prepareArticle(String articleId) =>
       _enqueue(() => _prepareArticle(articleId));
 
@@ -365,7 +372,7 @@ class ArticlePreparationService {
       return 0;
     }
     final epoch = await _records.currentEpoch();
-    await _prepareRecord(record, _now().toUtc(), epoch);
+    await _prepareRecord(record, _now().toUtc(), epoch, manual: true);
     return 1;
   }
 
@@ -420,14 +427,19 @@ class ArticlePreparationService {
   Future<void> _prepareRecord(
     ArticleRecord record,
     DateTime now,
-    int epoch,
-  ) async {
+    int epoch, {
+    bool manual = false,
+  }) async {
     final id = record.id;
 
     // 1. Body: full-text upgrade. The RSS body is kept when extraction fails.
     if (record.bodyState != MediaState.ready && record.link.isNotEmpty) {
+      // A body wait is only ever the local doubling backoff — an explicit
+      // user retry may bypass it (server waits only exist on media).
       final retryDue =
-          record.nextRetryAt == null || !record.nextRetryAt!.isAfter(now);
+          manual ||
+          record.nextRetryAt == null ||
+          !record.nextRetryAt!.isAfter(now);
       if (retryDue) {
         String? html;
         try {
@@ -473,7 +485,12 @@ class ArticlePreparationService {
       for (final e in fresh.media.entries)
         if (e.value.state != MediaState.ready &&
             e.value.state != MediaState.gone &&
-            (e.value.nextRetryAt == null || !e.value.nextRetryAt!.isAfter(now)))
+            (e.value.nextRetryAt == null ||
+                !e.value.nextRetryAt!.isAfter(now) ||
+                // A manual retry may bypass the local backoff — but never a
+                // server-issued Retry-After wait. Legacy entries carry no
+                // stamp, so only an explicit 'backoff' is bypassable.
+                (manual && e.value.waitSource == 'backoff')))
           e,
     ];
     await Future.wait([
@@ -516,14 +533,24 @@ class ArticlePreparationService {
           // a manual retry must not bypass a 429 wait either. A stored
           // (possibly longer, e.g. Retry-After) wait is never shortened.
           var retryAt = now.add(backoffFor(attempts));
+          var waitSource = 'backoff';
           final server = outcome.retryAfter;
-          if (server != null && server.isAfter(retryAt)) retryAt = server;
+          if (server != null && server.isAfter(retryAt)) {
+            retryAt = server;
+            waitSource = 'server';
+          }
           final stored = existing.nextRetryAt;
-          if (stored != null && stored.isAfter(retryAt)) retryAt = stored;
+          if (stored != null && stored.isAfter(retryAt)) {
+            retryAt = stored;
+            // A kept legacy wait keeps its protection: unknown origin is
+            // treated like a server wait, not a bypassable backoff.
+            waitSource = existing.waitSource ?? 'server';
+          }
           media[url] = existing.copyWith(
             state: MediaState.failed,
             attempts: attempts,
             nextRetryAt: () => retryAt,
+            waitSource: () => waitSource,
           );
         }
         return current.copyWith(media: media);
@@ -551,9 +578,11 @@ class ArticlePreparationService {
       if (response.statusCode == 200) {
         final type = response.headers['content-type'] ?? '';
         if ((type.isNotEmpty && !type.startsWith('image/')) ||
-            response.bodyBytes.length > maxMediaBytes) {
-          // Soft-404 HTML / captive portal / oversize — structural, not
-          // transient: retrying would fetch the same non-image forever.
+            response.bodyBytes.length > maxMediaBytes ||
+            response.bodyBytes.isEmpty) {
+          // Soft-404 HTML / captive portal / oversize / empty payload —
+          // structural, not transient: retrying would fetch the same
+          // non-image forever (an empty put throws, looping the wait).
           return (ready: null, retryAfter: null, gone: true);
         }
         return (

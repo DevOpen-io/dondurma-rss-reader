@@ -293,7 +293,8 @@ class AppLocalizationsTr extends AppLocalizations {
   String get clearCache => 'Önbelleği Temizle';
 
   @override
-  String get clearCacheDesc => 'Alan açmak için indirilen makaleleri kaldır';
+  String get clearCacheDesc =>
+      'Alan açmak için geçici saklanan yazı metinlerini ve görselleri temizler. Yer imleri korunur. Önbellek sınırı sıfırın üstündeyse içerik bir sonraki yenilemede yeniden hazırlanabilir.';
 
   @override
   String get cacheClearedSuccess => 'Önbellek başarıyla temizlendi.';
@@ -614,7 +615,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get factoryResetConfirmDesc =>
-      'Bu işlem takip ettiğiniz tüm haber kaynaklarını, kategorileri, yer işaretlerini ve ayarları kalıcı olarak silecektir. Uygulama varsayılan ilk yükleme durumuna dönecektir. Bu işlem geri alınamaz.';
+      'Kaynakları ve klasörleri, yer imlerini kaydedilmiş metin ve görselleriyle birlikte, ayarları, geçmişi, bekleyen indirmeleri, widget ve bildirim içeriklerini ve uygulama içi tarayıcı oturumlarını kalıcı olarak siler — site oturumları kapanabilir. İşletim sistemi izinleri, widget yerleşimi, harici tarayıcı ve dışa aktarılmış dosyalar etkilenmez. Bu işlem geri alınamaz.';
 
   @override
   String get factoryResetSuccess => 'Tüm veri ve ayarlar silindi.';
@@ -622,6 +623,72 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get factoryResetPartialError =>
       'Sıfırlama tamamlandı ancak bazı çevrimdışı veriler silinemedi. Daha sonra otomatik olarak temizlenecek.';
+
+  @override
+  String get articleStatusReadyInCache => 'Önbellekte hazır';
+
+  @override
+  String get articleStatusSavedCopyReady => 'Kaydedilmiş kopya hazır';
+
+  @override
+  String get articleStatusTextSaved => 'Metin saklandı';
+
+  @override
+  String get articleStatusTextCached => 'Metin önbellekte';
+
+  @override
+  String get articleStatusSaveRequested => 'Saklama isteği';
+
+  @override
+  String get articleStatusCouldNotSave => 'Kaydedilemedi';
+
+  @override
+  String get articleStatusRssSaved => 'RSS metni saklandı';
+
+  @override
+  String get articleStatusRssCached => 'RSS metni önbellekte';
+
+  @override
+  String get articleStatusReadableSession => 'Bu oturumda okunabilir';
+
+  @override
+  String get articleWaitPreparing => 'Eksikler hazırlanıyor';
+
+  @override
+  String get articleWaitUnmetered => 'Kotasız ağ bekleniyor';
+
+  @override
+  String articleWaitRetryEarliest(String time) {
+    return 'En erken $time sonra';
+  }
+
+  @override
+  String get articleWaitServer => 'Kaynak beklemesi';
+
+  @override
+  String get articleWaitUnavailable => 'Bazı içerik alınamadı';
+
+  @override
+  String articleImagesCount(int done, int total) {
+    return 'Görseller $done/$total';
+  }
+
+  @override
+  String get articleRetryMissing => 'Eksikleri yeniden dene';
+
+  @override
+  String get articleRetrySave => 'Kaydetmeyi yeniden dene';
+
+  @override
+  String get articleSavedCopyNotice =>
+      'Kaydedilmiş kopya, güncel sürüm alınamadı';
+
+  @override
+  String get articleSavedDateUnknown => 'Kaydetme tarihi bilinmiyor';
+
+  @override
+  String get articleSessionOnlyNote =>
+      'Mevcut metin yalnız bu oturumda; kalıcı yazım başarısız';
 
   @override
   String get browserMode => 'Tarayıcı Modu';

@@ -54,6 +54,25 @@ class ArticleMediaStore {
 
   static bool _isValidFileName(String name) => _fileNamePattern.hasMatch(name);
 
+  /// Resolves a `file://` src to a [File] only when its basename matches
+  /// the managed `m_` scheme — feed HTML is untrusted input, so arbitrary
+  /// `file://` URLs in the body never reach the filesystem (#41).
+  static File? managedFileFromSrc(String src) {
+    if (!src.startsWith('file://')) return null;
+    final String path;
+    try {
+      path = Uri.decodeFull(src.substring(7));
+    } on FormatException {
+      return null;
+    } on ArgumentError {
+      return null;
+    }
+    if (path.contains('..')) return null;
+    final name = path.split('/').last;
+    if (!_isValidFileName(name)) return null;
+    return File(path);
+  }
+
   /// 64-bit FNV-1a hash of the UTF-16 code units — deterministic,
   /// dependency-free file naming. Public so callers can commit a `pending`
   /// manifest entry BEFORE bytes land on disk (see [pendingEntry]): the
@@ -112,6 +131,14 @@ class ArticleMediaStore {
       byteSize: bytes.length,
       state: MediaState.ready,
     );
+  }
+
+  /// Absolute path of [fileName] inside the media pool — for renderers that
+  /// hand the file straight to the platform (`Image.file`, `file://` src).
+  /// Returns null for names outside the managed `m_` scheme.
+  Future<String?> pathFor(String fileName) async {
+    if (!_isValidFileName(fileName)) return null;
+    return '${(await _dir()).path}/$fileName';
   }
 
   Future<Uint8List?> read(MediaEntry entry) async {

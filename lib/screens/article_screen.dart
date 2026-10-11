@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
@@ -10,6 +13,8 @@ import '../providers/article_page_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/article_media_store.dart';
+import '../services/article_status.dart';
 import '../widgets/in_app_browser.dart';
 import '../widgets/article/article_circle_buttons.dart';
 import '../widgets/article/article_content_skeleton.dart';
@@ -137,6 +142,9 @@ class _ArticlePageState extends State<_ArticlePage> {
     if (!mounted || !widget.isActive) return;
     final provider =
         _articlePageProvider ?? context.read<ArticlePageProvider>();
+    // Refresh (not just first load) so a strip reflects preparation that
+    // committed while the page sat inactive (#41 freshness).
+    unawaited(provider.refreshSavedCopy());
     provider.checkAutoFullText(
       context.read<SubscriptionProvider>(),
       context.read<SettingsProvider>(),
@@ -459,6 +467,15 @@ class _ArticlePageState extends State<_ArticlePage> {
                           ],
                         ),
 
+                        // Durable-copy status strip (#41): scope label,
+                        // media count, wait reason, single retry action.
+                        _ArticleStatusStrip(
+                          item: widget.item,
+                          provider: provider,
+                          l10n: l10n,
+                          colorScheme: colorScheme,
+                        ),
+
                         const SizedBox(height: 16),
 
                         // Reading mode toggle — visible affordance for new users
@@ -556,6 +573,9 @@ class _ArticlePageState extends State<_ArticlePage> {
                                   final urls = urlsStr
                                       .split('|')
                                       .where((u) => u.isNotEmpty)
+                                      .where(
+                                        (u) => _trustedImageSrc(provider, u),
+                                      )
                                       .toList();
                                   if (urls.isEmpty) {
                                     return const SizedBox.shrink();
@@ -570,6 +590,35 @@ class _ArticlePageState extends State<_ArticlePage> {
                                       extensionContext.attributes['src'];
                                   if (src == null) {
                                     return const SizedBox.shrink();
+                                  }
+                                  // Durable media (#41): ready manifest
+                                  // entries were rewritten to file:// — read
+                                  // stored bytes instead of the network.
+                                  // Only paths the rewrite itself produced
+                                  // are trusted: a raw file:// src in feed
+                                  // HTML must never reach the filesystem.
+                                  if (src.startsWith('file://')) {
+                                    final file = _trustedLocalImage(
+                                      provider,
+                                      src,
+                                    );
+                                    if (file == null) {
+                                      return const SizedBox.shrink();
+                                    }
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(10),
+                                        child: Image.file(
+                                          file,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, _, _) =>
+                                              const SizedBox.shrink(),
+                                        ),
+                                      ),
+                                    );
                                   }
                                   return Padding(
                                     padding: const EdgeInsets.symmetric(
@@ -746,6 +795,290 @@ class _ArticlePageState extends State<_ArticlePage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// =============================================================================
+// Durable-copy status strip (#41)
+// =============================================================================
+
+/// Readable-content-first strip: scope label, then the wait reason and
+/// media count, then at most one action. A bookmarked item whose durable
+/// write failed reads "could not save" — never "ready".
+class _ArticleStatusStrip extends StatelessWidget {
+  final FeedItem item;
+  final ArticlePageProvider provider;
+  final AppLocalizations l10n;
+  final ColorScheme colorScheme;
+
+  const _ArticleStatusStrip({
+    required this.item,
+    required this.provider,
+    required this.l10n,
+    required this.colorScheme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final status = provider.recordStatus;
+    final unmetered = context.select<FeedProvider, bool>((p) => p.unmetered);
+
+    // Still reading the durable record — show nothing rather than flash a
+    // false "could not save" (#41 honesty).
+    if (!provider.savedCopyLoaded) return const SizedBox.shrink();
+
+    // Persistent write failed: bookmark claim exists but no record — the
+    // on-screen text is session-only and must say so (#41).
+    if (status == null) {
+      if (!item.isBookmarked) {
+        return const SizedBox.shrink();
+      }
+      return _NoticeBox(
+        colorScheme: colorScheme,
+        tone: _NoticeTone.warning,
+        children: [
+          Text(
+            l10n.articleStatusCouldNotSave,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          Text(
+            l10n.articleSessionOnlyNote,
+            style: const TextStyle(fontSize: 12),
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => unawaited(_retrySave(context)),
+              style: TextButton.styleFrom(
+                minimumSize: const Size(48, 48),
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(
+                l10n.articleRetrySave,
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final scope = _stripScopeLabel(status);
+    final wait = status.waitFor(
+      unmeteredNow: unmetered,
+      now: DateTime.now().toUtc(),
+    );
+    final details = <String>[
+      if (status.totalMedia > 0)
+        l10n.articleImagesCount(status.readyMedia, status.totalMedia),
+      ?_stripWaitLabel(status, wait),
+    ];
+
+    // A manual pass may bypass a local backoff but never a server or
+    // unknown-origin wait — the button only appears when work is actually
+    // reachable (#41: no dead retry affordance). An ownerless record (pre-
+    // tombstone) has no claim to prepare for — nothing to retry.
+    final showRetry = status.hasActionable && status.scope != ArticleScope.none;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (provider.usingArchivedCopy)
+          _NoticeBox(
+            colorScheme: colorScheme,
+            tone: _NoticeTone.info,
+            children: [
+              Text(
+                l10n.articleSavedCopyNotice,
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Text(
+                status.savedAt == null
+                    ? l10n.articleSavedDateUnknown
+                    : DateFormat.yMMMd(
+                        Localizations.localeOf(context).toString(),
+                      ).format(status.savedAt!.toLocal()),
+                style: const TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        _NoticeBox(
+          colorScheme: colorScheme,
+          tone: _NoticeTone.neutral,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  status.fullyReady ? Icons.offline_pin : Icons.schedule,
+                  size: 14,
+                  color: status.fullyReady
+                      ? colorScheme.secondary
+                      : colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    scope,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                if (showRetry)
+                  TextButton(
+                    onPressed: () => unawaited(_retryMissing(context)),
+                    style: TextButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                    ),
+                    child: Text(
+                      l10n.articleRetryMissing,
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+              ],
+            ),
+            if (details.isNotEmpty)
+              Text(
+                details.join(' · '),
+                style: TextStyle(
+                  fontSize: 11.5,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _stripScopeLabel(ArticleStatus status) {
+    final rss = status.bodySource == 'rss';
+    switch (status.scope) {
+      case ArticleScope.savedReady:
+        return l10n.articleStatusSavedCopyReady;
+      case ArticleScope.savedText:
+        return rss ? l10n.articleStatusRssSaved : l10n.articleStatusTextSaved;
+      case ArticleScope.saveRequested:
+        return l10n.articleStatusSaveRequested;
+      case ArticleScope.cachedReady:
+        return l10n.articleStatusReadyInCache;
+      case ArticleScope.cachedText:
+        return rss ? l10n.articleStatusRssCached : l10n.articleStatusTextCached;
+      case ArticleScope.none:
+        return l10n.articleStatusReadableSession;
+    }
+  }
+
+  String? _stripWaitLabel(ArticleStatus status, ArticleWait wait) {
+    // The server-wait timestamp comes from the SERVER-stamped earliest;
+    // mixing in a local backoff would misstate how long the source asked
+    // us to wait (#41).
+    final serverText = status.earliestServerRetryAt == null
+        ? null
+        : l10n.articleWaitRetryEarliest(
+            DateFormat.Hm().format(status.earliestServerRetryAt!.toLocal()),
+          );
+    final earliestText = status.earliestRetryAt == null
+        ? null
+        : l10n.articleWaitRetryEarliest(
+            DateFormat.Hm().format(status.earliestRetryAt!.toLocal()),
+          );
+    switch (wait) {
+      case ArticleWait.unavailable:
+        return l10n.articleWaitUnavailable;
+      case ArticleWait.serverWait:
+        return serverText == null
+            ? l10n.articleWaitServer
+            : '${l10n.articleWaitServer} · $serverText';
+      case ArticleWait.retry:
+        // waitFor only returns retry when a future wait exists.
+        return earliestText;
+      case ArticleWait.unmetered:
+        return l10n.articleWaitUnmetered;
+      case ArticleWait.preparing:
+        return l10n.articleWaitPreparing;
+      case ArticleWait.none:
+        return null;
+    }
+  }
+
+  /// One article, one pass — may use metered transport but never bypasses
+  /// a server Retry-After wait (#41).
+  Future<void> _retryMissing(BuildContext context) async {
+    final feedProvider = context.read<FeedProvider>();
+    await feedProvider.prepareArticleNow(item.id);
+    await provider.refreshSavedCopy();
+  }
+
+  Future<void> _retrySave(BuildContext context) async {
+    final feedProvider = context.read<FeedProvider>();
+    await feedProvider.retrySaveArticle(item);
+    await provider.refreshSavedCopy();
+  }
+}
+
+/// Resolves a `file://` image src to its [File] only when it matches the
+/// managed-media scheme AND appears in the provider's rewrite map — feed
+/// HTML is untrusted, so a raw `file://` URL never reaches the filesystem
+/// (#41).
+File? _trustedLocalImage(ArticlePageProvider provider, String src) {
+  // Exact-rewrite match first — a src carrying a literal '%' must not be
+  // dropped just because it can't round-trip through decodeFull.
+  if (provider.localImages.containsValue(src)) {
+    return ArticleMediaStore.managedFileFromSrc(src);
+  }
+  final file = ArticleMediaStore.managedFileFromSrc(src);
+  if (file == null) return null;
+  return provider.localImages.containsValue('file://${file.path}')
+      ? file
+      : null;
+}
+
+/// Carousel src filter — remote http(s) passes; `file://` must resolve to
+/// a rewrite-produced managed file.
+bool _trustedImageSrc(ArticlePageProvider provider, String src) {
+  if (!src.startsWith('file://')) return true;
+  return _trustedLocalImage(provider, src) != null;
+}
+
+enum _NoticeTone { neutral, info, warning }
+
+class _NoticeBox extends StatelessWidget {
+  final ColorScheme colorScheme;
+  final _NoticeTone tone;
+  final List<Widget> children;
+
+  const _NoticeBox({
+    required this.colorScheme,
+    required this.tone,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final color = switch (tone) {
+      _NoticeTone.neutral => colorScheme.surfaceContainerHighest,
+      _NoticeTone.info => colorScheme.primaryContainer.withValues(alpha: 0.35),
+      _NoticeTone.warning => colorScheme.errorContainer.withValues(alpha: 0.35),
+    };
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
       ),
     );
   }
