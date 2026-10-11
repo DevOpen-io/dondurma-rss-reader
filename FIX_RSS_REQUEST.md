@@ -72,6 +72,7 @@ Dürüst garanti: yakınsama her iki tarafın bir sonraki load döngüsünde sa�
 
 ```
 Branch: fix/rss-engine-reliability
+Commit: 57076dc
 PR:     https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
 Testler: 413/413 geçti
 ```
