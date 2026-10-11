@@ -34,7 +34,7 @@ platform :android do
       metadata_path: File.join(ROOT, 'fastlane/metadata/android'),
       changes_not_sent_for_review: false,
       rescue_changes_not_sent_for_review: false,
-      skip_upload_metadata: true, skip_upload_images: true,
+      skip_upload_metadata: true, skip_upload_images: false,
       skip_upload_screenshots: true, skip_upload_changelogs: false
     )
   end
