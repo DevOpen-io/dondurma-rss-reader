@@ -22,6 +22,11 @@ class BookmarkProvider extends ChangeNotifier {
   int get claimVersion => _claimVersion;
 
   bool _disposed = false;
+  int _restoreGeneration = 0;
+
+  /// Startup restoration writes only local records; automatic downloads keep
+  /// their usual unmetered-network gate. Cache cleanup waits for this future.
+  late final Future<void> restoration;
 
   @override
   void dispose() {
@@ -58,6 +63,51 @@ class BookmarkProvider extends ChangeNotifier {
   }) : _preparation = preparation,
        _fullTextFor = fullTextFor {
     _loadBookmarks();
+    restoration = _restoreDurableBookmarks();
+  }
+
+  Future<void> _restoreDurableBookmarks() async {
+    final prep = _preparation;
+    if (prep == null || _savedBookmarks.isEmpty) return;
+    final snapshot = List<FeedItem>.of(_savedBookmarks);
+    final generation = _restoreGeneration;
+    var restored = false;
+    try {
+      final epoch = await prep.currentRecordEpoch();
+      for (final item in snapshot) {
+        bool claimStillLive() =>
+            !_disposed &&
+            generation == _restoreGeneration &&
+            _bookmarkedItemIds.contains(item.id);
+        if (_disposed || generation != _restoreGeneration) return;
+        if (!claimStillLive()) continue;
+        final fullText = _fullTextFor?.call(item.feedUrl) ?? true;
+        var result = await prep.registerArticle(
+          item,
+          const {'bookmark'},
+          fullText: fullText,
+          expectedEpoch: epoch,
+          claimCheck: claimStillLive,
+        );
+        if (result == StoreWriteResult.failed && claimStillLive()) {
+          result = await prep.registerArticle(
+            item,
+            const {'bookmark'},
+            fullText: fullText,
+            expectedEpoch: epoch,
+            claimCheck: claimStillLive,
+          );
+        }
+        restored = restored || result == StoreWriteResult.applied;
+      }
+    } catch (error) {
+      // Preserve the Hive copy on failure; retry-save or the next startup can
+      // restore the archive without a one-time migration flag hiding failure.
+      debugPrint('Bookmark archive restoration failed: $error');
+    }
+    if (restored && !_disposed && generation == _restoreGeneration) {
+      _claimLanded();
+    }
   }
 
   /// Durable records live on the feeds-box archive — the same file the
@@ -239,6 +289,7 @@ class BookmarkProvider extends ChangeNotifier {
 
   /// Clears all bookmarks and resets to default state.
   Future<void> factoryReset() async {
+    _restoreGeneration++;
     _savedBookmarks.clear();
     _bookmarkedItemIds.clear();
     await _box.clear();

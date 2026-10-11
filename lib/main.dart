@@ -20,10 +20,12 @@ import 'router/app_router.dart';
 import 'services/article_preparation_service.dart';
 import 'services/article_record_store.dart';
 import 'services/background_fetch_service.dart';
+import 'services/feed_backoff.dart';
 import 'services/notification_service.dart';
 import 'services/widget_update_service.dart';
 import 'models/feed_item.dart';
 import 'utils/app_toast.dart';
+import 'utils/host_pacer.dart';
 
 /// Custom scroll behavior that uses iOS-style bouncing physics on all
 /// platforms and enables mouse/trackpad drag for desktop.
@@ -88,9 +90,13 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
         ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+        Provider<HostPacer>(create: (_) => HostPacer()),
+        Provider<FeedBackoff>(create: (_) => FeedBackoff()),
         Provider<ArticlePreparationService>(
-          create: (_) => ArticlePreparationService(
+          create: (ctx) => ArticlePreparationService(
             recordStore: ArticleRecordStore.forBox(Hive.box('feeds')),
+            hostPacer: ctx.read<HostPacer>(),
+            backoff: ctx.read<FeedBackoff>(),
           ),
           dispose: (_, service) => service.dispose(),
         ),
@@ -114,10 +120,18 @@ void main() async {
           BookmarkProvider,
           FeedProvider
         >(
-          create: (ctx) =>
-              FeedProvider(preparation: ctx.read<ArticlePreparationService>()),
-          update: (_, subscription, settings, bookmark, feed) =>
-              (feed ?? FeedProvider())
+          create: (ctx) => FeedProvider(
+            preparation: ctx.read<ArticlePreparationService>(),
+            hostPacer: ctx.read<HostPacer>(),
+            backoff: ctx.read<FeedBackoff>(),
+          ),
+          update: (ctx, subscription, settings, bookmark, feed) =>
+              (feed ??
+                    FeedProvider(
+                      preparation: ctx.read<ArticlePreparationService>(),
+                      hostPacer: ctx.read<HostPacer>(),
+                      backoff: ctx.read<FeedBackoff>(),
+                    ))
                 ..update(subscription, settings, bookmark),
         ),
       ],

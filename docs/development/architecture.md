@@ -105,7 +105,7 @@ Hive kutularına ek olarak `ArticleRecordStore` ve `ObservedArticleStore`, foreg
 
 Filtre hattı `feed_list_filter.dart`, tarih gruplama `feed_date_groups.dart`, saf kararlar `feed_decisions.dart` içindedir. Keyword regex'leri filtre geçişinde derlenir. Cooldown pacing bekleyişinden sonra yeniden kontrol edilir. Başarılı feed isteği host cooldown'unu silmez. İki persist slot'u birlikte okunur; her isolate kendi slot'una yazar. `Retry-After` en fazla 24 saat olarak değerlendirilir.
 
-`FeedProvider`, `FeedRefresher` ile extraction singleton'ına aynı `HostPacer`/`FeedBackoff` instance'larını bağlar. Kendi oluşturduğu varsayılan hazırlık servisine de bunları verir; ancak `main.dart` üzerinden enjekte edilen ortak `ArticlePreparationService` ayrı pacer ile, `backoff` verilmeden oluşturulur. Bu nedenle uygulama kökündeki medya hazırlığı için tüm servislerle ortak host koordinasyonu varsayılmamalıdır. Background akışı hazırlık servisine ortak pacer/backoff'u açıkça verir.
+Uygulama kökü aynı `HostPacer`/`FeedBackoff` instance'larını `ArticlePreparationService` ve `FeedProvider`'a verir; `FeedProvider` bunları `FeedRefresher` ile extraction singleton'ına da bağlar. Böylece ön plandaki feed, extraction ve medya istekleri ortak host pacing/cooldown politikasını kullanır. Background akışı kendi isolate'ında aynı paylaşımı açıkça kurar.
 
 Sayfalama 50 öğe ile başlar; kategori, arama veya filtre değişiminde sıfırlanır. Bölümler Today/Yesterday/Older mantığıyla tarih bazlıdır.
 
@@ -117,7 +117,7 @@ Sayfalama 50 öğe ile başlar; kategori, arama veya filtre değişiminde sıfı
 
 Ön plan timer'ı `cacheIntervalSeconds` ile yönetilir; provider güncellemesinde `_manageCacheTimer()` yeniden değerlendirir. Resume politikası `shouldRefreshOnResume` ile son yenileme ve eşik üzerinden karar verir.
 
-Workmanager unique işi `rss_bg_fetch`, bağlı ağ koşulu ve 15 dakikalık periyot isteği ile kaydolur; gerçek çalışma zamanını işletim sistemi belirler. Background isolate kutuları kendi açar, feed'leri çeker, cache üyeliğini uzlaştırır ve uygun ağda hazırlık çalıştırır. Yeni öğeler, `ObservedArticleStore` içindeki feed + subscription epoch namespace'li 14 günlük geçmişten atomik claim edilir. Foreground ve Workmanager aynı state dosyasını, `File.create(exclusive: true)` lock ownership ve fail-closed timeout ile paylaşır.
+Workmanager unique işi `rss_bg_fetch`, bağlı ağ koşulu ve 15 dakikalık periyot isteği ile kaydolur; gerçek çalışma zamanını işletim sistemi belirler. Background isolate kutuları kendi açar, feed'leri çeker, cache üyeliğini uzlaştırır ve uygun ağda hazırlık çalıştırır. Yeni öğeler, `ObservedArticleStore` içindeki feed + subscription epoch namespace'li 14 günlük geçmişten atomik claim edilir. Foreground ve Workmanager aynı state dosyasını, `File.create(exclusive: true)` lock ownership ve fail-closed timeout ile paylaşır. Kilit alma/kurtarma/bırakma işlemleri ayrıca atomik rename ile edinilen, benzersiz sahip işaretli bir dizinle korunur; eski sahip işaretinin temizliği yeni sahibin dolu dizinini silemez.
 
 Observation delivery'den önce gelir. Global/per-feed kapalı, quiet hours veya non-instant digest durumunda ID observed kalır; sonra backfill edilmez. Yalnız başarılı feed sonucu history'yi günceller; failure başka feed'in geçmişini silemez. İlk başarılı fetch ve her yeni subscription epoch sessiz initialize edilir.
 

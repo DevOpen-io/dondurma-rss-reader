@@ -42,6 +42,11 @@ class FileObservedArticlePersistence implements ObservedArticlePersistence {
 
   File get lockFile => File('${stateFile.path}.lock');
 
+  // A populated directory can be claimed by atomic rename but cannot be
+  // overwritten or removed by another contender's stale cleanup. Keep the
+  // existing lock file inside this protocol for legacy-lock recovery.
+  Directory get _guardDirectory => Directory('${lockFile.path}.guard');
+
   static int _tokenCounter = 0;
 
   String _newToken() {
@@ -75,12 +80,17 @@ class FileObservedArticlePersistence implements ObservedArticlePersistence {
     Future<T> Function() action,
   ) async {
     await stateFile.parent.create(recursive: true);
-    final token = _newToken();
     final stopwatch = Stopwatch()..start();
 
     while (true) {
+      // A retry publishes a different owner marker, so a delayed recovery
+      // from an earlier attempt cannot remove this attempt's fresh guard.
+      final token = _newToken();
       var acquired = false;
+      var guardAcquired = false;
       try {
+        await _acquireGuard(token);
+        guardAcquired = true;
         await lockFile.create(exclusive: true);
         acquired = true;
         await lockFile.writeAsString(
@@ -94,20 +104,91 @@ class FileObservedArticlePersistence implements ObservedArticlePersistence {
         // Fail closed: a lock that vanished between the failed create and
         // this check, or any persistent error, surfaces as a timeout — never
         // as an exception escaping the bool-style contract of callers.
-        if (await _stealIfStale()) continue;
+        if (guardAcquired) {
+          // All file-lock acquisition, recovery and release now hold the
+          // same guard. A stale decision cannot unlink a newer owner's lock.
+          if (await _stealIfStale()) continue;
+        } else {
+          if (await _recoverStaleGuard()) continue;
+        }
         if (stopwatch.elapsed >= lockTimeout) {
           return ExclusiveResult<T>.timeout();
         }
         await Future<void>.delayed(retryDelay);
       } finally {
-        if (acquired) await _releaseOwnedLock(token);
+        try {
+          if (acquired) await _releaseOwnedLock(token);
+        } finally {
+          if (guardAcquired) {
+            await _removeGuardOwner(_guardDirectory, 'owner-$token');
+          }
+        }
       }
+    }
+  }
+
+  Future<void> _acquireGuard(String token) async {
+    final candidate = Directory('${_guardDirectory.path}.$token');
+    final ownerName = 'owner-$token';
+    try {
+      await candidate.create();
+      await File(
+        '${candidate.path}/$ownerName',
+      ).writeAsString(DateTime.now().toUtc().toIso8601String(), flush: true);
+      // POSIX rename refuses to replace a non-empty directory; Windows
+      // refuses an existing destination. The owner marker is present before
+      // publication, so no contender can replace an active guard.
+      await candidate.rename(_guardDirectory.path);
+    } finally {
+      // After a successful rename this path is absent. After a failed rename
+      // it contains only this attempt's marker, never another owner's data.
+      await _removeGuardOwner(candidate, ownerName);
+    }
+  }
+
+  Future<bool> _recoverStaleGuard() async {
+    try {
+      final entries = await _guardDirectory.list(followLinks: false).toList();
+      if (entries.isEmpty) {
+        // A writer died after removing its marker. A concurrently published
+        // fresh guard is non-empty, making this non-recursive delete fail.
+        await _guardDirectory.delete();
+        return true;
+      }
+      if (entries.length != 1 || entries.single is! File) return false;
+      final owner = entries.single as File;
+      final name = owner.path.split(Platform.pathSeparator).last;
+      if (!RegExp(r'^owner-[0-9]+-[0-9]+-[0-9]+$').hasMatch(name)) {
+        return false;
+      }
+      final stamped = DateTime.tryParse(await owner.readAsString())?.toUtc();
+      if (stamped == null ||
+          DateTime.now().toUtc().difference(stamped) <= staleLockAge) {
+        return false;
+      }
+      return await _removeGuardOwner(_guardDirectory, name);
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  Future<bool> _removeGuardOwner(Directory directory, String ownerName) async {
+    try {
+      // Delete only the snapshotted owner's unique marker. If another
+      // contender already recovered/replaced the directory this fails; if it
+      // replaces the now-empty directory afterwards, the non-recursive
+      // directory delete fails because the new marker keeps it non-empty.
+      await File('${directory.path}/$ownerName').delete();
+      await directory.delete();
+      return true;
+    } on FileSystemException {
+      return false;
     }
   }
 
   /// Deletes the lock file when its embedded timestamp (or mtime fallback)
   /// is older than [staleLockAge]. Returns true so the caller retries the
-  /// exclusive create immediately.
+  /// exclusive create immediately. Only called while holding the guard.
   Future<bool> _stealIfStale() async {
     try {
       if (!await lockFile.exists()) return false;

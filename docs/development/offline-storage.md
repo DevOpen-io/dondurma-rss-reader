@@ -17,6 +17,8 @@ Hive `settings`, `feeds` ve `bookmarks` kutuları tercihleri, abonelikleri, list
 
 Bildirimlerin `ObservedArticleStore` geçmişi de ayrı state'tir. Cache temizleme veya makale sahipliği, bir öğenin bildirim açısından yeniden yeni sayılması için gerekçe değildir.
 
+Başlangıçta eski Hive yer imleri kalıcı makale kayıtlarına uzlaştırılır; mevcut gövde ve medya korunur, eksik kayıtlar `bookmark` sahipliğiyle oluşturulur. Cache üyeliği/temizleme bu yerel uzlaştırmanın tamamlanmasını bekler. İşlem kendi başına indirme izni vermez; otomatik hazırlık yine unmetered bağlantı koşuluna tabidir. Başarısız taşımada Hive kopyası korunur ve sonraki başlangıçta yeniden denenir.
+
 ## Sahiplik ve geçici cache
 
 Bir makale kaydı `bookmark`, `tempCache` veya her iki sahibini taşıyabilir. Yer imi kalıcı kullanıcı talebidir. Geçici cache üyeliğini [TempCacheMembership](../../lib/services/temp_cache_membership.dart) belirler:
@@ -38,7 +40,7 @@ Otomatik `preparePending` yalnız servisin unmetered kabul ettiği bağlantıda 
 
 `pending`, `ready`, `failed`, `gone` durumları gövde/medya hazırlığını belirtir. Geçici hata retry planlar; kalıcı olarak kullanılamayan medya `gone` olur. Cooldown yüzünden hiç çıkılmayan istek pending kalır ve hata denemesi sayılmaz.
 
-Hazırlık servisi dışarıdan `HostPacer` ve `FeedBackoff` alabilir. Background akışı bunları feed/extraction hattıyla paylaşır; uygulama kökünde enjekte edilen hazırlık servisi ise ayrı pacer ile, ortak backoff verilmeden oluşturulur. Bu bağlantı farkı [mimari rehberinde](architecture.md) açıklanır. Manuel retry yerel tahmini beklemeyi atlayabilir; sunucunun etkin `Retry-After` beklemesini atlayamaz. Ön plan ve arka plan cooldown snapshot'ları ayrı Hive anahtarlarına yazılır ve birlikte okunur; bu düzen anlık process-wide koordinasyon garantisi vermez.
+Hazırlık servisi `HostPacer` ve `FeedBackoff`'u kendi isolate'ındaki feed/extraction hattıyla paylaşır; hem uygulama kökü hem background akışı ortak instance'ları enjekte eder. Manuel retry yerel tahmini beklemeyi atlayabilir; sunucunun etkin `Retry-After` beklemesini atlayamaz. Ön plan ve arka plan cooldown snapshot'ları ayrı Hive anahtarlarına yazılır ve birlikte okunur; bu düzen anlık process-wide koordinasyon garantisi vermez.
 
 ## Temizleme ve reset
 

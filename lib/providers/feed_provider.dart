@@ -187,6 +187,9 @@ class FeedProvider extends ChangeNotifier {
   /// for that article's missing pieces — allowed on metered transport but
   /// never bypasses a server `Retry-After` wait.
   Future<int> prepareArticleNow(String id) async {
+    // Persist missing-file demotions BEFORE preparation reads the manifest.
+    // Otherwise the first retry trusts stale `ready` entries and does no work.
+    await _refreshArticleStatuses();
     final attempted = await _preparation.prepareArticle(id);
     await _refreshArticleStatuses();
     return attempted;
@@ -234,7 +237,7 @@ class FeedProvider extends ChangeNotifier {
   /// Per-feed rate-limit cooldowns. Loaded from Hive at startup so the
   /// background isolate's deadlines are honored here too — and persisted
   /// back after each refresh so the next background pass sees them.
-  final FeedBackoff _feedBackoff = FeedBackoff();
+  final FeedBackoff _feedBackoff;
 
   /// Last fetch failure per feed, persisted across restarts so a dead feed
   /// stays visibly unhealthy instead of silently showing stale cache.
@@ -280,7 +283,11 @@ class FeedProvider extends ChangeNotifier {
   FeedProvider({
     ObservedArticleStore? observedArticleStore,
     ArticlePreparationService? preparation,
-  }) : _ownsPreparation = preparation == null {
+    HostPacer? hostPacer,
+    FeedBackoff? backoff,
+  }) : _ownsPreparation = preparation == null,
+       _hostPacer = hostPacer ?? HostPacer(),
+       _feedBackoff = backoff ?? FeedBackoff() {
     _preparation =
         preparation ??
         ArticlePreparationService(hostPacer: _hostPacer, backoff: _feedBackoff);
@@ -320,9 +327,7 @@ class FeedProvider extends ChangeNotifier {
   /// One pacing schedule for every HTTP service in this isolate — feed
   /// refresh, extraction, and media downloads all reserve same-host
   /// slots through it.
-  final HostPacer _hostPacer = HostPacer(
-    minGap: const Duration(milliseconds: 500),
-  );
+  final HostPacer _hostPacer;
 
   /// An injected service belongs to its owner (Provider disposes it); a
   /// default-constructed one is this provider's to release.
@@ -1402,6 +1407,9 @@ class FeedProvider extends ChangeNotifier {
     if (settings == null || subscriptions == null || bookmarks == null) {
       return;
     }
+    // Legacy Hive bookmarks must have their durable claims before membership
+    // selection and cleanup can make decisions about the archive.
+    await bookmarks.restoration;
     // [generation] was captured when the caller enqueued this write —
     // a clearCache/factoryReset landing before this link ran already
     // bumped it, voiding both the badge ids and the file write below.

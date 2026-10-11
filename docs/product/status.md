@@ -26,7 +26,7 @@ Source comparison: 2026-10-11. Checked items describe implementation in the repo
 - [x] Global newest-N temporary-cache membership; bookmark ownership survives cache eviction
 - [x] Automatic unmetered preparation, explicit single-article preparation, retry scheduling
 - [x] Ownership-aware cleanup, reset fences, and durable article-status UI
-- [x] Shared feed/extraction host pacing, persisted feed/host cooldowns, bounded Retry-After handling (preparation wiring limits are documented in the architecture guide)
+- [x] Shared feed/extraction/media host pacing, persisted feed/host cooldowns, bounded Retry-After handling
 
 ## Backlog
 
