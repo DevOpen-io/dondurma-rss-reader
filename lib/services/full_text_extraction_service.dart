@@ -1,4 +1,3 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -49,17 +48,45 @@ class FullTextExtractionService {
     _cache[url] = html;
   }
 
-  // Failure cache — remembers URLs where extraction returned null so we
-  // don't waste bandwidth retrying on every article open. LinkedHashSet gives
-  // O(1) lookup + insertion-order iteration for FIFO eviction.
-  static final LinkedHashSet<String> _failedUrls = LinkedHashSet<String>();
+  // Failure cache — remembers URLs where extraction failed so we don't
+  // waste bandwidth retrying on every article open. Transient failures
+  // (timeouts, 5xx, 429) expire quickly so a temporary outage doesn't
+  // block the article for the whole session; permanent ones (403/404/410,
+  // or a page with no extractable content) last the session.
+  static final Map<String, DateTime> _failedUntil = {};
   static const int _failedCapacity = 20;
 
-  static void _recordFailure(String url) {
-    if (_failedUrls.length >= _failedCapacity && !_failedUrls.contains(url)) {
-      _failedUrls.remove(_failedUrls.first);
+  /// Far-future deadline marking a permanent (session-lifetime) failure.
+  static final DateTime _permanentDeadline = DateTime.utc(3000);
+
+  /// How long a transient failure keeps a URL out of automatic extraction.
+  /// Mutable so tests can shrink the cooldown instead of waiting minutes.
+  @visibleForTesting
+  static Duration transientFailureTtl = const Duration(minutes: 5);
+
+  /// Clears the shared session caches — tests need isolation between cases
+  /// because the singleton state is process-wide.
+  @visibleForTesting
+  static void debugClearSession() {
+    _cache.clear();
+    _failedUntil.clear();
+  }
+
+  static void _recordFailure(String url, DateTime until) {
+    if (_failedUntil.length >= _failedCapacity &&
+        !_failedUntil.containsKey(url)) {
+      _failedUntil.remove(_failedUntil.keys.first);
     }
-    _failedUrls.add(url);
+    _failedUntil[url] = until;
+  }
+
+  static DateTime? _parseRetryAfter(String? header, DateTime now) {
+    if (header == null) return null;
+    final seconds = int.tryParse(header.trim());
+    if (seconds != null && seconds >= 0) {
+      return now.add(Duration(seconds: seconds));
+    }
+    return null;
   }
 
   // ---------------------------------------------------------------------------
@@ -97,9 +124,13 @@ class FullTextExtractionService {
   // Public API
   // ---------------------------------------------------------------------------
 
-  /// Whether [url] already failed extraction this session. Prefetch uses it
-  /// to keep permanently-failing articles from consuming candidate slots.
-  bool hasFailedAttempt(String url) => _failedUrls.contains(url);
+  /// Whether [url] is currently inside a failure cooldown. Prefetch uses it
+  /// to keep failing articles from consuming candidate slots; transient
+  /// entries expire after [_transientFailureTtl].
+  bool hasFailedAttempt(String url) {
+    final until = _failedUntil[url];
+    return until != null && until.isAfter(DateTime.now());
+  }
 
   /// Fetches [url], extracts the main article body, and returns its inner HTML.
   ///
@@ -115,8 +146,8 @@ class FullTextExtractionService {
   }) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
-    // Skip if previously failed this session — unless the user forces a retry.
-    if (!forceRefresh && _failedUrls.contains(url)) return null;
+    // Skip while inside a failure cooldown — unless the user forces a retry.
+    if (!forceRefresh && hasFailedAttempt(url)) return null;
 
     try {
       final response = await http
@@ -132,7 +163,23 @@ class FullTextExtractionService {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        _recordFailure(url);
+        final now = DateTime.now();
+        // Access-denied and gone statuses are permanent for the session —
+        // the page won't change its mind in minutes. Everything else
+        // (429, 5xx, odd statuses) is transient: a Retry-After wins, else
+        // a short TTL lets the next attempt try again instead of the URL
+        // staying dead for the session.
+        const permanent = {401, 403, 404, 410};
+        final retryAfter = _parseRetryAfter(
+          response.headers['retry-after'],
+          now,
+        );
+        _recordFailure(
+          url,
+          permanent.contains(response.statusCode)
+              ? _permanentDeadline
+              : (retryAfter ?? now.add(transientFailureTtl)),
+        );
         return null;
       }
 
@@ -144,11 +191,12 @@ class FullTextExtractionService {
         _cachePut(url, result);
         return result;
       }
-      _recordFailure(url);
+      _recordFailure(url, _permanentDeadline);
       return null;
     } catch (e) {
       debugPrint('FullTextExtractionService error for $url: $e');
-      _recordFailure(url);
+      // Transport failures (timeout, DNS, socket) are transient by nature.
+      _recordFailure(url, DateTime.now().add(transientFailureTtl));
       return null;
     }
   }
