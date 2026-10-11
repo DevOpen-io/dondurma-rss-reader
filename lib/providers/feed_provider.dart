@@ -1135,6 +1135,10 @@ class FeedProvider extends ChangeNotifier {
           final results = await Connectivity().checkConnectivity();
           _setUnmetered(results);
           await _preparation.preparePending(unmetered: _unmetered);
+          // A page/media 429 during the sweep cooled a shared host —
+          // persist now so the next refresh pass and the bg isolate
+          // see it even if the app dies before the next sync.
+          _saveFeedBackoff();
           // Preparation commits landed — labels may now claim ready.
           await _refreshArticleStatuses();
         } catch (_) {
@@ -1231,6 +1235,9 @@ class FeedProvider extends ChangeNotifier {
         await _saveCachedItems();
       }
     } finally {
+      // Page 429s recorded shared host cooldowns — persist before the
+      // pass settles so a killed app doesn't lose them.
+      _saveFeedBackoff();
       _isPrefetching = false;
       if (_prefetchQueued) {
         _prefetchQueued = false;

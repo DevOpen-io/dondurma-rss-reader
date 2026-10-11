@@ -354,6 +354,22 @@ Future<void> runBgFetch() async {
         await preparation.preparePending(unmetered: true);
       } finally {
         preparation.dispose();
+        // Page/media 429s during the sweep recorded new host cooldowns
+        // in memory — persist them to this isolate's slot before the
+        // task ends, merging both slots first so a concurrent
+        // foreground write isn't dropped.
+        try {
+          for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+            final latest = feedsBox.get(key);
+            if (latest is String && latest.isNotEmpty) {
+              backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+            }
+          }
+          await feedsBox.put(
+            'feedBackoffUntil.bg',
+            jsonEncode(backoff.snapshot()),
+          );
+        } catch (_) {}
       }
     }
   } catch (e) {

@@ -669,6 +669,63 @@ void main() {
     },
   );
 
+  test('a media 429 during background preparation persists to the bg slot '
+      'and cools the next pass on the same host', () async {
+    // Preparation only runs on unmetered transport — mock wifi.
+    const connectivityChannel = MethodChannel(
+      'dev.fluttercommunity.plus/connectivity',
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(connectivityChannel, (call) async {
+          if (call.method == 'check') return ['wifi'];
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(connectivityChannel, null),
+    );
+
+    final aUrl = server.url('/media-feed.xml');
+    await _seedSubscriptions([
+      FeedSubscription(url: aUrl, name: 'A', category: 'Test'),
+    ]);
+    server.handlers['/media-feed.xml'] = (request) =>
+        _respond200(request, _rss('A', ['a1']));
+    server.handlers['/pic.png'] = (request) async {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '600');
+      await request.response.close();
+    };
+
+    // A durable record with pending media on the same host — the kind
+    // an earlier foreground pass registered.
+    final seedPrep = ArticlePreparationService(
+      recordStore: ArticleRecordStore.forBox(Hive.box('feeds')),
+    );
+    await seedPrep.registerArticle(
+      _item(aUrl, 'art-1').copyWith(imageUrl: server.url('/pic.png')),
+      const {'bookmark'},
+    );
+    seedPrep.dispose();
+
+    await runBgFetch();
+    expect(server.counts['/media-feed.xml'], 1);
+    expect(server.counts['/pic.png'] ?? 0, 1);
+
+    // The cooldown learned AFTER the feed phase — by the media 429 —
+    // must still land in this isolate's own slot.
+    final bgRaw = Hive.box('feeds').get('feedBackoffUntil.bg');
+    expect(bgRaw, isA<String>());
+    final bgSnap = jsonDecode(bgRaw as String) as Map<String, dynamic>;
+    expect((bgSnap['hosts'] as Map).isNotEmpty, isTrue);
+
+    // A fresh pass — a brand-new FeedBackoff hydrated only from Hive —
+    // treats the whole host as cooled: no feed request, no media retry.
+    await runBgFetch();
+    expect(server.counts['/media-feed.xml'], 1);
+    expect(server.counts['/pic.png'], 1);
+  });
+
   test('restart without network refresh restores persisted articles', () async {
     final url = server.url('/restart.xml');
     await _seedSubscriptions([

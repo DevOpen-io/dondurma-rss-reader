@@ -69,6 +69,15 @@ Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü
 - **Extraction/medya 429'u ortak backoff'a bildirilmiyordu**: 429/503/`Retry-After` taşıyan article-page ve media yanıtları artık `FeedBackoff.recordFailure`'a `FeedFetchException` olarak aktarılıyor → host-seviye (mandate'li) cooldown tüm origin'i korur; kardeş feed fetch, extraction ve medya istekleri aynı sinyali görür.
 - **Doc düzeltmesi**: `recordSuccess` açıklaması eski "local-estimate silinir" semantiğini anlatıyordu — güncel "host kaydına hiç dokunulmaz" davranışıyla hizalandı.
 
+## 3d. Preparation-Sonrası Cooldown Persist'i
+
+Önceki turda öğrenilen 429'ların persist edilmesi eksikti:
+
+- **`runBgFetch`**: `feedBackoffUntil.bg` snapshot'ı feed-fazının hemen ardından yazılıyordu; preparation sweep'i (extraction + medya) bu yazımdan **sonra** koşuyor → sweep sırasında öğrenilen host cooldown yalnız bellekte kalıyor, görev bittiğinde kayboluyordu. `preparePending`'in `finally`'sinde slot tekrar merge + yazılıyor.
+- **`FeedProvider`**: `_preparation.preparePending` sonrası `_saveFeedBackoff()` eklendi; `_prefetchFullText`'in `finally`'sinde de aynı persist — sayfa 429'ları artık fg slotuna düşer. İki slot (fg `feedBackoffUntil`, bg `feedBackoffUntil.bg`) ve merge-then-write davranışı korunuyor.
+
+Regresyon testi: wifi mock'u ile bg preparation'ı çalıştır, medya URL'si 429+`Retry-After` döndür → `.bg` slotunda `hosts` kaydı oluştuğunu doğrula → **ikinci `runBgFetch`** (Hive'dan hidrate olan yeni `FeedBackoff`, yeni-isolate simülasyonu) aynı host'a feed ve medya isteği **sıfır** gönderiyor.
+
 ## 4. Yeni Regresyon Testleri
 
 - Kardeş başarı **hiçbir** aktif host cooldown'unu silemez — Retry-After'lı da olmasa da (deadline'a kadar blok, sonra açılır)
@@ -90,10 +99,11 @@ Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü
 - Extraction'da cooldown'a takılan `null` → `pending` + sıfır attempts + retry planlanmaz + RSS body korunur
 - Sayfa 429'u (`Retry-After` ile) shared backoff'a yazılır → `isMandatedBackedOff` tüm origin'i kapsar
 - Medya 429'u shared backoff'a yazılır → hiç istek yememiş komşu URL bile cooled
+- Bg preparation'da öğrenilen cooldown `.bg` slotuna düşer → yeni pass/isolate Hive'dan yükler, aynı host'a sıfır istek
 
 ## 5. Doğrulama
 
-- `flutter test` → **445/445 geçti** (442 + 3 yeni)
+- `flutter test` → **446/446 geçti** (445 + 1 yeni)
 - `flutter analyze` → temiz
 - `dart format --set-exit-if-changed` → temiz
 - `flutter build apk --debug` → **başarılı** (`app-debug.apk`)
