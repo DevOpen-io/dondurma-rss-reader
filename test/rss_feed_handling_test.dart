@@ -17,6 +17,7 @@ void main() {
         bodyBytes: utf8.encode(body),
         category: 'T',
         url: 'https://x/f.xml',
+        contentType: null,
       ));
       return null;
     } on FeedFetchException catch (e) {
@@ -29,6 +30,7 @@ void main() {
         bodyBytes: utf8.encode(body),
         category: 'T',
         url: url,
+        contentType: null,
       ));
 
   group('RSS 2.0 variants', () {

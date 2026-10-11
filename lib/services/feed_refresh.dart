@@ -1,3 +1,5 @@
+import 'dart:math' show Random;
+
 import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../models/feed_item.dart';
@@ -66,6 +68,10 @@ class FeedRefresher {
   /// hit on every sync cycle, keeping the limit permanently exhausted.
   final Map<String, DateTime> _retryAt = {};
   final Map<String, int> _failAttempts = {};
+
+  /// Backoff jitter: many feeds failing together (e.g. after a long
+  /// offline stretch) would otherwise retry in lockstep every cycle.
+  final Random _jitter = Random();
 
   Future<FeedRefreshResult> refresh({
     required List<FeedSubscription> subscriptions,
@@ -176,7 +182,16 @@ class FeedRefresher {
           final now = DateTime.now();
           _retryAt[sub.url] = serverWait != null && serverWait.isAfter(now)
               ? serverWait
-              : now.add(ArticlePreparationService.backoffFor(attempts));
+              : now.add(
+                  Duration(
+                    milliseconds:
+                        (ArticlePreparationService.backoffFor(
+                                  attempts,
+                                ).inMilliseconds *
+                                (0.5 + _jitter.nextDouble()))
+                            .round(),
+                  ),
+                );
         }
         // Transient failure: keep the feed's existing items so one error doesn't
         // blank it out, and leave its validators untouched.

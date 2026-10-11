@@ -44,6 +44,7 @@ void main() {
           bodyBytes: utf8.encode(_rssXml),
           category: 'Tech',
           url: 'https://feed.example.com/rss',
+          contentType: null,
         ));
 
         expect(items, hasLength(1));
@@ -64,6 +65,7 @@ void main() {
         bodyBytes: utf8.encode(_atomXml),
         category: 'News',
         url: 'https://feed.example.com/atom',
+        contentType: null,
       ));
 
       expect(items, hasLength(1));
@@ -86,11 +88,13 @@ void main() {
         bodyBytes: utf8.encode(first),
         category: 'C',
         url: 'https://feed',
+        contentType: null,
       ));
       final b = FeedService.parseFeedBody((
         bodyBytes: utf8.encode(second),
         category: 'C',
         url: 'https://feed',
+        contentType: null,
       ));
 
       expect(a.single.id, 'stable-guid');
@@ -111,11 +115,13 @@ void main() {
         bodyBytes: utf8.encode(first),
         category: 'C',
         url: 'https://feed',
+        contentType: null,
       ));
       final b = FeedService.parseFeedBody((
         bodyBytes: utf8.encode(second),
         category: 'C',
         url: 'https://feed',
+        contentType: null,
       ));
 
       expect(a.single.id, 'atom-id');
@@ -128,6 +134,7 @@ void main() {
           bodyBytes: utf8.encode('<html><body>not a feed</body></html>'),
           category: 'X',
           url: 'https://feed.example.com/x',
+          contentType: null,
         )),
         throwsException,
       );

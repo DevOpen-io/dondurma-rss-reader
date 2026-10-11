@@ -60,6 +60,11 @@ class FeedService {
   /// counts, and the size of the merged in-memory list.
   static const int maxItemsPerFeed = 50;
 
+  /// Hard cap on a feed response body. Real feeds are well under a
+  /// megabyte; an unbounded buffer would let a broken or hostile endpoint
+  /// exhaust memory during refresh.
+  static const int maxFeedBytes = 8 * 1024 * 1024;
+
   /// Returns at most [maxItemsPerFeed] most-recent items. Sorts by descending
   /// publication date only when the cap is exceeded — feeds are conventionally
   /// reverse-chronological, but that is not guaranteed.
@@ -157,16 +162,34 @@ class FeedService {
       var currentUrl = url;
       http.StreamedResponse? streamed;
       for (var hops = 0; hops < 5; hops++) {
-        final request = http.Request('GET', Uri.parse(currentUrl))
+        final uri = Uri.parse(currentUrl);
+        if (uri.scheme != 'http' && uri.scheme != 'https') {
+          throw FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'Refusing non-HTTP redirect target: ${uri.scheme}',
+          );
+        }
+        // Conditional validators belong to the origin that issued them —
+        // forwarding them cross-origin both leaks them and fetches the
+        // wrong resource's validator state.
+        final crossOrigin = uri.host != Uri.parse(url).host;
+        final request = http.Request('GET', uri)
           ..followRedirects = false
           ..headers.addAll(headers);
+        if (crossOrigin) {
+          request.headers.remove('If-None-Match');
+          request.headers.remove('If-Modified-Since');
+        }
         final next = await _client
             .send(request)
             .timeout(const Duration(seconds: 10));
         final location = next.headers['location'];
         if (next.isRedirect && location != null) {
           await next.stream.drain();
-          currentUrl = Uri.parse(currentUrl).resolve(location).toString();
+          final resolved = Uri.parse(currentUrl).resolve(location);
+          // A relative Location can still produce an exotic scheme
+          // (file:, javascript:) — the next loop iteration rejects it.
+          currentUrl = resolved.toString();
           continue;
         }
         streamed = next;
@@ -180,7 +203,12 @@ class FeedService {
       }
       final statusCode = streamed.statusCode;
       final responseHeaders = streamed.headers;
-      final bodyBytes = await streamed.stream.toBytes();
+      // The send() timeout only covers response headers — a drip-feeding
+      // server could hold the body open forever. Bound both the byte count
+      // and the wall-clock time of the download itself.
+      final bodyBytes = await _readBoundedBody(
+        streamed.stream,
+      ).timeout(const Duration(seconds: 20));
 
       // A differing final URL means the feed moved — callers learn it and
       // skip the redirect round-trip on the next cycle.
@@ -215,6 +243,7 @@ class FeedService {
         bodyBytes: bodyBytes,
         category: category,
         url: url,
+        contentType: responseHeaders['content-type'],
       ));
       return FeedFetchResult(
         items: items,
@@ -242,6 +271,22 @@ class FeedService {
     }
   }
 
+  /// Reads [stream] to completion, aborting when the body exceeds
+  /// [maxFeedBytes].
+  static Future<Uint8List> _readBoundedBody(Stream<List<int>> stream) async {
+    final builder = BytesBuilder();
+    await for (final chunk in stream) {
+      builder.add(chunk);
+      if (builder.length > maxFeedBytes) {
+        throw FeedFetchException(
+          FeedFetchErrorKind.httpStatus,
+          'Response too large (limit $maxFeedBytes bytes)',
+        );
+      }
+    }
+    return builder.takeBytes();
+  }
+
   /// Parses a `Retry-After` header into an absolute instant — integer
   /// seconds or an HTTP-date. Unparseable or past values yield null.
   static DateTime? _parseRetryAfter(String? header, DateTime now) {
@@ -263,9 +308,13 @@ class FeedService {
   /// Static and side-effect free so it can run in a background isolate via
   /// [compute]. Attempts RSS first, then falls back to Atom.
   static List<FeedItem> parseFeedBody(
-    ({Uint8List bodyBytes, String category, String url}) request,
+    ({Uint8List bodyBytes, String category, String url, String? contentType})
+    request,
   ) {
-    final bodyString = _decodeBody(request.bodyBytes);
+    final bodyString = _decodeBody(
+      request.bodyBytes,
+      declaredCharset: _charsetFrom(request.contentType),
+    );
 
     // JSON Feed (jsonfeed.org v1/v1.1) — a JSON document, not XML.
     if (bodyString.trimLeft().startsWith('{')) {
@@ -349,9 +398,21 @@ class FeedService {
     }
   }
 
-  /// Decodes a feed body with a BOM/charset sniff: UTF-16 (via BOM), strict
-  /// UTF-8, then ISO-8859-1 for legacy feeds that declare a non-UTF encoding.
-  static String _decodeBody(Uint8List bytes) {
+  /// Extracts the `charset` parameter from a Content-Type header value.
+  static String? _charsetFrom(String? contentType) {
+    if (contentType == null) return null;
+    final match = RegExp(
+      r'charset\s*=\s*"?([A-Za-z0-9._-]+)"?',
+      caseSensitive: false,
+    ).firstMatch(contentType);
+    return match?.group(1)?.toLowerCase();
+  }
+
+  /// Decodes a feed body. A UTF-16 BOM wins over any declared charset —
+  /// servers routinely lie in Content-Type (and some emit no charset at
+  /// all). Without a BOM, a known declared charset applies, then strict
+  /// UTF-8, then ISO-8859-1 for legacy undeclared feeds.
+  static String _decodeBody(Uint8List bytes, {String? declaredCharset}) {
     if (bytes.length >= 2) {
       if (bytes[0] == 0xFF && bytes[1] == 0xFE) {
         return String.fromCharCodes(_utf16Units(bytes, bigEndian: false));
@@ -360,6 +421,26 @@ class FeedService {
         return String.fromCharCodes(_utf16Units(bytes, bigEndian: true));
       }
     }
+    switch (declaredCharset) {
+      case 'utf-16' || 'utf-16le':
+        final skip = bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE;
+        return String.fromCharCodes(
+          _utf16Units(bytes, bigEndian: false, offset: skip ? 2 : 0),
+        );
+      case 'utf-16be':
+        final skip = bytes.length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF;
+        return String.fromCharCodes(
+          _utf16Units(bytes, bigEndian: true, offset: skip ? 2 : 0),
+        );
+      case 'iso-8859-1' || 'latin1' || 'latin-1' || 'windows-1252':
+        return latin1.decode(bytes);
+      case 'utf-8':
+        try {
+          return utf8.decode(bytes);
+        } on FormatException {
+          return latin1.decode(bytes);
+        }
+    }
     try {
       return utf8.decode(bytes);
     } on FormatException {
@@ -367,10 +448,14 @@ class FeedService {
     }
   }
 
-  static Iterable<int> _utf16Units(Uint8List b, {required bool bigEndian}) {
-    return Iterable.generate((b.length - 2) ~/ 2, (i) {
-      final lo = b[2 + i * 2];
-      final hi = b[2 + i * 2 + 1];
+  static Iterable<int> _utf16Units(
+    Uint8List b, {
+    required bool bigEndian,
+    int offset = 2,
+  }) {
+    return Iterable.generate((b.length - offset) ~/ 2, (i) {
+      final lo = b[offset + i * 2];
+      final hi = b[offset + i * 2 + 1];
       return bigEndian ? (lo << 8) | hi : lo | (hi << 8);
     });
   }
