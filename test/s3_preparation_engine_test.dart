@@ -484,6 +484,73 @@ void main() {
       expect(record.body, contains('rss body'));
     });
 
+    test('an extraction null inside a host cooldown is deferred, '
+        'not counted as a failure', () async {
+      final backoff = FeedBackoff();
+      var extractCalls = 0;
+      final svc = service(
+        extract: (_) async {
+          extractCalls++;
+          // The extraction's own pace wait spanned a sibling request's
+          // 429 — it saw the shared cooldown and returned null without
+          // fetching. By the time prep inspects the result the host is
+          // already cooled, so the attempt must be deferred, not failed.
+          backoff.recordFailure(
+            'https://example.com/feed.xml',
+            FeedFetchException(
+              FeedFetchErrorKind.httpStatus,
+              'status 429',
+              statusCode: 429,
+            ),
+            DateTime.now(),
+          );
+          return null;
+        },
+        backoff: backoff,
+      );
+      await svc.registerArticle(item(content: '<p>rss body</p>'), const {
+        'bookmark',
+      });
+      await svc.preparePending(unmetered: true);
+
+      expect(extractCalls, 1); // extraction ran, deferred mid-request
+      final record = (await newStore().read('art-1'))!;
+      expect(record.bodyState, MediaState.pending); // not failed
+      expect(record.attempts, 0);
+      expect(record.nextRetryAt, isNull);
+      expect(record.body, '<p>rss body</p>');
+    });
+
+    test('a media 429 is reported to the shared host backoff — the '
+        'whole origin cools down', () async {
+      final backoff = FeedBackoff();
+      var httpCalls = 0;
+      final client = http_testing.MockClient((_) async {
+        httpCalls++;
+        return http.Response('x', 429, headers: {'retry-after': '300'});
+      });
+      final svc = service(
+        client: client,
+        extract: (_) async => '<p>ok</p>',
+        backoff: backoff,
+      );
+      await svc.registerArticle(
+        item(imageUrl: 'https://example.com/a.png'),
+        const {'bookmark'},
+      );
+      await svc.preparePending(unmetered: true);
+
+      expect(httpCalls, 1);
+      // A host-level, server-mandated cooldown now covers the whole
+      // origin — including a URL that never produced a failure.
+      final now = DateTime.now();
+      expect(backoff.isBackedOff('https://example.com/other.png', now), isTrue);
+      expect(
+        backoff.isMandatedBackedOff('https://example.com/other.png', now),
+        isTrue,
+      );
+    });
+
     test('Retry-After is computed from response time, not the stale sweep '
         'clock', () async {
       var t = DateTime.now();

@@ -248,6 +248,27 @@ void main() {
       );
       expect(counts['/art'], isNull);
     });
+
+    test('a page 429 is reported to the shared host backoff — the '
+        'whole origin cools down', () async {
+      final backoff = FeedBackoff();
+      FullTextExtractionService.instance.backoff = backoff;
+      handlers['/art'] = (request) {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '300');
+      };
+
+      expect(
+        await FullTextExtractionService.instance.extractFullText(url('/art')),
+        isNull,
+      );
+      expect(counts['/art'], 1);
+      // The cooldown is host-level and server-mandated — a sibling
+      // feed fetch or media download on the same origin must skip.
+      final now = DateTime.now();
+      expect(backoff.isBackedOff(url('/other'), now), isTrue);
+      expect(backoff.isMandatedBackedOff(url('/other'), now), isTrue);
+    });
   });
 
   group('post-pacing recheck', () {

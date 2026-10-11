@@ -14,6 +14,7 @@ import 'article_cleanup_service.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
 import 'feed_backoff.dart';
+import 'feed_service.dart';
 import 'full_text_extraction_service.dart';
 
 /// Offline preparation engine: ensures a saved article's full text and all of
@@ -493,6 +494,14 @@ class ArticlePreparationService {
               media: mergedMedia,
             );
           }
+          // The extraction returned null inside an active host cooldown
+          // (a sibling's 429 learned mid-request, or this page's own 429
+          // now reported to the shared backoff): the attempt was
+          // deferred, not failed — leave the body pending with its retry
+          // state untouched, mirroring media's `deferred` outcome.
+          if (_hostCooled(record.link, _now(), manual: manual)) {
+            return current;
+          }
           final attempts = current.attempts + 1;
           return current.copyWith(
             bodyState: MediaState.failed,
@@ -631,9 +640,29 @@ class ArticlePreparationService {
           deferred: false,
         );
       }
+      final retryAfter = parseRetryAfter(
+        response.headers['retry-after'],
+        _now(),
+      );
+      // A media 429 is a host-wide signal too — share it so feed fetches
+      // and other pieces on the same origin stop hammering the server.
+      if (response.statusCode == 429 ||
+          response.statusCode == 503 ||
+          retryAfter != null) {
+        _backoff?.recordFailure(
+          url,
+          FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'Media fetch failed (Status: ${response.statusCode})',
+            retryAfter: retryAfter,
+            statusCode: response.statusCode,
+          ),
+          _now(),
+        );
+      }
       return (
         ready: null,
-        retryAfter: parseRetryAfter(response.headers['retry-after'], _now()),
+        retryAfter: retryAfter,
         gone: response.statusCode == 404 || response.statusCode == 410,
         deferred: false,
       );

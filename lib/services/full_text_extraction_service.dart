@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart' show compute;
 import '../utils/host_pacer.dart';
 import '../utils/retry_after.dart';
 import 'feed_backoff.dart';
+import 'feed_service.dart';
 import 'package:flutter/material.dart' hide Element;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
@@ -243,6 +244,23 @@ class FullTextExtractionService {
           serverMandated:
               !permanent.contains(response.statusCode) && retryAfter != null,
         );
+        // Rate-limit signals are host-wide — report them to the shared
+        // backoff so sibling feeds, extractions and media downloads on
+        // the same origin stop too, not just this URL's own cooldown.
+        if (response.statusCode == 429 ||
+            response.statusCode == 503 ||
+            retryAfter != null) {
+          backoff?.recordFailure(
+            url,
+            FeedFetchException(
+              FeedFetchErrorKind.httpStatus,
+              'Full-text fetch failed (Status: ${response.statusCode})',
+              retryAfter: retryAfter,
+              statusCode: response.statusCode,
+            ),
+            now,
+          );
+        }
         return null;
       }
 

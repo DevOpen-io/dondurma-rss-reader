@@ -22,7 +22,7 @@
 
 Her cooldown kaydı üç alan taşır: `since` (oluşum event-zamanı), `until` (expiry), `serverMandated` (deadline `Retry-After`'dan mı geldi).
 
-- **`recordSuccess`**: feed'in kendi kaydı her zaman silinir (kendi 200'ü kendi cooldown'unu çürütür). Host kaydı yalnız local-estimate veya süresi dolmuşsa silinir; aktif server-mandated kayıt korunur ve host clear-marker **üretilmez** (marker sızıp diğer isolate'in mandate'ini bastırmasın diye).
+- **`recordSuccess`**: feed'in kendi kaydı her zaman silinir (kendi 200'ü kendi cooldown'unu çürütür). Host kaydına **hiç dokunulmaz** — kardeş 200, origin-çapı kısıtı (mandate olsun olmasın) çürütemez; host clear-marker **üretilmez** (marker sızıp diğer isolate'in mandate'ini bastırmasın diye).
 - **`load`**: önce `cleared` birleşir (en yeni event kazanır), sonra kayıtlar — `since <= clearedAt` olanlar bastırılır (host bölümünde mandated kayıtlar muaf), expiry'ler max ile birleşir; sonda öğrenilen clear'lar bellekteki kayıtlara da uygulanır (simetrik yayılım).
 - **Legacy**: v2 `{feeds: {url: ms}}` ve flat `{url: ms}` → `since = epoch` okunur; kaydedilmiş bir clear onları bastırır (güvenli varsayım), temizlenmemiş anahtarlar normal yüklenir.
 - **`snapshot`**: `{feeds, hosts}` kayıtları `{u, s, m}` + `cleared` haritası. Süresi dolmuş kayıtlar yazılmaz (sınır).
@@ -63,6 +63,12 @@ Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü
 - **F — `Retry-After` üst sınırı**: `maxRetryAfter = 24h` — devasa saniye değerleri veya uzak HTTP-date'ler artık aylara uzanan kilitlenme üretemez. Negatif değerler null; Duration mikrosaniye overflow'u clamp-öncesi karşılaştırmayla engellendi. Trade-off: >24h'lik gerçek mandate 1 güne kısaltılır — bu sürenin üstü broken-server ile ayırt edilemez.
 - **Ek — Medya post-pace recheck + `deferred` outcome**: `_fetchAndStore` pacing sonrası `_hostCooled(url, _now(), manual:)` kontrolü yapıyor; cooldown'da `deferred` döner → parça `pending` kalır, failure sayılmaz, retry planlanmaz, RSS body'si korunur, expiry sonrası tekrar uygun. Manuel bayrağı `_prepareRecord→_preparePiece→_fetchAndStore` zincirine taşındı — manuel retry local tahmini atlar, mandate'i atlamaz.
 
+## 3c. Merge Öncesi Son İki Bulgu
+
+- **Ertelenen extraction isteği hata sayılıyordu**: prep, extraction'ın `null` dönüşünü hep failure sayıyordu; cooldown yüzünden hiç ağa çıkmayan istek `attempts++` + `bodyState=failed` üretiyordu. Artık `null` sonrası `_hostCooled(link, _now(), manual:)` kontrolü yapılıyor — cooldown aktifse kayıt `pending` kalır, attempts/nextRetryAt dokunulmaz (medyadaki `deferred` ile aynı semantik). RSS body'si korunur; gerçek çıkarım hataları (404, boş içerik, 500) yine failure sayılır.
+- **Extraction/medya 429'u ortak backoff'a bildirilmiyordu**: 429/503/`Retry-After` taşıyan article-page ve media yanıtları artık `FeedBackoff.recordFailure`'a `FeedFetchException` olarak aktarılıyor → host-seviye (mandate'li) cooldown tüm origin'i korur; kardeş feed fetch, extraction ve medya istekleri aynı sinyali görür.
+- **Doc düzeltmesi**: `recordSuccess` açıklaması eski "local-estimate silinir" semantiğini anlatıyordu — güncel "host kaydına hiç dokunulmaz" davranışıyla hizalandı.
+
 ## 4. Yeni Regresyon Testleri
 
 - Kardeş başarı **hiçbir** aktif host cooldown'unu silemez — Retry-After'lı da olmasa da (deadline'a kadar blok, sonra açılır)
@@ -81,10 +87,13 @@ Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü
 - Bounded body: error→done ve error×2 tek tamamlama, timeout, oversize, normal body, drain toleransı — asılı future/subscription yok
 - Charset: UTF-8'in ISO-8859-1/Windows-1252 diye etiketlendiği gövdeler düzgün decode; gerçek Latin-1 ve gerçek CP1252 smart punctuation korunur
 - `parseRetryAfter`: 24h clamp (saniye + HTTP-date), negatif→null, sıradan değerler birebir
+- Extraction'da cooldown'a takılan `null` → `pending` + sıfır attempts + retry planlanmaz + RSS body korunur
+- Sayfa 429'u (`Retry-After` ile) shared backoff'a yazılır → `isMandatedBackedOff` tüm origin'i kapsar
+- Medya 429'u shared backoff'a yazılır → hiç istek yememiş komşu URL bile cooled
 
 ## 5. Doğrulama
 
-- `flutter test` → **442/442 geçti** (421 + 21 yeni/final tur)
+- `flutter test` → **445/445 geçti** (442 + 3 yeni)
 - `flutter analyze` → temiz
 - `dart format --set-exit-if-changed` → temiz
 - `flutter build apk --debug` → **başarılı** (`app-debug.apk`)
