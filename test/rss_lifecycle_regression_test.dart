@@ -703,6 +703,81 @@ void main() {
   );
 
   test(
+    'category add/rename blocks case-variant twins and silent merges',
+    () async {
+      final subs = SubscriptionProvider();
+      await subs.addFeed('https://x.com/a', 'A', 'News');
+      await subs.addFeed('https://x.com/b', 'B', 'Sports');
+
+      // Case-variant add → refused, no twin folder.
+      expect(await subs.addCategory('news'), isFalse);
+      expect(await subs.addCategory('  NEWS  '), isFalse);
+      expect(await subs.addCategory('Tech'), isTrue);
+
+      // Rename onto an existing category (any case) → refused: silent
+      // merge would also clobber the target's icon.
+      expect(await subs.renameCategory('Sports', 'news'), isFalse);
+      expect(subs.categories, contains('Sports'));
+      expect(subs.subscriptions[1].category, 'Sports');
+
+      // Renaming to the same category stays a no-op success.
+      expect(await subs.renameCategory('Sports', 'Sports'), isTrue);
+      expect(await subs.renameCategory('Sports', 'sports'), isTrue);
+      expect(subs.subscriptions[1].category, 'sports');
+
+      // Renaming to a fresh name works.
+      expect(await subs.renameCategory('sports', 'Athletics'), isTrue);
+      expect(subs.categories, contains('Athletics'));
+      expect(subs.categories, isNot(contains('sports')));
+    },
+  );
+
+  test(
+    'editSubscription rejects invalid URLs and canonical duplicates',
+    () async {
+      final subs = SubscriptionProvider();
+      await subs.addFeed('https://x.com/a', 'A', 'T');
+      await subs.addFeed('https://x.com/b', 'B', 'T');
+
+      // Invalid URL format → rejected, subscription unchanged.
+      expect(
+        await subs.editSubscription('https://x.com/a', 'not a url', 'A'),
+        isFalse,
+      );
+      expect(subs.subscriptions.first.url, 'https://x.com/a');
+
+      // Canonical collision with another subscription → rejected.
+      expect(
+        await subs.editSubscription('https://x.com/a', 'HTTPS://X.COM/b/', 'A'),
+        isFalse,
+      );
+      expect(subs.subscriptions.first.url, 'https://x.com/a');
+
+      // Renaming to itself (canonical match with own URL) stays allowed.
+      expect(
+        await subs.editSubscription(
+          'https://x.com/a',
+          'https://x.com/a/',
+          'A2',
+        ),
+        isTrue,
+      );
+      expect(subs.subscriptions.first.name, 'A2');
+
+      // A genuinely new URL succeeds.
+      expect(
+        await subs.editSubscription(
+          'https://x.com/a/',
+          'https://x.com/c',
+          'A2',
+        ),
+        isTrue,
+      );
+      expect(subs.subscriptions.first.url, 'https://x.com/c');
+    },
+  );
+
+  test(
     'failed feed records a persisted error that clears on recovery',
     () async {
       final url = server.url('/flaky.xml');

@@ -82,13 +82,21 @@ class OpmlService {
     final body = document.findAllElements('body').firstOrNull;
     if (body == null) return result;
 
-    bool foundNested = false;
-
+    // Both passes run unconditionally: real exports mix folders and
+    // loose top-level feeds — a `foundNested` gate would silently drop
+    // every root-level feed whenever any folder contains one (#53).
     for (final topOutline in body.findElements('outline')) {
       final xmlUrl = topOutline.getAttribute('xmlUrl');
 
       if (xmlUrl != null && xmlUrl.isNotEmpty) {
-        // This outline IS a feed (flat structure) — collect later if no nested
+        // This outline IS a feed (flat / loose top-level entry).
+        final feedName =
+            topOutline.getAttribute('text') ??
+            topOutline.getAttribute('title') ??
+            xmlUrl;
+        result.add(
+          FeedSubscription(url: xmlUrl, name: feedName, category: 'Imported'),
+        );
         continue;
       }
 
@@ -110,24 +118,6 @@ class OpmlService {
 
         result.add(
           FeedSubscription(url: feedUrl, name: feedName, category: category),
-        );
-        foundNested = true;
-      }
-    }
-
-    // If no nested structure was found, parse all feed outlines as flat
-    if (!foundNested) {
-      for (final outline in body.findAllElements('outline')) {
-        final feedUrl = outline.getAttribute('xmlUrl');
-        if (feedUrl == null || feedUrl.isEmpty) continue;
-
-        final feedName =
-            outline.getAttribute('text') ??
-            outline.getAttribute('title') ??
-            feedUrl;
-
-        result.add(
-          FeedSubscription(url: feedUrl, name: feedName, category: 'Imported'),
         );
       }
     }

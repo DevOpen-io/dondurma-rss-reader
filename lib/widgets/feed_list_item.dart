@@ -24,8 +24,10 @@ const int _articleNavigationWindowRadius = 25;
 /// Keeps both the site name and the category visible in the meta row: without
 /// per-segment limits a long site name pushes the category off screen.
 String truncateLabel(String text, int maxChars) {
-  if (text.length <= maxChars) return text;
-  return '${text.substring(0, maxChars - 1)}…';
+  // characters.count is grapheme-safe — substring could split an emoji or
+  // combining sequence into a broken '�' at the cut boundary.
+  if (text.characters.length <= maxChars) return text;
+  return '${text.characters.take(maxChars - 1)}…';
 }
 
 /// Computes the article-screen slice around [item] inside [allItems].
@@ -691,25 +693,46 @@ class _FeedItemContent extends StatelessWidget {
                 ),
               ),
             Expanded(
-              child: Text.rich(
-                TextSpan(
-                  text: truncateLabel(item.siteName, 20),
-                  style: TextStyle(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.2,
-                  ),
-                  children: [
-                    if (item.category != 'Uncategorized')
-                      TextSpan(
-                        text: ' · ${truncateLabel(item.category, 14)}',
-                        style: const TextStyle(fontWeight: FontWeight.w400),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  // Two separately-ellipsized segments: a single Text.rich
+                  // could clip the category away entirely ('Site… · …').
+                  // Below ~170 logical px of meta width the category chip
+                  // hides outright — a lone '…' beside the site name is
+                  // worse than showing nothing.
+                  final hideCategory = constraints.maxWidth < 170;
+                  return Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          truncateLabel(item.siteName, 20),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.2,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                  ],
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                      if (!hideCategory && item.category != 'Uncategorized')
+                        Flexible(
+                          child: Text(
+                            ' · ${truncateLabel(item.category, 14)}',
+                            style: TextStyle(
+                              color: colorScheme.onSurfaceVariant,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w400,
+                              letterSpacing: 0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                  );
+                },
               ),
             ),
             const SizedBox(width: 8),
@@ -776,7 +799,7 @@ class _FeedItemContent extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
                     ),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),

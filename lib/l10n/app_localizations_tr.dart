@@ -960,6 +960,16 @@ class AppLocalizationsTr extends AppLocalizations {
   String get add => 'Ekle';
 
   @override
+  String get existingCategoriesLabel => 'Mevcut';
+
+  @override
+  String get orCreateNewCategory => 'veya yeni oluştur';
+
+  @override
+  String get addCategoryEmptyHint =>
+      'Kaynaklarınızı düzenlemek için bir kategori ekleyin.';
+
+  @override
   String get siteNameHint => 'TechCrunch, BBC News…';
 
   @override

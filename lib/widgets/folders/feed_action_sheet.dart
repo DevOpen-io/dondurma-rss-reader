@@ -176,33 +176,52 @@ class FeedActionSheet extends StatelessWidget {
                               : cs.onSurfaceVariant,
                         ),
                         const SizedBox(width: 12),
-                        Text(l10n.fullTextToggle, style: tt.bodyMedium),
-                        const Spacer(),
-                        _FullTextChip(
-                          label: l10n.fullTextDefault,
-                          isSelected: sub.fullTextEnabled == null,
-                          onTap: () => context
-                              .read<SubscriptionProvider>()
-                              .setFullTextMode(sub.url, null),
-                          colorScheme: cs,
+                        // Loose label + flex-2 chips: the label takes only
+                        // what it needs; the chips get two thirds of the
+                        // remaining width and wrap past that.
+                        Flexible(
+                          child: Text(
+                            l10n.fullTextToggle,
+                            style: tt.bodyMedium,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                        const SizedBox(width: 6),
-                        _FullTextChip(
-                          label: l10n.fullTextOn,
-                          isSelected: sub.fullTextEnabled == true,
-                          onTap: () => context
-                              .read<SubscriptionProvider>()
-                              .setFullTextMode(sub.url, true),
-                          colorScheme: cs,
-                        ),
-                        const SizedBox(width: 6),
-                        _FullTextChip(
-                          label: l10n.fullTextOff,
-                          isSelected: sub.fullTextEnabled == false,
-                          onTap: () => context
-                              .read<SubscriptionProvider>()
-                              .setFullTextMode(sub.url, false),
-                          colorScheme: cs,
+                        Flexible(
+                          flex: 2,
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: Wrap(
+                              spacing: 6,
+                              alignment: WrapAlignment.end,
+                              children: [
+                                _FullTextChip(
+                                  label: l10n.fullTextDefault,
+                                  isSelected: sub.fullTextEnabled == null,
+                                  onTap: () => context
+                                      .read<SubscriptionProvider>()
+                                      .setFullTextMode(sub.url, null),
+                                  colorScheme: cs,
+                                ),
+                                _FullTextChip(
+                                  label: l10n.fullTextOn,
+                                  isSelected: sub.fullTextEnabled == true,
+                                  onTap: () => context
+                                      .read<SubscriptionProvider>()
+                                      .setFullTextMode(sub.url, true),
+                                  colorScheme: cs,
+                                ),
+                                _FullTextChip(
+                                  label: l10n.fullTextOff,
+                                  isSelected: sub.fullTextEnabled == false,
+                                  onTap: () => context
+                                      .read<SubscriptionProvider>()
+                                      .setFullTextMode(sub.url, false),
+                                  colorScheme: cs,
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ],
                     ),

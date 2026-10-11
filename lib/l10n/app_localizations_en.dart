@@ -958,6 +958,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get add => 'Add';
 
   @override
+  String get existingCategoriesLabel => 'Existing';
+
+  @override
+  String get orCreateNewCategory => 'or create new';
+
+  @override
+  String get addCategoryEmptyHint => 'Add a category to organize your feeds.';
+
+  @override
   String get siteNameHint => 'TechCrunch, BBC News…';
 
   @override

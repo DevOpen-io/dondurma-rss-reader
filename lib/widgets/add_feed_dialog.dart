@@ -173,22 +173,29 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.addRssFeed,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
+                  // The subtitle can overflow in big-font locales without
+                  // a bounded width — let it ellipsize instead.
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          l10n.addRssFeed,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                      Text(
-                        l10n.addFeedSubtitle,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: cs.onSurfaceVariant,
+                        Text(
+                          l10n.addFeedSubtitle,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurfaceVariant,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -657,7 +664,7 @@ class _CategorySheetState extends State<_CategorySheet> {
             const SizedBox(height: 20),
             // Section label
             Text(
-              'Existing',
+              l10n.existingCategoriesLabel,
               style: theme.textTheme.labelSmall?.copyWith(
                 color: cs.onSurfaceVariant,
                 fontWeight: FontWeight.w600,
@@ -722,7 +729,7 @@ class _CategorySheetState extends State<_CategorySheet> {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
                   child: Text(
-                    'or create new',
+                    l10n.orCreateNewCategory,
                     style: theme.textTheme.labelSmall?.copyWith(
                       color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
@@ -861,7 +868,14 @@ class _ActionRow extends StatelessWidget {
           top: BorderSide(color: cs.outlineVariant.withValues(alpha: 0.4)),
         ),
       ),
-      child: Row(
+      // OverflowBar, not Row+Spacer: at narrow widths/large fonts the
+      // save button drops to a second line (end-aligned) with its full
+      // label instead of being squeezed down to a bare '+' icon.
+      child: OverflowBar(
+        alignment: MainAxisAlignment.spaceBetween,
+        overflowAlignment: OverflowBarAlignment.end,
+        spacing: 8,
+        overflowSpacing: 4,
         children: [
           TextButton(
             onPressed: onCancel,
@@ -871,7 +885,6 @@ class _ActionRow extends StatelessWidget {
             ),
             child: Text(l10n.cancel),
           ),
-          const Spacer(),
           FilledButton.icon(
             onPressed: isLoading ? null : onSubmit,
             icon: isLoading
@@ -884,7 +897,10 @@ class _ActionRow extends StatelessWidget {
                     ),
                   )
                 : const Icon(Icons.add_rounded, size: 18),
-            label: Text(isLoading ? l10n.addingFeed : l10n.saveFeed),
+            label: Text(
+              isLoading ? l10n.addingFeed : l10n.saveFeed,
+              overflow: TextOverflow.ellipsis,
+            ),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(

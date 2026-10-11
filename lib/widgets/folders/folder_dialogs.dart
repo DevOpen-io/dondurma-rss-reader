@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/feed_subscription.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../utils/app_toast.dart';
 import '../../widgets/keyword_input_sheet.dart';
 import '../category_icon.dart';
 
@@ -52,17 +53,26 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
         ElevatedButton(
           onPressed: () {
             final newName = _controller.text.trim();
-            if (newName.isNotEmpty && newName != widget.currentCategory) {
-              context
-                  .read<SubscriptionProvider>()
-                  .renameCategory(widget.currentCategory, newName)
-                  .then((_) {
-                    if (context.mounted) {
-                      context.read<FeedProvider>().refreshAll();
-                    }
-                  });
+            if (newName.isEmpty) return;
+            if (newName == widget.currentCategory) {
+              context.pop();
+              return;
             }
-            context.pop();
+            context
+                .read<SubscriptionProvider>()
+                .renameCategory(widget.currentCategory, newName)
+                .then((renamed) {
+                  if (!context.mounted) return;
+                  if (!renamed) {
+                    showAppToast(
+                      l10n.folderAlreadyExists,
+                      type: AppToastType.error,
+                    );
+                    return;
+                  }
+                  context.pop();
+                  context.read<FeedProvider>().refreshAll();
+                });
           },
           child: Text(l10n.save),
         ),
@@ -451,22 +461,35 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                   onPressed: () {
                     final newName = _nameController.text.trim();
                     final newUrl = _urlController.text.trim();
-                    if (newName.isNotEmpty && newUrl.isNotEmpty) {
-                      context
-                          .read<SubscriptionProvider>()
-                          .editSubscription(
-                            widget.sub.url,
-                            newUrl,
-                            newName,
-                            excludedKeywords: _keywords,
-                          )
-                          .then((_) {
-                            if (context.mounted) {
-                              context.read<FeedProvider>().refreshAll();
-                            }
-                          });
+                    if (newName.isEmpty || newUrl.isEmpty) return;
+                    final uri = Uri.tryParse(newUrl);
+                    if (uri == null || !uri.isAbsolute) {
+                      showAppToast(
+                        l10n.pleaseEnterValidUrl,
+                        type: AppToastType.error,
+                      );
+                      return;
                     }
-                    context.pop();
+                    context
+                        .read<SubscriptionProvider>()
+                        .editSubscription(
+                          widget.sub.url,
+                          newUrl,
+                          newName,
+                          excludedKeywords: _keywords,
+                        )
+                        .then((saved) {
+                          if (!context.mounted) return;
+                          if (!saved) {
+                            showAppToast(
+                              l10n.feedAlreadyExists,
+                              type: AppToastType.error,
+                            );
+                            return;
+                          }
+                          context.pop();
+                          context.read<FeedProvider>().refreshAll();
+                        });
                   },
                   icon: const Icon(Icons.check_rounded, size: 18),
                   label: Text(l10n.save),

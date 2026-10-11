@@ -36,7 +36,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
     );
     if (!mounted) return;
     if (success) {
-      Navigator.of(context).pop();
+      Navigator.of(context).pop(name);
     } else {
       setState(() {
         _isLoading = false;

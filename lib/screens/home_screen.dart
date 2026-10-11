@@ -346,6 +346,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   appBarTitle,
                   key: ValueKey(appBarTitle),
                   style: const TextStyle(fontWeight: FontWeight.bold),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
         ),
         actions: [

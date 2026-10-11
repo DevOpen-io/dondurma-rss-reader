@@ -970,6 +970,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get add => 'Añadir';
 
   @override
+  String get existingCategoriesLabel => 'Existentes';
+
+  @override
+  String get orCreateNewCategory => 'o crear nueva';
+
+  @override
+  String get addCategoryEmptyHint =>
+      'Añade una categoría para organizar tus fuentes.';
+
+  @override
   String get siteNameHint => 'TechCrunch, BBC News…';
 
   @override

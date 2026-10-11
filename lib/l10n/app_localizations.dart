@@ -1858,6 +1858,24 @@ abstract class AppLocalizations {
   /// **'Add'**
   String get add;
 
+  /// No description provided for @existingCategoriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Existing'**
+  String get existingCategoriesLabel;
+
+  /// No description provided for @orCreateNewCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'or create new'**
+  String get orCreateNewCategory;
+
+  /// No description provided for @addCategoryEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a category to organize your feeds.'**
+  String get addCategoryEmptyHint;
+
   /// No description provided for @siteNameHint.
   ///
   /// In en, this message translates to:

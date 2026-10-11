@@ -231,11 +231,9 @@ class SubscriptionProvider extends ChangeNotifier {
     final storedIcon = _categoryIcons[category];
     if (storedIcon == null || int.tryParse(storedIcon) == null) {
       // Emoji or absent value — never normalize a user emoji into a
-      // codePoint, and only materialize a default when nothing is stored.
-      if (storedIcon == null) {
-        _assignDefaultIcon(category);
-        _saveCategoryIcons();
-      }
+      // codePoint. A category unknown to the provider (e.g. one a feed
+      // declares on its items) just renders the default icon — persisting
+      // a default here would write the box on every such build.
       return _defaultCategoryIcon;
     }
 
@@ -259,13 +257,23 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Adds a new empty category/folder. Returns `false` if it already exists.
+  /// Whether [name] matches an existing category, ignoring case and
+  /// surrounding whitespace — 'news', 'News', and ' NEWS ' are the same
+  /// folder to the user.
+  bool categoryExists(String name) {
+    final needle = name.trim().toLowerCase();
+    return categories.any((c) => c.toLowerCase() == needle);
+  }
+
+  /// Adds a new empty category/folder. Returns `false` if a category with
+  /// the same name (ignoring case/whitespace) already exists.
   Future<bool> addCategory(String name) async {
-    if (categories.contains(name)) {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty || categoryExists(trimmed)) {
       return false;
     }
-    _customCategories.add(name);
-    _assignDefaultIcon(name);
+    _customCategories.add(trimmed);
+    _assignDefaultIcon(trimmed);
     await _saveCustomCategories();
     await _saveCategoryIcons();
     notifyListeners();
@@ -273,35 +281,54 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   /// Renames [oldCategory] to [newCategory] across all subscriptions and
-  /// custom categories.
-  Future<void> renameCategory(String oldCategory, String newCategory) async {
+  /// custom categories. Returns `false` when [newCategory] names a
+  /// *different* existing category (ignoring case) — renaming onto it
+  /// would silently merge folders and clobber the target's icon.
+  Future<bool> renameCategory(String oldCategory, String newCategory) async {
+    final trimmed = newCategory.trim();
+    if (trimmed.isEmpty) return false;
+    final isSelf = trimmed.toLowerCase() == oldCategory.trim().toLowerCase();
+    if (!isSelf && categoryExists(trimmed)) return false;
+    // Exact self-rename is a no-op — without this the icon move below
+    // would set the key and immediately remove it, wiping a custom icon.
+    if (trimmed == oldCategory) return true;
     bool changed = false;
     for (int i = 0; i < _subscriptions.length; i++) {
       if (_subscriptions[i].category == oldCategory) {
-        _subscriptions[i] = _subscriptions[i].copyWith(category: newCategory);
+        _subscriptions[i] = _subscriptions[i].copyWith(category: trimmed);
         changed = true;
       }
     }
     if (_customCategories.remove(oldCategory)) {
-      _customCategories.add(newCategory);
+      _customCategories.add(trimmed);
       await _saveCustomCategories();
       changed = true;
     }
 
     // Move icon mapping
     if (_categoryIcons.containsKey(oldCategory)) {
-      _categoryIcons[newCategory] = _categoryIcons[oldCategory]!;
+      _categoryIcons[trimmed] = _categoryIcons[oldCategory]!;
       _categoryIcons.remove(oldCategory);
       await _saveCategoryIcons();
     } else if (changed) {
-      _assignDefaultIcon(newCategory);
+      _assignDefaultIcon(trimmed);
       await _saveCategoryIcons();
+    }
+
+    // Keep the user-defined position — a renamed category must not drop
+    // into the sorted tail of categoriesOrdered.
+    if (_categoryOrder.contains(oldCategory)) {
+      _categoryOrder = _categoryOrder
+          .map((c) => c == oldCategory ? trimmed : c)
+          .toList();
+      await _saveCategoryOrder();
     }
 
     if (changed) {
       await _saveSubscriptions();
       notifyListeners();
     }
+    return true;
   }
 
   /// Removes a category and all feeds that belong to it.
@@ -422,22 +449,34 @@ class SubscriptionProvider extends ChangeNotifier {
   }
 
   /// Edits a subscription's URL, name, and optional excluded keywords.
-  Future<void> editSubscription(
+  /// Returns `false` — leaving the subscription untouched — when [newUrl]
+  /// is not an absolute URI or canonically matches a *different*
+  /// subscription.
+  Future<bool> editSubscription(
     String oldUrl,
     String newUrl,
     String newName, {
     List<String>? excludedKeywords,
   }) async {
     final index = _subscriptions.indexWhere((s) => s.url == oldUrl);
-    if (index != -1) {
-      _subscriptions[index] = _subscriptions[index].copyWith(
-        url: newUrl,
-        name: newName,
-        excludedKeywords: excludedKeywords,
-      );
-      await _saveSubscriptions();
-      notifyListeners();
-    }
+    if (index == -1) return false;
+    final uri = Uri.tryParse(newUrl);
+    if (uri == null || !uri.isAbsolute) return false;
+    final canonical = ArticleIdentity.normalizeFeedUrl(newUrl);
+    final collides = _subscriptions.asMap().entries.any(
+      (e) =>
+          e.key != index &&
+          ArticleIdentity.normalizeFeedUrl(e.value.url) == canonical,
+    );
+    if (collides) return false;
+    _subscriptions[index] = _subscriptions[index].copyWith(
+      url: newUrl,
+      name: newName,
+      excludedKeywords: excludedKeywords,
+    );
+    await _saveSubscriptions();
+    notifyListeners();
+    return true;
   }
 
   /// Toggles notification enabled/disabled for a specific feed.

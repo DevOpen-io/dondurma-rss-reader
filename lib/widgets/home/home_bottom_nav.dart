@@ -47,14 +47,19 @@ class NavBarItem extends StatelessWidget {
             ),
             const SizedBox(height: 2),
             Flexible(
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                softWrap: false,
-                style: TextStyle(
-                  fontSize: 10.5,
-                  color: color,
-                  fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+              child: MediaQuery.withClampedTextScaling(
+                // 4 labels share a fixed-height bar; letting system font
+                // scale run past ~1.2x only mangles the labels mid-word.
+                maxScaleFactor: 1.2,
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  softWrap: false,
+                  style: TextStyle(
+                    fontSize: 10.5,
+                    color: color,
+                    fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+                  ),
                 ),
               ),
             ),

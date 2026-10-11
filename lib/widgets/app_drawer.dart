@@ -15,6 +15,7 @@ import 'category_icon.dart';
 import 'folders/category_action_sheet.dart';
 import 'folders/feed_action_sheet.dart';
 import 'folders/folder_dialogs.dart';
+import 'folders/move_feed_sheet.dart';
 
 /// Navigation drawer showing category-based feed filtering.
 ///
@@ -640,98 +641,17 @@ class AppDrawer extends StatelessWidget {
 
   void _showMoveFeedDialog(BuildContext context, FeedSubscription sub) {
     final l10n = AppLocalizations.of(context);
-    final subscriptionProvider = context.read<SubscriptionProvider>();
-    final allCategories =
-        subscriptionProvider.categories.where((c) => c != sub.category).toList()
-          ..sort();
-
-    if (allCategories.isEmpty) return;
-
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetCtx) {
-        final cs = Theme.of(context).colorScheme;
-        final tt = Theme.of(context).textTheme;
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: cs.onSurface.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.moveToFolder,
-                  style: tt.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: allCategories.length,
-                    separatorBuilder: (_, _) => Divider(
-                      height: 1,
-                      indent: 16,
-                      color: cs.outline.withValues(alpha: 0.2),
-                    ),
-                    itemBuilder: (_, index) {
-                      final category = allCategories[index];
-                      return ListTile(
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                        ),
-                        leading: CategoryIcon(
-                          category: category,
-                          size: 20,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        title: Text(category, style: tt.bodyMedium),
-                        trailing: Icon(
-                          Icons.chevron_right_rounded,
-                          size: 18,
-                          color: cs.onSurfaceVariant,
-                        ),
-                        onTap: () {
-                          subscriptionProvider
-                              .moveFeedToCategory(sub.url, category)
-                              .then((_) {
-                                if (sheetCtx.mounted) {
-                                  Navigator.of(sheetCtx).pop();
-                                }
-                                if (context.mounted) {
-                                  context.read<FeedProvider>().refreshAll();
-                                  showAppToast(
-                                    l10n.feedMovedToFolder(sub.name, category),
-                                    type: AppToastType.success,
-                                  );
-                                }
-                              });
-                        },
-                      );
-                    },
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-            ),
-          ),
-        );
+    MoveToCategorySheet.show(
+      context,
+      sub,
+      onMoved: (sub, category) {
+        if (context.mounted) {
+          context.read<FeedProvider>().refreshAll();
+          showAppToast(
+            l10n.feedMovedToFolder(sub.name, category),
+            type: AppToastType.success,
+          );
+        }
       },
     );
   }
