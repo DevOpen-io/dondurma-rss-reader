@@ -9,6 +9,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/feed_item.dart';
 import '../utils/async_semaphore.dart';
+import '../utils/host_pacer.dart';
 import 'article_cleanup_service.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
@@ -66,36 +67,17 @@ class ArticlePreparationService {
   final Future<String?> Function(String url) _extract;
   final int maxParallelTransfers;
 
-  /// Minimum spacing between requests to the same host. Parallelism is
-  /// bounded globally by the semaphore, but without per-host pacing a sweep
-  /// still bursts dozens of requests at one origin (an article body plus
-  /// all its images) — exactly the pattern that trips rate limiters
-  /// (Reddit answers 429 within seconds of a burst). Different hosts keep
-  /// running in parallel; only same-host requests serialize with a gap.
+  /// Minimum spacing between requests to the same host — see [HostPacer].
+  /// Kept as a ctor parameter because tests shrink it instead of waiting.
   final Duration minHostGap;
-  final Map<String, DateTime> _hostIdleAfter = {};
-  final Map<String, Future<void>> _hostTurn = {};
+  late final HostPacer _hostPacer = HostPacer(minGap: minHostGap);
 
   final DateTime Function() _now;
   late final AsyncSemaphore _semaphore;
 
   /// Waits until [url]'s host is allowed another request, then reserves
-  /// the next slot. Serializes per host: concurrent pieces to the same
-  /// origin queue instead of bursting.
-  Future<void> _paceHost(String url) {
-    final host = Uri.tryParse(url)?.authority ?? '';
-    if (host.isEmpty) return Future<void>.value();
-    final turn = (_hostTurn[host] ?? Future<void>.value()).then((_) async {
-      final notBefore = _hostIdleAfter[host];
-      final now = _now();
-      if (notBefore != null && notBefore.isAfter(now)) {
-        await Future<void>.delayed(notBefore.difference(now));
-      }
-      _hostIdleAfter[host] = _now().add(minHostGap);
-    });
-    _hostTurn[host] = turn;
-    return turn;
-  }
+  /// the next slot.
+  Future<void> _paceHost(String url) => _hostPacer.pace(url);
 
   /// Serializes every public operation on this instance so overlapping
   /// sweeps/permits can't double-attempt a piece in the same logical pass.

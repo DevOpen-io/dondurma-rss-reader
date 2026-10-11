@@ -16,6 +16,9 @@ import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
+import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
+import 'package:ice_cream_rss_reader/services/feed_service.dart';
+import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
 
@@ -850,6 +853,61 @@ void main() {
       await _waitForRefresh(providers.feed);
       expect(server.counts['/rate.xml'], 2);
       providers.feed.dispose();
+    },
+  );
+
+  test(
+    'subscriptions on the same host are paced, different hosts not',
+    () async {
+      final hitTimes = <String, List<DateTime>>{};
+      void paced(String path) {
+        server.handlers[path] = (request) async {
+          (hitTimes[path] ??= []).add(DateTime.now());
+          await _respond200(request, _rss(path, ['i-$path']));
+        };
+      }
+
+      paced('/s1.xml');
+      paced('/s2.xml');
+      paced('/s3.xml');
+      final subs = [
+        FeedSubscription(
+          url: server.url('/s1.xml'),
+          name: 'S1',
+          category: 'Test',
+        ),
+        FeedSubscription(
+          url: server.url('/s2.xml'),
+          name: 'S2',
+          category: 'Test',
+        ),
+        FeedSubscription(
+          url: server.url('/s3.xml'),
+          name: 'S3',
+          category: 'Test',
+        ),
+      ];
+
+      final refresher = FeedRefresher(
+        feedService: FeedService(),
+        observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+        hostGap: const Duration(milliseconds: 300),
+      );
+      await refresher.refresh(
+        subscriptions: subs,
+        existingItems: const [],
+        validators: const {},
+        bookmarkedItems: const [],
+        redirects: const {},
+      );
+
+      // All three share one authority — hits must be spread by ~300ms.
+      final all = hitTimes.values.expand((t) => t).toList()..sort();
+      expect(all, hasLength(3));
+      expect(
+        all.last.difference(all.first),
+        greaterThanOrEqualTo(const Duration(milliseconds: 550)),
+      );
     },
   );
 

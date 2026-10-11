@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../utils/async_semaphore.dart';
+import '../utils/host_pacer.dart';
 import 'feed_backoff.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
@@ -58,13 +59,20 @@ class FeedRefresher {
     required FeedService feedService,
     required ObservedArticleStore observedArticleStore,
     FeedBackoff? backoff,
+    Duration hostGap = const Duration(milliseconds: 500),
   }) : _feedService = feedService,
        _observedArticleStore = observedArticleStore,
-       backoff = backoff ?? FeedBackoff();
+       backoff = backoff ?? FeedBackoff(),
+       _hostPacer = HostPacer(minGap: hostGap);
 
   /// Shared rate-limit policy — the provider preloads persisted deadlines
   /// so cooldowns survive process/isolate boundaries.
   final FeedBackoff backoff;
+
+  /// Several subscriptions on one host (e.g. multiple subreddits) must
+  /// not fan out under the global concurrency cap — same-host fetches
+  /// serialize with a small gap.
+  final HostPacer _hostPacer;
 
   Future<FeedRefreshResult> refresh({
     required List<FeedSubscription> subscriptions,
@@ -108,6 +116,7 @@ class FeedRefresher {
       final v = validators[sub.url];
       // Fetch at the learned redirect URL when one exists — skips a hop.
       final fetchUrl = redirects[sub.url] ?? sub.url;
+      await _hostPacer.pace(fetchUrl);
       try {
         final etag = v?['etag'] as String?;
         final lastModified = v?['lastModified'] as String?;
