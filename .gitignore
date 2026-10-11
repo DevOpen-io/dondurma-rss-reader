@@ -52,3 +52,4 @@ fastlane/Preview.html
 *.p12
 *.mobileprovision
 AuthKey*.p8
+FIX_RSS_REQUEST.md

@@ -857,7 +857,7 @@ void main() {
   );
 
   test(
-    'subscriptions on the same host are paced, different hosts not',
+    'subscriptions on the same host are fetch-paced',
     () async {
       final hitTimes = <String, List<DateTime>>{};
       void paced(String path) {
