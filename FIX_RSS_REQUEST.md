@@ -101,7 +101,7 @@ Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü
 
 ```
 Branch: fix/rss-engine-reliability
-Commit: d058a24
+Commit: 28fa8c5
 PR:     https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
-Testler: 421/421 geçti
+Testler: 442/442 geçti
 ```
