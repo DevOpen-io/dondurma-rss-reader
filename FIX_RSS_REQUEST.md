@@ -1,141 +1,69 @@
-# Follow-up Review — PR #60 RSS Engine Reliability
+# RSS Motoru — Takip Denetimi Raporu
 
-Repository: https://github.com/DevOpen-io/dondurma-rss-reader
+## 1. Doğrulanan Kusurlar ve Kök Nedenler
 
-Branch: `fix/rss-engine-reliability`
+| # | Kusur | Kök neden |
+|---|-------|-----------|
+| 1 | `HostPacer` gerçekte paylaşılmıyordu | `FeedRefresher`, `ArticlePreparationService` ve `FullTextExtractionService` kendi instance'larını oluşturuyordu — "paylaşılan" yalnızca aynı sınıftı, aynı zamanlama değildi |
+| 2 | `FeedBackoff` yarışı | İki isolate aynı snapshot'ı okuyup eski halini yazabiliyordu; başarı kaydı temizlenmiş bir cooldown persist'ten dirilebiliyordu; aynı host'taki kardeş feed'ler 429'dan etkilenmiyordu |
+| 3 | Redirect hijyeni | Origin karşılaştırması yalnız `host`'a bakıyordu (scheme/port değişimi validator sızdırırdı); redirect gövdesi drain'siz/sınırsız bırakılabiliyordu |
+| 4 | `extractFullText(forceRefresh: true)` | Server'ın `Retry-After`'ını da bypass ediyordu — yalnız yerel heuristic TTL'i atlamalıydı; `_parseRetryAfter` HTTP-date'i anlamıyordu |
+| 5 | CodeRabbit bulguları | Tam-origin karşılaştırma eksikti; Windows-1252 `latin1.decode` ile okunuyordu (0x80–0x9F arası karakterler bozuluyordu); extraction'da HTTP-date `Retry-After` yoktu |
+| 6 | Prefix'li Atom parse | Keyfi prefix regex'i namespace URI'sini doğrulamıyordu — Atom-olmayan `<x:feed>` da dönüştürülebilirdi |
+| 7 | Gövde okuma kilidi | `sub.cancel()` sonrası `asFuture()` deterministik tamamlanmıyordu — cap testi 20 sn timeout'a düşüyordu |
 
-PR: https://github.com/DevOpen-io/dondurma-rss-reader/pull/60
+## 2. Yapılan Değişiklikler
 
-An independent review of your implementation found several issues that must be investigated before merging.
+- **`lib/services/feed_service.dart`**
+  - `sameOrigin(a, b)` (`@visibleForTesting`): redirect'te tam origin karşılaştırması (scheme + host + port); cross-origin'de `If-None-Match`/`If-Modified-Since` silinir
+  - HTTP/HTTPS dışı redirect hedefi (`file:`, `javascript:`) reddedilir
+  - `_readBoundedBody` → `Completer` tabanlı: boyut cap'i ve `bodyDeadline` (test-mutable, varsayılan 20 sn) stream'i deterministik `cancel` eder
+  - `_discardBody` → aynı sınırlarla redirect-hop drain'i; takılan/şişkin hop gövdesi socket'i bağlayamaz
+  - Windows-1252 decode: 0x80–0x9F `_cp1252` tablosuyla (kıvırcık tırnak, tire, €); tanımsız baytlar U+FFFD
+- **`lib/utils/retry_after.dart`** *(yeni)* — `parseRetryAfter`: delta-saniye + HTTP-date (`HttpDate.parse`); tüm servisler tek util'i kullanır
+- **`lib/services/full_text_extraction_service.dart`** — `_failedUntil` kaydı `serverMandated` bayrağı taşır; `forceRefresh` yalnız heuristic TTL'i atlar, server cooldown'u (`_inServerCooldown`) her zaman geçerlidir; enjekte edilebilir `pacer`
+- **`lib/utils/host_pacer.dart`** — per-call `gap` parametresi, saat enjeksiyonu; "daha katı rezervasyon kısaltılamaz" semantiği
+- **`lib/providers/feed_provider.dart`** — tek `_hostPacer` üç servise de enjekte edilir; refresh başı `_loadFeedBackoff()` reload; `_saveFeedBackoff` merge-on-save
+- **`lib/services/feed_backoff.dart`** — host-seviye + feed-seviye cooldown, snapshot v2 (`feeds`/`hosts`/`cleared`), legacy flat-format load, merge-asla-kısaltmaz, `_cleared` dirilme koruması
+- **`lib/services/background_fetch_service.dart`** — kendi `HostPacer`'ı (ayrı isolate) + persist cooldown merge-on-save
+- **`lib/services/feed_refresh.dart`** + **`lib/services/article_preparation_service.dart`** — enjekte edilebilir pacer
 
-**Work on the EXISTING branch and PR. Do not create a replacement architecture or unrelated refactor. Do not merge the PR.**
+## 3. Değişen Dosyalar
 
-## 1. Critical: HostPacer Is Not Actually Shared
+`lib/services/feed_service.dart`, `lib/services/feed_refresh.dart`, `lib/services/feed_backoff.dart`, `lib/services/full_text_extraction_service.dart`, `lib/services/article_preparation_service.dart`, `lib/services/background_fetch_service.dart`, `lib/providers/feed_provider.dart`, `lib/utils/host_pacer.dart`, `lib/utils/retry_after.dart` (yeni) + 4 test dosyası (2'si yeni: `feed_backoff_test.dart`, `host_pacer_test.dart`).
 
-Currently:
+## 4. Yeni Regresyon Testleri
 
-- `FeedRefresher` creates its own HostPacer.
-- `ArticlePreparationService` creates another instance.
-- `FullTextExtractionService` performs independent HTTP requests.
-- `runBgFetch()` does not apply HostPacer to its feed requests.
+- Aynı host'ta iki feed: birinin 429'u kardeşi de soğutur; farklı host etkilenmez
+- Persist edilmiş cooldown yeni refresher'da da geçerli (fg↔bg yönü)
+- `load` merge: deadline'lar asla kısalmaz; cleared-sonrası dirilme yok
+- Shared `HostPacer`: iki caller aynı host'ta serileşir, katı rezervasyon kısalmaz, farklı host bloklamaz
+- `forceRefresh`: heuristic TTL'i atlar; delta-saniye ve HTTP-date `Retry-After`'a saygı gösterir
+- Redirect: port-değişimi validator düşürür; şişkin gövde hop'u durdurmaz; takılan gövde deadline'la hop'a izin verir; `file:` hedefi reddedilir; origin matrisi (scheme/host/port)
+- Windows-1252: 0x93/0x94/0x96 doğru karaktere, C1 kontrolleri U+FFFD'ye
+- Feed 429 + HTTP-date `Retry-After` deadline'ı açığa çıkarır
+- Atom-olmayan namespace'e bağlı `<prefix:feed>` parse hatası verir; geçerli keyfi-prefix Atom parse edilir
 
-Your report claims shared same-host pacing, but the actual implementation does not guarantee it.
+## 5. CI/Test Sonuçları
 
-Investigate and implement reliable per-host coordination across feed fetching, article extraction, and media preparation.
+- `flutter test` → **402/402 geçti**
+- `flutter analyze` → temiz
+- `dart format` → temiz
+- Android debug build → çalıştırılmadı (kalan risk)
+- Gerçek cihaz/iOS → doğrulanmadı, iddia edilmiyor
 
-Foreground and background run in different isolates, so do not assume a Dart singleton is shared across them.
+## 6. Kalan Riskler
 
-Respect existing concurrency and performance requirements.
+- Reddit'in IP-bazlı limiti sunucu taraflı — saygılı davranış garanti değil
+- Isolate'ler arası anlık pacing mümkün değil (ayrı bellek); koordinasyon persist'li `FeedBackoff` üzerinden — iki isolate aynı saniye içinde okuyup yazarsa son yazanın merge'i kazanır, deadline kısalmaz
+- `feedBackoffUntil` içinde silinmiş abonelik kalıntıları süresi dolunca etkisiz kalır
+- Emülatör/cihaz smoke testi bu turda yapılmadı
 
-## 2. Critical: Rate-Limit Cooldown Is Per-Feed, Not Per-Domain
+## 7. Review Bilgisi
 
-`FeedBackoff` currently keys cooldowns by feed URL.
-
-When `reddit.com/r/a/.rss` receives HTTP 429, another subscription such as `reddit.com/r/b/.rss` can still be requested.
-
-Implement appropriate shared host/domain rate-limit handling while preserving feed-specific errors and scheduling.
-
-A server-imposed host-level cooldown must protect other relevant requests to that host.
-
-Do not unnecessarily block unrelated domains.
-
-## 3. Foreground/Background Persistence Race
-
-Review the interaction between:
-
-- `FeedProvider._loadFeedBackoff()`
-- `FeedProvider._saveFeedBackoff()`
-- `runBgFetch()`
-- Hive `feedBackoffUntil`
-- Foreground and background scheduling
-
-Investigate stale in-memory snapshots and concurrent updates overwriting newer deadlines.
-
-Implement safe state synchronization without unnecessary writes or a disruptive persistence migration.
-
-Add tests proving that a background 429 cannot be immediately bypassed by a foreground refresh, and vice versa.
-
-## 4. Fix HTTP Redirect Handling
-
-In `feed_service.dart`, cross-origin detection compares only `uri.host`.
-
-Compare the complete origin, including scheme, host, and port.
-
-Ensure validators are not incorrectly forwarded across origins.
-
-Also investigate `next.stream.drain()` during redirects: it currently lacks the same explicit body deadline/size protection applied to final responses.
-
-Add regression tests.
-
-Ensure bounded body timeouts actually release/cancel underlying network resources.
-
-## 5. Respect Server Retry-After During Manual Extraction
-
-`FullTextExtractionService.extractFullText(forceRefresh: true)` currently bypasses the failure deadline.
-
-Distinguish local retry suppression from server-mandated cooldown.
-
-Manual refresh may bypass a local heuristic cooldown, but must respect valid server `Retry-After` deadlines.
-
-Support both delta-seconds and HTTP-date values.
-
-Add tests.
-
-## 6. Resolve Existing CodeRabbit Findings
-
-Inspect all open review comments on PR #60.
-
-In particular, verify and fix:
-
-- Full-origin redirect comparison
-- Windows-1252 decoding
-- HTTP-date Retry-After in extraction
-
-Do not blindly apply suggestions. Validate them against the current code and add regression tests.
-
-## 7. Parser Robustness
-
-Review arbitrary Atom namespace-prefix handling.
-
-The parser should verify the Atom namespace URI and actual XML structure rather than relying only on a matching prefix regex.
-
-Preserve support for existing RSS, RDF, Atom and JSON Feed variants.
-
-Avoid converting unrelated XML namespaces into Atom accidentally.
-
-## 8. Mandatory Regression Tests
-
-Add tests for:
-
-- Multiple Reddit feeds receiving the same host-level 429
-- Foreground and background cooldown sharing
-- Concurrent Hive cooldown updates
-- Host pacing across different services
-- Manual extraction during server Retry-After
-- Redirect scheme/port changes
-- Slow redirect response bodies
-- Windows-1252 smart punctuation
-- HTTP-date Retry-After
-- Valid vs invalid prefixed Atom documents
-- Existing cache, bookmark and read-state preservation
-
-Run all existing tests and Flutter analysis.
-
-Verify Android debug build if available.
-
-Do not claim real-device validation unless actually performed.
-
-## 9. Final Report
-
-Provide a Turkish report with:
-
-1. Confirmed defects and root causes
-2. Exact implementation changes
-3. Relevant changed files
-4. New regression tests
-5. CI results
-6. Remaining risks
-7. Final commit SHA
-8. Explicit confirmation that PR #60 was not merged
-
-**Objective:** Make PR #60 safe and consistent with its reported guarantees. Prefer targeted, evidence-backed corrections over unnecessary architectural complexity.
+```
+Branch:       fix/rss-engine-reliability
+Son commit:   de4f997 (aşağıda doğrulanacak)
+PR:           https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
+Testler:      402/402 geçti, 0 başarısız
+```
