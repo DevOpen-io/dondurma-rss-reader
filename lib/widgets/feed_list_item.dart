@@ -346,14 +346,12 @@ class _ArticleCard extends StatelessWidget {
                   item: item,
                   isRead: isRead,
                   isBookmarked: isBookmarked,
-                  hasLocalCopy: _hasOfflineCopy(status),
                 ),
               ] else ...[
                 const SizedBox(width: 4),
                 _FeedItemActions(
                   item: item,
                   isBookmarked: isBookmarked,
-                  hasLocalCopy: _hasOfflineCopy(status),
                   isRead: isRead,
                 ),
               ],
@@ -463,13 +461,11 @@ class _FeedItemThumbnail extends StatelessWidget {
   final FeedItem item;
   final bool isRead;
   final bool isBookmarked;
-  final bool hasLocalCopy;
 
   const _FeedItemThumbnail({
     required this.item,
     required this.isRead,
     required this.isBookmarked,
-    required this.hasLocalCopy,
   });
 
   @override
@@ -546,27 +542,6 @@ class _FeedItemThumbnail extends StatelessWidget {
             ),
           ),
         ),
-        if (hasLocalCopy)
-          Positioned(
-            top: 4,
-            right: 4,
-            child: Semantics(
-              label: AppLocalizations.of(context).semanticOfflineCached,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: colorScheme.surface.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(5),
-                ),
-                child: Icon(
-                  Icons.offline_pin,
-                  size: 12,
-                  color: colorScheme.secondary.withValues(alpha: 0.7),
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
@@ -575,13 +550,6 @@ class _FeedItemThumbnail extends StatelessWidget {
 // =============================================================================
 // Status labels (#41)
 // =============================================================================
-
-/// The "available offline" pin mirrors what the label may claim: a readable
-/// body under a real claim — never an ownerless residue (#41).
-bool _hasOfflineCopy(ArticleStatus? status) =>
-    status != null &&
-    status.scope != ArticleScope.none &&
-    status.hasReadableBody;
 
 /// Short scope label for a row — distinguishes temporary cache from
 /// permanent bookmark claims. A bookmarked item whose status map has
@@ -830,13 +798,11 @@ class _FeedItemContent extends StatelessWidget {
 class _FeedItemActions extends StatelessWidget {
   final FeedItem item;
   final bool isBookmarked;
-  final bool hasLocalCopy;
   final bool isRead;
 
   const _FeedItemActions({
     required this.item,
     required this.isBookmarked,
-    required this.hasLocalCopy,
     required this.isRead,
   });
 
@@ -861,18 +827,6 @@ class _FeedItemActions extends StatelessWidget {
                 ? AppLocalizations.of(context).semanticRemoveBookmark
                 : AppLocalizations.of(context).semanticBookmark,
           ),
-          if (hasLocalCopy)
-            Padding(
-              padding: const EdgeInsets.only(top: 8.0),
-              child: Semantics(
-                label: AppLocalizations.of(context).semanticOfflineCached,
-                child: Icon(
-                  Icons.offline_pin,
-                  color: colorScheme.secondary.withValues(alpha: 0.7),
-                  size: 15,
-                ),
-              ),
-            ),
         ],
       ),
     );
