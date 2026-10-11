@@ -1,11 +1,9 @@
-import 'dart:math' show Random;
-
 import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../utils/async_semaphore.dart';
-import 'article_preparation_service.dart';
+import 'feed_backoff.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'observed_article_store.dart';
@@ -59,19 +57,14 @@ class FeedRefresher {
   FeedRefresher({
     required FeedService feedService,
     required ObservedArticleStore observedArticleStore,
+    FeedBackoff? backoff,
   }) : _feedService = feedService,
-       _observedArticleStore = observedArticleStore;
+       _observedArticleStore = observedArticleStore,
+       backoff = backoff ?? FeedBackoff();
 
-  /// Per-feed rate-limit backoff, session-scoped. A feed answering 429/503 —
-  /// or carrying a `Retry-After` — is not refetched until its wait passes.
-  /// Without this a rate-limited feed (Reddit answers 429 aggressively) is
-  /// hit on every sync cycle, keeping the limit permanently exhausted.
-  final Map<String, DateTime> _retryAt = {};
-  final Map<String, int> _failAttempts = {};
-
-  /// Backoff jitter: many feeds failing together (e.g. after a long
-  /// offline stretch) would otherwise retry in lockstep every cycle.
-  final Random _jitter = Random();
+  /// Shared rate-limit policy — the provider preloads persisted deadlines
+  /// so cooldowns survive process/isolate boundaries.
+  final FeedBackoff backoff;
 
   Future<FeedRefreshResult> refresh({
     required List<FeedSubscription> subscriptions,
@@ -94,8 +87,7 @@ class FeedRefresher {
     final futures = subscriptions.map((sub) async {
       // A backed-off feed keeps its cached items and its last error without
       // touching the network — same treatment as an unproven failure.
-      final backoffUntil = _retryAt[sub.url];
-      if (backoffUntil != null && backoffUntil.isAfter(DateTime.now())) {
+      if (backoff.isBackedOff(sub.url, DateTime.now())) {
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -140,8 +132,7 @@ class FeedRefresher {
             dropValidator = true;
           }
         }
-        _failAttempts.remove(sub.url);
-        _retryAt.remove(sub.url);
+        backoff.recordSuccess(sub.url);
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -166,33 +157,9 @@ class FeedRefresher {
         );
       } catch (e) {
         debugPrint('Error fetching feed ${sub.url}: $e');
-        final isConnectivity =
-            e is FeedFetchException &&
-            e.kind == FeedFetchErrorKind.connectivity;
-        // Rate-limit signals (429, 503, or an explicit Retry-After) earn a
-        // backoff: refetching them every cycle keeps the limiter exhausted.
-        // Other failures are not penalized — a single transient 500 should
-        // recover on the very next sync, not sit out a minute.
-        final serverWait = e is FeedFetchException ? e.retryAfter : null;
-        final status = e is FeedFetchException ? e.statusCode : null;
-        if (!isConnectivity &&
-            (status == 429 || status == 503 || serverWait != null)) {
-          final attempts = (_failAttempts[sub.url] ?? 0) + 1;
-          _failAttempts[sub.url] = attempts;
-          final now = DateTime.now();
-          _retryAt[sub.url] = serverWait != null && serverWait.isAfter(now)
-              ? serverWait
-              : now.add(
-                  Duration(
-                    milliseconds:
-                        (ArticlePreparationService.backoffFor(
-                                  attempts,
-                                ).inMilliseconds *
-                                (0.5 + _jitter.nextDouble()))
-                            .round(),
-                  ),
-                );
-        }
+        // Rate-limit signals earn a cooldown; a plain transient failure
+        // recovers on the next natural sync (see FeedBackoff for the rule).
+        backoff.recordFailure(sub.url, e, DateTime.now());
         // Transient failure: keep the feed's existing items so one error doesn't
         // blank it out, and leave its validators untouched.
         return (

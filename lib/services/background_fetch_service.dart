@@ -9,10 +9,12 @@ import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import 'article_identity.dart';
 import 'article_preparation_service.dart';
+import 'feed_backoff.dart';
 import 'article_record_store.dart';
 import 'temp_cache_membership.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
+import '../utils/async_semaphore.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -135,12 +137,60 @@ Future<void> runBgFetch() async {
         }
       } catch (_) {}
     }
+    // Shared cooldown policy — deadlines written by the foreground refresher
+    // are honored here, and limits hit here are persisted back so the next
+    // foreground pass does not re-hammer a rate-limited feed either.
+    final backoff = FeedBackoff();
+    try {
+      final rawBackoff = feedsBox.get('feedBackoffUntil');
+      if (rawBackoff is String && rawBackoff.isNotEmpty) {
+        backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
+      }
+    } catch (_) {}
+    final validators = <String, dynamic>{};
+    try {
+      final rawValidators = feedsBox.get('feedValidators');
+      if (rawValidators is String && rawValidators.isNotEmpty) {
+        validators.addAll(jsonDecode(rawValidators) as Map<String, dynamic>);
+      }
+    } catch (_) {}
+
     final feedService = FeedService();
+    // Same bounded concurrency as the foreground refresher — an unbounded
+    // fan-out on constrained devices trips TCP resets and rate limiters.
+    final semaphore = AsyncSemaphore(5);
     final results = await Future.wait(
       subscriptions.map((sub) async {
+        // A feed inside its cooldown keeps its durable articles — the merge
+        // only replaces feeds with an authoritative fresh response anyway.
+        if (backoff.isBackedOff(sub.url, DateTime.now())) {
+          return (
+            subscription: sub,
+            items: <FeedItem>[],
+            succeeded: false,
+            fresh: false,
+            allowInitialization: false,
+          );
+        }
+        await semaphore.acquire();
         final fetchUrl = redirects[sub.url] ?? sub.url;
         try {
-          final result = await feedService.fetchFeed(fetchUrl, sub.category);
+          final v = validators[sub.url];
+          final result = await feedService.fetchFeed(
+            fetchUrl,
+            sub.category,
+            etag: v?['etag'] as String?,
+            lastModified: v?['lastModified'] as String?,
+          );
+          backoff.recordSuccess(sub.url);
+          if (result.etag != null || result.lastModified != null) {
+            validators[sub.url] = {
+              'etag': result.etag,
+              'lastModified': result.lastModified,
+            };
+          } else if (!result.notModified) {
+            validators.remove(sub.url);
+          }
           return (
             subscription: sub,
             items: fetchUrl == sub.url
@@ -154,7 +204,8 @@ Future<void> runBgFetch() async {
             fresh: !result.notModified,
             allowInitialization: !result.notModified,
           );
-        } catch (_) {
+        } catch (e) {
+          backoff.recordFailure(sub.url, e, DateTime.now());
           return (
             subscription: sub,
             items: <FeedItem>[],
@@ -162,10 +213,16 @@ Future<void> runBgFetch() async {
             fresh: false,
             allowInitialization: false,
           );
+        } finally {
+          semaphore.release();
         }
       }),
     );
     feedService.dispose();
+    try {
+      await feedsBox.put('feedValidators', jsonEncode(validators));
+      await feedsBox.put('feedBackoffUntil', jsonEncode(backoff.snapshot()));
+    } catch (_) {}
 
     final allItems = results.expand((result) => result.items).toList();
     debugPrint('[BG] fetched ${allItems.length} items total');

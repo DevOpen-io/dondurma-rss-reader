@@ -13,6 +13,7 @@ import 'package:html/parser.dart' show parse;
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../services/article_identity.dart';
+import '../services/feed_backoff.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
@@ -229,6 +230,11 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Per-feed rate-limit cooldowns. Loaded from Hive at startup so the
+  /// background isolate's deadlines are honored here too — and persisted
+  /// back after each refresh so the next background pass sees them.
+  final FeedBackoff _feedBackoff = FeedBackoff();
+
   /// Last fetch failure per feed, persisted across restarts so a dead feed
   /// stays visibly unhealthy instead of silently showing stale cache.
   Map<String, String> _feedErrors = {};
@@ -280,6 +286,7 @@ class FeedProvider extends ChangeNotifier {
     _refresher = FeedRefresher(
       feedService: _feedService,
       observedArticleStore: _observedArticleStore,
+      backoff: _feedBackoff,
     );
     _initialization = _loadState();
     _connectivitySub = Connectivity().onConnectivityChanged.listen(
@@ -500,6 +507,8 @@ class FeedProvider extends ChangeNotifier {
       );
     }
 
+    _loadFeedBackoff();
+
     final String? cachedItemsData = _box.get('cachedItemsJson');
     if (cachedItemsData != null) {
       try {
@@ -552,6 +561,21 @@ class FeedProvider extends ChangeNotifier {
 
   void _saveFeedValidators(Map<String, dynamic> validators) {
     _box.put('feedValidators', jsonEncode(validators));
+  }
+
+  /// Loads persisted per-feed cooldown deadlines written by either the
+  /// foreground or the background isolate.
+  void _loadFeedBackoff() {
+    final raw = _box.get('feedBackoffUntil');
+    if (raw is String && raw.isNotEmpty) {
+      try {
+        _feedBackoff.load(jsonDecode(raw) as Map<String, dynamic>);
+      } catch (_) {}
+    }
+  }
+
+  void _saveFeedBackoff() {
+    _box.put('feedBackoffUntil', jsonEncode(_feedBackoff.snapshot()));
   }
 
   /// Learned per-feed redirect map (`{ canonicalUrl: resolvedUrl }`). A 301'd
@@ -1031,6 +1055,7 @@ class FeedProvider extends ChangeNotifier {
 
     _saveFeedValidators(result.validators);
     _saveFeedRedirects(result.redirects);
+    _saveFeedBackoff();
     _updateFeedErrors(result.feedErrors, result.unprovenUrls);
     _items = result.items;
     _isOffline = !result.online;
