@@ -120,7 +120,7 @@ Regresyon testi: wifi mock'u ile bg preparation'ı çalıştır, medya URL'si 42
 
 ```
 Branch: fix/rss-engine-reliability
-Commit: 0fc028e
+Commit: 2c6aef0
 PR:     https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
-Testler: 445/445 geçti
+Testler: 446/446 geçti
 ```
