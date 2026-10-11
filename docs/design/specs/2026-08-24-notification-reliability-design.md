@@ -3,6 +3,10 @@
 Date: 2026-08-24
 Status: implemented
 
+[Design index](../README.md) · [Current architecture](../../development/architecture.md)
+
+Historical design record. Current source and regression tests define behavior when details drift.
+
 ## Goal
 
 An article identity may be claimed as new at most once within the observed-history retention window. Refresh failures, lifecycle changes, foreground/background overlap, settings, cache limits, and subscription initialization must not make it new again during that window.

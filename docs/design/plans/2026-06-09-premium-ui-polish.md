@@ -1,5 +1,9 @@
 # Premium UI Polish Implementation Plan
 
+[Design index](../README.md)
+
+> Archived execution plan. Commands, agent workflow instructions and file maps below are historical context; use root `AGENTS.md` and current source for new work.
+
 Status: historical plan, substantially implemented. Current UI and tests define shipped behavior; unchecked boxes below preserve original execution plan, not current backlog.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

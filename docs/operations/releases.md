@@ -1,7 +1,9 @@
 # Store releases
 
+[Documentation index](../README.md) · [Development checks](../development/README.md) · [Play release-note files](../../fastlane/metadata/android/README.md)
+
 GitHub Actions owns validation, builds, artifacts and submissions in
-[the release workflow](../.github/workflows/build-and-release.yml). Fastlane
+[the release workflow](../../.github/workflows/build-and-release.yml). Fastlane
 handles Apple signing/packaging and store APIs. There are no Python or shell
 helper files. Flutter is pinned to 3.47.4, Java to 17, and iOS to macOS 15 /
 Xcode 26.3. iOS uses Swift Package Manager exclusively, with an iOS 15.5 minimum.

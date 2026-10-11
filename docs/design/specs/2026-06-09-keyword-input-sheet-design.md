@@ -1,10 +1,12 @@
 ---
 title: Keyword Input Bottom Sheet
 date: 2026-06-09
-status: approved
+status: implemented
 ---
 
 # Keyword Input Bottom Sheet
+
+[Design index](../README.md) · [Implementation plan](../plans/2026-06-09-keyword-input-sheet.md)
 
 Status: implemented. Current source: `lib/widgets/keyword_input_sheet.dart`. Historical design record; code wins on drift.
 

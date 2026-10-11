@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Read [AGENTS.md](AGENTS.md) for shared project constraints and task-specific documentation. [docs/README.md](docs/README.md) indexes current guides and historical records.
+
 ## Communication Style
 
 Use caveman skill. Terse responses. Drop filler, articles, hedging. Fragments OK. Technical terms exact. Code unchanged.
@@ -11,7 +13,6 @@ Use caveman skill. Terse responses. Drop filler, articles, hedging. Fragments OK
 **Prefer TDD when practical:** write or adjust failing tests first for new behavior or bug fixes, then implement until green; skip only where a test would not add signal (e.g. pure UI snapshot churn) — default bias is test-first.
 
 - Use available repository skills when their trigger matches.
-- **MCP over CLI** for Dart/Flutter tooling (analysis, fixes, project queries) when the MCP tool covers the task.
 - Avoid mutating Git history or user changes. Read-only Git inspection is allowed.
 - **UI/UX Excellence:** Exhibit impeccable skill in frontend design. Deliver modern, polished, and pixel-perfect layouts with exceptional attention to spacing, typography, and visual hierarchy.
 
@@ -73,38 +74,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
-## Architecture
+## Technical reference
 
-**State management**: 5 `ChangeNotifier` providers wired in `main.dart` via `MultiProvider`. `FeedProvider` depends on the other three via `ChangeNotifierProxyProvider3` — it receives `SubscriptionProvider`, `SettingsProvider`, and `BookmarkProvider` through its `update()` method.
-
-**Persistence**: Hive CE with 3 boxes opened at startup:
-- `'settings'` — theme, locale, sync interval, notification config, ad blocker, browser mode
-- `'feeds'` — subscriptions, custom categories, cached feed items, read IDs, category icons
-- `'bookmarks'` — bookmarked items (JSON + ID set)
-
-A one-time migration in `_migrateHiveBoxes()` moves legacy keys from `'settings'` into the dedicated boxes.
-
-**Routing**: GoRouter routes: `/onboarding`, `/`, `/article`, `/debug`; onboarding redirect uses persisted state plus session bypass.
-
-**Localization**: ARB files: `app_en.arb`, `app_tr.arb`, `app_es.arb`. Metadata comes from `supportedAppLanguages`. Generated Dart is committed; never edit manually.
-
-## Key Patterns
-
-- `FeedProvider._hasLoadedOnce` gates notification dispatch — first load never triggers notifications.
-- Categories = subscriptions' category fields + `_customCategories` set, merged in `SubscriptionProvider.categories` getter.
-- `NotificationService` is a singleton; `isSupported` returns `false` on platforms without notification support.
-- Per-feed `excludedKeywords` filtering happens inside `FeedProvider` before exposing items.
-- Per-feed `fullTextEnabled` is tri-state; `null` follows global `autoFullText`.
-- Global transient feedback uses `lib/utils/app_toast.dart`; new toast replaces current toast.
-- Browser mode is a string: `'builtin'` | `'external'` | `'system'`.
-- `_manageCacheTimer()` in `FeedProvider` recreates the background sync timer each time the proxy provider fires an update.
-- Category icons are stored separately in Hive and assigned on first load from `SubscriptionProvider`.
-
-## Gotchas
-
-- Always provide fallback defaults in Hive/JSON deserialization — fields may be absent in older persisted data.
-- `lib/l10n/app_localizations*.dart` is generated; edit all relevant EN/TR/ES ARB sources.
-- When adding a new Hive key to `'feeds'` or `'bookmarks'`, check whether it needs a migration path in `_migrateHiveBoxes()`.
-- `FeedProvider` uses date-based pagination (`_pageSize = 50`); the page limit resets on every filter/category/search change.
-- `NotificationService.requestPermission()` and `AdBlockerWebviewController.initialize()` run in the background after `runApp` — they are intentionally not awaited.
+Shared architecture and persistence rules live in [the architecture guide](docs/development/architecture.md). Read [offline storage](docs/development/offline-storage.md) for ownership, preparation and cleanup changes; read [the release guide](docs/operations/releases.md) before build/signing/submission work.
 

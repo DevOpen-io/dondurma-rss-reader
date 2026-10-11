@@ -1,5 +1,7 @@
 # Dondurma Product Guide
 
+[Documentation index](../README.md) · [Implementation status](status.md) · [Roadmap](roadmap.md)
+
 ## Audience
 
 Daily RSS/Atom readers valuing privacy, focus, offline access, predictable organization, and control over algorithmic discovery. UI supports English, Turkish, Spanish.

@@ -6,6 +6,8 @@ Fast, private RSS/Atom reader built with Flutter and Material 3. No accounts, al
 
 [English](#english) · [Türkçe](#türkçe)
 
+[Documentation / Belgeler](docs/README.md) · [Development / Geliştirme](docs/development/README.md) · [Product / Ürün](docs/product/guide.md)
+
 ## English
 
 [App Store](https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr) · [Google Play](https://play.google.com/store/apps/details?id=io.devopen.dondurma)
@@ -31,16 +33,18 @@ lib/
 ├── main.dart       # startup, Hive migration, providers, OS integrations
 ├── models/         # FeedItem, FeedSubscription
 ├── providers/      # settings, subscriptions, bookmarks, feeds, article state
-├── services/       # feed, full text, notification, OPML, background, widget
+├── services/       # feed, offline records/media, preparation, OS integrations
 ├── screens/        # onboarding, home tabs, article, settings, legal, debug
 ├── widgets/        # reusable article, folder, home, settings UI
 ├── router/         # GoRouter routes and onboarding redirect
 ├── theme/          # Material 3 themes
-├── utils/          # global toast
+├── utils/          # global toast, pacing, retry, motion helpers
 └── l10n/           # EN/TR/ES localization
 ```
 
 Five `ChangeNotifier` providers power UI state. `FeedProvider` receives subscription, settings, and bookmark state through `ChangeNotifierProxyProvider3`. Hive CE uses `settings`, `feeds`, and `bookmarks` boxes.
+
+Durable article records and a shared media pool support offline preparation independently of disposable image caches. See [architecture](docs/development/architecture.md) and [offline storage](docs/development/offline-storage.md). Native platform behavior requires platform-specific verification; dated findings are indexed under [audits and research](docs/README.md#denetim-ve-araştırma).
 
 ### Development
 
@@ -54,9 +58,9 @@ flutter test
 flutter run
 ```
 
-Release: `flutter build apk|ios|web|windows|macos|linux --release`.
+Build, signing and store submission: [release guide](docs/operations/releases.md).
 
-Details: [developer guide](DEVELOPER.md) · [product guide](PRODUCT.md)
+Details: [developer guide](docs/development/README.md) · [product guide](docs/product/guide.md) · [status and backlog](docs/product/status.md)
 
 ## Türkçe
 
@@ -84,7 +88,7 @@ flutter test
 flutter run
 ```
 
-Ayrıntılar: [geliştirici rehberi](DEVELOPER.md) · [ürün rehberi](PRODUCT.md)
+Ayrıntılar: [geliştirici rehberi](docs/development/README.md) · [ürün rehberi](docs/product/guide.md) · [durum ve backlog](docs/product/status.md) · [teknik yol haritası](docs/product/roadmap.md)
 
 ## Privacy and license
 

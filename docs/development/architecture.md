@@ -1,6 +1,8 @@
-# Dondurma Geliştirici Rehberi
+# Mimari ve Çalışma Zamanı
 
-Kaynak kodu özeti: 2026-08-24. Çelişkide kaynak kodu esas alınır.
+Kaynak koduyla karşılaştırma: 2026-10-11. Çelişkide kaynak kodu esas alınır.
+
+[Belge dizini](../README.md) · [Geliştirme ve doğrulama](README.md) · [Çevrimdışı saklama](offline-storage.md)
 
 ## Çalışma zamanı
 
@@ -11,8 +13,8 @@ Kaynak kodu özeti: 2026-08-24. Çelişkide kaynak kodu esas alınır.
 3. Eski tek-kutu şeması `_migrateHiveBoxes()` ile bir kez taşınır.
 4. `NotificationService` ve Workmanager hazırlanır.
 5. Bildirim/home-widget deep link akışları GoRouter'a bağlanır.
-6. Ağır izin/ad-block listesi işleri beklenmeden başlatılır.
-7. Provider ağacı ve `MyApp` çalıştırılır.
+6. İzin/ad-block listesi işleri await edilmeden başlatılır; ardından `runApp` çağrılır.
+7. Provider ağacı, ortak `ArticlePreparationService` ve `MyApp` oluşturulur.
 
 ## Mimari
 
@@ -21,8 +23,10 @@ flowchart TD
   UI[Screens and widgets] --> P[Providers]
   P --> H[(Hive CE)]
   P --> S[Services]
+  S --> D[(Article records and media)]
   S --> N[Feed and article hosts]
   W[Workmanager isolate] --> H
+  W --> D
   W --> N
   W --> L[Local notifications]
   P --> HW[Home-screen widgets]
@@ -38,6 +42,26 @@ Provider'lar:
 
 `FeedProvider`, `ChangeNotifierProxyProvider3` ile Subscription/Settings/Bookmark alır. `filterInputsChanged` yalnız filtreyi etkileyen keyword ve bookmark girdileri değişince filtre cache'ini bozar.
 
+Kategoriler, aboneliklerin kategori alanları ve `_customCategories` kümesinin birleşimidir. Model kaynakları `lib/models/feed_item.dart` ve `lib/models/feed_subscription.dart` içindedir; JSON serialization/copyWith ve eski kayıtlara fallback bu sınırda tutulur.
+
+`ArticlePageProvider` makale sayfası kapsamında oluşturulur. Uygulama kökündeki `Provider<ArticlePreparationService>`, Feed/Bookmark provider'larına aynı hazırlık servisini verir; bu servis bir `ChangeNotifier` değildir.
+
+## Kaynak kodu haritası
+
+| Dizin | Sorumluluk |
+| --- | --- |
+| `lib/models/` | `FeedItem`, `FeedSubscription`, önerilen akış modeli |
+| `lib/providers/` | Ekran durumu, kullanıcı tercihleri, provider koordinasyonu |
+| `lib/services/` | HTTP, parse, filtre, saklama, hazırlık ve sistem entegrasyonları |
+| `lib/screens/`, `lib/widgets/` | Sayfalar ve alanlarına göre ayrılmış UI bileşenleri |
+| `lib/router/` | GoRouter ve onboarding oturum durumu |
+| `lib/theme/`, `lib/utils/` | Tema, toast, hareket, pacing ve yardımcılar |
+| `lib/l10n/` | EN/TR/ES ARB kaynakları ve üretilen Dart dosyaları |
+| `android/`, `ios/` | Yerel platform yapılandırması ve widget kaynakları |
+| `test/` | Birim, widget ve yaşam döngüsü regresyon testleri |
+
+Bu tablodaki yollar depo köküne göredir.
+
 ## Kalıcılık
 
 ### `settings`
@@ -52,6 +76,9 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 - `custom_categories`, `category_icons`, `category_order`
 - `cachedItemsJson`, `readItemIds`
 - `feedValidators`: URL bazlı ETag/Last-Modified
+- `feedRedirects`: abonelik URL'sinden öğrenilen son URL'ye eşleme
+- `feedBackoffUntil`, `feedBackoffUntil.bg`: ön plan ve arka plan yazarlarının ayrı cooldown snapshot'ları
+- `cacheEpoch`: cache temizleme sırasında arka plan yazılarını sınırlar
 - `bgKnownItemIds`: yalnız eski sürüm migration kanıtı; aktif deduplication kaynağı değildir
 
 ### `bookmarks`
@@ -60,18 +87,25 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 
 Yeni kalıcı alanlarda eski kayıtlar için fallback zorunlu. `FeedSubscription.fullTextEnabled` tri-state: `null` global ayarı izler, `true` zorla açar, `false` zorla kapatır. `fullTextSchema: 2` eski `false` kayıtlarını ayırır.
 
+Hive kutularına ek olarak `ArticleRecordStore` ve `ObservedArticleStore`, foreground/Workmanager arasında lock dosyasıyla korunan ayrı JSON state dosyaları kullanır. Kalıcı medya havuzu uygulamanın documents dizinindedir. Sahiplik, hazırlık ve temizleme kuralları [çevrimdışı saklama rehberindedir](offline-storage.md).
+
 ## Feed hattı
 
 `FeedService` ortak keep-alive `http.Client`, browser User-Agent, zaman aşımı, ETag/Last-Modified ve 304 desteği kullanır. RSS/Atom gövdesi `compute(parseFeedBody, ...)` içinde ayrıştırılır. Eksik ID için kararlı fallback üretilir; feed başına öğe sayısı sınırlandırılır.
 
-`FeedProvider.refreshAll()`:
+`FeedProvider.refreshAll()`, HTTP/merge işini `FeedRefresher`'a devreder:
 
 - eşzamanlı çağrıları `_refreshQueued` ile birleştirir;
 - en fazla beş fetch çalıştırır;
 - yeni/304/hatalı sonuçları mevcut cache ile birleştirir;
 - global ve feed keyword filtrelerini uygular;
 - ilk yüklemede bildirim göndermez (`_hasLoadedOnce`);
-- cache ve home widget verisini günceller.
+- cache ve home widget verisini günceller;
+- geçici cache üyeliğini uzlaştırıp kalıcı makale hazırlığını tetikler.
+
+Filtre hattı `feed_list_filter.dart`, tarih gruplama `feed_date_groups.dart`, saf kararlar `feed_decisions.dart` içindedir. Keyword regex'leri filtre geçişinde derlenir. Cooldown pacing bekleyişinden sonra yeniden kontrol edilir. Başarılı feed isteği host cooldown'unu silmez. İki persist slot'u birlikte okunur; her isolate kendi slot'una yazar. `Retry-After` en fazla 24 saat olarak değerlendirilir.
+
+`FeedProvider`, `FeedRefresher` ile extraction singleton'ına aynı `HostPacer`/`FeedBackoff` instance'larını bağlar. Kendi oluşturduğu varsayılan hazırlık servisine de bunları verir; ancak `main.dart` üzerinden enjekte edilen ortak `ArticlePreparationService` ayrı pacer ile, `backoff` verilmeden oluşturulur. Bu nedenle uygulama kökündeki medya hazırlığı için tüm servislerle ortak host koordinasyonu varsayılmamalıdır. Background akışı hazırlık servisine ortak pacer/backoff'u açıkça verir.
 
 Sayfalama 50 öğe ile başlar; kategori, arama veya filtre değişiminde sıfırlanır. Bölümler Today/Yesterday/Older mantığıyla tarih bazlıdır.
 
@@ -83,7 +117,7 @@ Sayfalama 50 öğe ile başlar; kategori, arama veya filtre değişiminde sıfı
 
 Ön plan timer'ı `cacheIntervalSeconds` ile yönetilir; provider güncellemesinde `_manageCacheTimer()` yeniden değerlendirir. Resume politikası `shouldRefreshOnResume` ile son yenileme ve eşik üzerinden karar verir.
 
-Workmanager unique işi `rss_bg_fetch`, bağlı ağ koşulu ve platformun 15 dakikalık minimum periyodu ile kaydolur. Background isolate kutuları kendi açar, feed'leri çeker ve cache'i limitleyip yazar. Yeni öğeler, `ObservedArticleStore` içindeki feed + subscription epoch namespace'li 14 günlük geçmişten atomik claim edilir. Foreground ve Workmanager aynı state dosyasını, `File.create(exclusive: true)` lock ownership ve fail-closed timeout ile paylaşır.
+Workmanager unique işi `rss_bg_fetch`, bağlı ağ koşulu ve 15 dakikalık periyot isteği ile kaydolur; gerçek çalışma zamanını işletim sistemi belirler. Background isolate kutuları kendi açar, feed'leri çeker, cache üyeliğini uzlaştırır ve uygun ağda hazırlık çalıştırır. Yeni öğeler, `ObservedArticleStore` içindeki feed + subscription epoch namespace'li 14 günlük geçmişten atomik claim edilir. Foreground ve Workmanager aynı state dosyasını, `File.create(exclusive: true)` lock ownership ve fail-closed timeout ile paylaşır.
 
 Observation delivery'den önce gelir. Global/per-feed kapalı, quiet hours veya non-instant digest durumunda ID observed kalır; sonra backfill edilmez. Yalnız başarılı feed sonucu history'yi günceller; failure başka feed'in geçmişini silemez. İlk başarılı fetch ve her yeni subscription epoch sessiz initialize edilir.
 
@@ -97,6 +131,8 @@ Observation delivery'den önce gelir. Global/per-feed kapalı, quiet hours veya 
 - `OpmlService`: nested/flat OPML, duplicate URL atlama, sistem dosya seçici/paylaşım sayfası.
 - `ImageCacheService`: makale ve küçük görsel için ayrı cache manager'lar.
 
+Depoda Android/iOS widget kaynaklarının bulunması platformun cihazda doğrulandığı anlamına gelmez. iOS yapılandırmasının tarihli incelemesi [iOS araştırmasında](../research/2026-10-03-ios-viability-audit.md), güncel build/submission akışı [yayın rehberindedir](../operations/releases.md).
+
 ## Routing ve UI
 
 - `/onboarding`: `hasSeenOnboarding` öncesi hedef; oturum bypass desteği.
@@ -105,6 +141,8 @@ Observation delivery'den önce gelir. Global/per-feed kapalı, quiet hours veya 
 - `/debug`: sürüm numarasına uzun basarak ulaşılan araçlar.
 
 `MyApp`, tema/dil alanlarında `context.select` kullanır. `AppToastHost`, GoRouter child'ını sarar; yeni toast eskisini kuyruksuz değiştirir, modal varken konumunu ayarlar, azaltılmış hareketi izler.
+
+Browser modu `'builtin'`, `'external'` veya `'system'` olarak saklanır. `sessionOnboardingBypassed`, kalıcı onboarding tamamlanmasından bağımsız oturum bypass'ıdır.
 
 ## Yerelleştirme
 
@@ -116,7 +154,7 @@ flutter gen-l10n
 
 ## Test ve doğrulama
 
-Mevcut testler feed parse/isolate, fetch yardımcıları, filtre girdileri/runtime filtre, resume kararı, feed satırı, toast ve geniş ekran regresyonlarını kapsar.
+Mevcut testler feed parse/isolate, fetch/backoff/pacing, filtre, resume, observation/notification, kalıcı saklama, hazırlık, cache üyeliği, temizleme, makale durumu, feed satırı, toast ve geniş ekran regresyonlarını kapsar.
 
 ```bash
 flutter analyze
@@ -130,6 +168,6 @@ Platform entegrasyonu değişirse ilgili Android/iOS build veya cihaz smoke test
 - JSON/Hive deserialization fallback'siz bırakılmaz.
 - Yeni `feeds`/`bookmarks` anahtarında legacy migration ihtiyacı kontrol edilir.
 - `refreshAll()` concurrency ve ilk-yükleme bildirim korumaları bozulmaz.
-- `NotificationService.requestPermission()` ve ad-block initialize çağrıları kasıtlı olarak `runApp` sonrası beklenmez.
+- `NotificationService.requestPermission()` ve ad-block initialize çağrıları `runApp` öncesinde başlatılır, await edilmez.
 - `assets/Logo.png` launcher kaynağıdır; runtime asset değildir. Runtime listesi `assets/logo.ico`, `assets/js/`.
 - Toast için `lib/utils/app_toast.dart` kullanılır; eski snackbar helper yoktur.

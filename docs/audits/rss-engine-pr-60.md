@@ -1,5 +1,7 @@
 # RSS Motoru — Son Denetim Raporu (PR #60)
 
+> Tarihsel denetim kaydı. Aşağıdaki branch, commit, PR durumu ve test sayıları raporun yazıldığı ana aittir; güncel durum iddiası değildir. Güncel mimari için [mimari rehberini](../development/architecture.md), ertelenen işler için [yol haritasını](../product/roadmap.md) okuyun.
+
 ## 1. Üç Bulgunun Kök Nedeni
 
 ### Bulgu 1 — Kardeş feed'in başarısı host cooldown'unu erken siliyor

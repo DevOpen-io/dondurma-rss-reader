@@ -1,5 +1,7 @@
 # Yol Haritası
 
+[Ürün ve backlog](status.md) · [RSS denetim raporu](../audits/rss-engine-pr-60.md) · [Belge dizini](../README.md)
+
 PR #60 sonrası ertelenen iyileştirmeler. Her madde ayrı PR adayıdır.
 
 ## 1. `www.` normalizasyonunu doğrulanmış eşdeğer host'larla sınırlama

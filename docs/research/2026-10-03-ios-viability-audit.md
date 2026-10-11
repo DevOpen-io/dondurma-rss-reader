@@ -1,5 +1,9 @@
 # iOS viability audit — offline reading
 
+> Historical source audit dated 2026-10-03. Package versions, file/line references and config verdicts below describe that snapshot. Build/deployment configuration has since changed; this record is not a current platform certification. See the [current architecture](../development/architecture.md) and [release guide](../operations/releases.md) for current repository guidance.
+
+[Documentation index](../README.md)
+
 Resolves [issue #16](https://github.com/DevOpen-io/dondurma-rss-reader/issues/16).
 Scope: what blocks iOS today for the offline-reading feature set (feed fetch, cache,
 notifications, widgets, in-app browser). Source-verified against the repo and the

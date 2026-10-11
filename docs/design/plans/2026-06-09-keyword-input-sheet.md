@@ -1,5 +1,9 @@
 # Keyword Input Bottom Sheet Implementation Plan
 
+[Design index](../README.md) · [Design specification](../specs/2026-06-09-keyword-input-sheet-design.md)
+
+> Archived execution plan. Commands, agent workflow instructions and file maps below are historical context; use root `AGENTS.md` and current source for new work.
+
 Status: completed historical plan. Current source: `lib/widgets/keyword_input_sheet.dart`; unchecked boxes below preserve original plan state.
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.

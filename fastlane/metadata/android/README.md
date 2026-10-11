@@ -1,5 +1,7 @@
 # Play release notes
 
+Full build, signing and submission workflow: [store releases](../../../docs/operations/releases.md).
+
 Add `<locale>/changelogs/<pubspec-build-number>.txt` before creating a release
 tag. For example, `en-US/changelogs/14.txt`, `tr-TR/changelogs/14.txt`, and
 `es-ES/changelogs/14.txt`. Each file must contain 1–500 characters.
