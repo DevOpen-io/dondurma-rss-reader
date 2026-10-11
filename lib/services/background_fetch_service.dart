@@ -15,6 +15,7 @@ import 'temp_cache_membership.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import '../utils/async_semaphore.dart';
+import '../utils/host_pacer.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -158,7 +159,12 @@ Future<void> runBgFetch() async {
     final feedService = FeedService();
     // Same bounded concurrency as the foreground refresher — an unbounded
     // fan-out on constrained devices trips TCP resets and rate limiters.
+    // The pacer additionally serializes same-host fetches: several
+    // subreddits must not burst reddit.com even within the cap. This
+    // isolate owns its schedule; cross-isolate coordination is carried
+    // by the persisted `feedBackoffUntil` cooldowns.
     final semaphore = AsyncSemaphore(5);
+    final pacer = HostPacer();
     final results = await Future.wait(
       subscriptions.map((sub) async {
         // A feed inside its cooldown keeps its durable articles — the merge
@@ -175,6 +181,7 @@ Future<void> runBgFetch() async {
         await semaphore.acquire();
         final fetchUrl = redirects[sub.url] ?? sub.url;
         try {
+          await pacer.pace(fetchUrl);
           final v = validators[sub.url];
           final result = await feedService.fetchFeed(
             fetchUrl,
@@ -221,6 +228,13 @@ Future<void> runBgFetch() async {
     feedService.dispose();
     try {
       await feedsBox.put('feedValidators', jsonEncode(validators));
+      // Merge before writing — the foreground may have recorded a fresher
+      // cooldown while this isolate was fetching; last-writer-wins would
+      // silently drop it.
+      final latest = feedsBox.get('feedBackoffUntil');
+      if (latest is String && latest.isNotEmpty) {
+        backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+      }
       await feedsBox.put('feedBackoffUntil', jsonEncode(backoff.snapshot()));
     } catch (_) {}
 

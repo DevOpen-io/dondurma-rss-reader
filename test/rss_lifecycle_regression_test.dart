@@ -899,6 +899,65 @@ void main() {
     expect(result.unprovenUrls, contains(url));
   });
 
+  test('a 429 on one feed cools sibling feeds on the same host', () async {
+    // A second loopback server stands in for an unrelated authority —
+    // its different port means a different origin.
+    final other = await _FeedServer.start();
+    addTearDown(other.close);
+    other.handlers['/ok.xml'] = (request) async =>
+        _respond200(request, _rss('C', ['c1']));
+
+    for (final path in ['/rl-a.xml', '/rl-b.xml']) {
+      server.handlers[path] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '60');
+        await request.response.close();
+      };
+    }
+    final subs = [
+      FeedSubscription(
+        url: server.url('/rl-a.xml'),
+        name: 'A',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/rl-b.xml'),
+        name: 'B',
+        category: 'Test',
+      ),
+      FeedSubscription(url: other.url('/ok.xml'), name: 'C', category: 'Test'),
+    ];
+
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      hostGap: Duration.zero,
+    );
+    Future<FeedRefreshResult> pass() => refresher.refresh(
+      subscriptions: subs,
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+    );
+
+    await pass();
+    expect(server.counts['/rl-a.xml'], 1);
+    expect(server.counts['/rl-b.xml'], 1);
+    expect(other.counts['/ok.xml'], 1);
+
+    // Pass two: the host-level cooldown skips A and B — the unrelated
+    // authority stays fetchable.
+    final second = await pass();
+    expect(server.counts['/rl-a.xml'], 1);
+    expect(server.counts['/rl-b.xml'], 1);
+    expect(other.counts['/ok.xml'], 2);
+    expect(
+      second.unprovenUrls,
+      containsAll([server.url('/rl-a.xml'), server.url('/rl-b.xml')]),
+    );
+  });
+
   test('subscriptions on the same host are fetch-paced', () async {
     final hitTimes = <String, List<DateTime>>{};
     void paced(String path) {

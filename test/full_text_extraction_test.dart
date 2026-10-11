@@ -106,6 +106,71 @@ void main() {
     expect(FullTextExtractionService.instance.hasFailedAttempt(target), isTrue);
   });
 
+  test('forceRefresh bypasses the heuristic cooldown', () async {
+    handlers['/flaky'] = (request) {
+      request.response.statusCode = HttpStatus.internalServerError;
+    };
+    final target = url('/flaky');
+
+    expect(
+      await FullTextExtractionService.instance.extractFullText(target),
+      isNull,
+    );
+    // A manual retry ignores the local heuristic TTL and hits the network.
+    expect(
+      await FullTextExtractionService.instance.extractFullText(
+        target,
+        forceRefresh: true,
+      ),
+      isNull,
+    );
+    expect(counts['/flaky'], 2);
+  });
+
+  test('forceRefresh still honors a server Retry-After wait', () async {
+    handlers['/limited'] = (request) {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '30');
+    };
+    final target = url('/limited');
+
+    expect(
+      await FullTextExtractionService.instance.extractFullText(target),
+      isNull,
+    );
+    // Even an explicit user retry must not violate the server's mandate.
+    expect(
+      await FullTextExtractionService.instance.extractFullText(
+        target,
+        forceRefresh: true,
+      ),
+      isNull,
+    );
+    expect(counts['/limited'], 1);
+  });
+
+  test('an HTTP-date Retry-After also blocks a forced retry', () async {
+    final until = DateTime.now().toUtc().add(const Duration(minutes: 7));
+    handlers['/dated'] = (request) {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', HttpDate.format(until));
+    };
+    final target = url('/dated');
+
+    expect(
+      await FullTextExtractionService.instance.extractFullText(target),
+      isNull,
+    );
+    expect(
+      await FullTextExtractionService.instance.extractFullText(
+        target,
+        forceRefresh: true,
+      ),
+      isNull,
+    );
+    expect(counts['/dated'], 1);
+  });
+
   test('a page with no extractable content is a permanent failure', () async {
     handlers['/empty'] = (request) {
       request.response.headers.contentType = ContentType.html;

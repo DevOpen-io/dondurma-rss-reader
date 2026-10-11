@@ -2,6 +2,9 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show compute;
+
+import '../utils/host_pacer.dart';
+import '../utils/retry_after.dart';
 import 'package:flutter/material.dart' hide Element;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
@@ -48,12 +51,22 @@ class FullTextExtractionService {
     _cache[url] = html;
   }
 
+  /// Host pacer shared with the feed refresher/preparation pipeline —
+  /// wired by the owning provider. Falls back to a private pacer so the
+  /// service still works standalone (tests, direct use).
+  HostPacer pacer = HostPacer(minGap: const Duration(seconds: 1));
+
   // Failure cache — remembers URLs where extraction failed so we don't
   // waste bandwidth retrying on every article open. Transient failures
   // (timeouts, 5xx, 429) expire quickly so a temporary outage doesn't
   // block the article for the whole session; permanent ones (403/404/410,
   // or a page with no extractable content) last the session.
-  static final Map<String, DateTime> _failedUntil = {};
+  //
+  // `serverMandated` marks deadlines taken from a `Retry-After` header —
+  // an explicit user retry may bypass a local heuristic cooldown but
+  // never a server-issued wait.
+  static final Map<String, ({DateTime until, bool serverMandated})>
+  _failedUntil = {};
   static const int _failedCapacity = 20;
 
   /// Far-future deadline marking a permanent (session-lifetime) failure.
@@ -72,21 +85,16 @@ class FullTextExtractionService {
     _failedUntil.clear();
   }
 
-  static void _recordFailure(String url, DateTime until) {
+  static void _recordFailure(
+    String url,
+    DateTime until, {
+    bool serverMandated = false,
+  }) {
     if (_failedUntil.length >= _failedCapacity &&
         !_failedUntil.containsKey(url)) {
       _failedUntil.remove(_failedUntil.keys.first);
     }
-    _failedUntil[url] = until;
-  }
-
-  static DateTime? _parseRetryAfter(String? header, DateTime now) {
-    if (header == null) return null;
-    final seconds = int.tryParse(header.trim());
-    if (seconds != null && seconds >= 0) {
-      return now.add(Duration(seconds: seconds));
-    }
-    return null;
+    _failedUntil[url] = (until: until, serverMandated: serverMandated);
   }
 
   // ---------------------------------------------------------------------------
@@ -128,8 +136,17 @@ class FullTextExtractionService {
   /// to keep failing articles from consuming candidate slots; transient
   /// entries expire after [_transientFailureTtl].
   bool hasFailedAttempt(String url) {
-    final until = _failedUntil[url];
-    return until != null && until.isAfter(DateTime.now());
+    final entry = _failedUntil[url];
+    return entry != null && entry.until.isAfter(DateTime.now());
+  }
+
+  /// Whether [url] is inside a server-issued `Retry-After` wait — even a
+  /// forced retry must not violate it.
+  bool _inServerCooldown(String url) {
+    final entry = _failedUntil[url];
+    return entry != null &&
+        entry.serverMandated &&
+        entry.until.isAfter(DateTime.now());
   }
 
   /// Fetches [url], extracts the main article body, and returns its inner HTML.
@@ -146,10 +163,14 @@ class FullTextExtractionService {
   }) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
-    // Skip while inside a failure cooldown — unless the user forces a retry.
-    if (!forceRefresh && hasFailedAttempt(url)) return null;
+    // Skip inside a failure cooldown — a forced retry bypasses the local
+    // heuristic TTL, but a server-issued Retry-After wait still applies.
+    if (forceRefresh ? _inServerCooldown(url) : hasFailedAttempt(url)) {
+      return null;
+    }
 
     try {
+      await pacer.pace(url);
       final response = await http
           .get(
             Uri.parse(url),
@@ -170,7 +191,7 @@ class FullTextExtractionService {
         // a short TTL lets the next attempt try again instead of the URL
         // staying dead for the session.
         const permanent = {401, 403, 404, 410};
-        final retryAfter = _parseRetryAfter(
+        final retryAfter = parseRetryAfter(
           response.headers['retry-after'],
           now,
         );
@@ -179,6 +200,8 @@ class FullTextExtractionService {
           permanent.contains(response.statusCode)
               ? _permanentDeadline
               : (retryAfter ?? now.add(transientFailureTtl)),
+          serverMandated:
+              !permanent.contains(response.statusCode) && retryAfter != null,
         );
         return null;
       }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -10,6 +9,7 @@ import 'package:http/http.dart' as http;
 import '../models/feed_item.dart';
 import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
+import '../utils/retry_after.dart';
 import 'article_cleanup_service.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
@@ -37,6 +37,7 @@ class ArticlePreparationService {
     Future<String?> Function(String url)? extractFullText,
     this.maxParallelTransfers = 3,
     this.minHostGap = const Duration(milliseconds: 1500),
+    HostPacer? hostPacer,
     DateTime Function()? now,
   }) : _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
        _media = mediaStore ?? ArticleMediaStore(),
@@ -45,6 +46,7 @@ class ArticlePreparationService {
        _extract = extractFullText ?? _defaultExtract,
        _now = now ?? DateTime.now {
     _semaphore = AsyncSemaphore(maxParallelTransfers);
+    _hostPacer = hostPacer ?? HostPacer(minGap: minHostGap, now: _now);
   }
 
   /// Releases the internally created HTTP client (injected clients stay the
@@ -69,15 +71,18 @@ class ArticlePreparationService {
 
   /// Minimum spacing between requests to the same host — see [HostPacer].
   /// Kept as a ctor parameter because tests shrink it instead of waiting.
+  /// Acts as this service's gap inside a shared pacer when one is
+  /// injected by the provider.
   final Duration minHostGap;
-  late final HostPacer _hostPacer = HostPacer(minGap: minHostGap);
+  late final HostPacer _hostPacer;
 
   final DateTime Function() _now;
   late final AsyncSemaphore _semaphore;
 
   /// Waits until [url]'s host is allowed another request, then reserves
-  /// the next slot.
-  Future<void> _paceHost(String url) => _hostPacer.pace(url);
+  /// the next slot — this service's stricter [minHostGap] applies even
+  /// inside a shared pacer.
+  Future<void> _paceHost(String url) => _hostPacer.pace(url, gap: minHostGap);
 
   /// Serializes every public operation on this instance so overlapping
   /// sweeps/permits can't double-attempt a piece in the same logical pass.
@@ -204,20 +209,6 @@ class ArticlePreparationService {
     return results.any(
       (r) => r == ConnectivityResult.wifi || r == ConnectivityResult.ethernet,
     );
-  }
-
-  static DateTime? _parseRetryAfter(String? header, DateTime now) {
-    if (header == null) return null;
-    final seconds = int.tryParse(header.trim());
-    if (seconds != null && seconds >= 0) {
-      return now.add(Duration(seconds: seconds));
-    }
-    try {
-      final date = HttpDate.parse(header);
-      return date.isAfter(now) ? date : null;
-    } catch (_) {
-      return null;
-    }
   }
 
   static List<String> _bodyImageUrls(String? html) {
@@ -455,7 +446,8 @@ class ArticlePreparationService {
       if (retryDue) {
         String? html;
         try {
-          await _paceHost(record.link);
+          // The extraction service paces its own request against the
+          // shared HostPacer — pacing here too would double the gap.
           html = await _extract(record.link);
         } catch (_) {}
         await _records.mutate(id, expectedEpoch: epoch, (current) {
@@ -607,7 +599,7 @@ class ArticlePreparationService {
       }
       return (
         ready: null,
-        retryAfter: _parseRetryAfter(response.headers['retry-after'], now),
+        retryAfter: parseRetryAfter(response.headers['retry-after'], now),
         gone: response.statusCode == 404 || response.statusCode == 410,
       );
     } catch (_) {

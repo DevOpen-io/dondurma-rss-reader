@@ -60,10 +60,11 @@ class FeedRefresher {
     required ObservedArticleStore observedArticleStore,
     FeedBackoff? backoff,
     Duration hostGap = const Duration(milliseconds: 500),
+    HostPacer? hostPacer,
   }) : _feedService = feedService,
        _observedArticleStore = observedArticleStore,
        backoff = backoff ?? FeedBackoff(),
-       _hostPacer = HostPacer(minGap: hostGap);
+       _hostPacer = hostPacer ?? HostPacer(minGap: hostGap);
 
   /// Shared rate-limit policy — the provider preloads persisted deadlines
   /// so cooldowns survive process/isolate boundaries.
@@ -71,7 +72,9 @@ class FeedRefresher {
 
   /// Several subscriptions on one host (e.g. multiple subreddits) must
   /// not fan out under the global concurrency cap — same-host fetches
-  /// serialize with a small gap.
+  /// serialize with a small gap. The provider injects the pacer it
+  /// shares with the extraction/preparation pipeline so all same-host
+  /// traffic coordinates through one schedule.
   final HostPacer _hostPacer;
 
   Future<FeedRefreshResult> refresh({

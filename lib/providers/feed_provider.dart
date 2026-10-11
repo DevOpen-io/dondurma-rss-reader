@@ -25,6 +25,7 @@ import '../services/article_status.dart';
 import '../services/temp_cache_membership.dart';
 import '../services/feed_service.dart';
 import '../services/full_text_extraction_service.dart';
+import '../utils/host_pacer.dart';
 import '../services/image_cache_service.dart';
 import '../services/notification_delivery_policy.dart';
 import '../services/notification_service.dart';
@@ -279,14 +280,21 @@ class FeedProvider extends ChangeNotifier {
   FeedProvider({
     ObservedArticleStore? observedArticleStore,
     ArticlePreparationService? preparation,
-  }) : _preparation = preparation ?? ArticlePreparationService(),
-       _ownsPreparation = preparation == null {
+  }) : _ownsPreparation = preparation == null {
+    _preparation =
+        preparation ?? ArticlePreparationService(hostPacer: _hostPacer);
     _observedArticleStore =
         observedArticleStore ?? ObservedArticleStore.forBox(_box);
+    // One pacing schedule per isolate: feed fetches, full-text
+    // extraction, and media downloads to the same host all serialize
+    // through it, so a burst at one origin is impossible regardless of
+    // which service initiates the request.
+    FullTextExtractionService.instance.pacer = _hostPacer;
     _refresher = FeedRefresher(
       feedService: _feedService,
       observedArticleStore: _observedArticleStore,
       backoff: _feedBackoff,
+      hostPacer: _hostPacer,
     );
     _initialization = _loadState();
     _connectivitySub = Connectivity().onConnectivityChanged.listen(
@@ -305,7 +313,14 @@ class FeedProvider extends ChangeNotifier {
 
   /// Offline preparation engine — sweeps durable pending work after each
   /// online refresh, on the transport eligibility terms of the moment.
-  final ArticlePreparationService _preparation;
+  late final ArticlePreparationService _preparation;
+
+  /// One pacing schedule for every HTTP service in this isolate — feed
+  /// refresh, extraction, and media downloads all reserve same-host
+  /// slots through it.
+  final HostPacer _hostPacer = HostPacer(
+    minGap: const Duration(milliseconds: 500),
+  );
 
   /// An injected service belongs to its owner (Provider disposes it); a
   /// default-constructed one is this provider's to release.
@@ -564,7 +579,8 @@ class FeedProvider extends ChangeNotifier {
   }
 
   /// Loads persisted per-feed cooldown deadlines written by either the
-  /// foreground or the background isolate.
+  /// foreground or the background isolate. Loading merges — the later
+  /// deadline always wins.
   void _loadFeedBackoff() {
     final raw = _box.get('feedBackoffUntil');
     if (raw is String && raw.isNotEmpty) {
@@ -574,7 +590,11 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  /// Merge-then-write: a background sync may have recorded a fresher
+  /// 429 while this isolate was fetching — folding it in before the
+  /// snapshot means the write can't overwrite a newer deadline.
   void _saveFeedBackoff() {
+    _loadFeedBackoff();
     _box.put('feedBackoffUntil', jsonEncode(_feedBackoff.snapshot()));
   }
 
@@ -1039,6 +1059,9 @@ class FeedProvider extends ChangeNotifier {
     // belong to the era being wiped (#40).
     final resetGeneration = _resetGeneration;
 
+    // Pick up cooldowns the background isolate wrote since the last
+    // pass — a stale in-memory snapshot must never bypass a fresh 429.
+    _loadFeedBackoff();
     final result = await _refresher.refresh(
       subscriptions: subscriptionProvider!.subscriptions,
       existingItems: _items,
