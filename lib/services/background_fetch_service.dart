@@ -9,10 +9,14 @@ import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import 'article_identity.dart';
 import 'article_preparation_service.dart';
+import 'feed_backoff.dart';
 import 'article_record_store.dart';
 import 'temp_cache_membership.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
+import '../utils/async_semaphore.dart';
+import '../utils/host_pacer.dart';
+import 'full_text_extraction_service.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -135,12 +139,88 @@ Future<void> runBgFetch() async {
         }
       } catch (_) {}
     }
+    // Shared cooldown policy — deadlines written by the foreground refresher
+    // are honored here, and limits hit here are persisted back so the next
+    // foreground pass does not re-hammer a rate-limited feed either.
+    final backoff = FeedBackoff();
+    try {
+      // Both writer slots merge — the foreground owns 'feedBackoffUntil',
+      // this isolate owns 'feedBackoffUntil.bg'. Owning separate slots
+      // removes the read-modify-write race on a shared key: no isolate's
+      // snapshot can overwrite the other's.
+      for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+        try {
+          final rawBackoff = feedsBox.get(key);
+          if (rawBackoff is String && rawBackoff.isNotEmpty) {
+            backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
+          }
+        } catch (_) {
+          // One malformed slot must not forfeit the other.
+        }
+      }
+    } catch (_) {}
+    final validators = <String, dynamic>{};
+    try {
+      final rawValidators = feedsBox.get('feedValidators');
+      if (rawValidators is String && rawValidators.isNotEmpty) {
+        validators.addAll(jsonDecode(rawValidators) as Map<String, dynamic>);
+      }
+    } catch (_) {}
+
     final feedService = FeedService();
+    // Same bounded concurrency as the foreground refresher — an unbounded
+    // fan-out on constrained devices trips TCP resets and rate limiters.
+    // The pacer additionally serializes same-host fetches: several
+    // subreddits must not burst reddit.com even within the cap. This
+    // isolate owns its schedule; cross-isolate coordination is carried
+    // by the persisted `feedBackoffUntil` cooldowns.
+    final semaphore = AsyncSemaphore(5);
+    final pacer = HostPacer();
     final results = await Future.wait(
       subscriptions.map((sub) async {
+        // A feed inside its cooldown keeps its durable articles — the merge
+        // only replaces feeds with an authoritative fresh response anyway.
+        if (backoff.isBackedOff(sub.url, DateTime.now())) {
+          return (
+            subscription: sub,
+            items: <FeedItem>[],
+            succeeded: false,
+            fresh: false,
+            allowInitialization: false,
+          );
+        }
+        await semaphore.acquire();
         final fetchUrl = redirects[sub.url] ?? sub.url;
         try {
-          final result = await feedService.fetchFeed(fetchUrl, sub.category);
+          await pacer.pace(fetchUrl);
+          // Recheck after the queue wait: a same-host sibling may have
+          // learned a 429 while this request waited its turn — a spacing
+          // gap alone does not mean the previous request finished.
+          if (backoff.isBackedOff(sub.url, DateTime.now())) {
+            return (
+              subscription: sub,
+              items: <FeedItem>[],
+              succeeded: false,
+              fresh: false,
+              allowInitialization: false,
+            );
+          }
+          final v = validators[sub.url];
+          final result = await feedService.fetchFeed(
+            fetchUrl,
+            sub.category,
+            etag: v?['etag'] as String?,
+            lastModified: v?['lastModified'] as String?,
+          );
+          backoff.recordSuccess(sub.url);
+          if (result.etag != null || result.lastModified != null) {
+            validators[sub.url] = {
+              'etag': result.etag,
+              'lastModified': result.lastModified,
+            };
+          } else if (!result.notModified) {
+            validators.remove(sub.url);
+          }
           return (
             subscription: sub,
             items: fetchUrl == sub.url
@@ -154,7 +234,8 @@ Future<void> runBgFetch() async {
             fresh: !result.notModified,
             allowInitialization: !result.notModified,
           );
-        } catch (_) {
+        } catch (e) {
+          backoff.recordFailure(sub.url, e, DateTime.now());
           return (
             subscription: sub,
             items: <FeedItem>[],
@@ -162,10 +243,29 @@ Future<void> runBgFetch() async {
             fresh: false,
             allowInitialization: false,
           );
+        } finally {
+          semaphore.release();
         }
       }),
     );
     feedService.dispose();
+    try {
+      await feedsBox.put('feedValidators', jsonEncode(validators));
+      // Merge both slots before writing this isolate's own — the
+      // foreground may have recorded a fresher cooldown (or a clear)
+      // while this isolate was fetching; merging first keeps the union.
+      for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+        try {
+          final latest = feedsBox.get(key);
+          if (latest is String && latest.isNotEmpty) {
+            backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+          }
+        } catch (_) {
+          // One malformed slot must not forfeit the other — or the write.
+        }
+      }
+      await feedsBox.put('feedBackoffUntil.bg', jsonEncode(backoff.snapshot()));
+    } catch (_) {}
 
     final allItems = results.expand((result) => result.items).toList();
     debugPrint('[BG] fetched ${allItems.length} items total');
@@ -203,6 +303,8 @@ Future<void> runBgFetch() async {
         subscriptions,
         bookmarkedIds,
         bookmarkedItems,
+        pacer,
+        backoff,
       );
       await WidgetUpdateService.updateFeedWidgets(persisted);
     }
@@ -245,13 +347,42 @@ Future<void> runBgFetch() async {
     // durable, so a task killed mid-sweep simply resumes next time.
     final connectivity = await Connectivity().checkConnectivity();
     if (ArticlePreparationService.unmeteredNetwork(connectivity)) {
+      // Inside this isolate all same-host traffic shares one schedule
+      // and one cooldown policy — feed fetches above, article
+      // extraction, and media downloads. (Extraction is a singleton
+      // here, so its pacer/backoff are assigned, not injected.)
+      FullTextExtractionService.instance.pacer = pacer;
+      FullTextExtractionService.instance.backoff = backoff;
       final preparation = ArticlePreparationService(
         recordStore: ArticleRecordStore.forBox(feedsBox),
+        hostPacer: pacer,
+        backoff: backoff,
       );
       try {
         await preparation.preparePending(unmetered: true);
       } finally {
         preparation.dispose();
+        // Page/media 429s during the sweep recorded new host cooldowns
+        // in memory — persist them to this isolate's slot before the
+        // task ends, merging both slots first so a concurrent
+        // foreground write isn't dropped.
+        try {
+          for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+            try {
+              final latest = feedsBox.get(key);
+              if (latest is String && latest.isNotEmpty) {
+                backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+              }
+            } catch (_) {
+              // A malformed foreground slot must not suppress this
+              // write — the prep-learned cooldown would be lost.
+            }
+          }
+          await feedsBox.put(
+            'feedBackoffUntil.bg',
+            jsonEncode(backoff.snapshot()),
+          );
+        } catch (_) {}
       }
     }
   } catch (e) {
@@ -270,6 +401,8 @@ Future<List<FeedItem>> _persistBgCache(
   List<FeedSubscription> subscriptions,
   Set<String> bookmarkedIds,
   List<FeedItem> bookmarkedItems,
+  HostPacer pacer,
+  FeedBackoff backoff,
 ) async {
   final int limit = settingsBox.get('offlineCacheLimit', defaultValue: 50);
   final autoFullText = settingsBox.get('autoFullText', defaultValue: false);
@@ -279,7 +412,11 @@ Future<List<FeedItem>> _persistBgCache(
       const <String>[];
 
   final store = ArticleRecordStore.forBox(feedsBox);
-  final preparation = ArticlePreparationService(recordStore: store);
+  final preparation = ArticlePreparationService(
+    recordStore: store,
+    hostPacer: pacer,
+    backoff: backoff,
+  );
   final membership = TempCacheMembership(
     records: store,
     preparation: preparation,

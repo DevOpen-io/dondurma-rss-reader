@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show debugPrint;
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../utils/async_semaphore.dart';
+import '../utils/host_pacer.dart';
+import 'feed_backoff.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'observed_article_store.dart';
@@ -56,8 +58,24 @@ class FeedRefresher {
   FeedRefresher({
     required FeedService feedService,
     required ObservedArticleStore observedArticleStore,
+    FeedBackoff? backoff,
+    Duration hostGap = const Duration(milliseconds: 500),
+    HostPacer? hostPacer,
   }) : _feedService = feedService,
-       _observedArticleStore = observedArticleStore;
+       _observedArticleStore = observedArticleStore,
+       backoff = backoff ?? FeedBackoff(),
+       _hostPacer = hostPacer ?? HostPacer(minGap: hostGap);
+
+  /// Shared rate-limit policy — the provider preloads persisted deadlines
+  /// so cooldowns survive process/isolate boundaries.
+  final FeedBackoff backoff;
+
+  /// Several subscriptions on one host (e.g. multiple subreddits) must
+  /// not fan out under the global concurrency cap — same-host fetches
+  /// serialize with a small gap. The provider injects the pacer it
+  /// shares with the extraction/preparation pipeline so all same-host
+  /// traffic coordinates through one schedule.
+  final HostPacer _hostPacer;
 
   Future<FeedRefreshResult> refresh({
     required List<FeedSubscription> subscriptions,
@@ -78,11 +96,51 @@ class FeedRefresher {
     // TCP resets on constrained devices.
     final semaphore = AsyncSemaphore(_fetchConcurrency);
     final futures = subscriptions.map((sub) async {
+      // A backed-off feed keeps its cached items and its last error without
+      // touching the network — same treatment as an unproven failure.
+      if (backoff.isBackedOff(sub.url, DateTime.now())) {
+        return (
+          url: sub.url,
+          observationEpoch: sub.notificationEpoch,
+          items: existingByFeed[sub.url] ?? const <FeedItem>[],
+          succeeded: false,
+          fresh: false,
+          etag: null as String?,
+          lastModified: null as String?,
+          dropValidator: false,
+          finalUrl: null as String?,
+          fetchUrl: sub.url,
+          error: null as String?,
+          connectivity: false,
+          skipped: true,
+        );
+      }
       await semaphore.acquire();
       final v = validators[sub.url];
       // Fetch at the learned redirect URL when one exists — skips a hop.
       final fetchUrl = redirects[sub.url] ?? sub.url;
+      await _hostPacer.pace(fetchUrl);
       try {
+        // Recheck after the queue wait: a same-host sibling may have
+        // learned a 429 while this request waited its turn — a spacing
+        // gap alone does not mean the previous request finished.
+        if (backoff.isBackedOff(sub.url, DateTime.now())) {
+          return (
+            url: sub.url,
+            observationEpoch: sub.notificationEpoch,
+            items: existingByFeed[sub.url] ?? const <FeedItem>[],
+            succeeded: false,
+            fresh: false,
+            etag: null as String?,
+            lastModified: null as String?,
+            dropValidator: false,
+            finalUrl: null as String?,
+            fetchUrl: fetchUrl,
+            error: null as String?,
+            connectivity: false,
+            skipped: true,
+          );
+        }
         final etag = v?['etag'] as String?;
         final lastModified = v?['lastModified'] as String?;
         var result = await _feedService.fetchFeed(
@@ -106,6 +164,7 @@ class FeedRefresher {
             dropValidator = true;
           }
         }
+        backoff.recordSuccess(sub.url);
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -126,9 +185,13 @@ class FeedRefresher {
           fetchUrl: fetchUrl,
           error: null as String?,
           connectivity: false,
+          skipped: false,
         );
       } catch (e) {
         debugPrint('Error fetching feed ${sub.url}: $e');
+        // Rate-limit signals earn a cooldown; a plain transient failure
+        // recovers on the next natural sync (see FeedBackoff for the rule).
+        backoff.recordFailure(sub.url, e, DateTime.now());
         // Transient failure: keep the feed's existing items so one error doesn't
         // blank it out, and leave its validators untouched.
         return (
@@ -146,6 +209,7 @@ class FeedRefresher {
           connectivity:
               e is FeedFetchException &&
               e.kind == FeedFetchErrorKind.connectivity,
+          skipped: false,
         );
       } finally {
         semaphore.release();
@@ -255,6 +319,11 @@ class FeedRefresher {
     final feedErrors = <String, String>{};
     final unprovenUrls = <String>{};
     for (final o in outcomes) {
+      if (o.skipped) {
+        // Backed off before the network — the stored verdict stays as-is.
+        unprovenUrls.add(o.url);
+        continue;
+      }
       if (o.succeeded || o.error == null) continue;
       if (o.connectivity && !online) {
         unprovenUrls.add(o.url);

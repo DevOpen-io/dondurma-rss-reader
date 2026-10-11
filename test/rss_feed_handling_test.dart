@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
@@ -17,6 +19,7 @@ void main() {
         bodyBytes: utf8.encode(body),
         category: 'T',
         url: 'https://x/f.xml',
+        contentType: null,
       ));
       return null;
     } on FeedFetchException catch (e) {
@@ -29,6 +32,7 @@ void main() {
         bodyBytes: utf8.encode(body),
         category: 'T',
         url: url,
+        contentType: null,
       ));
 
   group('RSS 2.0 variants', () {
@@ -277,6 +281,70 @@ void main() {
       expect(items.single.pubDate, isNotNull);
     });
 
+    test('Atom under an arbitrary namespace prefix parses (HBR ns6:)', () {
+      // Feedburner serves HBR with <ns6:feed xmlns:ns6="...Atom"> — the
+      // prefix name is random, only the namespace URI matters.
+      final items = parse('''<?xml version="1.0" encoding="utf-8"?>
+<ns6:feed xmlns:ns6="http://www.w3.org/2005/Atom">
+<ns6:title>Prefixed</ns6:title>
+<ns6:entry><ns6:title>P1</ns6:title><ns6:id>tag:x,2026:p1</ns6:id>
+<ns6:link rel="alternate" href="https://x/p1"/>
+<ns6:updated>2026-08-26T10:00:00Z</ns6:updated>
+<ns6:summary>Body</ns6:summary></ns6:entry>
+</ns6:feed>''');
+      expect(items.single.id, 'tag:x,2026:p1');
+      expect(items.single.title, 'P1');
+      expect(items.single.link, 'https://x/p1');
+      expect(items.single.siteName, 'Prefixed');
+    });
+
+    test('Reddit-shaped Atom fixture parses entries', () {
+      // Reddit .rss endpoints serve Atom: entries carry escaped HTML in
+      // <content type="html"> and the comments page as alternate link.
+      final items = parse('''<?xml version="1.0" encoding="UTF-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+<title>r/example</title>
+<entry><title>Post title</title><id>t3_abc123</id>
+<link href="https://www.reddit.com/r/example/comments/abc123/post/"/>
+<updated>2026-08-26T10:00:00+00:00</updated>
+<content type="html">&lt;table&gt;&lt;tr&gt;&lt;td&gt;&lt;a href="https://ext.example/article"&gt;link&lt;/a&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</content>
+</entry></feed>''');
+      expect(items.single.id, 't3_abc123');
+      expect(items.single.title, 'Post title');
+      expect(
+        items.single.link,
+        'https://www.reddit.com/r/example/comments/abc123/post/',
+      );
+      expect(items.single.content, contains('ext.example/article'));
+    });
+
+    test('a <prefix:feed> bound to a non-Atom namespace is not parsed', () {
+      // An unrelated vocabulary that happens to name its root "feed"
+      // must not be silently converted to Atom — the xmlns binding
+      // decides, not the prefix match alone.
+      expect(
+        () => parse('''<?xml version="1.0"?>
+<x:feed xmlns:x="http://example.com/not-atom">
+<x:title>Not Atom</x:title>
+<x:entry><x:title>P</x:title></x:entry></x:feed>'''),
+        throwsA(isA<FeedFetchException>()),
+      );
+    });
+
+    test('prefixed Atom keeps non-feed namespaces untouched', () {
+      // media:thumbnail inside a prefixed feed must survive — only the
+      // feed prefix is stripped, other prefixes stay namespaced.
+      final items = parse('''<?xml version="1.0"?>
+<z:feed xmlns:z="http://www.w3.org/2005/Atom"
+ xmlns:media="http://search.yahoo.com/mrss/">
+<z:title>S</z:title>
+<z:entry><z:title>V</z:title><z:id>e1</z:id><z:link href="https://x/a"/>
+<z:updated>2026-08-26T10:00:00Z</z:updated>
+<media:thumbnail url="https://img/z.jpg"/>
+</z:entry></z:feed>''');
+      expect(items.single.imageUrl, 'https://img/z.jpg');
+    });
+
     test('content type="xhtml" keeps markup and images (issue #22)', () {
       final items = parse('''<?xml version="1.0"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
@@ -382,14 +450,172 @@ void main() {
     });
   });
 
+  group('charset decoding', () {
+    List<FeedItem> parseBytes(List<int> bytes, {String? contentType}) =>
+        FeedService.parseFeedBody((
+          bodyBytes: bytes is Uint8List ? bytes : Uint8List.fromList(bytes),
+          category: 'T',
+          url: 'https://x/f.xml',
+          contentType: contentType,
+        ));
+
+    String feed(String title) =>
+        '<?xml version="1.0"?><rss version="2.0"><channel><title>S</title>'
+        '<item><title>$title</title><guid>g</guid><link>https://x/1</link>'
+        '</item></channel></rss>';
+
+    test('UTF-8 body mislabeled as ISO-8859-1 decodes correctly', () {
+      // The server declares Latin-1 but the payload is real UTF-8 —
+      // strict UTF-8 must win, or every non-ASCII char becomes mojibake.
+      final items = parseBytes(
+        utf8.encode(feed('café')),
+        contentType: 'text/xml; charset=ISO-8859-1',
+      );
+      expect(items.single.title, 'café');
+    });
+
+    test('a genuine Latin-1 body still decodes via the declared map', () {
+      final items = parseBytes(
+        latin1.encode(feed('café')),
+        contentType: 'text/xml; charset=iso-8859-1',
+      );
+      expect(items.single.title, 'café');
+    });
+
+    test('a genuine Windows-1252 body keeps smart punctuation', () {
+      // Raw 0x93/0x94/0x97 bytes are CP1252 curly quotes and em-dash —
+      // the dedicated map must render them, not C1 control codes.
+      final cp = String.fromCharCode;
+      final bytes = latin1.encode(
+        feed('${cp(0x93)}quoted${cp(0x94)} ${cp(0x97)} dash'),
+      );
+      final items = parseBytes(
+        bytes,
+        contentType: 'text/xml; charset=windows-1252',
+      );
+      expect(items.single.title, '“quoted” — dash');
+    });
+
+    test('UTF-8 body mislabeled as windows-1252 decodes correctly', () {
+      final items = parseBytes(
+        utf8.encode(feed('naïve café')),
+        contentType: 'text/xml; charset=windows-1252',
+      );
+      expect(items.single.title, 'naïve café');
+    });
+  });
+
+  group('bounded body readers', () {
+    test(
+      'stream error then done completes once — no double completion',
+      () async {
+        // A socket error mid-body followed by the stream's done event —
+        // the reader must surface the error once and not re-complete.
+        Stream<List<int>> errorThenDone() async* {
+          yield [1, 2, 3];
+          yield* Stream.error(StateError('network reset'));
+        }
+
+        await expectLater(
+          FeedService.debugReadBoundedBody(errorThenDone()),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test('repeated error events complete once', () async {
+      Stream<List<int>> multiError() async* {
+        yield* Stream.error(StateError('first'));
+        yield* Stream.error(StateError('second'));
+      }
+
+      await expectLater(
+        FeedService.debugReadBoundedBody(multiError()),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('normal completion returns the accumulated bytes', () async {
+      final c = StreamController<List<int>>();
+      final future = FeedService.debugReadBoundedBody(c.stream);
+      c.add([1, 2]);
+      c.add([3, 4]);
+      await c.close();
+      expect(await future, [1, 2, 3, 4]);
+    });
+
+    test('oversized body aborts with a size error, not a hang', () async {
+      final prev = FeedService.maxFeedBytes;
+      FeedService.maxFeedBytes = 8;
+      addTearDown(() => FeedService.maxFeedBytes = prev);
+      final c = StreamController<List<int>>();
+      final future = FeedService.debugReadBoundedBody(c.stream);
+      c.add(List.filled(16, 0x41));
+      await expectLater(
+        future,
+        throwsA(
+          isA<FeedFetchException>().having(
+            (e) => '$e',
+            'msg',
+            contains('too large'),
+          ),
+        ),
+      );
+      await c.close();
+    });
+
+    test('a stalled body hits the deadline instead of hanging', () async {
+      final prev = FeedService.bodyDeadline;
+      FeedService.bodyDeadline = const Duration(milliseconds: 100);
+      addTearDown(() => FeedService.bodyDeadline = prev);
+      final c = StreamController<List<int>>();
+      final future = FeedService.debugReadBoundedBody(c.stream);
+      await expectLater(future, throwsA(isA<TimeoutException>()));
+      await c.close();
+    });
+
+    test('discard tolerates error-then-done and oversize', () async {
+      Stream<List<int>> errorThenDone() async* {
+        yield* Stream.error(StateError('socket gone'));
+      }
+
+      await expectLater(
+        FeedService.debugDiscardBody(errorThenDone()),
+        completes,
+      );
+
+      final prev = FeedService.maxFeedBytes;
+      FeedService.maxFeedBytes = 4;
+      addTearDown(() => FeedService.maxFeedBytes = prev);
+      final c2 = StreamController<List<int>>();
+      final future2 = FeedService.debugDiscardBody(c2.stream);
+      c2.add(List.filled(32, 0x42));
+      await expectLater(future2, completes);
+      await c2.close();
+    });
+  });
+
   group('HTTP fetchFeed', () {
     late HttpServer server;
+    late HttpServer otherServer;
+    String? otherSeenIfNoneMatch;
 
     setUpAll(() async {
       // flutter_test's binding installs a 400-only HttpOverrides client —
       // these tests need the real loopback server.
       HttpOverrides.global = null;
       server = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      // A second loopback port = a different origin — used to prove
+      // conditional validators never leak across origins.
+      otherServer = await HttpServer.bind(InternetAddress.loopbackIPv4, 0);
+      otherServer.listen((HttpRequest r) async {
+        otherSeenIfNoneMatch = r.headers.value(HttpHeaders.ifNoneMatchHeader);
+        r.response.write('''<?xml version="1.0"?>
+<rss version="2.0"><channel><title>Other</title>
+<item><title>O</title><guid>o1</guid><link>https://o/1</link></item>
+</channel></rss>''');
+        await r.response.close();
+      });
       server.listen((HttpRequest r) async {
         switch (r.uri.path) {
           case '/ok.xml':
@@ -406,9 +632,84 @@ void main() {
             r.response.statusCode = HttpStatus.notFound;
           case '/boom.xml':
             r.response.statusCode = HttpStatus.internalServerError;
+          case '/forbidden.xml':
+            r.response.statusCode = HttpStatus.forbidden;
+          case '/gone.xml':
+            r.response.statusCode = HttpStatus.gone;
+          case '/empty.xml':
+            r.response.headers.contentType = ContentType(
+              'application',
+              'rss+xml',
+            );
+            r.response.write('''<?xml version="1.0"?>
+<rss version="2.0"><channel><title>Quiet</title></channel></rss>''');
+          case '/huge.xml':
+            r.response.headers.contentType = ContentType(
+              'application',
+              'rss+xml',
+            );
+            // Stream chunks past the cap so the bounded reader trips
+            // mid-download instead of waiting on buffered writes.
+            final chunk = List<int>.filled(4096, 0x20);
+            for (var i = 0; i < 4; i++) {
+              r.response.add(chunk);
+              await r.response.flush();
+            }
           case '/redirect.xml':
             r.response.statusCode = HttpStatus.movedPermanently;
             r.response.headers.set(HttpHeaders.locationHeader, '/ok.xml');
+          case '/hop-origin.xml':
+            // Same host string, different port → different origin.
+            r.response.statusCode = HttpStatus.movedPermanently;
+            r.response.headers.set(
+              HttpHeaders.locationHeader,
+              'http://127.0.0.1:${otherServer.port}/f.xml',
+            );
+          case '/fat-redirect.xml':
+            r.response.statusCode = HttpStatus.movedPermanently;
+            r.response.headers.set(HttpHeaders.locationHeader, '/ok.xml');
+            // A redirect with an oversized body must not stall the hop —
+            // the bounded discard cancels it and follows anyway.
+            final chunk = List<int>.filled(4096, 0x20);
+            for (var i = 0; i < 4; i++) {
+              r.response.add(chunk);
+              await r.response.flush();
+            }
+          case '/slow-redirect.xml':
+            r.response.statusCode = HttpStatus.movedPermanently;
+            r.response.headers.set(HttpHeaders.locationHeader, '/ok.xml');
+            // Headers arrive, then the body stalls — the discard deadline
+            // must cut it loose so the hop still happens.
+            r.response.add(List<int>.filled(64, 0x20));
+            await r.response.flush();
+            await Future<void>.delayed(const Duration(minutes: 5));
+          case '/evil-redirect.xml':
+            r.response.statusCode = HttpStatus.movedPermanently;
+            r.response.headers.set(
+              HttpHeaders.locationHeader,
+              'file:///etc/passwd',
+            );
+          case '/cp1252.xml':
+            r.response.headers.contentType = ContentType(
+              'application',
+              'rss+xml',
+              charset: 'windows-1252',
+            );
+            // “smart” quotes and en-dash live at 0x93/0x94/0x96.
+            r.response.add(<int>[
+              ...latin1.encode('''<?xml version="1.0"?>
+<rss version="2.0"><channel><title>W</title>
+<item><title>'''),
+              0x93, 0x48, 0x69, 0x94, // “Hi”
+              ...latin1.encode(''' said</title><guid>w1</guid>
+<link>https://x/w</link></item></channel></rss>'''),
+            ]);
+          case '/ratelimit-date.xml':
+            r.response.statusCode = HttpStatus.tooManyRequests;
+            r.response.headers.set(
+              'retry-after',
+              HttpDate.format(DateTime.now().add(const Duration(minutes: 7))),
+            );
           case '/html.xml':
             r.response.headers.contentType = ContentType('text', 'html');
             r.response.write('<html><body>oops</body></html>');
@@ -460,7 +761,10 @@ void main() {
       });
     });
 
-    tearDownAll(() => server.close(force: true));
+    tearDownAll(() {
+      server.close(force: true);
+      otherServer.close(force: true);
+    });
 
     String url(String p) => 'http://127.0.0.1:${server.port}$p';
 
@@ -472,13 +776,13 @@ void main() {
       service.dispose();
     });
 
-    test('404 throws httpStatus-kind error', () async {
+    test('404 throws gone-kind error', () async {
       final service = FeedService();
       try {
         await service.fetchFeed(url('/notfound.xml'), 'T');
         fail('should have thrown');
       } on FeedFetchException catch (e) {
-        expect(e.kind, FeedFetchErrorKind.httpStatus);
+        expect(e.kind, FeedFetchErrorKind.gone);
         expect(e.message, contains('404'));
       }
       service.dispose();
@@ -491,6 +795,143 @@ void main() {
         fail('should have thrown');
       } on FeedFetchException catch (e) {
         expect(e.kind, FeedFetchErrorKind.httpStatus);
+      }
+      service.dispose();
+    });
+
+    test('403 throws accessRestricted-kind error', () async {
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/forbidden.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.kind, FeedFetchErrorKind.accessRestricted);
+        expect(e.statusCode, HttpStatus.forbidden);
+      }
+      service.dispose();
+    });
+
+    test('410 throws gone-kind error', () async {
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/gone.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.kind, FeedFetchErrorKind.gone);
+      }
+      service.dispose();
+    });
+
+    test(
+      'a legitimate empty feed parses to zero items, not an error',
+      () async {
+        final service = FeedService();
+        final result = await service.fetchFeed(url('/empty.xml'), 'T');
+        expect(result.items, isEmpty);
+        service.dispose();
+      },
+    );
+
+    test('a body beyond the size cap is rejected before parse', () async {
+      final previous = FeedService.maxFeedBytes;
+      FeedService.maxFeedBytes = 4096;
+      addTearDown(() => FeedService.maxFeedBytes = previous);
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/huge.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.message, contains('too large'));
+      }
+      service.dispose();
+    });
+
+    test('a redirect to another origin drops conditional validators', () async {
+      final service = FeedService();
+      final result = await service.fetchFeed(
+        url('/hop-origin.xml'),
+        'T',
+        etag: '"v1"',
+      );
+      expect(result.items.single.id, 'o1');
+      expect(otherSeenIfNoneMatch, isNull);
+      service.dispose();
+    });
+
+    test('a redirect with an oversized body is still followed', () async {
+      final previous = FeedService.maxFeedBytes;
+      FeedService.maxFeedBytes = 4096;
+      addTearDown(() => FeedService.maxFeedBytes = previous);
+      final service = FeedService();
+      final result = await service.fetchFeed(url('/fat-redirect.xml'), 'T');
+      expect(result.items.single.id, 'i1');
+      service.dispose();
+    });
+
+    test('a redirect whose body stalls still reaches the target', () async {
+      final previous = FeedService.bodyDeadline;
+      FeedService.bodyDeadline = const Duration(milliseconds: 300);
+      addTearDown(() => FeedService.bodyDeadline = previous);
+      final service = FeedService();
+      final sw = Stopwatch()..start();
+      final result = await service.fetchFeed(url('/slow-redirect.xml'), 'T');
+      expect(result.items.single.id, 'i1');
+      expect(sw.elapsed, lessThan(const Duration(seconds: 5)));
+      service.dispose();
+    });
+
+    test('a redirect to a non-HTTP scheme is refused', () async {
+      final service = FeedService();
+      await expectLater(
+        service.fetchFeed(url('/evil-redirect.xml'), 'T'),
+        throwsA(
+          isA<FeedFetchException>().having(
+            (e) => e.message,
+            'message',
+            contains('non-HTTP'),
+          ),
+        ),
+      );
+      service.dispose();
+    });
+
+    test('origin comparison covers scheme, host, and port', () {
+      const a = 'http://example.com/f.xml';
+      expect(FeedService.sameOrigin(a, 'http://example.com/g.xml'), isTrue);
+      // Scheme change (http→https) is a different origin.
+      expect(FeedService.sameOrigin(a, 'https://example.com/g.xml'), isFalse);
+      // Explicit port differing from the default is a different origin.
+      expect(
+        FeedService.sameOrigin(a, 'http://example.com:8080/g.xml'),
+        isFalse,
+      );
+      expect(
+        FeedService.sameOrigin(a, 'http://other.example.com/g.xml'),
+        isFalse,
+      );
+    });
+
+    test('windows-1252 decodes smart punctuation, not C1 controls', () async {
+      final service = FeedService();
+      final result = await service.fetchFeed(url('/cp1252.xml'), 'T');
+      expect(result.items.single.title, '“Hi” said');
+      service.dispose();
+    });
+
+    test('429 with an HTTP-date Retry-After exposes the deadline', () async {
+      final service = FeedService();
+      try {
+        await service.fetchFeed(url('/ratelimit-date.xml'), 'T');
+        fail('should have thrown');
+      } on FeedFetchException catch (e) {
+        expect(e.statusCode, HttpStatus.tooManyRequests);
+        // HTTP-date resolves to roughly +7min — clearly beyond a
+        // seconds-misread, which would yield no deadline at all.
+        expect(e.retryAfter, isNotNull);
+        expect(
+          e.retryAfter!.difference(DateTime.now()).inMinutes,
+          greaterThanOrEqualTo(5),
+        );
       }
       service.dispose();
     });

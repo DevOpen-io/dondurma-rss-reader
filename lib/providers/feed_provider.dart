@@ -13,6 +13,7 @@ import 'package:html/parser.dart' show parse;
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../services/article_identity.dart';
+import '../services/feed_backoff.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
@@ -24,6 +25,7 @@ import '../services/article_status.dart';
 import '../services/temp_cache_membership.dart';
 import '../services/feed_service.dart';
 import '../services/full_text_extraction_service.dart';
+import '../utils/host_pacer.dart';
 import '../services/image_cache_service.dart';
 import '../services/notification_delivery_policy.dart';
 import '../services/notification_service.dart';
@@ -229,6 +231,11 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Per-feed rate-limit cooldowns. Loaded from Hive at startup so the
+  /// background isolate's deadlines are honored here too — and persisted
+  /// back after each refresh so the next background pass sees them.
+  final FeedBackoff _feedBackoff = FeedBackoff();
+
   /// Last fetch failure per feed, persisted across restarts so a dead feed
   /// stays visibly unhealthy instead of silently showing stale cache.
   Map<String, String> _feedErrors = {};
@@ -273,13 +280,23 @@ class FeedProvider extends ChangeNotifier {
   FeedProvider({
     ObservedArticleStore? observedArticleStore,
     ArticlePreparationService? preparation,
-  }) : _preparation = preparation ?? ArticlePreparationService(),
-       _ownsPreparation = preparation == null {
+  }) : _ownsPreparation = preparation == null {
+    _preparation =
+        preparation ??
+        ArticlePreparationService(hostPacer: _hostPacer, backoff: _feedBackoff);
     _observedArticleStore =
         observedArticleStore ?? ObservedArticleStore.forBox(_box);
+    // One pacing schedule and one cooldown policy per isolate: feed
+    // fetches, full-text extraction, and media downloads to the same
+    // host all serialize through the pacer and respect the same
+    // rate-limit records.
+    FullTextExtractionService.instance.pacer = _hostPacer;
+    FullTextExtractionService.instance.backoff = _feedBackoff;
     _refresher = FeedRefresher(
       feedService: _feedService,
       observedArticleStore: _observedArticleStore,
+      backoff: _feedBackoff,
+      hostPacer: _hostPacer,
     );
     _initialization = _loadState();
     _connectivitySub = Connectivity().onConnectivityChanged.listen(
@@ -298,7 +315,14 @@ class FeedProvider extends ChangeNotifier {
 
   /// Offline preparation engine — sweeps durable pending work after each
   /// online refresh, on the transport eligibility terms of the moment.
-  final ArticlePreparationService _preparation;
+  late final ArticlePreparationService _preparation;
+
+  /// One pacing schedule for every HTTP service in this isolate — feed
+  /// refresh, extraction, and media downloads all reserve same-host
+  /// slots through it.
+  final HostPacer _hostPacer = HostPacer(
+    minGap: const Duration(milliseconds: 500),
+  );
 
   /// An injected service belongs to its owner (Provider disposes it); a
   /// default-constructed one is this provider's to release.
@@ -500,6 +524,8 @@ class FeedProvider extends ChangeNotifier {
       );
     }
 
+    _loadFeedBackoff();
+
     final String? cachedItemsData = _box.get('cachedItemsJson');
     if (cachedItemsData != null) {
       try {
@@ -552,6 +578,33 @@ class FeedProvider extends ChangeNotifier {
 
   void _saveFeedValidators(Map<String, dynamic> validators) {
     _box.put('feedValidators', jsonEncode(validators));
+  }
+
+  /// Loads persisted cooldown snapshots written by either isolate. Each
+  /// writer owns its own slot (`feedBackoffUntil` for the foreground,
+  /// `feedBackoffUntil.bg` for the background isolate) and every reader
+  /// merges both — there is no shared read-modify-write register, so
+  /// concurrent isolates can't lose each other's cooldowns. Loading
+  /// merges: later expiries win, newer clears suppress superseded
+  /// records.
+  void _loadFeedBackoff() {
+    for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+      final raw = _box.get(key);
+      if (raw is String && raw.isNotEmpty) {
+        try {
+          _feedBackoff.load(jsonDecode(raw) as Map<String, dynamic>);
+        } catch (_) {}
+      }
+    }
+  }
+
+  /// Merge-then-write into this isolate's own slot: a background sync may
+  /// have recorded a fresher 429 while this isolate was fetching — folding
+  /// its slot in before the snapshot means the write can't drop a newer
+  /// deadline. The background slot is never written from here.
+  void _saveFeedBackoff() {
+    _loadFeedBackoff();
+    _box.put('feedBackoffUntil', jsonEncode(_feedBackoff.snapshot()));
   }
 
   /// Learned per-feed redirect map (`{ canonicalUrl: resolvedUrl }`). A 301'd
@@ -1015,6 +1068,9 @@ class FeedProvider extends ChangeNotifier {
     // belong to the era being wiped (#40).
     final resetGeneration = _resetGeneration;
 
+    // Pick up cooldowns the background isolate wrote since the last
+    // pass — a stale in-memory snapshot must never bypass a fresh 429.
+    _loadFeedBackoff();
     final result = await _refresher.refresh(
       subscriptions: subscriptionProvider!.subscriptions,
       existingItems: _items,
@@ -1031,6 +1087,7 @@ class FeedProvider extends ChangeNotifier {
 
     _saveFeedValidators(result.validators);
     _saveFeedRedirects(result.redirects);
+    _saveFeedBackoff();
     _updateFeedErrors(result.feedErrors, result.unprovenUrls);
     _items = result.items;
     _isOffline = !result.online;
@@ -1074,10 +1131,17 @@ class FeedProvider extends ChangeNotifier {
       // verdict is queried fresh here: the cached stream value can be
       // stale right after resume (wifi→mobile handoff).
       unawaited(() async {
+        final gen = _resetGeneration;
         try {
           final results = await Connectivity().checkConnectivity();
           _setUnmetered(results);
           await _preparation.preparePending(unmetered: _unmetered);
+          // A page/media 429 during the sweep cooled a shared host —
+          // persist now so the next refresh pass and the bg isolate
+          // see it even if the app dies before the next sync. Skip the
+          // write if a factory reset landed mid-sweep — the box and the
+          // in-memory cooldowns were already wiped.
+          if (gen == _resetGeneration) _saveFeedBackoff();
           // Preparation commits landed — labels may now claim ready.
           await _refreshArticleStatuses();
         } catch (_) {
@@ -1121,6 +1185,7 @@ class FeedProvider extends ChangeNotifier {
     if (subs == null || subs.isEmpty) return;
 
     _isPrefetching = true;
+    final gen = _resetGeneration;
     try {
       final extraction = FullTextExtractionService.instance;
       // _items is date-sorted newest-first, so take() picks the latest.
@@ -1174,6 +1239,10 @@ class FeedProvider extends ChangeNotifier {
         await _saveCachedItems();
       }
     } finally {
+      // Page 429s recorded shared host cooldowns — persist before the
+      // pass settles so a killed app doesn't lose them. Fenced: a reset
+      // landing mid-pass wiped both the box and the in-memory state.
+      if (gen == _resetGeneration) _saveFeedBackoff();
       _isPrefetching = false;
       if (_prefetchQueued) {
         _prefetchQueued = false;
@@ -1479,6 +1548,9 @@ class FeedProvider extends ChangeNotifier {
 
     _cacheGeneration++;
     _resetGeneration++; // an in-flight refresh's apply phase is now void
+    // Rate-limit state belongs to the wiped era too — otherwise an async
+    // save (prep sweep, prefetch) could resurrect it into the new box.
+    _feedBackoff.reset();
     _needsInitialReconcile = true; // the next era bootstraps owners again
     _knownSubscriptionUrls = const {};
     await _bumpCacheEpoch(); // fence bg writers before the wipe…

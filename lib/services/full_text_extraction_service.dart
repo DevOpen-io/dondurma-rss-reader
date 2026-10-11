@@ -1,8 +1,12 @@
-import 'dart:collection';
 import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter/foundation.dart' show compute;
+
+import '../utils/host_pacer.dart';
+import '../utils/retry_after.dart';
+import 'feed_backoff.dart';
+import 'feed_service.dart';
 import 'package:flutter/material.dart' hide Element;
 import 'package:http/http.dart' as http;
 import 'package:html/parser.dart' show parse;
@@ -49,17 +53,101 @@ class FullTextExtractionService {
     _cache[url] = html;
   }
 
-  // Failure cache — remembers URLs where extraction returned null so we
-  // don't waste bandwidth retrying on every article open. LinkedHashSet gives
-  // O(1) lookup + insertion-order iteration for FIFO eviction.
-  static final LinkedHashSet<String> _failedUrls = LinkedHashSet<String>();
+  /// Host pacer shared with the feed refresher/preparation pipeline —
+  /// wired by the owning provider. Falls back to a private pacer so the
+  /// service still works standalone (tests, direct use).
+  HostPacer pacer = HostPacer(minGap: const Duration(seconds: 1));
+
+  /// Shared rate-limit policy — a host cooldown learned by feed refresh
+  /// (e.g. a Reddit 429) must also hold article fetches back. Assigned
+  /// by the owning provider / background runner; null means extraction
+  /// only honors its own failure tracking.
+  FeedBackoff? backoff;
+
+  // Failure cache — remembers URLs where extraction failed so we don't
+  // waste bandwidth retrying on every article open. Transient failures
+  // (timeouts, 5xx, 429) expire quickly so a temporary outage doesn't
+  // block the article for the whole session; permanent ones (403/404/410,
+  // or a page with no extractable content) last the session.
+  //
+  // `mandatedUntil` tracks the server-issued `Retry-After` window
+  // separately from the overall cooldown — an explicit user retry may
+  // bypass the local heuristic part but never an active server wait.
+  // Keeping the two windows distinct means a local estimate longer than
+  // the mandate can't erase the mandate, and vice versa.
+  static final Map<String, ({DateTime until, DateTime? mandatedUntil})>
+  _failedUntil = {};
   static const int _failedCapacity = 20;
 
-  static void _recordFailure(String url) {
-    if (_failedUrls.length >= _failedCapacity && !_failedUrls.contains(url)) {
-      _failedUrls.remove(_failedUrls.first);
+  /// Far-future deadline marking a permanent (session-lifetime) failure.
+  static final DateTime _permanentDeadline = DateTime.utc(3000);
+
+  /// How long a transient failure keeps a URL out of automatic extraction.
+  /// Mutable so tests can shrink the cooldown instead of waiting minutes.
+  @visibleForTesting
+  static Duration transientFailureTtl = const Duration(minutes: 5);
+
+  /// Clears the shared session caches — tests need isolation between cases
+  /// because the singleton state is process-wide.
+  @visibleForTesting
+  static void debugClearSession() {
+    _cache.clear();
+    _failedUntil.clear();
+    _deferredUrls.clear();
+  }
+
+  // URLs whose last [extractFullText] call returned null WITHOUT firing
+  // a request — a cooldown gate skipped it. A caller distinguishes
+  // "deferred" (not an attempt — don't count a failure) from a fetch
+  // that actually ran and failed (e.g. the page's own 429).
+  static final Set<String> _deferredUrls = {};
+
+  /// Whether the last [extractFullText] call for [url] was skipped by a
+  /// cooldown without hitting the network.
+  bool wasDeferred(String url) => _deferredUrls.contains(url);
+
+  static void _markDeferred(String url) {
+    if (_deferredUrls.length >= _failedCapacity &&
+        !_deferredUrls.contains(url)) {
+      _deferredUrls.remove(_deferredUrls.first);
     }
-    _failedUrls.add(url);
+    _deferredUrls.add(url);
+  }
+
+  /// Test seam — injected extract callbacks in tests simulate the
+  /// cooldown-skip path through this marker.
+  @visibleForTesting
+  static void debugMarkDeferred(String url) => _markDeferred(url);
+
+  static void _recordFailure(
+    String url,
+    DateTime until, {
+    bool serverMandated = false,
+  }) {
+    // Merge, never shorten: an out-of-order sibling response (a 500
+    // landing after a 429's Retry-After) must not unlock a retry early.
+    // The mandate window merges independently — a shorter local estimate
+    // can't cut it, a longer one can't erase it, and a new valid mandate
+    // still extends it.
+    final existing = _failedUntil[url];
+    var effective = until;
+    DateTime? mandated = serverMandated ? until : null;
+    if (existing != null) {
+      if (existing.until.isAfter(effective)) effective = existing.until;
+      final em = existing.mandatedUntil;
+      if (em != null && (mandated == null || em.isAfter(mandated))) {
+        mandated = em;
+      }
+    }
+    // A mandated wait also blocks automatic retries for its whole window.
+    if (mandated != null && mandated.isAfter(effective)) {
+      effective = mandated;
+    }
+    if (_failedUntil.length >= _failedCapacity &&
+        !_failedUntil.containsKey(url)) {
+      _failedUntil.remove(_failedUntil.keys.first);
+    }
+    _failedUntil[url] = (until: effective, mandatedUntil: mandated);
   }
 
   // ---------------------------------------------------------------------------
@@ -97,9 +185,35 @@ class FullTextExtractionService {
   // Public API
   // ---------------------------------------------------------------------------
 
-  /// Whether [url] already failed extraction this session. Prefetch uses it
-  /// to keep permanently-failing articles from consuming candidate slots.
-  bool hasFailedAttempt(String url) => _failedUrls.contains(url);
+  /// Whether [url] is currently inside a failure cooldown. Prefetch uses it
+  /// to keep failing articles from consuming candidate slots; transient
+  /// entries expire after [_transientFailureTtl].
+  bool hasFailedAttempt(String url) {
+    final entry = _failedUntil[url];
+    return entry != null && entry.until.isAfter(DateTime.now());
+  }
+
+  /// Whether a request to [url] must not fire right now — this URL's own
+  /// failure cooldown or the shared host-level rate-limit policy. A
+  /// forced retry bypasses local estimates, never a server mandate.
+  bool _blocked(String url, bool forceRefresh) {
+    if (forceRefresh ? _inServerCooldown(url) : hasFailedAttempt(url)) {
+      return true;
+    }
+    final b = backoff;
+    if (b == null) return false;
+    final now = DateTime.now();
+    return forceRefresh
+        ? b.isMandatedBackedOff(url, now)
+        : b.isBackedOff(url, now);
+  }
+
+  /// Whether [url] is inside a server-issued `Retry-After` wait — even a
+  /// forced retry must not violate it.
+  bool _inServerCooldown(String url) {
+    final until = _failedUntil[url]?.mandatedUntil;
+    return until != null && until.isAfter(DateTime.now());
+  }
 
   /// Fetches [url], extracts the main article body, and returns its inner HTML.
   ///
@@ -115,10 +229,20 @@ class FullTextExtractionService {
   }) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
-    // Skip if previously failed this session — unless the user forces a retry.
-    if (!forceRefresh && _failedUrls.contains(url)) return null;
+    if (_blocked(url, forceRefresh)) {
+      _markDeferred(url);
+      return null;
+    }
 
     try {
+      await pacer.pace(url);
+      // The pace wait may have spanned a sibling request's 429 — the
+      // cooldown learned while queued applies before this request too.
+      if (_blocked(url, forceRefresh)) {
+        _markDeferred(url);
+        return null;
+      }
+      _deferredUrls.remove(url);
       final response = await http
           .get(
             Uri.parse(url),
@@ -132,7 +256,42 @@ class FullTextExtractionService {
           .timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
-        _recordFailure(url);
+        final now = DateTime.now();
+        // Access-denied and gone statuses are permanent for the session —
+        // the page won't change its mind in minutes. Everything else
+        // (429, 5xx, odd statuses) is transient: a Retry-After wins, else
+        // a short TTL lets the next attempt try again instead of the URL
+        // staying dead for the session.
+        const permanent = {401, 403, 404, 410};
+        final retryAfter = parseRetryAfter(
+          response.headers['retry-after'],
+          now,
+        );
+        _recordFailure(
+          url,
+          permanent.contains(response.statusCode)
+              ? _permanentDeadline
+              : (retryAfter ?? now.add(transientFailureTtl)),
+          serverMandated:
+              !permanent.contains(response.statusCode) && retryAfter != null,
+        );
+        // Rate-limit signals are host-wide — report them to the shared
+        // backoff so sibling feeds, extractions and media downloads on
+        // the same origin stop too, not just this URL's own cooldown.
+        if (response.statusCode == 429 ||
+            response.statusCode == 503 ||
+            retryAfter != null) {
+          backoff?.recordFailure(
+            url,
+            FeedFetchException(
+              FeedFetchErrorKind.httpStatus,
+              'Full-text fetch failed (Status: ${response.statusCode})',
+              retryAfter: retryAfter,
+              statusCode: response.statusCode,
+            ),
+            now,
+          );
+        }
         return null;
       }
 
@@ -144,11 +303,12 @@ class FullTextExtractionService {
         _cachePut(url, result);
         return result;
       }
-      _recordFailure(url);
+      _recordFailure(url, _permanentDeadline);
       return null;
     } catch (e) {
       debugPrint('FullTextExtractionService error for $url: $e');
-      _recordFailure(url);
+      // Transport failures (timeout, DNS, socket) are transient by nature.
+      _recordFailure(url, DateTime.now().add(transientFailureTtl));
       return null;
     }
   }

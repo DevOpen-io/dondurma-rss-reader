@@ -46,11 +46,14 @@ void main() {
   </outline>
   <outline text="Loose2" xmlUrl="https://loose2.com/feed" />
 </body></opml>''');
-      expect(subs.map((s) => s.url), containsAll(<String>[
-        'https://loose.com/feed',
-        'https://inner.com/feed',
-        'https://loose2.com/feed',
-      ]));
+      expect(
+        subs.map((s) => s.url),
+        containsAll(<String>[
+          'https://loose.com/feed',
+          'https://inner.com/feed',
+          'https://loose2.com/feed',
+        ]),
+      );
       expect(subs.length, 3);
       // Root-level feeds keep a real category label.
       final loose = subs.firstWhere((s) => s.url == 'https://loose.com/feed');

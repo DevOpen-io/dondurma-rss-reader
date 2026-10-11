@@ -16,6 +16,11 @@ import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
+import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
+import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
+import 'package:ice_cream_rss_reader/services/feed_service.dart';
+import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
+import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
 
@@ -621,6 +626,147 @@ void main() {
     },
   );
 
+  test(
+    'background fetch rechecks cooldown after pacing and writes its own slot',
+    () async {
+      final aUrl = server.url('/bg-a.xml');
+      final bUrl = server.url('/bg-b.xml');
+      await _seedSubscriptions([
+        FeedSubscription(url: aUrl, name: 'A', category: 'Test'),
+        FeedSubscription(url: bUrl, name: 'B', category: 'Test'),
+      ]);
+      // A answers slowly with a 429; B sits behind it in the host pacing
+      // queue — the default 500ms gap outlives A's 150ms response.
+      server.handlers['/bg-a.xml'] = (request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '600');
+        await request.response.close();
+      };
+      server.handlers['/bg-b.xml'] = (request) =>
+          _respond200(request, _rss('B', ['b1']));
+
+      await runBgFetch();
+
+      expect(server.counts['/bg-a.xml'], 1);
+      // B was eligible when the pass started but the host cooled while
+      // it queued — the post-pacing recheck must skip it.
+      expect(server.counts['/bg-b.xml'] ?? 0, 0);
+
+      // The cooldown landed in the background isolate's own slot, not
+      // the foreground's — the shared register is union-read, per-writer
+      // write.
+      final bgRaw = Hive.box('feeds').get('feedBackoffUntil.bg');
+      expect(bgRaw, isA<String>());
+      final bgSnap = jsonDecode(bgRaw as String) as Map<String, dynamic>;
+      expect((bgSnap['feeds'] as Map).containsKey(aUrl), isTrue);
+
+      // And a second pass honors the persisted cooldown without a
+      // network request at all.
+      await runBgFetch();
+      expect(server.counts['/bg-a.xml'], 1);
+      expect(server.counts['/bg-b.xml'] ?? 0, 0);
+    },
+  );
+
+  test('a media 429 during background preparation persists to the bg slot '
+      'and cools the next pass on the same host', () async {
+    // Preparation only runs on unmetered transport — mock wifi.
+    const connectivityChannel = MethodChannel(
+      'dev.fluttercommunity.plus/connectivity',
+    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(connectivityChannel, (call) async {
+          if (call.method == 'check') return ['wifi'];
+          return null;
+        });
+    addTearDown(
+      () => TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(connectivityChannel, null),
+    );
+
+    final aUrl = server.url('/media-feed.xml');
+    await _seedSubscriptions([
+      FeedSubscription(url: aUrl, name: 'A', category: 'Test'),
+    ]);
+    server.handlers['/media-feed.xml'] = (request) =>
+        _respond200(request, _rss('A', ['a1']));
+    server.handlers['/pic.png'] = (request) async {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '600');
+      await request.response.close();
+    };
+
+    // A corrupt foreground slot must not suppress the background
+    // isolate's own cooldown write below.
+    await Hive.box('feeds').put('feedBackoffUntil', '{not json');
+
+    // A durable record with pending media on the same host — the kind
+    // an earlier foreground pass registered.
+    final seedPrep = ArticlePreparationService(
+      recordStore: ArticleRecordStore.forBox(Hive.box('feeds')),
+    );
+    await seedPrep.registerArticle(
+      _item(aUrl, 'art-1').copyWith(imageUrl: server.url('/pic.png')),
+      const {'bookmark'},
+    );
+    seedPrep.dispose();
+
+    await runBgFetch();
+    expect(server.counts['/media-feed.xml'], 1);
+    expect(server.counts['/pic.png'] ?? 0, 1);
+
+    // The cooldown learned AFTER the feed phase — by the media 429 —
+    // must still land in this isolate's own slot.
+    final bgRaw = Hive.box('feeds').get('feedBackoffUntil.bg');
+    expect(bgRaw, isA<String>());
+    final bgSnap = jsonDecode(bgRaw as String) as Map<String, dynamic>;
+    expect((bgSnap['hosts'] as Map).isNotEmpty, isTrue);
+
+    // A fresh pass — a brand-new FeedBackoff hydrated only from Hive —
+    // treats the whole host as cooled: no feed request, no media retry.
+    await runBgFetch();
+    expect(server.counts['/media-feed.xml'], 1);
+    expect(server.counts['/pic.png'], 1);
+  });
+
+  test('factory reset drops in-memory cooldowns — a later save writes a '
+      'clean snapshot', () async {
+    final url = server.url('/reset-bo.xml');
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'R', category: 'Test'),
+    ]);
+    server.handlers['/reset-bo.xml'] = (request) async {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '300');
+      await request.response.close();
+    };
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    // The cooldown was learned and persisted pre-reset.
+    expect(Hive.box('feeds').get('feedBackoffUntil'), isNotNull);
+
+    await providers.feed.factoryReset();
+    expect(Hive.box('feeds').get('feedBackoffUntil'), isNull);
+
+    // Same provider, fresh refresh — SubscriptionProvider still holds
+    // the subscription in memory; the feed now answers 200.
+    server.handlers['/reset-bo.xml'] = (request) =>
+        _respond200(request, _rss('R', ['a1']));
+    await providers.feed.refreshAll();
+    await _waitForRefresh(providers.feed);
+
+    // The feed really fetched (it was not blocked by a resurrected
+    // cooldown) and the re-written snapshot is clean of wiped-era
+    // records.
+    expect(providers.feed.items, isNotEmpty);
+    final raw = Hive.box('feeds').get('feedBackoffUntil') as String?;
+    final snap = raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
+    expect((snap?['hosts'] as Map?)?.isEmpty ?? true, isTrue);
+    expect((snap?['feeds'] as Map?)?.isEmpty ?? true, isTrue);
+    providers.feed.dispose();
+  });
+
   test('restart without network refresh restores persisted articles', () async {
     final url = server.url('/restart.xml');
     await _seedSubscriptions([
@@ -817,6 +963,247 @@ void main() {
       providers.feed.dispose();
     },
   );
+
+  test(
+    '429 response backs the feed off — no refetch until Retry-After passes',
+    () async {
+      final url = server.url('/rate.xml');
+      server.handlers['/rate.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '1');
+        await request.response.close();
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'Rate', category: 'Test'),
+      ]);
+
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/rate.xml'], 1);
+      expect(providers.feed.feedErrorFor(url), contains('429'));
+
+      // Backoff active — an immediate second refresh must not hit the server.
+      await providers.feed.refreshAll();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/rate.xml'], 1);
+      // The stored error survives the skipped pass — the feed still reads
+      // as unhealthy instead of flipping to a phantom "all good".
+      expect(providers.feed.feedErrorFor(url), contains('429'));
+
+      // Once the server-issued wait elapses the feed is fetched again.
+      await Future<void>.delayed(const Duration(milliseconds: 1100));
+      await providers.feed.refreshAll();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/rate.xml'], 2);
+      providers.feed.dispose();
+    },
+  );
+
+  test('a persisted cooldown survives into a fresh refresher', () async {
+    // Foreground records a 429; the background isolate — which builds
+    // its own FeedRefresher — must honor the same deadline via Hive.
+    final url = server.url('/rate.xml');
+    server.handlers['/rate.xml'] = (request) async {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '60');
+      await request.response.close();
+    };
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Rate', category: 'Test'),
+    ]);
+
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    expect(server.counts['/rate.xml'], 1);
+    providers.feed.dispose();
+
+    final persisted = Hive.box('feeds').get('feedBackoffUntil');
+    expect(persisted, isNotNull);
+
+    // A brand-new refresher — stand-in for the background isolate —
+    // loads the persisted deadline and skips the fetch entirely.
+    final backoff = FeedBackoff()
+      ..load((jsonDecode(persisted as String) as Map).cast<String, dynamic>());
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      backoff: backoff,
+    );
+    final sub = FeedSubscription(url: url, name: 'Rate', category: 'Test');
+    final result = await refresher.refresh(
+      subscriptions: [sub],
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+    );
+    expect(server.counts['/rate.xml'], 1);
+    expect(result.unprovenUrls, contains(url));
+  });
+
+  test('a 429 on one feed cools sibling feeds on the same host', () async {
+    // A second loopback server stands in for an unrelated authority —
+    // its different port means a different origin.
+    final other = await _FeedServer.start();
+    addTearDown(other.close);
+    other.handlers['/ok.xml'] = (request) async =>
+        _respond200(request, _rss('C', ['c1']));
+
+    for (final path in ['/rl-a.xml', '/rl-b.xml']) {
+      server.handlers[path] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '60');
+        await request.response.close();
+      };
+    }
+    final subs = [
+      FeedSubscription(
+        url: server.url('/rl-a.xml'),
+        name: 'A',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/rl-b.xml'),
+        name: 'B',
+        category: 'Test',
+      ),
+      FeedSubscription(url: other.url('/ok.xml'), name: 'C', category: 'Test'),
+    ];
+
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      hostGap: Duration.zero,
+    );
+    Future<FeedRefreshResult> pass() => refresher.refresh(
+      subscriptions: subs,
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+    );
+
+    await pass();
+    expect(server.counts['/rl-a.xml'], 1);
+    expect(server.counts['/rl-b.xml'], 1);
+    expect(other.counts['/ok.xml'], 1);
+
+    // Pass two: the host-level cooldown skips A and B — the unrelated
+    // authority stays fetchable.
+    final second = await pass();
+    expect(server.counts['/rl-a.xml'], 1);
+    expect(server.counts['/rl-b.xml'], 1);
+    expect(other.counts['/ok.xml'], 2);
+    expect(
+      second.unprovenUrls,
+      containsAll([server.url('/rl-a.xml'), server.url('/rl-b.xml')]),
+    );
+  });
+
+  test(
+    'a sibling queued in the pacer rechecks cooldown after the wait',
+    () async {
+      // Feed A answers slowly with a 429; feed B passed the pre-check and
+      // is waiting its pacing turn on the same host. When A's response
+      // lands the host cools down — B must re-verify eligibility before
+      // its request goes out, not rely on a check made before the wait.
+      server.handlers['/slow-a.xml'] = (request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '60');
+        await request.response.close();
+      };
+      server.handlers['/rl-b.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '60');
+        await request.response.close();
+      };
+      final subs = [
+        FeedSubscription(
+          url: server.url('/slow-a.xml'),
+          name: 'A',
+          category: 'Test',
+        ),
+        FeedSubscription(
+          url: server.url('/rl-b.xml'),
+          name: 'B',
+          category: 'Test',
+        ),
+      ];
+      // Pacing gap deliberately longer than A's response time so B's
+      // slot only opens after the 429 is already recorded.
+      final refresher = FeedRefresher(
+        feedService: FeedService(),
+        observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+        hostPacer: HostPacer(minGap: const Duration(milliseconds: 400)),
+      );
+
+      final result = await refresher.refresh(
+        subscriptions: subs,
+        existingItems: const [],
+        validators: const {},
+        bookmarkedItems: const [],
+        redirects: const {},
+      );
+
+      expect(server.counts['/slow-a.xml'], 1);
+      // B never reached the network — the host cooled while it waited.
+      expect(server.counts['/rl-b.xml'] ?? 0, 0);
+      expect(result.unprovenUrls, contains(server.url('/rl-b.xml')));
+    },
+  );
+
+  test('subscriptions on the same host are fetch-paced', () async {
+    final hitTimes = <String, List<DateTime>>{};
+    void paced(String path) {
+      server.handlers[path] = (request) async {
+        (hitTimes[path] ??= []).add(DateTime.now());
+        await _respond200(request, _rss(path, ['i-$path']));
+      };
+    }
+
+    paced('/s1.xml');
+    paced('/s2.xml');
+    paced('/s3.xml');
+    final subs = [
+      FeedSubscription(
+        url: server.url('/s1.xml'),
+        name: 'S1',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/s2.xml'),
+        name: 'S2',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/s3.xml'),
+        name: 'S3',
+        category: 'Test',
+      ),
+    ];
+
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      hostGap: const Duration(milliseconds: 300),
+    );
+    await refresher.refresh(
+      subscriptions: subs,
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+    );
+
+    // All three share one authority — hits must be spread by ~300ms.
+    final all = hitTimes.values.expand((t) => t).toList()..sort();
+    expect(all, hasLength(3));
+    expect(
+      all.last.difference(all.first),
+      greaterThanOrEqualTo(const Duration(milliseconds: 550)),
+    );
+  });
 
   test(
     'prefetch stores full text for full-text feeds only (issue #14 policy)',

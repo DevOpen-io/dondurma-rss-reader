@@ -10,17 +10,42 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
+import '../utils/retry_after.dart';
 import 'article_identity.dart';
 
 /// Why a feed fetch failed — lets health reporting tell a dead feed apart
 /// from a dead network.
-enum FeedFetchErrorKind { connectivity, httpStatus, parse, other }
+enum FeedFetchErrorKind {
+  connectivity,
+  httpStatus,
+
+  /// 401/403 — the source refuses this client; retrying blindly won't help.
+  accessRestricted,
+
+  /// 404/410 — the feed URL no longer exists.
+  gone,
+  parse,
+  other,
+}
 
 class FeedFetchException implements Exception {
-  FeedFetchException(this.kind, this.message);
+  FeedFetchException(
+    this.kind,
+    this.message, {
+    this.retryAfter,
+    this.statusCode,
+  });
 
   final FeedFetchErrorKind kind;
   final String message;
+
+  /// Earliest instant the server allows another request, taken from a
+  /// `Retry-After` response header. Null when the server gave no hint.
+  final DateTime? retryAfter;
+
+  /// HTTP status for [FeedFetchErrorKind.httpStatus] failures — lets the
+  /// refresher tell a rate-limit (429/503) from a dead feed (404).
+  final int? statusCode;
 
   @override
   String toString() => message;
@@ -46,6 +71,13 @@ class FeedService {
   /// entries); keeping only the most recent slice bounds memory, the unread
   /// counts, and the size of the merged in-memory list.
   static const int maxItemsPerFeed = 50;
+
+  /// Hard cap on a feed response body. Real feeds are well under a
+  /// megabyte; an unbounded buffer would let a broken or hostile endpoint
+  /// exhaust memory during refresh. Mutable so tests can trip the bound
+  /// without streaming megabytes.
+  @visibleForTesting
+  static int maxFeedBytes = 8 * 1024 * 1024;
 
   /// Returns at most [maxItemsPerFeed] most-recent items. Sorts by descending
   /// publication date only when the cap is exceeded — feeds are conventionally
@@ -144,16 +176,38 @@ class FeedService {
       var currentUrl = url;
       http.StreamedResponse? streamed;
       for (var hops = 0; hops < 5; hops++) {
-        final request = http.Request('GET', Uri.parse(currentUrl))
+        final uri = Uri.parse(currentUrl);
+        if (uri.scheme != 'http' && uri.scheme != 'https') {
+          throw FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'Refusing non-HTTP redirect target: ${uri.scheme}',
+          );
+        }
+        // Conditional validators belong to the origin that issued them —
+        // forwarding them cross-origin both leaks them and fetches the
+        // wrong resource's validator state. Origin = scheme+host+port:
+        // http→https or :8080→:443 must drop validators too.
+        final crossOrigin = !sameOrigin(url, uri.toString());
+        final request = http.Request('GET', uri)
           ..followRedirects = false
           ..headers.addAll(headers);
+        if (crossOrigin) {
+          request.headers.remove('If-None-Match');
+          request.headers.remove('If-Modified-Since');
+        }
         final next = await _client
             .send(request)
             .timeout(const Duration(seconds: 10));
         final location = next.headers['location'];
         if (next.isRedirect && location != null) {
-          await next.stream.drain();
-          currentUrl = Uri.parse(currentUrl).resolve(location).toString();
+          // Discard the hop's body with the same bounds as a final
+          // response — a redirect with an unbounded/slow body could pin
+          // the connection otherwise.
+          await _discardBody(next.stream);
+          final resolved = Uri.parse(currentUrl).resolve(location);
+          // A relative Location can still produce an exotic scheme
+          // (file:, javascript:) — the next loop iteration rejects it.
+          currentUrl = resolved.toString();
           continue;
         }
         streamed = next;
@@ -167,7 +221,10 @@ class FeedService {
       }
       final statusCode = streamed.statusCode;
       final responseHeaders = streamed.headers;
-      final bodyBytes = await streamed.stream.toBytes();
+      // The send() timeout only covers response headers — a drip-feeding
+      // server could hold the body open forever. Bound both the byte count
+      // and the wall-clock time of the download itself.
+      final bodyBytes = await _readBoundedBody(streamed.stream);
 
       // A differing final URL means the feed moved — callers learn it and
       // skip the redirect round-trip on the next cycle.
@@ -183,8 +240,17 @@ class FeedService {
       }
       if (statusCode != 200) {
         throw FeedFetchException(
-          FeedFetchErrorKind.httpStatus,
+          switch (statusCode) {
+            401 || 403 => FeedFetchErrorKind.accessRestricted,
+            404 || 410 => FeedFetchErrorKind.gone,
+            _ => FeedFetchErrorKind.httpStatus,
+          },
           'Failed to load RSS feed (Status: $statusCode)',
+          retryAfter: parseRetryAfter(
+            responseHeaders['retry-after'],
+            DateTime.now(),
+          ),
+          statusCode: statusCode,
         );
       }
 
@@ -197,6 +263,7 @@ class FeedService {
         bodyBytes: bodyBytes,
         category: category,
         url: url,
+        contentType: responseHeaders['content-type'],
       ));
       return FeedFetchResult(
         items: items,
@@ -224,14 +291,118 @@ class FeedService {
     }
   }
 
+  /// Whether two URLs share a scheme, host, and port — the boundary at
+  /// which conditional validators may be forwarded on a redirect.
+  @visibleForTesting
+  static bool sameOrigin(String a, String b) =>
+      Uri.parse(a).origin == Uri.parse(b).origin;
+
+  /// Wall-clock limit for a response body download — kept mutable so
+  /// tests can exercise the deadline without waiting seconds.
+  @visibleForTesting
+  static Duration bodyDeadline = const Duration(seconds: 20);
+
+  /// Reads [stream] to completion, aborting when the body exceeds
+  /// [maxFeedBytes] or outlives the download deadline. Cancelling the
+  /// subscription on either bound releases the underlying socket —
+  /// `Stream.timeout` alone would leave it open.
+  static Future<Uint8List> _readBoundedBody(Stream<List<int>> stream) async {
+    final builder = BytesBuilder();
+    final completer = Completer<Uint8List>();
+    late final StreamSubscription<List<int>> sub;
+    sub = stream.listen(
+      (chunk) {
+        builder.add(chunk);
+        if (builder.length > maxFeedBytes && !completer.isCompleted) {
+          unawaited(sub.cancel());
+          completer.completeError(
+            FeedFetchException(
+              FeedFetchErrorKind.httpStatus,
+              'Response too large (limit $maxFeedBytes bytes)',
+            ),
+          );
+        }
+      },
+      // A stream may deliver multiple errors — or an error followed by
+      // done — so every completion path must check first; a second
+      // complete* call throws 'Future already completed' as an
+      // unhandled async error.
+      onError: (Object e, StackTrace st) {
+        if (!completer.isCompleted) completer.completeError(e, st);
+      },
+      onDone: () {
+        if (!completer.isCompleted) {
+          completer.complete(builder.takeBytes());
+        }
+      },
+    );
+    try {
+      return await completer.future.timeout(
+        bodyDeadline,
+        onTimeout: () {
+          unawaited(sub.cancel());
+          throw TimeoutException('feed body deadline');
+        },
+      );
+    } catch (_) {
+      if (!completer.isCompleted) unawaited(sub.cancel());
+      rethrow;
+    }
+  }
+
+  /// Drains a redirect hop's body under the same byte/time bounds —
+  /// the Location header is already in hand, so a cancelled read just
+  /// means the connection closes and the next hop opens a fresh one.
+  static Future<void> _discardBody(Stream<List<int>> stream) async {
+    var bytes = 0;
+    final completer = Completer<void>();
+    late final StreamSubscription<List<int>> sub;
+    sub = stream.listen(
+      (chunk) {
+        bytes += chunk.length;
+        if (bytes > maxFeedBytes && !completer.isCompleted) {
+          unawaited(sub.cancel());
+          completer.complete();
+        }
+      },
+      // Drain is best-effort — errors or done both mean "released";
+      // but only the first signal may complete the future.
+      onError: (_) {
+        if (!completer.isCompleted) completer.complete();
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete();
+      },
+    );
+    await completer.future.timeout(
+      bodyDeadline,
+      onTimeout: () => unawaited(sub.cancel()),
+    );
+  }
+
+  /// Test seam for [_readBoundedBody] — stream failure modes need a
+  /// controlled source, not a live socket.
+  @visibleForTesting
+  static Future<Uint8List> debugReadBoundedBody(Stream<List<int>> stream) =>
+      _readBoundedBody(stream);
+
+  /// Test seam for [_discardBody].
+  @visibleForTesting
+  static Future<void> debugDiscardBody(Stream<List<int>> stream) =>
+      _discardBody(stream);
+
   /// Decodes and parses a raw feed body into capped [FeedItem]s.
   ///
   /// Static and side-effect free so it can run in a background isolate via
   /// [compute]. Attempts RSS first, then falls back to Atom.
   static List<FeedItem> parseFeedBody(
-    ({Uint8List bodyBytes, String category, String url}) request,
+    ({Uint8List bodyBytes, String category, String url, String? contentType})
+    request,
   ) {
-    final bodyString = _decodeBody(request.bodyBytes);
+    final bodyString = _decodeBody(
+      request.bodyBytes,
+      declaredCharset: _charsetFrom(request.contentType),
+    );
 
     // JSON Feed (jsonfeed.org v1/v1.1) — a JSON document, not XML.
     if (bodyString.trimLeft().startsWith('{')) {
@@ -282,24 +453,36 @@ class FeedService {
           ),
         );
       } catch (e2) {
-        // Namespace-prefixed Atom (<atom:feed>) — strip the atom: tag prefix
-        // and retry once before declaring the feed unparseable.
-        if (bodyString.contains('<atom:feed')) {
-          try {
-            final stripped = bodyString
-                .replaceAll('<atom:', '<')
-                .replaceAll('</atom:', '</');
-            final atomFeed = AtomFeed.parse(stripped);
-            return capItems(
-              _mapAtomItems(
-                atomFeed,
-                request.category,
-                request.url,
-                xhtmlContents: _xhtmlContents(stripped),
-              ),
-            );
-          } catch (_) {
-            // Fall through to the parse error below.
+        // Namespace-prefixed Atom — the prefix is arbitrary (atom:, ns6:,
+        // z:…); only the namespace URI identifies Atom. Strip the prefix
+        // only when the document actually binds it to the Atom URI —
+        // an unrelated <x:feed> in another vocabulary must not be
+        // converted into Atom by accident.
+        final prefixMatch = RegExp(
+          r'<([A-Za-z_][\w.-]*):feed[\s/>]',
+        ).firstMatch(bodyString);
+        if (prefixMatch != null) {
+          final prefix = prefixMatch.group(1)!;
+          final bindsAtom = RegExp(
+            'xmlns:$prefix\\s*=\\s*["\']http://www\\.w3\\.org/2005/Atom["\']',
+          ).hasMatch(bodyString);
+          if (bindsAtom) {
+            try {
+              final stripped = bodyString
+                  .replaceAll('<$prefix:', '<')
+                  .replaceAll('</$prefix:', '</');
+              final atomFeed = AtomFeed.parse(stripped);
+              return capItems(
+                _mapAtomItems(
+                  atomFeed,
+                  request.category,
+                  request.url,
+                  xhtmlContents: _xhtmlContents(stripped),
+                ),
+              );
+            } catch (_) {
+              // Fall through to the parse error below.
+            }
           }
         }
         throw FeedFetchException(
@@ -310,9 +493,21 @@ class FeedService {
     }
   }
 
-  /// Decodes a feed body with a BOM/charset sniff: UTF-16 (via BOM), strict
-  /// UTF-8, then ISO-8859-1 for legacy feeds that declare a non-UTF encoding.
-  static String _decodeBody(Uint8List bytes) {
+  /// Extracts the `charset` parameter from a Content-Type header value.
+  static String? _charsetFrom(String? contentType) {
+    if (contentType == null) return null;
+    final match = RegExp(
+      r'charset\s*=\s*"?([A-Za-z0-9._-]+)"?',
+      caseSensitive: false,
+    ).firstMatch(contentType);
+    return match?.group(1)?.toLowerCase();
+  }
+
+  /// Decodes a feed body. A UTF-16 BOM wins over any declared charset —
+  /// servers routinely lie in Content-Type (and some emit no charset at
+  /// all). Without a BOM, a known declared charset applies, then strict
+  /// UTF-8, then ISO-8859-1 for legacy undeclared feeds.
+  static String _decodeBody(Uint8List bytes, {String? declaredCharset}) {
     if (bytes.length >= 2) {
       if (bytes[0] == 0xFF && bytes[1] == 0xFE) {
         return String.fromCharCodes(_utf16Units(bytes, bigEndian: false));
@@ -321,6 +516,43 @@ class FeedService {
         return String.fromCharCodes(_utf16Units(bytes, bigEndian: true));
       }
     }
+    switch (declaredCharset) {
+      case 'utf-16' || 'utf-16le':
+        final skip = bytes.length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE;
+        return String.fromCharCodes(
+          _utf16Units(bytes, bigEndian: false, offset: skip ? 2 : 0),
+        );
+      case 'utf-16be':
+        final skip = bytes.length >= 2 && bytes[0] == 0xFE && bytes[1] == 0xFF;
+        return String.fromCharCodes(
+          _utf16Units(bytes, bigEndian: true, offset: skip ? 2 : 0),
+        );
+      case 'iso-8859-1' || 'latin1' || 'latin-1':
+        // Servers routinely declare Latin-1 while actually sending
+        // UTF-8 — strict UTF-8 first, declared legacy map on failure.
+        try {
+          return utf8.decode(bytes);
+        } on FormatException {
+          return latin1.decode(bytes);
+        }
+      case 'windows-1252' || 'cp1252':
+        // Bytes 0x80–0x9F are C1 controls in Latin-1 but printable
+        // punctuation (curly quotes, dashes, €) in Windows-1252 — a raw
+        // latin1.decode renders smart punctuation as control chars.
+        try {
+          return utf8.decode(bytes);
+        } on FormatException {
+          return String.fromCharCodes(
+            bytes.map((b) => b >= 0x80 && b <= 0x9F ? _cp1252[b - 0x80] : b),
+          );
+        }
+      case 'utf-8':
+        try {
+          return utf8.decode(bytes);
+        } on FormatException {
+          return latin1.decode(bytes);
+        }
+    }
     try {
       return utf8.decode(bytes);
     } on FormatException {
@@ -328,10 +560,23 @@ class FeedService {
     }
   }
 
-  static Iterable<int> _utf16Units(Uint8List b, {required bool bigEndian}) {
-    return Iterable.generate((b.length - 2) ~/ 2, (i) {
-      final lo = b[2 + i * 2];
-      final hi = b[2 + i * 2 + 1];
+  /// Windows-1252 mapping for bytes 0x80–0x9F; 0xFFFD marks the five
+  /// byte values the standard leaves undefined.
+  static const _cp1252 = <int>[
+    0x20AC, 0xFFFD, 0x201A, 0x0192, 0x201E, 0x2026, 0x2020, 0x2021, // 80-87
+    0x02C6, 0x2030, 0x0160, 0x2039, 0x0152, 0xFFFD, 0x017D, 0xFFFD, // 88-8F
+    0xFFFD, 0x2018, 0x2019, 0x201C, 0x201D, 0x2022, 0x2013, 0x2014, // 90-97
+    0x02DC, 0x2122, 0x0161, 0x203A, 0x0153, 0xFFFD, 0x017E, 0x0178, // 98-9F
+  ];
+
+  static Iterable<int> _utf16Units(
+    Uint8List b, {
+    required bool bigEndian,
+    int offset = 2,
+  }) {
+    return Iterable.generate((b.length - offset) ~/ 2, (i) {
+      final lo = b[offset + i * 2];
+      final hi = b[offset + i * 2 + 1];
       return bigEndian ? (lo << 8) | hi : lo | (hi << 8);
     });
   }

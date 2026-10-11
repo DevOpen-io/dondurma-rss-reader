@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -9,9 +8,13 @@ import 'package:http/http.dart' as http;
 
 import '../models/feed_item.dart';
 import '../utils/async_semaphore.dart';
+import '../utils/host_pacer.dart';
+import '../utils/retry_after.dart';
 import 'article_cleanup_service.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
+import 'feed_backoff.dart';
+import 'feed_service.dart';
 import 'full_text_extraction_service.dart';
 
 /// Offline preparation engine: ensures a saved article's full text and all of
@@ -35,14 +38,19 @@ class ArticlePreparationService {
     http.Client? client,
     Future<String?> Function(String url)? extractFullText,
     this.maxParallelTransfers = 3,
+    this.minHostGap = const Duration(milliseconds: 1500),
+    HostPacer? hostPacer,
+    FeedBackoff? backoff,
     DateTime Function()? now,
-  }) : _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
+  }) : _backoff = backoff,
+       _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
        _media = mediaStore ?? ArticleMediaStore(),
        _client = client ?? http.Client(),
        _ownsClient = client == null,
        _extract = extractFullText ?? _defaultExtract,
        _now = now ?? DateTime.now {
     _semaphore = AsyncSemaphore(maxParallelTransfers);
+    _hostPacer = hostPacer ?? HostPacer(minGap: minHostGap, now: _now);
   }
 
   /// Releases the internally created HTTP client (injected clients stay the
@@ -64,8 +72,35 @@ class ArticlePreparationService {
   final bool _ownsClient;
   final Future<String?> Function(String url) _extract;
   final int maxParallelTransfers;
+
+  /// Minimum spacing between requests to the same host — see [HostPacer].
+  /// Kept as a ctor parameter because tests shrink it instead of waiting.
+  /// Acts as this service's gap inside a shared pacer when one is
+  /// injected by the provider.
+  final Duration minHostGap;
+  late final HostPacer _hostPacer;
+
+  /// Shared rate-limit policy — a host cooldown learned by feed refresh
+  /// (e.g. a Reddit 429) holds extraction and media downloads back too.
+  /// Skipped pieces simply stay pending; cooldown is not a failure.
+  final FeedBackoff? _backoff;
+
+  /// Skipped pieces simply stay pending — a cooldown is not a failure.
+  /// A manual retry may bypass a locally estimated host cooldown, but
+  /// never a server-issued `Retry-After` mandate.
+  bool _hostCooled(String url, DateTime now, {bool manual = false}) {
+    final b = _backoff;
+    if (b == null) return false;
+    return manual ? b.isMandatedBackedOff(url, now) : b.isBackedOff(url, now);
+  }
+
   final DateTime Function() _now;
   late final AsyncSemaphore _semaphore;
+
+  /// Waits until [url]'s host is allowed another request, then reserves
+  /// the next slot — this service's stricter [minHostGap] applies even
+  /// inside a shared pacer.
+  Future<void> _paceHost(String url) => _hostPacer.pace(url, gap: minHostGap);
 
   /// Serializes every public operation on this instance so overlapping
   /// sweeps/permits can't double-attempt a piece in the same logical pass.
@@ -192,20 +227,6 @@ class ArticlePreparationService {
     return results.any(
       (r) => r == ConnectivityResult.wifi || r == ConnectivityResult.ethernet,
     );
-  }
-
-  static DateTime? _parseRetryAfter(String? header, DateTime now) {
-    if (header == null) return null;
-    final seconds = int.tryParse(header.trim());
-    if (seconds != null && seconds >= 0) {
-      return now.add(Duration(seconds: seconds));
-    }
-    try {
-      final date = HttpDate.parse(header);
-      return date.isAfter(now) ? date : null;
-    } catch (_) {
-      return null;
-    }
   }
 
   static List<String> _bodyImageUrls(String? html) {
@@ -437,12 +458,17 @@ class ArticlePreparationService {
       // A body wait is only ever the local doubling backoff — an explicit
       // user retry may bypass it (server waits only exist on media).
       final retryDue =
-          manual ||
-          record.nextRetryAt == null ||
-          !record.nextRetryAt!.isAfter(now);
+          (manual ||
+              record.nextRetryAt == null ||
+              !record.nextRetryAt!.isAfter(now)) &&
+          // A host cooldown learned elsewhere (feed 429) skips the
+          // extraction attempt without counting it as a failure.
+          !_hostCooled(record.link, now, manual: manual);
       if (retryDue) {
         String? html;
         try {
+          // The extraction service paces its own request against the
+          // shared HostPacer — pacing here too would double the gap.
           html = await _extract(record.link);
         } catch (_) {}
         await _records.mutate(id, expectedEpoch: epoch, (current) {
@@ -468,6 +494,15 @@ class ArticlePreparationService {
               media: mergedMedia,
             );
           }
+          // Deferred only when the extraction was skipped WITHOUT a
+          // request (a cooldown gate saw it first). A page that actually
+          // answered 429 is a real failed attempt — the cooldown it just
+          // recorded covers this same check, so the marker is what
+          // separates "skipped" from "fetched and failed".
+          if (_hostCooled(record.link, _now(), manual: manual) &&
+              FullTextExtractionService.instance.wasDeferred(record.link)) {
+            return current;
+          }
           final attempts = current.attempts + 1;
           return current.copyWith(
             bodyState: MediaState.failed,
@@ -485,6 +520,7 @@ class ArticlePreparationService {
       for (final e in fresh.media.entries)
         if (e.value.state != MediaState.ready &&
             e.value.state != MediaState.gone &&
+            !_hostCooled(e.key, now, manual: manual) &&
             (e.value.nextRetryAt == null ||
                 !e.value.nextRetryAt!.isAfter(now) ||
                 // A manual retry may bypass the local backoff — but never a
@@ -494,24 +530,28 @@ class ArticlePreparationService {
           e,
     ];
     await Future.wait([
-      for (final piece in pending) _preparePiece(id, piece.key, now, epoch),
+      for (final piece in pending)
+        _preparePiece(id, piece.key, epoch, manual: manual),
     ]);
   }
 
   Future<void> _preparePiece(
     String id,
     String url,
-    DateTime now,
-    int epoch,
-  ) async {
+    int epoch, {
+    bool manual = false,
+  }) async {
     await _semaphore.acquire();
     try {
-      final outcome = await _fetchAndStore(url, now);
+      final outcome = await _fetchAndStore(url, manual: manual);
       await _records.mutate(id, expectedEpoch: epoch, (current) {
         if (current == null || current.tombstoned) return current;
         if (current.owners.isEmpty) return current;
         final existing = current.media[url];
         if (existing == null) return current;
+        // Deferred by a host cooldown learned mid-queue: not an attempt —
+        // the piece stays pending with its retry state untouched.
+        if (outcome.deferred) return current;
         // Never downgrade a piece another pass already completed.
         if (existing.state == MediaState.ready) return current;
         // A permanent failure is fenced too: a racing pass's transient
@@ -532,7 +572,7 @@ class ArticlePreparationService {
           // The later of doubling backoff and server Retry-After wins —
           // a manual retry must not bypass a 429 wait either. A stored
           // (possibly longer, e.g. Retry-After) wait is never shortened.
-          var retryAt = now.add(backoffFor(attempts));
+          var retryAt = _now().add(backoffFor(attempts));
           var waitSource = 'backoff';
           final server = outcome.retryAfter;
           if (server != null && server.isAfter(retryAt)) {
@@ -563,12 +603,21 @@ class ArticlePreparationService {
   /// Downloads [url] into the media pool. Returns the ready manifest entry
   /// on success; [gone] for permanent failures (404/410, non-image payload,
   /// oversize) that must never be retried; [retryAfter] carries the server's
-  /// hint for transient failures.
-  Future<({MediaEntry? ready, DateTime? retryAfter, bool gone})> _fetchAndStore(
-    String url,
-    DateTime now,
-  ) async {
+  /// hint for transient failures; [deferred] marks a skip with zero
+  /// attempts — the piece was cooled mid-queue, not failed.
+  ///
+  /// All retry math uses a fresh `_now()` at response time — the sweep's
+  /// `now` may be minutes stale after semaphore and pacing waits, and a
+  /// `Retry-After` relative to a dead timestamp schedules wrong.
+  Future<({MediaEntry? ready, DateTime? retryAfter, bool gone, bool deferred})>
+  _fetchAndStore(String url, {bool manual = false}) async {
     try {
+      await _paceHost(url);
+      // The queue wait may have spanned a sibling's 429 — honor the
+      // cooldown learned in the meantime instead of firing anyway.
+      if (_hostCooled(url, _now(), manual: manual)) {
+        return (ready: null, retryAfter: null, gone: false, deferred: true);
+      }
       final response = await _client
           .get(
             Uri.parse(url),
@@ -583,21 +632,43 @@ class ArticlePreparationService {
           // Soft-404 HTML / captive portal / oversize / empty payload —
           // structural, not transient: retrying would fetch the same
           // non-image forever (an empty put throws, looping the wait).
-          return (ready: null, retryAfter: null, gone: true);
+          return (ready: null, retryAfter: null, gone: true, deferred: false);
         }
         return (
           ready: await _media.put(url, response.bodyBytes),
           retryAfter: null,
           gone: false,
+          deferred: false,
+        );
+      }
+      final retryAfter = parseRetryAfter(
+        response.headers['retry-after'],
+        _now(),
+      );
+      // A media 429 is a host-wide signal too — share it so feed fetches
+      // and other pieces on the same origin stop hammering the server.
+      if (response.statusCode == 429 ||
+          response.statusCode == 503 ||
+          retryAfter != null) {
+        _backoff?.recordFailure(
+          url,
+          FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'Media fetch failed (Status: ${response.statusCode})',
+            retryAfter: retryAfter,
+            statusCode: response.statusCode,
+          ),
+          _now(),
         );
       }
       return (
         ready: null,
-        retryAfter: _parseRetryAfter(response.headers['retry-after'], now),
+        retryAfter: retryAfter,
         gone: response.statusCode == 404 || response.statusCode == 410,
+        deferred: false,
       );
     } catch (_) {
-      return (ready: null, retryAfter: null, gone: false);
+      return (ready: null, retryAfter: null, gone: false, deferred: false);
     }
   }
 }
