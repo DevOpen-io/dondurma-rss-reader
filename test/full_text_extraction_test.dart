@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/full_text_extraction_service.dart';
+import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
 
 /// Transient-vs-permanent failure classification in
 /// [FullTextExtractionService]: a dead page must not be retried forever,
@@ -17,6 +18,13 @@ void main() {
 
   String url(String path) =>
       'http://${server.address.host}:${server.port}$path';
+
+  FeedFetchException rateLimit({DateTime? retryAfter}) => FeedFetchException(
+    FeedFetchErrorKind.httpStatus,
+    'status 429',
+    retryAfter: retryAfter,
+    statusCode: 429,
+  );
 
   setUpAll(() async {
     // flutter_test installs a 400-only HttpOverrides client — extraction
@@ -43,6 +51,9 @@ void main() {
     FullTextExtractionService.debugClearSession();
     FullTextExtractionService.transientFailureTtl = const Duration(minutes: 5);
     FullTextExtractionService.instance.backoff = null;
+    FullTextExtractionService.instance.pacer = HostPacer(
+      minGap: const Duration(seconds: 1),
+    );
   });
 
   test('404 marks the URL permanently failed — no second request', () async {
@@ -175,13 +186,6 @@ void main() {
   });
 
   group('shared feed backoff', () {
-    FeedFetchException rateLimit({DateTime? retryAfter}) => FeedFetchException(
-      FeedFetchErrorKind.httpStatus,
-      'status 429',
-      retryAfter: retryAfter,
-      statusCode: 429,
-    );
-
     test('a host cooldown learned by feed refresh blocks extraction', () async {
       handlers['/art'] = (request) {
         request.response.headers.contentType = ContentType.html;
@@ -243,6 +247,102 @@ void main() {
         isNull,
       );
       expect(counts['/art'], isNull);
+    });
+  });
+
+  group('post-pacing recheck', () {
+    test('a request queued behind a slower sibling rechecks its failure '
+        'cooldown before firing', () async {
+      // Gap outlives the sibling's round trip: the queued call passes
+      // its initial check before the 500 lands, then must re-evaluate
+      // after pacing instead of firing blindly.
+      FullTextExtractionService.instance.pacer = HostPacer(
+        minGap: const Duration(milliseconds: 400),
+      );
+      handlers['/flaky'] = (request) {
+        request.response.statusCode = HttpStatus.internalServerError;
+      };
+      final target = url('/flaky');
+      final first = FullTextExtractionService.instance.extractFullText(target);
+      final second = FullTextExtractionService.instance.extractFullText(target);
+      expect(await first, isNull);
+      expect(await second, isNull);
+      expect(counts['/flaky'], 1); // the queued request never fired
+    });
+
+    test('a host cooldown learned while queued blocks the pending request '
+        'with zero network traffic', () async {
+      FullTextExtractionService.instance.pacer = HostPacer(
+        minGap: const Duration(milliseconds: 400),
+      );
+      final backoff = FeedBackoff();
+      FullTextExtractionService.instance.backoff = backoff;
+      handlers['/art1'] = (request) {
+        // The sibling response carries the 429 signal: recording the
+        // cooldown here guarantees call 1 already passed its recheck
+        // while call 2 still sits in the pacing queue.
+        backoff.recordFailure(url('/feed.xml'), rateLimit(), DateTime.now());
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(
+          '<html><body><article>'
+          '<p>${'extractable body text. ' * 40}</p>'
+          '</article></body></html>',
+        );
+      };
+      handlers['/art2'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write('<html><body>never fetched</body></html>');
+      };
+      // Call 1 grabs the pacing slot and fetches; call 2 queues behind
+      // it. The host gets rate-limited while call 2 waits.
+      final first = FullTextExtractionService.instance.extractFullText(
+        url('/art1'),
+      );
+      final second = FullTextExtractionService.instance.extractFullText(
+        url('/art2'),
+      );
+
+      expect(await first, isNotNull);
+      expect(await second, isNull);
+      expect(counts['/art2'], isNull); // deferred — zero HTTP requests
+    });
+  });
+
+  group('server-mandate preservation', () {
+    test('a slower sibling failure cannot shorten a server Retry-After '
+        'mandate on the same URL', () async {
+      // Zero pacing gap → both calls fire before either response
+      // lands. The 429 records a mandate, then the 500's local
+      // cooldown must merge without erasing it.
+      FullTextExtractionService.instance.pacer = HostPacer(
+        minGap: Duration.zero,
+      );
+      var hits = 0;
+      handlers['/race'] = (request) {
+        hits++;
+        if (hits == 1) {
+          request.response.statusCode = HttpStatus.tooManyRequests;
+          request.response.headers.set('retry-after', '60');
+        } else {
+          request.response.statusCode = HttpStatus.internalServerError;
+        }
+      };
+      final target = url('/race');
+      await Future.wait([
+        FullTextExtractionService.instance.extractFullText(target),
+        FullTextExtractionService.instance.extractFullText(target),
+      ]);
+      expect(counts['/race'], 2);
+
+      // The mandated window survives — a forced retry is still blocked.
+      expect(
+        await FullTextExtractionService.instance.extractFullText(
+          target,
+          forceRefresh: true,
+        ),
+        isNull,
+      );
+      expect(counts['/race'], 2);
     });
   });
 

@@ -51,6 +51,18 @@ Bu turda önceki mimari korunarak üç davranış kapatıldı:
 2. **Extraction ve medya hazırlığı aynı `FeedBackoff`'a bağlandı.** `FullTextExtractionService.backoff` ve `ArticlePreparationService(backoff:)` — feed 429'undan öğrenilen host cooldown iki serviste de ağa çıkmadan önce denetlenir. Atlanan parçalar `pending` kalır, failure sayılmaz; **RSS body'si korunur** (extraction yalnız upgrade). Manuel retry: local tahmini atlayabilir (`isMandatedBackedOff`), server mandate'ini asla.
 3. **`hostKey` kanonikleştirmesi** — lowercase + `www.` strip + etkin port: `reddit.com` ↔ `www.reddit.com` ↔ `:443` aynı kova (`reddit.com:443`), `old.reddit.com` gibi gerçekten farklı host'lar etkilenmez. `FeedBackoff._authority` ve `HostPacer` aynı anahtarı kullanır → cooldown ve pacing tek politikada birleşir, persist slot'ları da aynı anahtarla yazılır.
 
+## 3b. Final Review Turu — CodeRabbit A–F + Medya Recheck
+
+Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü kapatıldı:
+
+- **A — Extraction post-pace recheck**: `extractFullText` uygunluk kontrolünü `pace()` **öncesi** yapıyordu; kuyrukta beklerken öğrenilen 429'a kayıtsız kalıyordu. `pace()` dönüşünde `_blocked(url, forceRefresh)` tekrarlanıyor — ağa çıkmadan önce son kontrol. Manuel retry semantiği korunur: local tahmin atlanır, server mandate'i asla.
+- **B — Mandate penceresi ayrıldı**: `_recordFailure`, var olan `Retry-After` deadline'ını daha kısa local failure cooldown'uyla ezebiliyordu (429 sonrası geç dönen 500/timeout senaryosu). `_failedUntil` kayıtları artık `{until, mandatedUntil}` çift pencere taşıyor: `until` her zaman max ile birleşir, `mandatedUntil` bağımsız birleşir — kısa local tahmin mandate'i kesemez, uzun olan mandate'i silemez, yeni geçerli mandate yine uzatabilir. Mandate aktifken `until`'i de aşar.
+- **C — Medya `Retry-After` taze saat**: `_fetchAndStore` ve `_preparePiece`, sweep başında yakalanan `now` ile `Retry-After`/local-backoff hesaplıyordu; semaphore+pacer kuyruğunda geçen süre deadline'ı geçmişe kaydırıyordu. Tüm retry matematiği artık response anındaki `_now()`'dan hesaplanıyor.
+- **D — Completer çift-tamamlama**: `_readBoundedBody`/`_discardBody` dinleyicilerinde error+done veya çoklu error dizisi ikinci `complete*` çağrısı üretiyordu (`Bad state: Future already completed` unhandled async hatası). Tüm tamamlama yolları `isCompleted` korumalı; `_discardBody` timeout'unda `sub.cancel` sonucu artık `unawaited` ile tüketiliyor. `debugReadBoundedBody`/`debugDiscardBody` test seam'leri eklendi.
+- **E — Yanlış deklare charset**: `ISO-8859-1`/`Windows-1252` deklare edip UTF-8 gönderen sunucular mojibake üretiyordu. Bu legacy deklarasyonlarda önce strict UTF-8 deneniyor, başarısızsa deklare edilen kodlamaya düşülüyor. Windows-1252'nin 0x80–0x9F smart-punctuation eşlemesi korunuyor (gerçek CP1252 gövdelerde UTF-8 strict zaten fail eder).
+- **F — `Retry-After` üst sınırı**: `maxRetryAfter = 24h` — devasa saniye değerleri veya uzak HTTP-date'ler artık aylara uzanan kilitlenme üretemez. Negatif değerler null; Duration mikrosaniye overflow'u clamp-öncesi karşılaştırmayla engellendi. Trade-off: >24h'lik gerçek mandate 1 güne kısaltılır — bu sürenin üstü broken-server ile ayırt edilemez.
+- **Ek — Medya post-pace recheck + `deferred` outcome**: `_fetchAndStore` pacing sonrası `_hostCooled(url, _now(), manual:)` kontrolü yapıyor; cooldown'da `deferred` döner → parça `pending` kalır, failure sayılmaz, retry planlanmaz, RSS body'si korunur, expiry sonrası tekrar uygun. Manuel bayrağı `_prepareRecord→_preparePiece→_fetchAndStore` zincirine taşındı — manuel retry local tahmini atlar, mandate'i atlamaz.
+
 ## 4. Yeni Regresyon Testleri
 
 - Kardeş başarı **hiçbir** aktif host cooldown'unu silemez — Retry-After'lı da olmasa da (deadline'a kadar blok, sonra açılır)
@@ -63,10 +75,16 @@ Bu turda önceki mimari korunarak üç davranış kapatıldı:
 - `www.reddit.com`↔`reddit.com`↔`:443` tek cooldown kovası + tek pacing kovası; `old.reddit.com` bağımsız
 - Extraction: feed-kaynaklı host cooldown'da **sıfır HTTP isteği**; forceRefresh local tahmini atlar, server mandate'ine uyar
 - Prep: cooldown'da extraction+medya atlanır, failure sayılmaz, RSS body'si korunur; manuel retry mandated'da 0 istek, local'de çalışır
+- Extraction post-pace: pace kuyruğunda bekleyen istek, beklerken öğrenilen 429 sonrası **sıfır HTTP** ile döner (deterministik kuyruk senaryosu)
+- `_recordFailure` sırasız-yanıt: 429+`Retry-After` sonrası dönen 500 mandate'i kısaltamaz; yeni daha uzun mandate uzatır; local 500 cooldown expiry'de retry serbest
+- Medya: gecikmeli istekte `Retry-After` deadline'ı response saatinden hesaplanır; pace kuyruğundaki parça cooldown'da `deferred` → pending + sıfır istek; expiry sonrası tekrar denenir
+- Bounded body: error→done ve error×2 tek tamamlama, timeout, oversize, normal body, drain toleransı — asılı future/subscription yok
+- Charset: UTF-8'in ISO-8859-1/Windows-1252 diye etiketlendiği gövdeler düzgün decode; gerçek Latin-1 ve gerçek CP1252 smart punctuation korunur
+- `parseRetryAfter`: 24h clamp (saniye + HTTP-date), negatif→null, sıradan değerler birebir
 
 ## 5. Doğrulama
 
-- `flutter test` → **421/421 geçti** (önceki 413 + 8 yeni)
+- `flutter test` → **442/442 geçti** (421 + 21 yeni/final tur)
 - `flutter analyze` → temiz
 - `dart format --set-exit-if-changed` → temiz
 - `flutter build apk --debug` → **başarılı** (`app-debug.apk`)

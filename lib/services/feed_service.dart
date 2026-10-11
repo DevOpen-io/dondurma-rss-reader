@@ -323,7 +323,13 @@ class FeedService {
           );
         }
       },
-      onError: completer.completeError,
+      // A stream may deliver multiple errors — or an error followed by
+      // done — so every completion path must check first; a second
+      // complete* call throws 'Future already completed' as an
+      // unhandled async error.
+      onError: (Object e, StackTrace st) {
+        if (!completer.isCompleted) completer.completeError(e, st);
+      },
       onDone: () {
         if (!completer.isCompleted) {
           completer.complete(builder.takeBytes());
@@ -355,15 +361,35 @@ class FeedService {
       (chunk) {
         bytes += chunk.length;
         if (bytes > maxFeedBytes && !completer.isCompleted) {
-          sub.cancel();
+          unawaited(sub.cancel());
           completer.complete();
         }
       },
-      onError: (_) => completer.complete(),
-      onDone: completer.complete,
+      // Drain is best-effort — errors or done both mean "released";
+      // but only the first signal may complete the future.
+      onError: (_) {
+        if (!completer.isCompleted) completer.complete();
+      },
+      onDone: () {
+        if (!completer.isCompleted) completer.complete();
+      },
     );
-    await completer.future.timeout(bodyDeadline, onTimeout: sub.cancel);
+    await completer.future.timeout(
+      bodyDeadline,
+      onTimeout: () => unawaited(sub.cancel()),
+    );
   }
+
+  /// Test seam for [_readBoundedBody] — stream failure modes need a
+  /// controlled source, not a live socket.
+  @visibleForTesting
+  static Future<Uint8List> debugReadBoundedBody(Stream<List<int>> stream) =>
+      _readBoundedBody(stream);
+
+  /// Test seam for [_discardBody].
+  @visibleForTesting
+  static Future<void> debugDiscardBody(Stream<List<int>> stream) =>
+      _discardBody(stream);
 
   /// Decodes and parses a raw feed body into capped [FeedItem]s.
   ///
@@ -502,14 +528,24 @@ class FeedService {
           _utf16Units(bytes, bigEndian: true, offset: skip ? 2 : 0),
         );
       case 'iso-8859-1' || 'latin1' || 'latin-1':
-        return latin1.decode(bytes);
+        // Servers routinely declare Latin-1 while actually sending
+        // UTF-8 — strict UTF-8 first, declared legacy map on failure.
+        try {
+          return utf8.decode(bytes);
+        } on FormatException {
+          return latin1.decode(bytes);
+        }
       case 'windows-1252' || 'cp1252':
         // Bytes 0x80–0x9F are C1 controls in Latin-1 but printable
         // punctuation (curly quotes, dashes, €) in Windows-1252 — a raw
         // latin1.decode renders smart punctuation as control chars.
-        return String.fromCharCodes(
-          bytes.map((b) => b >= 0x80 && b <= 0x9F ? _cp1252[b - 0x80] : b),
-        );
+        try {
+          return utf8.decode(bytes);
+        } on FormatException {
+          return String.fromCharCodes(
+            bytes.map((b) => b >= 0x80 && b <= 0x9F ? _cp1252[b - 0x80] : b),
+          );
+        }
       case 'utf-8':
         try {
           return utf8.decode(bytes);

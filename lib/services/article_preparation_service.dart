@@ -520,24 +520,28 @@ class ArticlePreparationService {
           e,
     ];
     await Future.wait([
-      for (final piece in pending) _preparePiece(id, piece.key, now, epoch),
+      for (final piece in pending)
+        _preparePiece(id, piece.key, epoch, manual: manual),
     ]);
   }
 
   Future<void> _preparePiece(
     String id,
     String url,
-    DateTime now,
-    int epoch,
-  ) async {
+    int epoch, {
+    bool manual = false,
+  }) async {
     await _semaphore.acquire();
     try {
-      final outcome = await _fetchAndStore(url, now);
+      final outcome = await _fetchAndStore(url, manual: manual);
       await _records.mutate(id, expectedEpoch: epoch, (current) {
         if (current == null || current.tombstoned) return current;
         if (current.owners.isEmpty) return current;
         final existing = current.media[url];
         if (existing == null) return current;
+        // Deferred by a host cooldown learned mid-queue: not an attempt —
+        // the piece stays pending with its retry state untouched.
+        if (outcome.deferred) return current;
         // Never downgrade a piece another pass already completed.
         if (existing.state == MediaState.ready) return current;
         // A permanent failure is fenced too: a racing pass's transient
@@ -558,7 +562,7 @@ class ArticlePreparationService {
           // The later of doubling backoff and server Retry-After wins —
           // a manual retry must not bypass a 429 wait either. A stored
           // (possibly longer, e.g. Retry-After) wait is never shortened.
-          var retryAt = now.add(backoffFor(attempts));
+          var retryAt = _now().add(backoffFor(attempts));
           var waitSource = 'backoff';
           final server = outcome.retryAfter;
           if (server != null && server.isAfter(retryAt)) {
@@ -589,13 +593,21 @@ class ArticlePreparationService {
   /// Downloads [url] into the media pool. Returns the ready manifest entry
   /// on success; [gone] for permanent failures (404/410, non-image payload,
   /// oversize) that must never be retried; [retryAfter] carries the server's
-  /// hint for transient failures.
-  Future<({MediaEntry? ready, DateTime? retryAfter, bool gone})> _fetchAndStore(
-    String url,
-    DateTime now,
-  ) async {
+  /// hint for transient failures; [deferred] marks a skip with zero
+  /// attempts — the piece was cooled mid-queue, not failed.
+  ///
+  /// All retry math uses a fresh `_now()` at response time — the sweep's
+  /// `now` may be minutes stale after semaphore and pacing waits, and a
+  /// `Retry-After` relative to a dead timestamp schedules wrong.
+  Future<({MediaEntry? ready, DateTime? retryAfter, bool gone, bool deferred})>
+  _fetchAndStore(String url, {bool manual = false}) async {
     try {
       await _paceHost(url);
+      // The queue wait may have spanned a sibling's 429 — honor the
+      // cooldown learned in the meantime instead of firing anyway.
+      if (_hostCooled(url, _now(), manual: manual)) {
+        return (ready: null, retryAfter: null, gone: false, deferred: true);
+      }
       final response = await _client
           .get(
             Uri.parse(url),
@@ -610,21 +622,23 @@ class ArticlePreparationService {
           // Soft-404 HTML / captive portal / oversize / empty payload —
           // structural, not transient: retrying would fetch the same
           // non-image forever (an empty put throws, looping the wait).
-          return (ready: null, retryAfter: null, gone: true);
+          return (ready: null, retryAfter: null, gone: true, deferred: false);
         }
         return (
           ready: await _media.put(url, response.bodyBytes),
           retryAfter: null,
           gone: false,
+          deferred: false,
         );
       }
       return (
         ready: null,
-        retryAfter: parseRetryAfter(response.headers['retry-after'], now),
+        retryAfter: parseRetryAfter(response.headers['retry-after'], _now()),
         gone: response.statusCode == 404 || response.statusCode == 410,
+        deferred: false,
       );
     } catch (_) {
-      return (ready: null, retryAfter: null, gone: false);
+      return (ready: null, retryAfter: null, gone: false, deferred: false);
     }
   }
 }

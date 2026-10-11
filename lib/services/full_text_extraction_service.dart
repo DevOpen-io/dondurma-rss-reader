@@ -69,10 +69,12 @@ class FullTextExtractionService {
   // block the article for the whole session; permanent ones (403/404/410,
   // or a page with no extractable content) last the session.
   //
-  // `serverMandated` marks deadlines taken from a `Retry-After` header —
-  // an explicit user retry may bypass a local heuristic cooldown but
-  // never a server-issued wait.
-  static final Map<String, ({DateTime until, bool serverMandated})>
+  // `mandatedUntil` tracks the server-issued `Retry-After` window
+  // separately from the overall cooldown — an explicit user retry may
+  // bypass the local heuristic part but never an active server wait.
+  // Keeping the two windows distinct means a local estimate longer than
+  // the mandate can't erase the mandate, and vice versa.
+  static final Map<String, ({DateTime until, DateTime? mandatedUntil})>
   _failedUntil = {};
   static const int _failedCapacity = 20;
 
@@ -97,11 +99,30 @@ class FullTextExtractionService {
     DateTime until, {
     bool serverMandated = false,
   }) {
+    // Merge, never shorten: an out-of-order sibling response (a 500
+    // landing after a 429's Retry-After) must not unlock a retry early.
+    // The mandate window merges independently — a shorter local estimate
+    // can't cut it, a longer one can't erase it, and a new valid mandate
+    // still extends it.
+    final existing = _failedUntil[url];
+    var effective = until;
+    DateTime? mandated = serverMandated ? until : null;
+    if (existing != null) {
+      if (existing.until.isAfter(effective)) effective = existing.until;
+      final em = existing.mandatedUntil;
+      if (em != null && (mandated == null || em.isAfter(mandated))) {
+        mandated = em;
+      }
+    }
+    // A mandated wait also blocks automatic retries for its whole window.
+    if (mandated != null && mandated.isAfter(effective)) {
+      effective = mandated;
+    }
     if (_failedUntil.length >= _failedCapacity &&
         !_failedUntil.containsKey(url)) {
       _failedUntil.remove(_failedUntil.keys.first);
     }
-    _failedUntil[url] = (until: until, serverMandated: serverMandated);
+    _failedUntil[url] = (until: effective, mandatedUntil: mandated);
   }
 
   // ---------------------------------------------------------------------------
@@ -147,13 +168,26 @@ class FullTextExtractionService {
     return entry != null && entry.until.isAfter(DateTime.now());
   }
 
+  /// Whether a request to [url] must not fire right now — this URL's own
+  /// failure cooldown or the shared host-level rate-limit policy. A
+  /// forced retry bypasses local estimates, never a server mandate.
+  bool _blocked(String url, bool forceRefresh) {
+    if (forceRefresh ? _inServerCooldown(url) : hasFailedAttempt(url)) {
+      return true;
+    }
+    final b = backoff;
+    if (b == null) return false;
+    final now = DateTime.now();
+    return forceRefresh
+        ? b.isMandatedBackedOff(url, now)
+        : b.isBackedOff(url, now);
+  }
+
   /// Whether [url] is inside a server-issued `Retry-After` wait — even a
   /// forced retry must not violate it.
   bool _inServerCooldown(String url) {
-    final entry = _failedUntil[url];
-    return entry != null &&
-        entry.serverMandated &&
-        entry.until.isAfter(DateTime.now());
+    final until = _failedUntil[url]?.mandatedUntil;
+    return until != null && until.isAfter(DateTime.now());
   }
 
   /// Fetches [url], extracts the main article body, and returns its inner HTML.
@@ -170,23 +204,13 @@ class FullTextExtractionService {
   }) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
-    // Skip inside a failure cooldown — a forced retry bypasses the local
-    // heuristic TTL, but a server-issued Retry-After wait still applies.
-    if (forceRefresh ? _inServerCooldown(url) : hasFailedAttempt(url)) {
-      return null;
-    }
-    // Skip inside the shared host cooldown — same rule: a manual retry
-    // may bypass a local estimate, never a server-issued mandate.
-    final b = backoff;
-    if (b != null &&
-        (forceRefresh
-            ? b.isMandatedBackedOff(url, DateTime.now())
-            : b.isBackedOff(url, DateTime.now()))) {
-      return null;
-    }
+    if (_blocked(url, forceRefresh)) return null;
 
     try {
       await pacer.pace(url);
+      // The pace wait may have spanned a sibling request's 429 — the
+      // cooldown learned while queued applies before this request too.
+      if (_blocked(url, forceRefresh)) return null;
       final response = await http
           .get(
             Uri.parse(url),

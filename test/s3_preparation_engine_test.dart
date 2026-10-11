@@ -66,6 +66,7 @@ void main() {
     Future<String?> Function(String url)? extract,
     Duration? minHostGap,
     FeedBackoff? backoff,
+    DateTime Function()? now,
   }) => ArticlePreparationService(
     recordStore: newStore(),
     mediaStore: ArticleMediaStore(root: mediaDir),
@@ -74,6 +75,7 @@ void main() {
     extractFullText: extract,
     minHostGap: minHostGap ?? Duration.zero,
     backoff: backoff,
+    now: now,
   );
 
   group('registerArticle', () {
@@ -430,6 +432,87 @@ void main() {
         expect(httpCalls, 1);
       },
     );
+
+    test('a media request cooled while queued is deferred — zero requests, '
+        'no failure, stays pending', () async {
+      var httpCalls = 0;
+      final backoff = FeedBackoff();
+      final client = http_testing.MockClient((_) async {
+        httpCalls++;
+        // The first download lands, then the host gets limited — the
+        // sibling still sitting in the pacing queue must defer, not
+        // fire and not fail.
+        backoff.recordFailure(
+          'https://example.com/feed.xml',
+          FeedFetchException(
+            FeedFetchErrorKind.httpStatus,
+            'status 429',
+            statusCode: 429,
+          ),
+          DateTime.now(),
+        );
+        return http.Response('img', 200);
+      });
+      // A nonzero gap is what keeps piece B queued long enough to see
+      // the cooldown the sibling's response just recorded.
+      final svc = service(
+        client: client,
+        // Extraction fails → the RSS body stays as the fallback.
+        extract: (_) async => null,
+        backoff: backoff,
+        minHostGap: const Duration(milliseconds: 150),
+      );
+      await svc.registerArticle(
+        item(
+          imageUrl: 'https://example.com/a.png',
+          content: '<p>rss body</p><img src="https://example.com/b.png">',
+        ),
+        const {'bookmark'},
+      );
+      await svc.preparePending(unmetered: true);
+
+      expect(httpCalls, 1); // only the first piece ever hit the network
+      final record = (await newStore().read('art-1'))!;
+      final a = record.media['https://example.com/a.png']!;
+      final b = record.media['https://example.com/b.png']!;
+      expect(a.state, MediaState.ready);
+      // B was deferred, not attempted: pending, zero attempts, no
+      // rescheduled retry — and the RSS body is untouched.
+      expect(b.state, MediaState.pending);
+      expect(b.attempts, 0);
+      expect(b.nextRetryAt, isNull);
+      expect(record.body, contains('rss body'));
+    });
+
+    test('Retry-After is computed from response time, not the stale sweep '
+        'clock', () async {
+      var t = DateTime.now();
+      final client = http_testing.MockClient((_) async {
+        // The piece sat behind the semaphore/pacer for "30 minutes".
+        t = t.add(const Duration(minutes: 30));
+        return http.Response('x', 429, headers: {'retry-after': '300'});
+      });
+      final svc = service(
+        client: client,
+        extract: (_) async => 'ok',
+        now: () => t,
+      );
+      await svc.registerArticle(
+        item(imageUrl: 'https://example.com/a.png'),
+        const {'bookmark'},
+      );
+      await svc.preparePending(unmetered: true);
+
+      final record = (await newStore().read('art-1'))!;
+      final entry = record.media['https://example.com/a.png']!;
+      // Sweep-start math would store t0+5m (already past); the deadline
+      // must anchor at the response instant ≈ t0+30m+5m.
+      expect(
+        entry.nextRetryAt!.isAfter(t.subtract(const Duration(minutes: 2))),
+        isTrue,
+      );
+      expect(entry.waitSource, 'server');
+    });
 
     test('a ready piece is never re-fetched on a later pass', () async {
       var calls = 0;

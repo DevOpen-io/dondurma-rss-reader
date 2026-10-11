@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
@@ -445,6 +447,151 @@ void main() {
 ]}''');
       expect(items[0].id, 'https://j/a');
       expect(items[1].id, isNotEmpty);
+    });
+  });
+
+  group('charset decoding', () {
+    List<FeedItem> parseBytes(List<int> bytes, {String? contentType}) =>
+        FeedService.parseFeedBody((
+          bodyBytes: bytes is Uint8List ? bytes : Uint8List.fromList(bytes),
+          category: 'T',
+          url: 'https://x/f.xml',
+          contentType: contentType,
+        ));
+
+    String feed(String title) =>
+        '<?xml version="1.0"?><rss version="2.0"><channel><title>S</title>'
+        '<item><title>$title</title><guid>g</guid><link>https://x/1</link>'
+        '</item></channel></rss>';
+
+    test('UTF-8 body mislabeled as ISO-8859-1 decodes correctly', () {
+      // The server declares Latin-1 but the payload is real UTF-8 —
+      // strict UTF-8 must win, or every non-ASCII char becomes mojibake.
+      final items = parseBytes(
+        utf8.encode(feed('café')),
+        contentType: 'text/xml; charset=ISO-8859-1',
+      );
+      expect(items.single.title, 'café');
+    });
+
+    test('a genuine Latin-1 body still decodes via the declared map', () {
+      final items = parseBytes(
+        latin1.encode(feed('café')),
+        contentType: 'text/xml; charset=iso-8859-1',
+      );
+      expect(items.single.title, 'café');
+    });
+
+    test('a genuine Windows-1252 body keeps smart punctuation', () {
+      // Raw 0x93/0x94/0x97 bytes are CP1252 curly quotes and em-dash —
+      // the dedicated map must render them, not C1 control codes.
+      final cp = String.fromCharCode;
+      final bytes = latin1.encode(
+        feed('${cp(0x93)}quoted${cp(0x94)} ${cp(0x97)} dash'),
+      );
+      final items = parseBytes(
+        bytes,
+        contentType: 'text/xml; charset=windows-1252',
+      );
+      expect(items.single.title, '“quoted” — dash');
+    });
+
+    test('UTF-8 body mislabeled as windows-1252 decodes correctly', () {
+      final items = parseBytes(
+        utf8.encode(feed('naïve café')),
+        contentType: 'text/xml; charset=windows-1252',
+      );
+      expect(items.single.title, 'naïve café');
+    });
+  });
+
+  group('bounded body readers', () {
+    test(
+      'stream error then done completes once — no double completion',
+      () async {
+        // A socket error mid-body followed by the stream's done event —
+        // the reader must surface the error once and not re-complete.
+        Stream<List<int>> errorThenDone() async* {
+          yield [1, 2, 3];
+          yield* Stream.error(StateError('network reset'));
+        }
+
+        await expectLater(
+          FeedService.debugReadBoundedBody(errorThenDone()),
+          throwsA(isA<StateError>()),
+        );
+      },
+    );
+
+    test('repeated error events complete once', () async {
+      Stream<List<int>> multiError() async* {
+        yield* Stream.error(StateError('first'));
+        yield* Stream.error(StateError('second'));
+      }
+
+      await expectLater(
+        FeedService.debugReadBoundedBody(multiError()),
+        throwsA(isA<StateError>()),
+      );
+    });
+
+    test('normal completion returns the accumulated bytes', () async {
+      final c = StreamController<List<int>>();
+      final future = FeedService.debugReadBoundedBody(c.stream);
+      c.add([1, 2]);
+      c.add([3, 4]);
+      await c.close();
+      expect(await future, [1, 2, 3, 4]);
+    });
+
+    test('oversized body aborts with a size error, not a hang', () async {
+      final prev = FeedService.maxFeedBytes;
+      FeedService.maxFeedBytes = 8;
+      addTearDown(() => FeedService.maxFeedBytes = prev);
+      final c = StreamController<List<int>>();
+      final future = FeedService.debugReadBoundedBody(c.stream);
+      c.add(List.filled(16, 0x41));
+      await expectLater(
+        future,
+        throwsA(
+          isA<FeedFetchException>().having(
+            (e) => '$e',
+            'msg',
+            contains('too large'),
+          ),
+        ),
+      );
+      await c.close();
+    });
+
+    test('a stalled body hits the deadline instead of hanging', () async {
+      final prev = FeedService.bodyDeadline;
+      FeedService.bodyDeadline = const Duration(milliseconds: 100);
+      addTearDown(() => FeedService.bodyDeadline = prev);
+      final c = StreamController<List<int>>();
+      final future = FeedService.debugReadBoundedBody(c.stream);
+      await expectLater(future, throwsA(isA<TimeoutException>()));
+      await c.close();
+    });
+
+    test('discard tolerates error-then-done and oversize', () async {
+      Stream<List<int>> errorThenDone() async* {
+        yield* Stream.error(StateError('socket gone'));
+      }
+
+      await expectLater(
+        FeedService.debugDiscardBody(errorThenDone()),
+        completes,
+      );
+
+      final prev = FeedService.maxFeedBytes;
+      FeedService.maxFeedBytes = 4;
+      addTearDown(() => FeedService.maxFeedBytes = prev);
+      final c2 = StreamController<List<int>>();
+      final future2 = FeedService.debugDiscardBody(c2.stream);
+      c2.add(List.filled(32, 0x42));
+      await expectLater(future2, completes);
+      await c2.close();
     });
   });
 
