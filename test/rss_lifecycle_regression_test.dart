@@ -697,6 +697,10 @@ void main() {
       await request.response.close();
     };
 
+    // A corrupt foreground slot must not suppress the background
+    // isolate's own cooldown write below.
+    await Hive.box('feeds').put('feedBackoffUntil', '{not json');
+
     // A durable record with pending media on the same host — the kind
     // an earlier foreground pass registered.
     final seedPrep = ArticlePreparationService(
@@ -724,6 +728,43 @@ void main() {
     await runBgFetch();
     expect(server.counts['/media-feed.xml'], 1);
     expect(server.counts['/pic.png'], 1);
+  });
+
+  test('factory reset drops in-memory cooldowns — a later save writes a '
+      'clean snapshot', () async {
+    final url = server.url('/reset-bo.xml');
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'R', category: 'Test'),
+    ]);
+    server.handlers['/reset-bo.xml'] = (request) async {
+      request.response.statusCode = HttpStatus.tooManyRequests;
+      request.response.headers.set('retry-after', '300');
+      await request.response.close();
+    };
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    // The cooldown was learned and persisted pre-reset.
+    expect(Hive.box('feeds').get('feedBackoffUntil'), isNotNull);
+
+    await providers.feed.factoryReset();
+    expect(Hive.box('feeds').get('feedBackoffUntil'), isNull);
+
+    // Same provider, fresh refresh — SubscriptionProvider still holds
+    // the subscription in memory; the feed now answers 200.
+    server.handlers['/reset-bo.xml'] = (request) =>
+        _respond200(request, _rss('R', ['a1']));
+    await providers.feed.refreshAll();
+    await _waitForRefresh(providers.feed);
+
+    // The feed really fetched (it was not blocked by a resurrected
+    // cooldown) and the re-written snapshot is clean of wiped-era
+    // records.
+    expect(providers.feed.items, isNotEmpty);
+    final raw = Hive.box('feeds').get('feedBackoffUntil') as String?;
+    final snap = raw == null ? null : jsonDecode(raw) as Map<String, dynamic>;
+    expect((snap?['hosts'] as Map?)?.isEmpty ?? true, isTrue);
+    expect((snap?['feeds'] as Map?)?.isEmpty ?? true, isTrue);
+    providers.feed.dispose();
   });
 
   test('restart without network refresh restores persisted articles', () async {

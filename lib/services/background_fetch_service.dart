@@ -149,9 +149,13 @@ Future<void> runBgFetch() async {
       // removes the read-modify-write race on a shared key: no isolate's
       // snapshot can overwrite the other's.
       for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-        final rawBackoff = feedsBox.get(key);
-        if (rawBackoff is String && rawBackoff.isNotEmpty) {
-          backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
+        try {
+          final rawBackoff = feedsBox.get(key);
+          if (rawBackoff is String && rawBackoff.isNotEmpty) {
+            backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
+          }
+        } catch (_) {
+          // One malformed slot must not forfeit the other.
         }
       }
     } catch (_) {}
@@ -251,9 +255,13 @@ Future<void> runBgFetch() async {
       // foreground may have recorded a fresher cooldown (or a clear)
       // while this isolate was fetching; merging first keeps the union.
       for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-        final latest = feedsBox.get(key);
-        if (latest is String && latest.isNotEmpty) {
-          backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+        try {
+          final latest = feedsBox.get(key);
+          if (latest is String && latest.isNotEmpty) {
+            backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+          }
+        } catch (_) {
+          // One malformed slot must not forfeit the other — or the write.
         }
       }
       await feedsBox.put('feedBackoffUntil.bg', jsonEncode(backoff.snapshot()));
@@ -360,9 +368,14 @@ Future<void> runBgFetch() async {
         // foreground write isn't dropped.
         try {
           for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-            final latest = feedsBox.get(key);
-            if (latest is String && latest.isNotEmpty) {
-              backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+            try {
+              final latest = feedsBox.get(key);
+              if (latest is String && latest.isNotEmpty) {
+                backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+              }
+            } catch (_) {
+              // A malformed foreground slot must not suppress this
+              // write — the prep-learned cooldown would be lost.
             }
           }
           await feedsBox.put(

@@ -78,6 +78,12 @@ Bağımsız incelemede 6 CodeRabbit thread'i + 1 ek senaryo doğrulandı; tümü
 
 Regresyon testi: wifi mock'u ile bg preparation'ı çalıştır, medya URL'si 429+`Retry-After` döndür → `.bg` slotunda `hosts` kaydı oluştuğunu doğrula → **ikinci `runBgFetch`** (Hive'dan hidrate olan yeni `FeedBackoff`, yeni-isolate simülasyonu) aynı host'a feed ve medya isteği **sıfır** gönderiyor.
 
+## 3e. CodeRabbit Son Tur — Üç Bulgu
+
+- **factoryReset dirilmesi (Major)**: `_feedBackoff` bellekteki cooldown'ları `factoryReset`'ten sağ çıkıyordu; yeni async persist çağrıları (prep sweep, prefetch `finally`) silinen cooldown'u yeni box'a geri yazabilirdi. `FeedBackoff.reset()` eklendi → reset'te tüm in-memory kayıtlar düşer + iki async save `_resetGeneration` fence'iyle korunuyor (refresh-yolu save zaten fence'liydi).
+- **Bozuk slot kaybı (Minor)**: herhangi bir slot malformed JSON içerirse `jsonDecode` tüm merge+yazmayı iptal ediyordu → bg'nin öğrendiği cooldown kaybolurdu. Üç merge döngüsünde de parse artık anahtar-başına izole.
+- **Deferred ≠ failed ayrımı (Major)**: sayfa isteğinin KENDİSİ 429 aldığında cooldown istek dönmeden kaydediliyor → prep `null`+cooled görüp deferred sanıyordu; oysa istek uçtu ve başarısız oldu. `FullTextExtractionService` artık `_deferredUrls` set'i tutar — yalnızca ağa **hiç çıkmadan** dönen URL'ler işaretlenir (`wasDeferred`); fetch yapan her çağrı işareti temizler. Prep'in deferred koşulu artık `wasDeferred` da ister: sıfır-istek skip → pending/attempts=0, gerçek 429 → attempts+1 + retry.
+
 ## 4. Yeni Regresyon Testleri
 
 - Kardeş başarı **hiçbir** aktif host cooldown'unu silemez — Retry-After'lı da olmasa da (deadline'a kadar blok, sonra açılır)
@@ -99,11 +105,13 @@ Regresyon testi: wifi mock'u ile bg preparation'ı çalıştır, medya URL'si 42
 - Extraction'da cooldown'a takılan `null` → `pending` + sıfır attempts + retry planlanmaz + RSS body korunur
 - Sayfa 429'u (`Retry-After` ile) shared backoff'a yazılır → `isMandatedBackedOff` tüm origin'i kapsar
 - Medya 429'u shared backoff'a yazılır → hiç istek yememiş komşu URL bile cooled
-- Bg preparation'da öğrenilen cooldown `.bg` slotuna düşer → yeni pass/isolate Hive'dan yükler, aynı host'a sıfır istek
+- Bg preparation'da öğrenilen cooldown `.bg` slotuna düşer → yeni pass/isolate Hive'dan yükler, aynı host'a sıfır istek (bozuk fg slot yazıyı engellemez)
+- factoryReset sonrası `_feedBackoff` temiz → yeni snapshot wiped-era host/feed kaydı içermez, feed gerçekten fetch edilir
+- Extraction self-429 → attempts+1 + failed + retry; cooldown'a takılan sıfır-istek skip → pending/attempts=0 (deferred)
 
 ## 5. Doğrulama
 
-- `flutter test` → **446/446 geçti** (445 + 1 yeni)
+- `flutter test` → **448/448 geçti** (446 + 2 yeni)
 - `flutter analyze` → temiz
 - `dart format --set-exit-if-changed` → temiz
 - `flutter build apk --debug` → **başarılı** (`app-debug.apk`)

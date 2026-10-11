@@ -93,7 +93,31 @@ class FullTextExtractionService {
   static void debugClearSession() {
     _cache.clear();
     _failedUntil.clear();
+    _deferredUrls.clear();
   }
+
+  // URLs whose last [extractFullText] call returned null WITHOUT firing
+  // a request — a cooldown gate skipped it. A caller distinguishes
+  // "deferred" (not an attempt — don't count a failure) from a fetch
+  // that actually ran and failed (e.g. the page's own 429).
+  static final Set<String> _deferredUrls = {};
+
+  /// Whether the last [extractFullText] call for [url] was skipped by a
+  /// cooldown without hitting the network.
+  bool wasDeferred(String url) => _deferredUrls.contains(url);
+
+  static void _markDeferred(String url) {
+    if (_deferredUrls.length >= _failedCapacity &&
+        !_deferredUrls.contains(url)) {
+      _deferredUrls.remove(_deferredUrls.first);
+    }
+    _deferredUrls.add(url);
+  }
+
+  /// Test seam — injected extract callbacks in tests simulate the
+  /// cooldown-skip path through this marker.
+  @visibleForTesting
+  static void debugMarkDeferred(String url) => _markDeferred(url);
 
   static void _recordFailure(
     String url,
@@ -205,13 +229,20 @@ class FullTextExtractionService {
   }) async {
     // Return cached result if available
     if (_cache.containsKey(url)) return _cache[url];
-    if (_blocked(url, forceRefresh)) return null;
+    if (_blocked(url, forceRefresh)) {
+      _markDeferred(url);
+      return null;
+    }
 
     try {
       await pacer.pace(url);
       // The pace wait may have spanned a sibling request's 429 — the
       // cooldown learned while queued applies before this request too.
-      if (_blocked(url, forceRefresh)) return null;
+      if (_blocked(url, forceRefresh)) {
+        _markDeferred(url);
+        return null;
+      }
+      _deferredUrls.remove(url);
       final response = await http
           .get(
             Uri.parse(url),

@@ -14,6 +14,7 @@ import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
+import 'package:ice_cream_rss_reader/services/full_text_extraction_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
 
 void main() {
@@ -30,6 +31,9 @@ void main() {
     stateFile = File('${tempDir.path}/prep_$stamp.json');
     mediaDir = Directory('${tempDir.path}/media_$stamp')
       ..createSync(recursive: true);
+    // Session-scoped extraction state (deferred markers, failure
+    // cooldowns) is process-wide — isolate each test.
+    FullTextExtractionService.debugClearSession();
   });
 
   tearDownAll(() {
@@ -493,10 +497,50 @@ void main() {
           extractCalls++;
           // The extraction's own pace wait spanned a sibling request's
           // 429 — it saw the shared cooldown and returned null without
-          // fetching. By the time prep inspects the result the host is
+          // fetching, marking the URL deferred the way the real service
+          // does. By the time prep inspects the result the host is
           // already cooled, so the attempt must be deferred, not failed.
           backoff.recordFailure(
             'https://example.com/feed.xml',
+            FeedFetchException(
+              FeedFetchErrorKind.httpStatus,
+              'status 429',
+              statusCode: 429,
+            ),
+            DateTime.now(),
+          );
+          FullTextExtractionService.debugMarkDeferred(
+            'https://example.com/article/1',
+          );
+          return null;
+        },
+        backoff: backoff,
+      );
+      await svc.registerArticle(item(content: '<p>rss body</p>'), const {
+        'bookmark',
+      });
+      await svc.preparePending(unmetered: true);
+
+      expect(extractCalls, 1); // extraction ran, deferred mid-request
+      final record = (await newStore().read('art-1'))!;
+      expect(record.bodyState, MediaState.pending); // not failed
+      expect(record.attempts, 0);
+      expect(record.nextRetryAt, isNull);
+      expect(record.body, '<p>rss body</p>');
+    });
+
+    test('a page 429 on the extraction request itself counts as an '
+        'attempt — deferred is only for zero-request skips', () async {
+      final backoff = FeedBackoff();
+      var extractCalls = 0;
+      final svc = service(
+        extract: (u) async {
+          extractCalls++;
+          // The request fired and the page answered 429 — the service
+          // reports it to the shared backoff, but it is NOT a deferred
+          // skip: this attempt must count.
+          backoff.recordFailure(
+            u,
             FeedFetchException(
               FeedFetchErrorKind.httpStatus,
               'status 429',
@@ -513,11 +557,11 @@ void main() {
       });
       await svc.preparePending(unmetered: true);
 
-      expect(extractCalls, 1); // extraction ran, deferred mid-request
+      expect(extractCalls, 1);
       final record = (await newStore().read('art-1'))!;
-      expect(record.bodyState, MediaState.pending); // not failed
-      expect(record.attempts, 0);
-      expect(record.nextRetryAt, isNull);
+      expect(record.bodyState, MediaState.failed);
+      expect(record.attempts, 1);
+      expect(record.nextRetryAt, isNotNull);
       expect(record.body, '<p>rss body</p>');
     });
 

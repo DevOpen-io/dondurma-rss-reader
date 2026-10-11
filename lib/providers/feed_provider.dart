@@ -1131,14 +1131,17 @@ class FeedProvider extends ChangeNotifier {
       // verdict is queried fresh here: the cached stream value can be
       // stale right after resume (wifi→mobile handoff).
       unawaited(() async {
+        final gen = _resetGeneration;
         try {
           final results = await Connectivity().checkConnectivity();
           _setUnmetered(results);
           await _preparation.preparePending(unmetered: _unmetered);
           // A page/media 429 during the sweep cooled a shared host —
           // persist now so the next refresh pass and the bg isolate
-          // see it even if the app dies before the next sync.
-          _saveFeedBackoff();
+          // see it even if the app dies before the next sync. Skip the
+          // write if a factory reset landed mid-sweep — the box and the
+          // in-memory cooldowns were already wiped.
+          if (gen == _resetGeneration) _saveFeedBackoff();
           // Preparation commits landed — labels may now claim ready.
           await _refreshArticleStatuses();
         } catch (_) {
@@ -1182,6 +1185,7 @@ class FeedProvider extends ChangeNotifier {
     if (subs == null || subs.isEmpty) return;
 
     _isPrefetching = true;
+    final gen = _resetGeneration;
     try {
       final extraction = FullTextExtractionService.instance;
       // _items is date-sorted newest-first, so take() picks the latest.
@@ -1236,8 +1240,9 @@ class FeedProvider extends ChangeNotifier {
       }
     } finally {
       // Page 429s recorded shared host cooldowns — persist before the
-      // pass settles so a killed app doesn't lose them.
-      _saveFeedBackoff();
+      // pass settles so a killed app doesn't lose them. Fenced: a reset
+      // landing mid-pass wiped both the box and the in-memory state.
+      if (gen == _resetGeneration) _saveFeedBackoff();
       _isPrefetching = false;
       if (_prefetchQueued) {
         _prefetchQueued = false;
@@ -1543,6 +1548,9 @@ class FeedProvider extends ChangeNotifier {
 
     _cacheGeneration++;
     _resetGeneration++; // an in-flight refresh's apply phase is now void
+    // Rate-limit state belongs to the wiped era too — otherwise an async
+    // save (prep sweep, prefetch) could resurrect it into the new box.
+    _feedBackoff.reset();
     _needsInitialReconcile = true; // the next era bootstraps owners again
     _knownSubscriptionUrls = const {};
     await _bumpCacheEpoch(); // fence bg writers before the wipe…

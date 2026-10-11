@@ -494,12 +494,13 @@ class ArticlePreparationService {
               media: mergedMedia,
             );
           }
-          // The extraction returned null inside an active host cooldown
-          // (a sibling's 429 learned mid-request, or this page's own 429
-          // now reported to the shared backoff): the attempt was
-          // deferred, not failed — leave the body pending with its retry
-          // state untouched, mirroring media's `deferred` outcome.
-          if (_hostCooled(record.link, _now(), manual: manual)) {
+          // Deferred only when the extraction was skipped WITHOUT a
+          // request (a cooldown gate saw it first). A page that actually
+          // answered 429 is a real failed attempt — the cooldown it just
+          // recorded covers this same check, so the marker is what
+          // separates "skipped" from "fetched and failed".
+          if (_hostCooled(record.link, _now(), manual: manual) &&
+              FullTextExtractionService.instance.wasDeferred(record.link)) {
             return current;
           }
           final attempts = current.attempts + 1;

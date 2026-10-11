@@ -123,6 +123,15 @@ class FeedBackoff {
     return until;
   }
 
+  /// Drops all in-memory state. Called on factory reset so a later
+  /// snapshot write cannot resurrect wiped-era cooldowns.
+  void reset() {
+    _feeds.clear();
+    _hosts.clear();
+    _attempts.clear();
+    _cleared.clear();
+  }
+
   /// A successful fetch clears the feed's own failure history — the
   /// server just answered it. The host cooldown is NEVER touched: a
   /// sibling's 200 — even one whose request started before the 429 —
