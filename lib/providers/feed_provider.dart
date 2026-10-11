@@ -578,21 +578,28 @@ class FeedProvider extends ChangeNotifier {
     _box.put('feedValidators', jsonEncode(validators));
   }
 
-  /// Loads persisted per-feed cooldown deadlines written by either the
-  /// foreground or the background isolate. Loading merges — the later
-  /// deadline always wins.
+  /// Loads persisted cooldown snapshots written by either isolate. Each
+  /// writer owns its own slot (`feedBackoffUntil` for the foreground,
+  /// `feedBackoffUntil.bg` for the background isolate) and every reader
+  /// merges both — there is no shared read-modify-write register, so
+  /// concurrent isolates can't lose each other's cooldowns. Loading
+  /// merges: later expiries win, newer clears suppress superseded
+  /// records.
   void _loadFeedBackoff() {
-    final raw = _box.get('feedBackoffUntil');
-    if (raw is String && raw.isNotEmpty) {
-      try {
-        _feedBackoff.load(jsonDecode(raw) as Map<String, dynamic>);
-      } catch (_) {}
+    for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+      final raw = _box.get(key);
+      if (raw is String && raw.isNotEmpty) {
+        try {
+          _feedBackoff.load(jsonDecode(raw) as Map<String, dynamic>);
+        } catch (_) {}
+      }
     }
   }
 
-  /// Merge-then-write: a background sync may have recorded a fresher
-  /// 429 while this isolate was fetching — folding it in before the
-  /// snapshot means the write can't overwrite a newer deadline.
+  /// Merge-then-write into this isolate's own slot: a background sync may
+  /// have recorded a fresher 429 while this isolate was fetching — folding
+  /// its slot in before the snapshot means the write can't drop a newer
+  /// deadline. The background slot is never written from here.
   void _saveFeedBackoff() {
     _loadFeedBackoff();
     _box.put('feedBackoffUntil', jsonEncode(_feedBackoff.snapshot()));

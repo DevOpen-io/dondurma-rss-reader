@@ -121,6 +121,26 @@ class FeedRefresher {
       final fetchUrl = redirects[sub.url] ?? sub.url;
       await _hostPacer.pace(fetchUrl);
       try {
+        // Recheck after the queue wait: a same-host sibling may have
+        // learned a 429 while this request waited its turn — a spacing
+        // gap alone does not mean the previous request finished.
+        if (backoff.isBackedOff(sub.url, DateTime.now())) {
+          return (
+            url: sub.url,
+            observationEpoch: sub.notificationEpoch,
+            items: existingByFeed[sub.url] ?? const <FeedItem>[],
+            succeeded: false,
+            fresh: false,
+            etag: null as String?,
+            lastModified: null as String?,
+            dropValidator: false,
+            finalUrl: null as String?,
+            fetchUrl: fetchUrl,
+            error: null as String?,
+            connectivity: false,
+            skipped: true,
+          );
+        }
         final etag = v?['etag'] as String?;
         final lastModified = v?['lastModified'] as String?;
         var result = await _feedService.fetchFeed(

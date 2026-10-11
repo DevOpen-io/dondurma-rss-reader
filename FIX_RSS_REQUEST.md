@@ -1,69 +1,77 @@
-# RSS Motoru — Takip Denetimi Raporu
+# RSS Motoru — Son Denetim Raporu (PR #60)
 
-## 1. Doğrulanan Kusurlar ve Kök Nedenler
+## 1. Üç Bulgunun Kök Nedeni
 
-| # | Kusur | Kök neden |
-|---|-------|-----------|
-| 1 | `HostPacer` gerçekte paylaşılmıyordu | `FeedRefresher`, `ArticlePreparationService` ve `FullTextExtractionService` kendi instance'larını oluşturuyordu — "paylaşılan" yalnızca aynı sınıftı, aynı zamanlama değildi |
-| 2 | `FeedBackoff` yarışı | İki isolate aynı snapshot'ı okuyup eski halini yazabiliyordu; başarı kaydı temizlenmiş bir cooldown persist'ten dirilebiliyordu; aynı host'taki kardeş feed'ler 429'dan etkilenmiyordu |
-| 3 | Redirect hijyeni | Origin karşılaştırması yalnız `host`'a bakıyordu (scheme/port değişimi validator sızdırırdı); redirect gövdesi drain'siz/sınırsız bırakılabiliyordu |
-| 4 | `extractFullText(forceRefresh: true)` | Server'ın `Retry-After`'ını da bypass ediyordu — yalnız yerel heuristic TTL'i atlamalıydı; `_parseRetryAfter` HTTP-date'i anlamıyordu |
-| 5 | CodeRabbit bulguları | Tam-origin karşılaştırma eksikti; Windows-1252 `latin1.decode` ile okunuyordu (0x80–0x9F arası karakterler bozuluyordu); extraction'da HTTP-date `Retry-After` yoktu |
-| 6 | Prefix'li Atom parse | Keyfi prefix regex'i namespace URI'sini doğrulamıyordu — Atom-olmayan `<x:feed>` da dönüştürülebilirdi |
-| 7 | Gövde okuma kilidi | `sub.cancel()` sonrası `asFuture()` deterministik tamamlanmıyordu — cap testi 20 sn timeout'a düşüyordu |
+### Bulgu 1 — Kardeş feed'in başarısı host cooldown'unu erken siliyor
 
-## 2. Yapılan Değişiklikler
+`recordSuccess` koşulsuz `_hostRetryAt.remove(...)` yapıyordu. Senaryo: A 429 + `Retry-After: 600` alır → host 10 dk soğur → önceden uçuşta olan B 200 döner → başarı host kaydını siler → C, sunucunun 10 dk'lık kısıtı bitmeden istek atabilir. Kardeş 200, origin çapında geçerli bir server kısıtını çürütmez.
 
-- **`lib/services/feed_service.dart`**
-  - `sameOrigin(a, b)` (`@visibleForTesting`): redirect'te tam origin karşılaştırması (scheme + host + port); cross-origin'de `If-None-Match`/`If-Modified-Since` silinir
-  - HTTP/HTTPS dışı redirect hedefi (`file:`, `javascript:`) reddedilir
-  - `_readBoundedBody` → `Completer` tabanlı: boyut cap'i ve `bodyDeadline` (test-mutable, varsayılan 20 sn) stream'i deterministik `cancel` eder
-  - `_discardBody` → aynı sınırlarla redirect-hop drain'i; takılan/şişkin hop gövdesi socket'i bağlayamaz
-  - Windows-1252 decode: 0x80–0x9F `_cp1252` tablosuyla (kıvırcık tırnak, tire, €); tanımsız baytlar U+FFFD
-- **`lib/utils/retry_after.dart`** *(yeni)* — `parseRetryAfter`: delta-saniye + HTTP-date (`HttpDate.parse`); tüm servisler tek util'i kullanır
-- **`lib/services/full_text_extraction_service.dart`** — `_failedUntil` kaydı `serverMandated` bayrağı taşır; `forceRefresh` yalnız heuristic TTL'i atlar, server cooldown'u (`_inServerCooldown`) her zaman geçerlidir; enjekte edilebilir `pacer`
-- **`lib/utils/host_pacer.dart`** — per-call `gap` parametresi, saat enjeksiyonu; "daha katı rezervasyon kısaltılamaz" semantiği
-- **`lib/providers/feed_provider.dart`** — tek `_hostPacer` üç servise de enjekte edilir; refresh başı `_loadFeedBackoff()` reload; `_saveFeedBackoff` merge-on-save
-- **`lib/services/feed_backoff.dart`** — host-seviye + feed-seviye cooldown, snapshot v2 (`feeds`/`hosts`/`cleared`), legacy flat-format load, merge-asla-kısaltmaz, `_cleared` dirilme koruması
-- **`lib/services/background_fetch_service.dart`** — kendi `HostPacer`'ı (ayrı isolate) + persist cooldown merge-on-save
-- **`lib/services/feed_refresh.dart`** + **`lib/services/article_preparation_service.dart`** — enjekte edilebilir pacer
+### Bulgu 2 — Temizlenen cooldown persist'ten dirilebiliyor
+
+`_cleared[key] = <temizleme anı>` ile persist'teki `until` (sona erme anı) karşılaştırılıyordu — iki farklı zaman ekseni. 10:00'da `Retry-After: 1800` ile oluşan kaydın deadline'ı 10:30'dur; 10:06'daki başarı bu kaydı temizler; ama `until (10:30) > clearedAt (10:06)` olduğu için eski snapshot kaydı geri yüklerdi. Event-zamanı ile expiry-zamanı karşılaştırılamaz.
+
+### Bulgu 3 — Isolate içi/ler arası pacing ve yarış
+
+- `runBgFetch` kendi `HostPacer`'ını oluşturuyor ama `ArticlePreparationService` ve `FullTextExtractionService` bağımsız instance'lar kullanıyordu → aynı isolate içinde iki ayrı zamanlama.
+- Pacing kuyruğunda bekleyen istek, cooldown uygunluğunu **beklemeden önce** kontrol ediyordu; boşluk süresi önceki isteğin bittiğini garanti etmez → 429 öğrenildikten sonra gereksiz istek çıkıyordu.
+- Hive `get→merge→put` iki isolate arasında atomik değil: aynı anahtara son yazan kazanır → kayıp güncelleme riski gerçekti.
+
+## 2. Düzeltilen Model
+
+### `FeedBackoff` v3 kayıtları
+
+Her cooldown kaydı üç alan taşır: `since` (oluşum event-zamanı), `until` (expiry), `serverMandated` (deadline `Retry-After`'dan mı geldi).
+
+- **`recordSuccess`**: feed'in kendi kaydı her zaman silinir (kendi 200'ü kendi cooldown'unu çürütür). Host kaydı yalnız local-estimate veya süresi dolmuşsa silinir; aktif server-mandated kayıt korunur ve host clear-marker **üretilmez** (marker sızıp diğer isolate'in mandate'ini bastırmasın diye).
+- **`load`**: önce `cleared` birleşir (en yeni event kazanır), sonra kayıtlar — `since <= clearedAt` olanlar bastırılır (host bölümünde mandated kayıtlar muaf), expiry'ler max ile birleşir; sonda öğrenilen clear'lar bellekteki kayıtlara da uygulanır (simetrik yayılım).
+- **Legacy**: v2 `{feeds: {url: ms}}` ve flat `{url: ms}` → `since = epoch` okunur; kaydedilmiş bir clear onları bastırır (güvenli varsayım), temizlenmemiş anahtarlar normal yüklenir.
+- **`snapshot`**: `{feeds, hosts}` kayıtları `{u, s, m}` + `cleared` haritası. Süresi dolmuş kayıtlar yazılmaz (sınır).
+
+### Çapraz-isolate persist modeli
+
+Ortak `feedBackoffUntil` üzerinde read-modify-write yerine **yazar-başına slot**: ön plan `feedBackoffUntil`, arka plan `feedBackoffUntil.bg` yazar; **her okuyucu iki slotu da merge eder**. Paylaşılan register yok → isolate'ler birbirinin snapshot'ını ezemez. Clear'lar snapshot içinde taşınır → karşı tarafa yayılır.
+
+Dürüst garanti: yakınsama her iki tarafın bir sonraki load döngüsünde sağlanır; aynı milisaniyede yazılan iki slot yine de kaybolmaz çünkü ayrı anahtarlardır. Gerçek process-wide anlık koordinasyon yok — isolate'ler sıradan nesne paylaşamaz; bu model atomiklik iddiası olmadan lost-update'i ortadan kaldırır.
+
+### Aynı-host istek koordinasyonu
+
+- Ön planda tek `HostPacer` → `FeedRefresher` + `ArticlePreparationService` + `FullTextExtractionService` aynı instance'ı paylaşır.
+- Arkaplan isolate'inde tek `pacer`: feed fetch döngüsü + iki `ArticlePreparationService` yapımı + `FullTextExtractionService.instance.pacer` hepsi aynı schedule'a bağlandı. Double-pacing yok — prep içindeki çağrı zaten paylaşılan instance farkındalığıyla tasarlanmış.
+- **Recheck-after-pace**: `FeedRefresher` ve `runBgFetch` artık `pace()` beklemesinden hemen sonra `isBackedOff` kontrolünü tekrarlıyor — kuyrukta beklerken öğrenilen host cooldown'u gereksiz isteği engeller (sonuç `skipped/unproven` → cache + hata korunur).
 
 ## 3. Değişen Dosyalar
 
-`lib/services/feed_service.dart`, `lib/services/feed_refresh.dart`, `lib/services/feed_backoff.dart`, `lib/services/full_text_extraction_service.dart`, `lib/services/article_preparation_service.dart`, `lib/services/background_fetch_service.dart`, `lib/providers/feed_provider.dart`, `lib/utils/host_pacer.dart`, `lib/utils/retry_after.dart` (yeni) + 4 test dosyası (2'si yeni: `feed_backoff_test.dart`, `host_pacer_test.dart`).
+`lib/services/feed_backoff.dart` (v3 model), `lib/providers/feed_provider.dart` (iki-slot okuma), `lib/services/background_fetch_service.dart` (kendi slotu, paylaşılan pacer, post-pace recheck), `lib/services/feed_refresh.dart` (post-pace recheck), `test/feed_backoff_test.dart` (16 senaryo), `test/rss_lifecycle_regression_test.dart` (+2 senaryo).
 
 ## 4. Yeni Regresyon Testleri
 
-- Aynı host'ta iki feed: birinin 429'u kardeşi de soğutur; farklı host etkilenmez
-- Persist edilmiş cooldown yeni refresher'da da geçerli (fg↔bg yönü)
-- `load` merge: deadline'lar asla kısalmaz; cleared-sonrası dirilme yok
-- Shared `HostPacer`: iki caller aynı host'ta serileşir, katı rezervasyon kısalmaz, farklı host bloklamaz
-- `forceRefresh`: heuristic TTL'i atlar; delta-saniye ve HTTP-date `Retry-After`'a saygı gösterir
-- Redirect: port-değişimi validator düşürür; şişkin gövde hop'u durdurmaz; takılan gövde deadline'la hop'a izin verir; `file:` hedefi reddedilir; origin matrisi (scheme/host/port)
-- Windows-1252: 0x93/0x94/0x96 doğru karaktere, C1 kontrolleri U+FFFD'ye
-- Feed 429 + HTTP-date `Retry-After` deadline'ı açığa çıkarır
-- Atom-olmayan namespace'e bağlı `<prefix:feed>` parse hatası verir; geçerli keyfi-prefix Atom parse edilir
+- Kardeş başarı local host cooldown'unu siler; **server-mandated** cooldown'u silemez (deadline'a kadar blok, sonra açılır)
+- Failure→success→stale snapshot: `since < clearedAt` → dirilme yok (local + mandated varyantları)
+- Başka isolate'ten öğrenilen clear bellek kayıtlarını da düşürür; eşzamanlı yazarlar union'a yakınsar
+- Restart: kayıtlar + clear marker'ları round-trip; mandated host cooldown başarı+restart'a rağmen kalır
+- Legacy flat + v2 snapshot uyumluluğu; expired kayıtlar snapshot'tan düşer
+- Refresh'te: A yavaş 429 → pacer kuyruğundaki B hiç ağa çıkmaz (`unprovenUrls`'te)
+- `runBgFetch`: aynı senaryo bg'de; cooldown `feedBackoffUntil.bg`'ye yazılır, ikinci pass sıfır istek
 
-## 5. CI/Test Sonuçları
+## 5. Doğrulama
 
-- `flutter test` → **402/402 geçti**
+- `flutter test` → **413/413 geçti** (önceki 402 + 11 yeni)
 - `flutter analyze` → temiz
-- `dart format` → temiz
-- Android debug build → çalıştırılmadı (kalan risk)
-- Gerçek cihaz/iOS → doğrulanmadı, iddia edilmiyor
+- `dart format --set-exit-if-changed` → temiz
+- `flutter build apk --debug` → **başarılı** (`app-debug.apk`)
+- GitHub Actions → push sonrası PR sayfasında görülecek
+- Gerçek cihaz/iOS → çalıştırılmadı, iddia edilmiyor
 
-## 6. Kalan Riskler
+## 6. Kalan Sınırlar
 
-- Reddit'in IP-bazlı limiti sunucu taraflı — saygılı davranış garanti değil
-- Isolate'ler arası anlık pacing mümkün değil (ayrı bellek); koordinasyon persist'li `FeedBackoff` üzerinden — iki isolate aynı saniye içinde okuyup yazarsa son yazanın merge'i kazanır, deadline kısalmaz
-- `feedBackoffUntil` içinde silinmiş abonelik kalıntıları süresi dolunca etkisiz kalır
-- Emülatör/cihaz smoke testi bu turda yapılmadı
+- Isolate'ler arası anlık (in-memory) koordinasyon mümkün değil; converge latency = bir sonraki load anı. Crash anında yazılmamış clear kaybolabilir — en kötü durum muhafazakâr (cooldown doğal expiry'de biter).
+- `cleared` marker'ları anahtar-başına saklanır; silinmiş aboneliklerin marker'ları kalır ama bounded (distinct key sayısı).
+- Reddit IP limiti sunucu taraflı — davranış saygılı, garanti yok.
 
 ## 7. Review Bilgisi
 
 ```
-Branch:       fix/rss-engine-reliability
-Uygulama:     de4f997 · Rapor: 068079d (HEAD)
-PR:           https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
-Testler:      402/402 geçti, 0 başarısız
+Branch: fix/rss-engine-reliability
+PR:     https://github.com/DevOpen-io/dondurma-rss-reader/pull/60 — AÇIK, MERGE EDİLMEDİ
+Testler: 413/413 geçti
 ```

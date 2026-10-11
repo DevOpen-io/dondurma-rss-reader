@@ -16,6 +16,7 @@ import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
+import 'full_text_extraction_service.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -143,9 +144,15 @@ Future<void> runBgFetch() async {
     // foreground pass does not re-hammer a rate-limited feed either.
     final backoff = FeedBackoff();
     try {
-      final rawBackoff = feedsBox.get('feedBackoffUntil');
-      if (rawBackoff is String && rawBackoff.isNotEmpty) {
-        backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
+      // Both writer slots merge — the foreground owns 'feedBackoffUntil',
+      // this isolate owns 'feedBackoffUntil.bg'. Owning separate slots
+      // removes the read-modify-write race on a shared key: no isolate's
+      // snapshot can overwrite the other's.
+      for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+        final rawBackoff = feedsBox.get(key);
+        if (rawBackoff is String && rawBackoff.isNotEmpty) {
+          backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
+        }
       }
     } catch (_) {}
     final validators = <String, dynamic>{};
@@ -182,6 +189,18 @@ Future<void> runBgFetch() async {
         final fetchUrl = redirects[sub.url] ?? sub.url;
         try {
           await pacer.pace(fetchUrl);
+          // Recheck after the queue wait: a same-host sibling may have
+          // learned a 429 while this request waited its turn — a spacing
+          // gap alone does not mean the previous request finished.
+          if (backoff.isBackedOff(sub.url, DateTime.now())) {
+            return (
+              subscription: sub,
+              items: <FeedItem>[],
+              succeeded: false,
+              fresh: false,
+              allowInitialization: false,
+            );
+          }
           final v = validators[sub.url];
           final result = await feedService.fetchFeed(
             fetchUrl,
@@ -228,14 +247,16 @@ Future<void> runBgFetch() async {
     feedService.dispose();
     try {
       await feedsBox.put('feedValidators', jsonEncode(validators));
-      // Merge before writing — the foreground may have recorded a fresher
-      // cooldown while this isolate was fetching; last-writer-wins would
-      // silently drop it.
-      final latest = feedsBox.get('feedBackoffUntil');
-      if (latest is String && latest.isNotEmpty) {
-        backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+      // Merge both slots before writing this isolate's own — the
+      // foreground may have recorded a fresher cooldown (or a clear)
+      // while this isolate was fetching; merging first keeps the union.
+      for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
+        final latest = feedsBox.get(key);
+        if (latest is String && latest.isNotEmpty) {
+          backoff.load(jsonDecode(latest) as Map<String, dynamic>);
+        }
       }
-      await feedsBox.put('feedBackoffUntil', jsonEncode(backoff.snapshot()));
+      await feedsBox.put('feedBackoffUntil.bg', jsonEncode(backoff.snapshot()));
     } catch (_) {}
 
     final allItems = results.expand((result) => result.items).toList();
@@ -274,6 +295,7 @@ Future<void> runBgFetch() async {
         subscriptions,
         bookmarkedIds,
         bookmarkedItems,
+        pacer,
       );
       await WidgetUpdateService.updateFeedWidgets(persisted);
     }
@@ -316,8 +338,14 @@ Future<void> runBgFetch() async {
     // durable, so a task killed mid-sweep simply resumes next time.
     final connectivity = await Connectivity().checkConnectivity();
     if (ArticlePreparationService.unmeteredNetwork(connectivity)) {
+      // Inside this isolate all same-host traffic shares one schedule —
+      // feed fetches above, article extraction, and media downloads.
+      // (Extraction is a singleton here, so its pacer is assigned, not
+      // injected through the ctor.)
+      FullTextExtractionService.instance.pacer = pacer;
       final preparation = ArticlePreparationService(
         recordStore: ArticleRecordStore.forBox(feedsBox),
+        hostPacer: pacer,
       );
       try {
         await preparation.preparePending(unmetered: true);
@@ -341,6 +369,7 @@ Future<List<FeedItem>> _persistBgCache(
   List<FeedSubscription> subscriptions,
   Set<String> bookmarkedIds,
   List<FeedItem> bookmarkedItems,
+  HostPacer pacer,
 ) async {
   final int limit = settingsBox.get('offlineCacheLimit', defaultValue: 50);
   final autoFullText = settingsBox.get('autoFullText', defaultValue: false);
@@ -350,7 +379,10 @@ Future<List<FeedItem>> _persistBgCache(
       const <String>[];
 
   final store = ArticleRecordStore.forBox(feedsBox);
-  final preparation = ArticlePreparationService(recordStore: store);
+  final preparation = ArticlePreparationService(
+    recordStore: store,
+    hostPacer: pacer,
+  );
   final membership = TempCacheMembership(
     records: store,
     preparation: preparation,

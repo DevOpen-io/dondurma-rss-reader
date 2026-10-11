@@ -20,6 +20,7 @@ import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
+import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
 
@@ -625,6 +626,49 @@ void main() {
     },
   );
 
+  test(
+    'background fetch rechecks cooldown after pacing and writes its own slot',
+    () async {
+      final aUrl = server.url('/bg-a.xml');
+      final bUrl = server.url('/bg-b.xml');
+      await _seedSubscriptions([
+        FeedSubscription(url: aUrl, name: 'A', category: 'Test'),
+        FeedSubscription(url: bUrl, name: 'B', category: 'Test'),
+      ]);
+      // A answers slowly with a 429; B sits behind it in the host pacing
+      // queue — the default 500ms gap outlives A's 150ms response.
+      server.handlers['/bg-a.xml'] = (request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '600');
+        await request.response.close();
+      };
+      server.handlers['/bg-b.xml'] = (request) =>
+          _respond200(request, _rss('B', ['b1']));
+
+      await runBgFetch();
+
+      expect(server.counts['/bg-a.xml'], 1);
+      // B was eligible when the pass started but the host cooled while
+      // it queued — the post-pacing recheck must skip it.
+      expect(server.counts['/bg-b.xml'] ?? 0, 0);
+
+      // The cooldown landed in the background isolate's own slot, not
+      // the foreground's — the shared register is union-read, per-writer
+      // write.
+      final bgRaw = Hive.box('feeds').get('feedBackoffUntil.bg');
+      expect(bgRaw, isA<String>());
+      final bgSnap = jsonDecode(bgRaw as String) as Map<String, dynamic>;
+      expect((bgSnap['feeds'] as Map).containsKey(aUrl), isTrue);
+
+      // And a second pass honors the persisted cooldown without a
+      // network request at all.
+      await runBgFetch();
+      expect(server.counts['/bg-a.xml'], 1);
+      expect(server.counts['/bg-b.xml'] ?? 0, 0);
+    },
+  );
+
   test('restart without network refresh restores persisted articles', () async {
     final url = server.url('/restart.xml');
     await _seedSubscriptions([
@@ -957,6 +1001,59 @@ void main() {
       containsAll([server.url('/rl-a.xml'), server.url('/rl-b.xml')]),
     );
   });
+
+  test(
+    'a sibling queued in the pacer rechecks cooldown after the wait',
+    () async {
+      // Feed A answers slowly with a 429; feed B passed the pre-check and
+      // is waiting its pacing turn on the same host. When A's response
+      // lands the host cools down — B must re-verify eligibility before
+      // its request goes out, not rely on a check made before the wait.
+      server.handlers['/slow-a.xml'] = (request) async {
+        await Future<void>.delayed(const Duration(milliseconds: 150));
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '60');
+        await request.response.close();
+      };
+      server.handlers['/rl-b.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set('retry-after', '60');
+        await request.response.close();
+      };
+      final subs = [
+        FeedSubscription(
+          url: server.url('/slow-a.xml'),
+          name: 'A',
+          category: 'Test',
+        ),
+        FeedSubscription(
+          url: server.url('/rl-b.xml'),
+          name: 'B',
+          category: 'Test',
+        ),
+      ];
+      // Pacing gap deliberately longer than A's response time so B's
+      // slot only opens after the 429 is already recorded.
+      final refresher = FeedRefresher(
+        feedService: FeedService(),
+        observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+        hostPacer: HostPacer(minGap: const Duration(milliseconds: 400)),
+      );
+
+      final result = await refresher.refresh(
+        subscriptions: subs,
+        existingItems: const [],
+        validators: const {},
+        bookmarkedItems: const [],
+        redirects: const {},
+      );
+
+      expect(server.counts['/slow-a.xml'], 1);
+      // B never reached the network — the host cooled while it waited.
+      expect(server.counts['/rl-b.xml'] ?? 0, 0);
+      expect(result.unprovenUrls, contains(server.url('/rl-b.xml')));
+    },
+  );
 
   test('subscriptions on the same host are fetch-paced', () async {
     final hitTimes = <String, List<DateTime>>{};
