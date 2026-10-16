@@ -12,6 +12,7 @@ import 'package:html/parser.dart' show parse;
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
+import '../models/refresh_progress.dart';
 import '../services/article_identity.dart';
 import '../services/feed_backoff.dart';
 import '../services/feed_date_groups.dart';
@@ -90,6 +91,12 @@ class FeedProvider extends ChangeNotifier {
   /// Whether a sync is currently in progress.
   bool _isSyncing = false;
   bool get isSyncing => _isSyncing;
+
+  /// Incremental refresh status — a dedicated [ValueNotifier] so per-feed
+  /// progress repaints only the small toolbar indicator instead of the
+  /// entire provider listener tree.
+  final ValueNotifier<RefreshProgress> refreshProgress =
+      ValueNotifier(const RefreshProgress.idle());
 
   /// Set when a refresh is requested while one is already running. The in-flight
   /// [refreshAll] runs exactly one more pass when it finishes, so overlapping
@@ -351,7 +358,9 @@ class FeedProvider extends ChangeNotifier {
     _setUnmetered(results);
     if (!_isOffline) return;
     final hasNetwork = results.any((r) => r != ConnectivityResult.none);
-    if (hasNetwork) refreshAll();
+    // Connectivity appearing mid-sync genuinely changes the inputs — an
+    // in-flight pass that ran fully offline must be followed by a real one.
+    if (hasNetwork) refreshAll(queueIfRunning: true);
   }
 
   /// Called by the `ChangeNotifierProxyProvider3` whenever any upstream
@@ -455,9 +464,11 @@ class FeedProvider extends ChangeNotifier {
       _saveCachedItems().ignore();
     }
 
-    // If subscriptions were added/removed, kick off a fresh fetch.
+    // If subscriptions were added/removed, kick off a fresh fetch. A running
+    // pass fetched the OLD set, so this is a real input change — it earns a
+    // trailing pass rather than just attaching to the current one.
     if (subscriptionsChanged) {
-      refreshAll();
+      refreshAll(queueIfRunning: true);
     }
   }
 
@@ -1019,17 +1030,19 @@ class FeedProvider extends ChangeNotifier {
 
   /// Fetches all subscribed feeds with bounded concurrency, merges bookmarks,
   /// sorts by date, fires notifications for new articles, and persists cache.
-  Future<void> refreshAll() async {
+  ///
+  /// Calls arriving while a pass is already running normally *attach* to it —
+  /// a manual click, a timer tick, or a resume asking for "a sync" is already
+  /// served by the in-flight pass. Pass `queueIfRunning: true` only when the
+  /// caller knows the inputs changed (new subscription, regained
+  /// connectivity) so the in-flight pass is followed by one fresh pass —
+  /// never an unbounded queue.
+  Future<void> refreshAll({bool queueIfRunning = false}) async {
     await _initialization;
     if (subscriptionProvider == null) return;
 
-    // Coalesce overlapping refreshes. The periodic timer, app-resume, and
-    // subscription-change triggers can all fire close together; without this a
-    // second full-feed fetch storm would run in parallel, doubling HTTP load.
-    // Instead, record that one more pass is needed and let the in-flight call
-    // run it when it finishes.
     if (_isSyncing) {
-      _refreshQueued = true;
+      if (queueIfRunning) _refreshQueued = true;
       return (_refreshWaiter ??= Completer<void>()).future;
     }
 
@@ -1044,6 +1057,11 @@ class FeedProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       failure = error;
       failureStack = stackTrace;
+      refreshProgress.value = refreshProgress.value.copyWith(
+        phase: RefreshPhase.failed,
+        inFlight: 0,
+        completedAt: DateTime.now(),
+      );
       rethrow;
     } finally {
       // Always clear the guard, even if a fetch/persist step throws — otherwise
@@ -1077,16 +1095,44 @@ class FeedProvider extends ChangeNotifier {
     // Pick up cooldowns the background isolate wrote since the last
     // pass — a stale in-memory snapshot must never bypass a fresh 429.
     _loadFeedBackoff();
+    final subscriptions = subscriptionProvider!.subscriptions;
+    refreshProgress.value = RefreshProgress(
+      phase: RefreshPhase.refreshing,
+      total: subscriptions.length,
+      startedAt: DateTime.now(),
+      completedAt: refreshProgress.value.completedAt,
+    );
     final result = await _refresher.refresh(
-      subscriptions: subscriptionProvider!.subscriptions,
+      subscriptions: subscriptions,
       existingItems: _items,
       validators: _loadFeedValidators(),
       bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
       redirects: _loadFeedRedirects(),
+      onProgress: ({
+        required total,
+        required completed,
+        required succeeded,
+        required failed,
+        required skipped,
+        required inFlight,
+      }) {
+        refreshProgress.value = refreshProgress.value.copyWith(
+          total: total,
+          completed: completed,
+          succeeded: succeeded,
+          failed: failed,
+          skipped: skipped,
+          inFlight: inFlight,
+        );
+      },
     );
 
     if (resetGeneration != _resetGeneration) {
       _isLoading = false;
+      refreshProgress.value = refreshProgress.value.copyWith(
+        phase: RefreshPhase.idle,
+        inFlight: 0,
+      );
       if (!_disposed) notifyListeners();
       return;
     }
@@ -1098,6 +1144,15 @@ class FeedProvider extends ChangeNotifier {
     _items = result.items;
     _isOffline = !result.online;
     _isLoading = false;
+    refreshProgress.value = refreshProgress.value.copyWith(
+      phase: !result.online
+          ? RefreshPhase.offline
+          : result.feedErrors.isNotEmpty
+              ? RefreshPhase.completedWithErrors
+              : RefreshPhase.completed,
+      inFlight: 0,
+      completedAt: DateTime.now(),
+    );
     _invalidateFilterCache();
     if (!_disposed) notifyListeners();
 
@@ -1599,6 +1654,7 @@ class FeedProvider extends ChangeNotifier {
     _disposed = true;
     _cacheTimer?.cancel();
     _connectivitySub?.cancel();
+    refreshProgress.dispose();
     _feedService.dispose();
     if (_ownsPreparation) _preparation.dispose();
     super.dispose();

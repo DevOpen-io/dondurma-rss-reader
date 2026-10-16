@@ -67,6 +67,10 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   DesktopSection _section = DesktopSection.articles;
   String? _selectedArticleId;
 
+  /// User-collapsed feed explorer — session-only, so a resize across the
+  /// pin breakpoint can't strand it in the wrong state.
+  bool _explorerCollapsed = false;
+
   final FocusNode _searchFocusNode = FocusNode();
   final FocusNode _listFocusNode = FocusNode();
 
@@ -183,7 +187,8 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
         : items.indexWhere((i) => i.id == selected.id);
 
     final width = MediaQuery.sizeOf(context).width;
-    final explorerPinned = width >= kDesktopExplorerBreakpoint;
+    final explorerPinned =
+        width >= kDesktopExplorerBreakpoint && !_explorerCollapsed;
     final explorer = DesktopSidebar(
       section: _section,
       onSectionChanged: (s) => setState(() => _section = s),
@@ -222,6 +227,11 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 onOpenDiscover: _openDiscover,
                 onOpenSettings: _openSettings,
                 explorerInDrawer: !explorerPinned,
+                explorerToggle: width >= kDesktopExplorerBreakpoint
+                    ? () => setState(
+                        () => _explorerCollapsed = !_explorerCollapsed,
+                      )
+                    : null,
               ),
             ),
             divider,
@@ -277,9 +287,13 @@ class _AppRail extends StatelessWidget {
   final VoidCallback onOpenDiscover;
   final VoidCallback onOpenSettings;
 
-  /// Whether the feed explorer is demoted to a drawer (narrow windows).
-  /// When true the rail shows a Feeds button that opens it.
+  /// Whether the feed explorer is demoted to a drawer (narrow windows or
+  /// user-collapsed). When true the rail shows a Feeds button.
   final bool explorerInDrawer;
+
+  /// When non-null (wide windows), the Feeds rail item toggles the pinned
+  /// explorer instead of opening a drawer.
+  final VoidCallback? explorerToggle;
 
   const _AppRail({
     required this.section,
@@ -288,6 +302,7 @@ class _AppRail extends StatelessWidget {
     required this.onOpenDiscover,
     required this.onOpenSettings,
     required this.explorerInDrawer,
+    this.explorerToggle,
   });
 
   @override
@@ -407,7 +422,8 @@ class _AppRail extends StatelessWidget {
               Icons.view_sidebar_outlined,
               l10n.feedsTab,
               selected: false,
-              onTap: () => Scaffold.of(context).openDrawer(),
+              onTap: explorerToggle ??
+                  () => Scaffold.of(context).openDrawer(),
             ),
           const SizedBox(height: 8),
           railAction(

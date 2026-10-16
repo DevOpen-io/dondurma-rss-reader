@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
+import '../../models/refresh_progress.dart';
 import '../../providers/bookmark_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/settings_provider.dart';
@@ -196,25 +197,74 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                   tooltip: l10n.filterSheetTitle,
                   onPressed: () => FilterBottomSheet.show(context),
                 ),
-                IconButton(
-                  icon: provider.isSyncing
-                      ? SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: cs.primary,
-                          ),
-                        )
-                      : Icon(
-                          Icons.refresh_rounded,
-                          size: 20,
-                          color: cs.onSurfaceVariant,
+                // Progress lives in a dedicated ValueNotifier so per-feed
+                // updates repaint this chip only — never the whole list.
+                ValueListenableBuilder<RefreshProgress>(
+                  valueListenable: provider.refreshProgress,
+                  builder: (context, progress, _) {
+                    if (progress.phase == RefreshPhase.refreshing) {
+                      return Tooltip(
+                        message: l10n.refreshingFeeds(
+                          progress.completed,
+                          progress.total,
                         ),
-                  tooltip: l10n.refresh,
-                  onPressed: provider.isSyncing
-                      ? null
-                      : () => provider.refreshAll(),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 6,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SizedBox(
+                                width: 14,
+                                height: 14,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: cs.primary,
+                                ),
+                              ),
+                              const SizedBox(width: 7),
+                              Text(
+                                '${progress.completed} / ${progress.total}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: cs.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+                    final tooltip = switch (progress.phase) {
+                      RefreshPhase.completedWithErrors =>
+                        l10n.refreshSummaryFailed(
+                          progress.completed,
+                          progress.failed,
+                        ),
+                      RefreshPhase.completed => l10n.updatedJustNow,
+                      RefreshPhase.offline => l10n.offlineBanner,
+                      RefreshPhase.idle ||
+                      RefreshPhase.failed ||
+                      RefreshPhase.refreshing => l10n.refresh,
+                    };
+                    return IconButton(
+                      icon: Icon(
+                        progress.phase == RefreshPhase.completedWithErrors
+                            ? Icons.sync_problem_rounded
+                            : Icons.refresh_rounded,
+                        size: 20,
+                        color:
+                            progress.phase == RefreshPhase.completedWithErrors
+                                ? cs.error
+                                : cs.onSurfaceVariant,
+                      ),
+                      tooltip: tooltip,
+                      onPressed: () => provider.refreshAll(),
+                    );
+                  },
                 ),
               ],
             ),

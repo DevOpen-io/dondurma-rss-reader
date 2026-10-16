@@ -814,6 +814,30 @@ abstract class AppLocalizations {
   /// **'Relaxed'**
   String get lineSpacingRelaxed;
 
+  /// No description provided for @readingWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading Width'**
+  String get readingWidth;
+
+  /// No description provided for @readingWidthComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get readingWidthComfortable;
+
+  /// No description provided for @readingWidthExpanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Expanded'**
+  String get readingWidthExpanded;
+
+  /// No description provided for @readingWidthFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full width'**
+  String get readingWidthFull;
+
   /// No description provided for @contentFiltering.
   ///
   /// In en, this message translates to:
@@ -915,6 +939,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refresh;
+
+  /// No description provided for @refreshingFeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing feeds · {completed} / {total}'**
+  String refreshingFeeds(int completed, int total);
+
+  /// No description provided for @updatedJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated just now'**
+  String get updatedJustNow;
+
+  /// No description provided for @refreshSummaryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{checked} checked · {failed} failed'**
+  String refreshSummaryFailed(int checked, int failed);
 
   /// No description provided for @brightness.
   ///

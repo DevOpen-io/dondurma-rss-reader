@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../utils/time_format.dart';
+import '../adaptive_dialog.dart';
 
 class SettingsSectionTitle extends StatelessWidget {
   final String title;
@@ -217,13 +218,10 @@ class SettingsSelectionTile<T> extends StatelessWidget {
 
   void _showOptions(BuildContext context) {
     final theme = Theme.of(context);
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (sheetContext) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -279,7 +277,9 @@ class SettingsSelectionTile<T> extends StatelessWidget {
             ),
           ],
         ),
+        ),
       ),
+      showDragHandle: true,
     );
   }
 }

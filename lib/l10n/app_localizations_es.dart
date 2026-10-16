@@ -404,6 +404,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lineSpacingRelaxed => 'Amplio';
 
   @override
+  String get readingWidth => 'Ancho de lectura';
+
+  @override
+  String get readingWidthComfortable => 'Cómodo';
+
+  @override
+  String get readingWidthExpanded => 'Expandido';
+
+  @override
+  String get readingWidthFull => 'Ancho completo';
+
+  @override
   String get contentFiltering => 'Filtrado de contenido';
 
   @override
@@ -454,6 +466,19 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get refresh => 'Actualizar';
+
+  @override
+  String refreshingFeeds(int completed, int total) {
+    return 'Actualizando fuentes · $completed / $total';
+  }
+
+  @override
+  String get updatedJustNow => 'Actualizado ahora';
+
+  @override
+  String refreshSummaryFailed(int checked, int failed) {
+    return '$checked comprobados · $failed fallidos';
+  }
 
   @override
   String get brightness => 'Brillo';

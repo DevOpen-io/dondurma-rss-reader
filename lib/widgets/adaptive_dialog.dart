@@ -11,6 +11,7 @@ Future<T?> showAdaptiveSheet<T>(
   BuildContext context,
   Widget child, {
   double maxWidth = 560,
+  bool showDragHandle = false,
 }) {
   if (PlatformCaps.isDesktop) {
     return showDialog<T>(
@@ -37,6 +38,7 @@ Future<T?> showAdaptiveSheet<T>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
+    showDragHandle: showDragHandle,
     builder: (_) => child,
   );
 }

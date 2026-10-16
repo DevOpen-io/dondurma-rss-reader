@@ -396,6 +396,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get lineSpacingRelaxed => 'Geniş';
 
   @override
+  String get readingWidth => 'Okuma Genişliği';
+
+  @override
+  String get readingWidthComfortable => 'Rahat';
+
+  @override
+  String get readingWidthExpanded => 'Genişletilmiş';
+
+  @override
+  String get readingWidthFull => 'Tam genişlik';
+
+  @override
   String get contentFiltering => 'İçerik Filtreleme';
 
   @override
@@ -446,6 +458,19 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get refresh => 'Yenile';
+
+  @override
+  String refreshingFeeds(int completed, int total) {
+    return 'Akışlar yenileniyor · $completed / $total';
+  }
+
+  @override
+  String get updatedJustNow => 'Az önce güncellendi';
+
+  @override
+  String refreshSummaryFailed(int checked, int failed) {
+    return '$checked kontrol edildi · $failed başarısız';
+  }
 
   @override
   String get brightness => 'Parlaklık';

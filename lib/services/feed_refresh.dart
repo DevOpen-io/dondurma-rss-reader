@@ -42,6 +42,18 @@ typedef FeedRefreshResult = ({
   Map<String, String> redirects,
 });
 
+/// Per-feed progress snapshot emitted as each subscription reaches a
+/// terminal outcome during [FeedRefresher.refresh].
+typedef FeedProgressCallback =
+    void Function({
+      required int total,
+      required int completed,
+      required int succeeded,
+      required int failed,
+      required int skipped,
+      required int inFlight,
+    });
+
 /// Single-pass feed refresh engine: bounded-concurrency fetches, HTTP 304
 /// handling, observed-history claims, bookmark merge, and validator update.
 ///
@@ -77,18 +89,43 @@ class FeedRefresher {
   /// traffic coordinates through one schedule.
   final HostPacer _hostPacer;
 
+  /// Per-feed progress snapshot emitted as each subscription reaches a
+  /// terminal outcome. Invoked from async closures — always on the calling
+  /// isolate's event loop, so plain counters stay consistent.
+
   Future<FeedRefreshResult> refresh({
     required List<FeedSubscription> subscriptions,
     required List<FeedItem> existingItems,
     required Map<String, dynamic> validators,
     required List<FeedItem> bookmarkedItems,
     required Map<String, String> redirects,
+    FeedProgressCallback? onProgress,
   }) async {
     // Snapshot current items per feed so a 304 — or a transient error — reuses
     // the feed's existing articles instead of dropping them this cycle.
     final existingByFeed = <String, List<FeedItem>>{};
     for (final it in existingItems) {
       (existingByFeed[it.feedUrl] ??= []).add(it);
+    }
+
+    // Live counters for incremental progress reporting. The callback is
+    // invoked synchronously as each feed settles so the UI can show real
+    // per-feed advancement instead of an ambiguous spinning boolean.
+    var completed = 0;
+    var succeeded = 0;
+    var failed = 0;
+    var skipped = 0;
+    var inFlight = 0;
+    void emit() {
+      if (onProgress == null) return;
+      onProgress(
+        total: subscriptions.length,
+        completed: completed,
+        succeeded: succeeded,
+        failed: failed,
+        skipped: skipped,
+        inFlight: inFlight,
+      );
     }
 
     // Rate-limit concurrent HTTP requests to avoid network/memory saturation.
@@ -99,6 +136,9 @@ class FeedRefresher {
       // A backed-off feed keeps its cached items and its last error without
       // touching the network — same treatment as an unproven failure.
       if (backoff.isBackedOff(sub.url, DateTime.now())) {
+        skipped++;
+        completed++;
+        emit();
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -116,6 +156,8 @@ class FeedRefresher {
         );
       }
       await semaphore.acquire();
+      inFlight++;
+      emit();
       final v = validators[sub.url];
       // Fetch at the learned redirect URL when one exists — skips a hop.
       final fetchUrl = redirects[sub.url] ?? sub.url;
@@ -125,6 +167,10 @@ class FeedRefresher {
         // learned a 429 while this request waited its turn — a spacing
         // gap alone does not mean the previous request finished.
         if (backoff.isBackedOff(sub.url, DateTime.now())) {
+          skipped++;
+          completed++;
+          inFlight--;
+          emit();
           return (
             url: sub.url,
             observationEpoch: sub.notificationEpoch,
@@ -165,6 +211,10 @@ class FeedRefresher {
           }
         }
         backoff.recordSuccess(sub.url);
+        succeeded++;
+        completed++;
+        inFlight--;
+        emit();
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
@@ -192,6 +242,10 @@ class FeedRefresher {
         // Rate-limit signals earn a cooldown; a plain transient failure
         // recovers on the next natural sync (see FeedBackoff for the rule).
         backoff.recordFailure(sub.url, e, DateTime.now());
+        failed++;
+        completed++;
+        inFlight--;
+        emit();
         // Transient failure: keep the feed's existing items so one error doesn't
         // blank it out, and leave its validators untouched.
         return (

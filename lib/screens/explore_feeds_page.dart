@@ -8,6 +8,7 @@ import '../providers/subscription_provider.dart';
 import '../services/suggested_feeds_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/platform_caps.dart';
+import '../widgets/adaptive_dialog.dart';
 import '../widgets/constrained_width.dart';
 import '../widgets/explore_feeds/explore_feeds_widgets.dart';
 
@@ -204,13 +205,10 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
   ) async {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final confirmed = await showModalBottomSheet<bool>(
-      context: context,
-      showDragHandle: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (sheetContext) => SafeArea(
+    final confirmed = await showAdaptiveSheet<bool>(
+      context,
+      Builder(
+        builder: (sheetContext) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
           child: Column(
@@ -276,6 +274,8 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
           ),
         ),
       ),
+      ),
+      showDragHandle: true,
     );
     if (confirmed != true || !context.mounted) return;
 
@@ -305,12 +305,10 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     final categories = counts.keys.toList()
       ..sort((a, b) => (popMap[b] ?? 0).compareTo(popMap[a] ?? 0));
 
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (ctx) {
         return SafeArea(
           child: SingleChildScrollView(
             padding: EdgeInsets.fromLTRB(
@@ -380,6 +378,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
           ),
         );
       },
+      ),
     );
   }
 
@@ -443,20 +442,59 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                           ),
                         );
                       }
-                      return ConstrainedWidth(
-                        maxWidth: PlatformCaps.isDesktop ? 860 : 680,
-                        child: ListView.builder(
-                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-                        itemCount: feeds.length,
-                        itemBuilder: (context, index) => SuggestedFeedTile(
-                          feed: feeds[index],
-                          isSubscribing: _subscribingUrls.contains(
-                            feeds[index].url,
+                      Widget tile(BuildContext context, int index) =>
+                          SuggestedFeedTile(
+                            feed: feeds[index],
+                            isSubscribing: _subscribingUrls.contains(
+                              feeds[index].url,
+                            ),
+                            onSubscribe: _subscribeToFeed,
+                            onUnsubscribe: _unsubscribeFromFeed,
+                          );
+                      if (!PlatformCaps.isDesktop) {
+                        return ConstrainedWidth(
+                          maxWidth: 680,
+                          child: ListView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            itemCount: feeds.length,
+                            itemBuilder: tile,
                           ),
-                          onSubscribe: _subscribeToFeed,
-                          onUnsubscribe: _unsubscribeFromFeed,
-                        ),
-                        ),
+                        );
+                      }
+                      return LayoutBuilder(
+                        builder: (context, constraints) {
+                          final columns = (constraints.maxWidth ~/ 380).clamp(
+                            1,
+                            4,
+                          );
+                          if (columns == 1) {
+                            return ConstrainedWidth(
+                              maxWidth: 680,
+                              child: ListView.builder(
+                                padding: const EdgeInsets.fromLTRB(
+                                  16,
+                                  12,
+                                  16,
+                                  8,
+                                ),
+                                itemCount: feeds.length,
+                                itemBuilder: tile,
+                              ),
+                            );
+                          }
+                          return GridView.builder(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                            gridDelegate:
+                                SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: columns,
+                                  mainAxisSpacing: 4,
+                                  crossAxisSpacing: 8,
+                                  mainAxisExtent: 84,
+                                ),
+                            itemCount: feeds.length,
+                            itemBuilder: tile,
+                          );
+                        },
                       );
                     },
                   ),

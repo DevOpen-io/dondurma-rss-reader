@@ -7,6 +7,8 @@ import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../utils/app_toast.dart';
+import '../utils/platform_caps.dart';
+import '../widgets/adaptive_dialog.dart';
 import '../widgets/folders/feed_action_sheet.dart';
 import '../widgets/category_icon.dart';
 import '../widgets/folders/folder_dialogs.dart';
@@ -40,14 +42,7 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => EditSubscriptionDialog(sub: sub),
-    );
+    showAdaptiveSheet<void>(context, EditSubscriptionDialog(sub: sub));
   }
 
   void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
@@ -149,13 +144,10 @@ class CategoriesScreen extends StatelessWidget {
   }
 
   void _showFeedActionSheet(BuildContext context, FeedSubscription sub) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => FeedActionSheet(
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (ctx) => FeedActionSheet(
         subUrl: sub.url,
         onMove: () {
           Navigator.of(ctx).pop();
@@ -169,6 +161,7 @@ class CategoriesScreen extends StatelessWidget {
           Navigator.of(ctx).pop();
           _showDeleteConfirmation(context, sub);
         },
+        ),
       ),
     );
   }
@@ -229,6 +222,7 @@ class CategoriesScreen extends StatelessWidget {
     }
 
     return ConstrainedWidth(
+      maxWidth: PlatformCaps.isDesktop ? 860 : 680,
       child: ListView.builder(
         padding: const EdgeInsets.fromLTRB(0, 8, 0, 128),
         itemCount: sortedCategoryNames.length,

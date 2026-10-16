@@ -19,6 +19,7 @@ import '../utils/app_toast.dart';
 import '../utils/platform_caps.dart';
 import '../utils/time_format.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
+import '../widgets/adaptive_dialog.dart';
 import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
 import '../widgets/constrained_width.dart';
@@ -357,6 +358,31 @@ class SettingsScreen extends StatelessWidget {
                 onChanged: (v) =>
                     context.read<SettingsProvider>().setLineSpacing(v!),
               ),
+              if (PlatformCaps.isDesktop) ...[
+                const SettingsTileDivider(),
+                SettingsSelectionTile<String>(
+                  icon: Icons.unfold_more_rounded,
+                  title: l10n.readingWidth,
+                  value: settings.desktopReadingWidth,
+                  items: [
+                    DropdownMenuItem(
+                      value: 'comfortable',
+                      child: Text(l10n.readingWidthComfortable),
+                    ),
+                    DropdownMenuItem(
+                      value: 'expanded',
+                      child: Text(l10n.readingWidthExpanded),
+                    ),
+                    DropdownMenuItem(
+                      value: 'full',
+                      child: Text(l10n.readingWidthFull),
+                    ),
+                  ],
+                  onChanged: (v) => context
+                      .read<SettingsProvider>()
+                      .setDesktopReadingWidth(v!),
+                ),
+              ],
               const SettingsTileDivider(),
               SettingsSwitchTile(
                 icon: Icons.article_outlined,
@@ -842,13 +868,9 @@ class SettingsScreen extends StatelessWidget {
   void _showGlobalKeywordsDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final settingsProvider = context.read<SettingsProvider>();
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => KeywordInputSheet(
+    showAdaptiveSheet<void>(
+      context,
+      KeywordInputSheet(
         title: l10n.globalExcludedKeywords,
         initialKeywords: settingsProvider.globalExcludedKeywords,
         onSave: (keywords) =>

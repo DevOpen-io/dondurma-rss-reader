@@ -186,6 +186,10 @@
   "lineSpacingTight": "Tight",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Relaxed",
+  "readingWidth": "Reading Width",
+  "readingWidthComfortable": "Comfortable",
+  "readingWidthExpanded": "Expanded",
+  "readingWidthFull": "Full width",
   "contentFiltering": "Content Filtering",
   "globalExcludedKeywords": "Global Excluded Keywords",
   "globalExcludedKeywordsDesc": "Hide articles containing these words across all feeds",
@@ -203,6 +207,29 @@
   "back": "Back",
   "forward": "Forward",
   "refresh": "Refresh",
+  "refreshingFeeds": "Refreshing feeds · {completed} / {total}",
+  "@refreshingFeeds": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedJustNow": "Updated just now",
+  "refreshSummaryFailed": "{checked} checked · {failed} failed",
+  "@refreshSummaryFailed": {
+    "placeholders": {
+      "checked": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
   "brightness": "Brightness",
   "brightnessSystem": "System",
   "brightnessLight": "Light",

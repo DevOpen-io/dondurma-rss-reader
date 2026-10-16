@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -293,7 +294,16 @@ class _ArticlePageState extends State<ArticlePage> {
                 // the article.
                 if (!widget.embedded || hasHero)
                 SliverAppBar(
-                  expandedHeight: hasHero ? 280 : 0,
+                  // Embedded (desktop): scale the hero with the pane instead
+                  // of a fixed 280 so tall windows don't waste the fold.
+                  expandedHeight: hasHero
+                      ? (widget.embedded
+                            ? (MediaQuery.sizeOf(context).height * 0.30).clamp(
+                                240.0,
+                                400.0,
+                              )
+                            : 280.0)
+                      : 0,
                   pinned: !widget.embedded,
                   stretch: true,
                   automaticallyImplyLeading: !widget.embedded,
@@ -398,11 +408,28 @@ class _ArticlePageState extends State<ArticlePage> {
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Center(
-                      child: ConstrainedBox(
-                        // Desktop reader column: wide enough to use the
-                        // pane, capped so lines stay readable (~75ch).
-                        constraints: const BoxConstraints(maxWidth: 840),
-                        child: Column(
+                      // Width comes from the *pane* constraints, not the
+                      // window: sizing off MediaQuery squeezed the reader to
+                      // a ~60px strip when embedded in the desktop layout.
+                      // The desktop "Reading width" setting maps pane width
+                      // to a content column; mobile keeps the 720 cap.
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final w = constraints.maxWidth;
+                          final mode = widget.embedded
+                              ? context
+                                  .watch<SettingsProvider>()
+                                  .desktopReadingWidth
+                              : 'comfortable';
+                          final maxW = switch (mode) {
+                            _ when !widget.embedded => math.min(w, 720.0),
+                            'comfortable' => math.min(w, 760.0),
+                            'full' => w,
+                            _ => w < 700 ? w : math.min(w * 0.94, 1180.0),
+                          };
+                          return ConstrainedBox(
+                            constraints: BoxConstraints(maxWidth: maxW),
+                            child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: hasHero ? 4 : 20),
@@ -783,7 +810,9 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         const SizedBox(height: 40),
                       ],
-                        ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),

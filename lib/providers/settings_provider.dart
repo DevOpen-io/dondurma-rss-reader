@@ -51,6 +51,11 @@ class SettingsProvider extends ChangeNotifier {
   // Time format: 'system', '12h', '24h'
   String _timeFormat = 'system';
 
+  // Desktop reading column: 'comfortable' (760 cap), 'expanded' (~93% of
+  // pane, capped), 'full' (pane minus padding). Desktop-only — mobile
+  // reading is unaffected.
+  String _desktopReadingWidth = 'expanded';
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -85,6 +90,8 @@ class SettingsProvider extends ChangeNotifier {
   bool get autoFullText => _autoFullText;
 
   String get timeFormat => _timeFormat;
+
+  String get desktopReadingWidth => _desktopReadingWidth;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -183,6 +190,12 @@ class SettingsProvider extends ChangeNotifier {
 
     // Time format
     _timeFormat = _box.get('timeFormat', defaultValue: 'system');
+
+    // Desktop reading width
+    _desktopReadingWidth = _box.get(
+      'desktopReadingWidth',
+      defaultValue: 'expanded',
+    );
 
     notifyListeners();
   }
@@ -333,6 +346,15 @@ class SettingsProvider extends ChangeNotifier {
     _timeFormat = format;
     notifyListeners();
     await _box.put('timeFormat', format);
+  }
+
+  /// Sets the desktop reading column mode: `'comfortable'`, `'expanded'`,
+  /// or `'full'`. Only consulted by the desktop reader pane.
+  Future<void> setDesktopReadingWidth(String mode) async {
+    if (mode != 'comfortable' && mode != 'expanded' && mode != 'full') return;
+    _desktopReadingWidth = mode;
+    notifyListeners();
+    await _box.put('desktopReadingWidth', mode);
   }
 
   /// Adds a search query to the history.
