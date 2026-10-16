@@ -37,14 +37,20 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
   @override
   Widget build(BuildContext context) {
     final imageCount = widget.imageUrls.length;
-    final screenWidth = MediaQuery.of(context).size.width - 40;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Column(
-        children: [
-          SizedBox(
-            height: screenWidth * 0.65,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          // Height follows the real content-column width (≈65% aspect),
+          // not the whole window — the desktop reader lives inside a pane.
+          final columnWidth = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : MediaQuery.of(context).size.width - 40;
+          return Column(
+            children: [
+              SizedBox(
+                height: columnWidth * 0.65,
             child: PageView.builder(
               controller: _pageController,
               itemCount: imageCount,
@@ -85,42 +91,44 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
             ),
           ),
           const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ...List.generate(imageCount, (index) {
-                final isActive = index == _currentPage;
-                return AnimatedContainer(
-                  duration: motionDuration(
-                    context,
-                    const Duration(milliseconds: 250),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ...List.generate(imageCount, (index) {
+                    final isActive = index == _currentPage;
+                    return AnimatedContainer(
+                      duration: motionDuration(
+                        context,
+                        const Duration(milliseconds: 250),
+                      ),
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      width: isActive ? 20 : 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        color: isActive
+                            ? Theme.of(context).colorScheme.primary
+                            : Theme.of(
+                                context,
+                              ).colorScheme.onSurface.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    );
+                  }),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${_currentPage + 1} / $imageCount',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
                   ),
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: isActive ? 20 : 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: isActive
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                );
-              }),
-              const SizedBox(width: 8),
-              Text(
-                '${_currentPage + 1} / $imageCount',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Theme.of(
-                    context,
-                  ).colorScheme.onSurface.withValues(alpha: 0.5),
-                ),
+                ],
               ),
             ],
-          ),
-        ],
+          );
+        },
       ),
     );
   }

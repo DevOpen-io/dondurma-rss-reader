@@ -7,6 +7,8 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/suggested_feeds_service.dart';
 import '../utils/app_toast.dart';
+import '../utils/platform_caps.dart';
+import '../widgets/constrained_width.dart';
 import '../widgets/explore_feeds/explore_feeds_widgets.dart';
 
 /// Full-screen page that displays a curated list of suggested RSS feeds,
@@ -441,7 +443,9 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                           ),
                         );
                       }
-                      return ListView.builder(
+                      return ConstrainedWidth(
+                        maxWidth: PlatformCaps.isDesktop ? 860 : 680,
+                        child: ListView.builder(
                         padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                         itemCount: feeds.length,
                         itemBuilder: (context, index) => SuggestedFeedTile(
@@ -451,6 +455,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                           ),
                           onSubscribe: _subscribeToFeed,
                           onUnsubscribe: _unsubscribeFromFeed,
+                        ),
                         ),
                       );
                     },

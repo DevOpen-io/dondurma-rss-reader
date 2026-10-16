@@ -86,11 +86,13 @@ class DesktopSidebar extends StatelessWidget {
 
           // ── Library + feed tree ──────────────────────────────────────
           Expanded(
-            child: Consumer3<
-              FeedProvider,
-              SubscriptionProvider,
-              BookmarkProvider
-            >(
+            child: Scrollbar(
+              thumbVisibility: true,
+              child: Consumer3<
+                FeedProvider,
+                SubscriptionProvider,
+                BookmarkProvider
+              >(
               builder: (context, feed, subs, bookmarks, _) {
                 final categories = subs.categoriesOrdered;
                 final nonUncategorized = categories
@@ -178,6 +180,7 @@ class DesktopSidebar extends StatelessWidget {
                   ],
                 );
               },
+              ),
             ),
           ),
         ],
@@ -253,18 +256,22 @@ class _NavItem extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: tt.bodyMedium?.copyWith(
-                      fontWeight: selected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                      color: selected
-                          ? cs.onSurface
-                          : cs.onSurface.withValues(alpha: 0.8),
+                  child: Tooltip(
+                    message: label,
+                    waitDuration: const Duration(milliseconds: 600),
+                    child: Text(
+                      label,
+                      style: tt.bodyMedium?.copyWith(
+                        fontWeight: selected
+                            ? FontWeight.w700
+                            : FontWeight.w500,
+                        color: selected
+                            ? cs.onSurface
+                            : cs.onSurface.withValues(alpha: 0.8),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
                 if (count != null && count! > 0)

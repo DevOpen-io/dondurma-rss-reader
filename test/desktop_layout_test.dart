@@ -15,7 +15,9 @@ import 'package:ice_cream_rss_reader/screens/desktop/desktop_home_screen.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_reader_pane.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
 import 'package:ice_cream_rss_reader/screens/home_screen.dart';
+import 'package:ice_cream_rss_reader/screens/settings_screen.dart';
 import 'package:ice_cream_rss_reader/utils/platform_caps.dart';
+import 'package:ice_cream_rss_reader/widgets/constrained_width.dart';
 
 /// On non-desktop test hosts the adaptive shell must render the mobile
 /// [HomeScreen] regardless of size; on Linux/macOS/Windows hosts wide windows
@@ -130,6 +132,90 @@ void main() {
       await tester.pumpWidget(wrapApp());
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('survives continuous resize across all breakpoints', (
+      tester,
+    ) async {
+      if (!PlatformCaps.isDesktop) return;
+      const sizes = [
+        Size(1920, 1080),
+        Size(1600, 900),
+        Size(1440, 900),
+        Size(1280, 720),
+        Size(1024, 768),
+        Size(900, 600),
+        Size(700, 900),
+        Size(1600, 900),
+      ];
+      await tester.pumpWidget(wrapApp());
+      await tester.pumpAndSettle();
+      for (final size in sizes) {
+        tester.view.physicalSize = size;
+        await tester.pump();
+        expect(tester.takeException(), isNull, reason: 'size=$size');
+      }
+      addTearDown(tester.view.resetPhysicalSize);
+    });
+
+    testWidgets('respects increased text scaling', (tester) async {
+      if (!PlatformCaps.isDesktop) return;
+      setSurface(tester, const Size(1600, 900));
+      tester.platformDispatcher.textScaleFactorTestValue = 1.3;
+      addTearDown(
+        () => tester.platformDispatcher.clearTextScaleFactorTestValue(),
+      );
+
+      await tester.pumpWidget(wrapApp());
+      await tester.pumpAndSettle();
+      expect(find.byType(DesktopArticleListPane), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('Desktop settings', () {
+    testWidgets('settings uses a wide column on desktop', (tester) async {
+      if (!PlatformCaps.isDesktop) return;
+      setSurface(tester, const Size(1600, 900));
+
+      await tester.pumpWidget(
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(create: (_) => SettingsProvider()),
+            ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
+            ChangeNotifierProvider(create: (_) => BookmarkProvider()),
+            ChangeNotifierProxyProvider3<
+              SubscriptionProvider,
+              SettingsProvider,
+              BookmarkProvider,
+              FeedProvider
+            >(
+              create: (_) => FeedProvider(),
+              update: (_, sub, settings, bm, feed) =>
+                  (feed ?? FeedProvider())..update(sub, settings, bm),
+            ),
+          ],
+          child: MaterialApp(
+            localizationsDelegates:
+                AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const Scaffold(body: SettingsScreen()),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+      // Content column must be wider than the mobile 680 cap on desktop.
+      final box = tester.widget<ConstrainedBox>(
+        find
+            .descendant(
+              of: find.byType(ConstrainedWidth),
+              matching: find.byType(ConstrainedBox),
+            )
+            .first,
+      );
+      expect(box.constraints.maxWidth, greaterThan(680));
     });
   });
 }

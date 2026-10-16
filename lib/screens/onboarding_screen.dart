@@ -10,6 +10,7 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../router/onboarding_state.dart';
 import '../utils/motion.dart';
+import '../utils/platform_caps.dart';
 import '../widgets/constrained_width.dart';
 
 const _globalFeedsUrl =
@@ -251,6 +252,8 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
 
+    final isDesktop = PlatformCaps.isDesktop;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -260,13 +263,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               painter: _BlobPainter(
                 t: _bgController.value,
                 color: colorScheme.primary,
+                subtle: isDesktop,
               ),
               child: const SizedBox.expand(),
             ),
           ),
           SafeArea(
             child: ConstrainedWidth(
-              maxWidth: 600,
+              // Desktop gets a wide but bounded column; mobile keeps 600.
+              maxWidth: isDesktop ? 880 : 600,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
@@ -279,15 +284,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         child: Column(
                           children: [
                             Container(
-                              width: 64,
-                              height: 64,
+                              width: isDesktop ? 72 : 64,
+                              height: isDesktop ? 72 : 64,
                               decoration: BoxDecoration(
                                 color: colorScheme.primaryContainer,
                                 borderRadius: BorderRadius.circular(20),
                               ),
                               child: Icon(
                                 Icons.rss_feed_rounded,
-                                size: 36,
+                                size: isDesktop ? 40 : 36,
                                 color: colorScheme.onPrimaryContainer,
                               ),
                             ),
@@ -295,7 +300,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             Text(
                               l10n.onboardingTitle,
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.headlineSmall
+                              style: (isDesktop
+                                      ? Theme.of(
+                                          context,
+                                        ).textTheme.headlineMedium
+                                      : Theme.of(
+                                          context,
+                                        ).textTheme.headlineSmall)
                                   ?.copyWith(
                                     fontWeight: FontWeight.w700,
                                     color: colorScheme.onSurface,
@@ -305,7 +316,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                             Text(
                               l10n.onboardingSubtitle,
                               textAlign: TextAlign.center,
-                              style: Theme.of(context).textTheme.bodyMedium
+                              style: (isDesktop
+                                      ? Theme.of(context).textTheme.bodyLarge
+                                      : Theme.of(
+                                          context,
+                                        ).textTheme.bodyMedium)
                                   ?.copyWith(
                                     color: colorScheme.onSurface.withValues(
                                       alpha: 0.6,
@@ -450,6 +465,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 count: counts[cat] ?? 0,
                 selected: selected.contains(cat),
                 colorScheme: colorScheme,
+                desktop: PlatformCaps.isDesktop,
                 onTap: () => onToggle(cat),
               ),
             )
@@ -539,6 +555,7 @@ class _CategoryChip extends StatelessWidget {
   final int count;
   final bool selected;
   final ColorScheme colorScheme;
+  final bool desktop;
   final VoidCallback onTap;
 
   const _CategoryChip({
@@ -547,16 +564,21 @@ class _CategoryChip extends StatelessWidget {
     required this.selected,
     required this.colorScheme,
     required this.onTap,
+    this.desktop = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(20),
       child: AnimatedContainer(
         duration: motionDuration(context, const Duration(milliseconds: 200)),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        padding: EdgeInsets.symmetric(
+          horizontal: desktop ? 18 : 14,
+          vertical: desktop ? 13 : 10,
+        ),
         decoration: BoxDecoration(
           color: selected
               ? colorScheme.primary
@@ -573,13 +595,17 @@ class _CategoryChip extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (selected) ...[
-              Icon(Icons.check_rounded, size: 14, color: colorScheme.onPrimary),
+              Icon(
+                Icons.check_rounded,
+                size: desktop ? 16 : 14,
+                color: colorScheme.onPrimary,
+              ),
               const SizedBox(width: 6),
             ],
             Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: desktop ? 14.5 : 13,
                 fontWeight: FontWeight.w600,
                 color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
               ),
@@ -615,25 +641,38 @@ class _BlobPainter extends CustomPainter {
   final double t;
   final Color color;
 
-  const _BlobPainter({required this.t, required this.color});
+  /// Desktop: much smaller, fainter glows — the giant animated circles that
+  /// suit a phone overwhelm a large window.
+  final bool subtle;
+
+  const _BlobPainter({
+    required this.t,
+    required this.color,
+    this.subtle = false,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = color.withValues(alpha: 0.07);
+    final alpha = subtle ? 0.035 : 0.07;
+    final paint = Paint()..color = color.withValues(alpha: alpha);
+    final s = subtle ? 0.5 : 1.0;
 
     final b1x = size.width * (0.78 + 0.08 * sin(t * 2 * pi));
     final b1y = size.height * (0.1 + 0.05 * cos(t * 2 * pi * 1.3));
-    canvas.drawCircle(Offset(b1x, b1y), size.width * 0.42, paint);
+    canvas.drawCircle(Offset(b1x, b1y), size.width * 0.42 * s, paint);
 
     final b2x = size.width * (0.12 + 0.07 * cos(t * 2 * pi * 0.7));
     final b2y = size.height * (0.82 + 0.06 * sin(t * 2 * pi * 0.9));
-    canvas.drawCircle(Offset(b2x, b2y), size.width * 0.36, paint);
+    canvas.drawCircle(Offset(b2x, b2y), size.width * 0.36 * s, paint);
 
-    final b3x = size.width * (0.5 + 0.06 * sin(t * 2 * pi * 1.1 + pi));
-    final b3y = size.height * (0.48 + 0.04 * cos(t * 2 * pi * 0.8));
-    canvas.drawCircle(Offset(b3x, b3y), size.width * 0.26, paint);
+    if (!subtle) {
+      final b3x = size.width * (0.5 + 0.06 * sin(t * 2 * pi * 1.1 + pi));
+      final b3y = size.height * (0.48 + 0.04 * cos(t * 2 * pi * 0.8));
+      canvas.drawCircle(Offset(b3x, b3y), size.width * 0.26, paint);
+    }
   }
 
   @override
-  bool shouldRepaint(covariant _BlobPainter old) => old.t != t;
+  bool shouldRepaint(covariant _BlobPainter old) =>
+      old.t != t || old.subtle != subtle;
 }

@@ -50,6 +50,9 @@ class SettingsScreen extends StatelessWidget {
     final theme = Theme.of(context);
 
     return ConstrainedWidth(
+      // Desktop settings get a wider working column (~920dp); mobile keeps
+      // the original 680dp cap.
+      maxWidth: PlatformCaps.isDesktop ? 920 : 680,
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [

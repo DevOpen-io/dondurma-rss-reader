@@ -126,7 +126,9 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     final provider = context.watch<FeedProvider>();
 
     return Material(
-      color: cs.surface,
+      // Subtly darker than the reader surface so the three panes read as
+      // distinct layers in both light and dark themes.
+      color: cs.surfaceContainerLowest,
       child: Column(
         children: [
           // ── Toolbar: search + filter + refresh ────────────────────────
@@ -268,7 +270,10 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                         }
                         return false;
                       },
-                      child: ListView.builder(
+                      child: Scrollbar(
+                        controller: _scrollController,
+                        thumbVisibility: true,
+                        child: ListView.builder(
                         controller: _scrollController,
                         scrollCacheExtent: const ScrollCacheExtent.pixels(400),
                         itemCount:
@@ -286,6 +291,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                             onTap: () => widget.onSelect(item),
                           );
                         },
+                        ),
                       ),
                     ),
                   ),

@@ -24,7 +24,7 @@ import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import '../utils/share_actions.dart';
 import '../utils/time_format.dart';
-import 'dart:math' as math;
+
 
 const _articleTransitionSettleDelay = Duration(milliseconds: 380);
 
@@ -379,15 +379,16 @@ class _ArticlePageState extends State<ArticlePage> {
                 ),
 
                 // ── Article content ──────────────────────────────────────
+                // Content width comes from the *pane* constraints, not the
+                // window: sizing off MediaQuery squeezed the reader to a ~60px
+                // strip when embedded in the desktop three-pane layout.
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: math.max(
-                        20.0,
-                        (MediaQuery.of(context).size.width - 680) / 2,
-                      ),
-                    ),
-                    child: Column(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 720),
+                        child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         SizedBox(height: hasHero ? 4 : 20),
@@ -569,8 +570,16 @@ class _ArticlePageState extends State<ArticlePage> {
                                 : null,
                           ),
                         ] else ...[
-                          // Rich HTML content
-                          Html(
+                          // Rich HTML content. LayoutBuilder supplies the
+                          // real content-column width — MediaQuery would give
+                          // the whole window, breaking embedded panes.
+                          LayoutBuilder(
+                            builder: (context, contentConstraints) {
+                              final contentWidth =
+                                  contentConstraints.maxWidth.isFinite
+                                  ? contentConstraints.maxWidth
+                                  : MediaQuery.of(context).size.width;
+                              return Html(
                             data: provider.displayContent,
                             extensions: [
                               TagExtension(
@@ -665,9 +674,7 @@ class _ArticlePageState extends State<ArticlePage> {
                                 textDecoration: TextDecoration.none,
                               ),
                               "img": Style(
-                                width: Width(
-                                  MediaQuery.of(context).size.width - 40,
-                                ),
+                                width: Width(contentWidth),
                                 margin: Margins.only(top: 12, bottom: 12),
                               ),
                               "figure": Style(
@@ -690,6 +697,8 @@ class _ArticlePageState extends State<ArticlePage> {
                               if (url != null && url.isNotEmpty) {
                                 _openUrl(context, url);
                               }
+                            },
+                              );
                             },
                           ),
                         ],
@@ -760,6 +769,8 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         const SizedBox(height: 40),
                       ],
+                        ),
+                      ),
                     ),
                   ),
                 ),
