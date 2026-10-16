@@ -9,7 +9,7 @@ import '../article_screen.dart';
 /// Right column of the desktop layout: the selected article rendered by the
 /// same [ArticlePage] used by the mobile reader, plus previous/next
 /// navigation driven by the middle column's order.
-class DesktopReaderPane extends StatelessWidget {
+class DesktopReaderPane extends StatefulWidget {
   /// Currently selected article; null shows the empty state.
   final FeedItem? item;
 
@@ -30,11 +30,36 @@ class DesktopReaderPane extends StatelessWidget {
   });
 
   @override
+  State<DesktopReaderPane> createState() => _DesktopReaderPaneState();
+}
+
+class _DesktopReaderPaneState extends State<DesktopReaderPane> {
+  /// Shared by the visible Scrollbar and the article's CustomScrollView —
+  /// the reason this pane is stateful.
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant DesktopReaderPane oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Selecting a different article resets the reading position.
+    if (oldWidget.item?.id != widget.item?.id &&
+        _scrollController.hasClients) {
+      _scrollController.jumpTo(0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
 
-    final current = item;
+    final current = widget.item;
     if (current == null) {
       return Material(
         color: cs.surface,
@@ -74,21 +99,24 @@ class DesktopReaderPane extends StatelessWidget {
                 IconButton(
                   icon: const Icon(Icons.keyboard_arrow_up_rounded),
                   tooltip: l10n.previousArticle,
-                  onPressed: onPrevious,
+                  onPressed: widget.onPrevious,
                   iconSize: 22,
                 ),
                 IconButton(
                   icon: const Icon(Icons.keyboard_arrow_down_rounded),
                   tooltip: l10n.nextArticle,
-                  onPressed: onNext,
+                  onPressed: widget.onNext,
                   iconSize: 22,
                 ),
                 const Spacer(),
-                if (totalCount > 1)
+                if (widget.totalCount > 1)
                   Padding(
                     padding: const EdgeInsets.only(right: 14),
                     child: Text(
-                      l10n.articlePosition(currentIndex + 1, totalCount),
+                      l10n.articlePosition(
+                        widget.currentIndex + 1,
+                        widget.totalCount,
+                      ),
                       style: TextStyle(
                         fontSize: 12,
                         color: cs.onSurfaceVariant.withValues(alpha: 0.8),
@@ -108,15 +136,20 @@ class DesktopReaderPane extends StatelessWidget {
             // Keyed by article id so switching items builds a fresh
             // ArticlePageProvider + scroll state instead of reusing stale
             // page state.
-            child: ChangeNotifierProvider(
-              key: ValueKey('reader-${current.id}'),
-              create: (_) => ArticlePageProvider(item: current),
-              child: ArticlePage(
-                item: current,
-                currentIndex: currentIndex,
-                totalCount: totalCount,
-                isActive: true,
-                embedded: true,
+            child: Scrollbar(
+              controller: _scrollController,
+              thumbVisibility: true,
+              child: ChangeNotifierProvider(
+                key: ValueKey('reader-${current.id}'),
+                create: (_) => ArticlePageProvider(item: current),
+                child: ArticlePage(
+                  item: current,
+                  currentIndex: widget.currentIndex,
+                  totalCount: widget.totalCount,
+                  isActive: true,
+                  embedded: true,
+                  scrollController: _scrollController,
+                ),
               ),
             ),
           ),

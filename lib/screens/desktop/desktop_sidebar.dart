@@ -18,7 +18,7 @@ import '../../widgets/folders/move_feed_sheet.dart';
 /// destinations (Articles / Bookmarks), the category+feed tree, and
 /// Discover/Settings entries. Selection writes through to [FeedProvider]'s
 /// existing category/feed filters — no second filter engine.
-class DesktopSidebar extends StatelessWidget {
+class DesktopSidebar extends StatefulWidget {
   /// Currently selected library section.
   final DesktopSection section;
 
@@ -44,6 +44,21 @@ class DesktopSidebar extends StatelessWidget {
     required this.onOpenDiscover,
     required this.onOpenSettings,
   });
+
+  @override
+  State<DesktopSidebar> createState() => _DesktopSidebarState();
+}
+
+class _DesktopSidebarState extends State<DesktopSidebar> {
+  /// Owns the nav ListView's position — the Scrollbar above must share this
+  /// controller or it falls back to an unattached PrimaryScrollController.
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +102,7 @@ class DesktopSidebar extends StatelessWidget {
           // ── Library + feed tree ──────────────────────────────────────
           Expanded(
             child: Scrollbar(
+              controller: _scrollController,
               thumbVisibility: true,
               child: Consumer3<
                 FeedProvider,
@@ -100,9 +116,11 @@ class DesktopSidebar extends StatelessWidget {
                     .toList();
                 final hasUncategorized = categories.contains('Uncategorized');
 
-                final inArticles = section == DesktopSection.articles;
+                final inArticles =
+                    widget.section == DesktopSection.articles;
 
                 return ListView(
+                  controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
                   children: [
                     _NavItem(
@@ -112,15 +130,18 @@ class DesktopSidebar extends StatelessWidget {
                       selected: inArticles && feed.selectedCategory == null,
                       onTap: () {
                         feed.selectCategory(null);
-                        onSectionChanged(DesktopSection.articles);
+                        widget.onSectionChanged(DesktopSection.articles);
                       },
                     ),
                     _NavItem(
                       icon: Icons.bookmark_outline_rounded,
                       label: l10n.bookmarksTab,
                       count: bookmarks.bookmarkedItemIds.length,
-                      selected: section == DesktopSection.bookmarks,
-                      onTap: () => onSectionChanged(DesktopSection.bookmarks),
+                      selected:
+                          widget.section == DesktopSection.bookmarks,
+                      onTap: () => widget.onSectionChanged(
+                        DesktopSection.bookmarks,
+                      ),
                     ),
 
                     _SectionLabel(l10n.categories),
@@ -136,7 +157,7 @@ class DesktopSidebar extends StatelessWidget {
                         subs: subs,
                         active: inArticles,
                         onSelect: () =>
-                            onSectionChanged(DesktopSection.articles),
+                            widget.onSectionChanged(DesktopSection.articles),
                       ),
                     if (hasUncategorized)
                       _CategoryNode(
@@ -151,17 +172,17 @@ class DesktopSidebar extends StatelessWidget {
                         active: inArticles,
                         isUncategorized: true,
                         onSelect: () =>
-                            onSectionChanged(DesktopSection.articles),
+                            widget.onSectionChanged(DesktopSection.articles),
                       ),
                     _ActionRow(
                       icon: Icons.add,
                       label: l10n.semanticAddFeed,
-                      onTap: onAddFeed,
+                      onTap: widget.onAddFeed,
                     ),
                     _ActionRow(
                       icon: Icons.create_new_folder_outlined,
                       label: l10n.addFolder,
-                      onTap: onAddCategory,
+                      onTap: widget.onAddCategory,
                     ),
 
                     _SectionLabel(l10n.discover),
@@ -169,13 +190,13 @@ class DesktopSidebar extends StatelessWidget {
                       icon: Icons.lightbulb_outline_rounded,
                       label: l10n.suggestedFeeds,
                       selected: false,
-                      onTap: onOpenDiscover,
+                      onTap: widget.onOpenDiscover,
                     ),
                     _NavItem(
                       icon: Icons.settings_outlined,
                       label: l10n.settingsTab,
                       selected: false,
-                      onTap: onOpenSettings,
+                      onTap: widget.onOpenSettings,
                     ),
                   ],
                 );

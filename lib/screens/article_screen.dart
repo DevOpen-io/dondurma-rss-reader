@@ -111,6 +111,11 @@ class ArticlePage extends StatefulWidget {
   /// swipeable [ArticleScreen] PageView.
   final bool embedded;
 
+  /// Optional externally-owned scroll controller. The desktop reader pane
+  /// supplies one so its visible [Scrollbar] tracks the article scroll
+  /// position; mobile pages keep their implicit controllers.
+  final ScrollController? scrollController;
+
   const ArticlePage({
     super.key,
     required this.item,
@@ -118,6 +123,7 @@ class ArticlePage extends StatefulWidget {
     required this.totalCount,
     required this.isActive,
     this.embedded = false,
+    this.scrollController,
   });
 
   @override
@@ -278,6 +284,7 @@ class _ArticlePageState extends State<ArticlePage> {
           NotificationListener<ScrollNotification>(
             onNotification: provider.updateReadingProgress,
             child: CustomScrollView(
+              controller: widget.scrollController,
               slivers: [
                 // ── Collapsing AppBar with hero image ────────────────────
                 SliverAppBar(

@@ -58,7 +58,13 @@ class DesktopArticleListPane extends StatefulWidget {
 class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final Map<String, GlobalKey> _tileKeys = {};
+
+  /// Per-row keys used only for Scrollable.ensureVisible. They are keyed by
+  /// *index*, not item id: feed items share `guid ?? link` identities, so two
+  /// different articles can legitimately carry the same id — an id-keyed map
+  /// duplicates GlobalKeys across siblings (the "Multiple widgets used the
+  /// same GlobalKey" spam).
+  final Map<int, GlobalObjectKey> _tileKeys = {};
 
   @override
   void initState() {
@@ -73,15 +79,15 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     super.dispose();
   }
 
-  GlobalKey _keyFor(FeedItem item) =>
-      _tileKeys.putIfAbsent(item.id, () => GlobalKey());
+  GlobalObjectKey _keyFor(int index) =>
+      _tileKeys.putIfAbsent(index, () => GlobalObjectKey(index));
 
   void _selectIndex(int index) {
     if (index < 0 || index >= widget.items.length) return;
     final item = widget.items[index];
     widget.onSelect(item);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _tileKeys[item.id]?.currentContext;
+      final ctx = _tileKeys[index]?.currentContext;
       if (ctx != null) {
         Scrollable.ensureVisible(
           ctx,
@@ -285,7 +291,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                           }
                           final item = widget.items[index];
                           return _DesktopArticleTile(
-                            key: _keyFor(item),
+                            key: _keyFor(index),
                             item: item,
                             selected: item.id == widget.selectedId,
                             onTap: () => widget.onSelect(item),
