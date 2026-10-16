@@ -95,19 +95,26 @@ void main() {
       expect(find.text('Select an article to read'), findsOneWidget);
     });
 
-    testWidgets('collapses sidebar to icon rail at medium width', (
+    testWidgets('explorer demotes to a drawer below the pin breakpoint', (
       tester,
     ) async {
       if (!PlatformCaps.isDesktop) return;
-      setSurface(tester, const Size(1000, 800));
+      setSurface(tester, const Size(1200, 800));
 
       await tester.pumpWidget(wrapApp());
       await tester.pumpAndSettle();
 
-      // Full sidebar gone; panes 2 and 3 remain.
+      // Explorer not pinned inline; list + reader remain.
       expect(find.byType(DesktopSidebar), findsNothing);
       expect(find.byType(DesktopArticleListPane), findsOneWidget);
       expect(find.byType(DesktopReaderPane), findsOneWidget);
+      expect(tester.takeException(), isNull);
+
+      // Rail's Feeds button opens the explorer drawer.
+      await tester.tap(find.byIcon(Icons.view_sidebar_outlined));
+      await tester.pumpAndSettle();
+      expect(find.byType(Drawer), findsOneWidget);
+      expect(find.byType(DesktopSidebar), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
 

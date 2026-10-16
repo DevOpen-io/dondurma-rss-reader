@@ -209,8 +209,6 @@ void main() {
             onSectionChanged: (_) {},
             onAddFeed: () {},
             onAddCategory: () {},
-            onOpenDiscover: () {},
-            onOpenSettings: () {},
           ),
         ),
       );

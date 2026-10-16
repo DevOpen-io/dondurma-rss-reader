@@ -23,9 +23,10 @@ import 'desktop_sidebar.dart';
 /// Below this a single-column navigation is more usable than three panes.
 const double kDesktopNarrowBreakpoint = 860;
 
-/// Width below which the sidebar collapses to an icon rail instead of the
-/// full category tree.
-const double kDesktopRailBreakpoint = 1150;
+/// Width at which the feed/category explorer pins as its own column next to
+/// the app rail. Below this the explorer stays reachable as a drawer from
+/// the rail's Feeds button, keeping narrow windows uncluttered.
+const double kDesktopExplorerBreakpoint = 1360;
 
 /// Picks the mobile or desktop home experience.
 ///
@@ -45,7 +46,16 @@ class AdaptiveHomeScreen extends StatelessWidget {
   }
 }
 
-/// Three-pane desktop shell: navigation sidebar, article list, reader.
+/// Desktop shell with a four-zone information architecture:
+///
+/// ```
+/// [App rail] | [Feed explorer] | [Article list] | [Reader]
+///  72px        280px             380px            flex
+/// ```
+///
+/// The rail carries app-level destinations; the explorer carries the
+/// feed/category tree. Below [kDesktopExplorerBreakpoint] the explorer
+/// demotes to a drawer so the rail never merges menu and content.
 class DesktopHomeScreen extends StatefulWidget {
   const DesktopHomeScreen({super.key});
 
@@ -173,7 +183,17 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
         : items.indexWhere((i) => i.id == selected.id);
 
     final width = MediaQuery.sizeOf(context).width;
-    final railMode = width < kDesktopRailBreakpoint;
+    final explorerPinned = width >= kDesktopExplorerBreakpoint;
+    final explorer = DesktopSidebar(
+      section: _section,
+      onSectionChanged: (s) => setState(() => _section = s),
+      onAddFeed: _showAddFeed,
+      onAddCategory: _showAddCategory,
+    );
+    final divider = VerticalDivider(
+      width: 1,
+      color: cs.outlineVariant.withValues(alpha: 0.35),
+    );
 
     return CallbackShortcuts(
       bindings: {
@@ -187,38 +207,34 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
             _openSettings,
       },
       child: Scaffold(
+        // When the explorer isn't pinned it lives in the scaffold drawer,
+        // opened from the rail's Feeds button.
+        drawer: explorerPinned ? null : Drawer(width: 300, child: explorer),
         body: Row(
           children: [
-            // ── Column 1: navigation ───────────────────────────────────
+            // ── App-level navigation rail (always present) ─────────────
             SizedBox(
-              width: railMode ? 72 : 264,
-              child: railMode
-                  ? _IconRail(
-                      section: _section,
-                      onSectionChanged: (s) =>
-                          setState(() => _section = s),
-                      onAddFeed: _showAddFeed,
-                      onOpenDiscover: _openDiscover,
-                      onOpenSettings: _openSettings,
-                    )
-                  : DesktopSidebar(
-                      section: _section,
-                      onSectionChanged: (s) =>
-                          setState(() => _section = s),
-                      onAddFeed: _showAddFeed,
-                      onAddCategory: _showAddCategory,
-                      onOpenDiscover: _openDiscover,
-                      onOpenSettings: _openSettings,
-                    ),
+              width: 72,
+              child: _AppRail(
+                section: _section,
+                onSectionChanged: (s) => setState(() => _section = s),
+                onAddFeed: _showAddFeed,
+                onOpenDiscover: _openDiscover,
+                onOpenSettings: _openSettings,
+                explorerInDrawer: !explorerPinned,
+              ),
             ),
-            VerticalDivider(
-              width: 1,
-              color: cs.outlineVariant.withValues(alpha: 0.35),
-            ),
+            divider,
 
-            // ── Column 2: article list ─────────────────────────────────
+            // ── Feed/category explorer (content navigation) ────────────
+            if (explorerPinned) ...[
+              SizedBox(width: 280, child: explorer),
+              divider,
+            ],
+
+            // ── Article list ───────────────────────────────────────────
             SizedBox(
-              width: railMode ? 320 : 380,
+              width: explorerPinned ? 380 : 360,
               child: DesktopArticleListPane(
                 items: items,
                 selectedId: selected?.id,
@@ -227,12 +243,9 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 listFocusNode: _listFocusNode,
               ),
             ),
-            VerticalDivider(
-              width: 1,
-              color: cs.outlineVariant.withValues(alpha: 0.35),
-            ),
+            divider,
 
-            // ── Column 3: reader ───────────────────────────────────────
+            // ── Reader ─────────────────────────────────────────────────
             Expanded(
               child: DesktopReaderPane(
                 item: selected,
@@ -253,20 +266,28 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   }
 }
 
-/// Icon-only navigation used between the narrow and wide breakpoints.
-class _IconRail extends StatelessWidget {
+/// Permanent app-level navigation: identity, primary destinations
+/// (All News / Bookmarks / Feeds), then utility entries pinned to the
+/// bottom. Content navigation (categories, feeds) lives in the explorer
+/// pane/drawer — never merged into this rail.
+class _AppRail extends StatelessWidget {
   final DesktopSection section;
   final ValueChanged<DesktopSection> onSectionChanged;
   final VoidCallback onAddFeed;
   final VoidCallback onOpenDiscover;
   final VoidCallback onOpenSettings;
 
-  const _IconRail({
+  /// Whether the feed explorer is demoted to a drawer (narrow windows).
+  /// When true the rail shows a Feeds button that opens it.
+  final bool explorerInDrawer;
+
+  const _AppRail({
     required this.section,
     required this.onSectionChanged,
     required this.onAddFeed,
     required this.onOpenDiscover,
     required this.onOpenSettings,
+    required this.explorerInDrawer,
   });
 
   @override
@@ -274,69 +295,139 @@ class _IconRail extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
 
-    Widget railItem(IconData icon, String label,
-        {required bool selected, required VoidCallback onTap}) {
-      return Tooltip(
-        message: label,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onTap,
-          child: Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: selected
-                  ? cs.primaryContainer.withValues(alpha: 0.6)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              icon,
-              size: 20,
-              color: selected ? cs.primary : cs.onSurfaceVariant,
+    // Destinations get icon + label; one-off actions and utilities stay
+    // icon-only with tooltips (activity-bar grammar: labeled = navigates,
+    // bare icon = acts).
+    Widget railItem(
+      IconData icon,
+      String label, {
+      required bool selected,
+      required VoidCallback onTap,
+    }) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 3),
+        child: Tooltip(
+          message: label,
+          waitDuration: const Duration(milliseconds: 500),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(12),
+            onTap: onTap,
+            child: SizedBox(
+              width: 62,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    width: 44,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? cs.secondaryContainer
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Icon(
+                      icon,
+                      size: 19,
+                      color: selected
+                          ? cs.onSecondaryContainer
+                          : cs.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 10,
+                      height: 1.2,
+                      fontWeight:
+                          selected ? FontWeight.w600 : FontWeight.w500,
+                      color: selected ? cs.onSurface : cs.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       );
     }
 
+    Widget railAction(
+      IconData icon,
+      String tooltip, {
+      required VoidCallback onTap,
+    }) {
+      return Tooltip(
+        message: tooltip,
+        waitDuration: const Duration(milliseconds: 500),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: SizedBox(
+            width: 44,
+            height: 40,
+            child: Icon(icon, size: 20, color: cs.onSurfaceVariant),
+          ),
+        ),
+      );
+    }
+
     return Material(
-      color: cs.surfaceContainerLow,
+      // Darkest chrome — the rail visually recedes behind content panes.
+      color: cs.surfaceContainerLowest,
       child: Column(
         children: [
           const SizedBox(height: 14),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.asset('assets/logo.ico', width: 30, height: 30),
+          ),
+          const SizedBox(height: 14),
+
+          // ── Primary destinations ────────────────────────────────────
           railItem(
             Icons.dynamic_feed_rounded,
             l10n.allNews,
             selected: section == DesktopSection.articles,
             onTap: () => onSectionChanged(DesktopSection.articles),
           ),
-          const SizedBox(height: 6),
           railItem(
             Icons.bookmark_outline_rounded,
             l10n.bookmarksTab,
             selected: section == DesktopSection.bookmarks,
             onTap: () => onSectionChanged(DesktopSection.bookmarks),
           ),
-          const SizedBox(height: 6),
-          railItem(
+          if (explorerInDrawer)
+            railItem(
+              Icons.view_sidebar_outlined,
+              l10n.feedsTab,
+              selected: false,
+              onTap: () => Scaffold.of(context).openDrawer(),
+            ),
+          const SizedBox(height: 8),
+          railAction(
             Icons.add_rounded,
             l10n.semanticAddFeed,
-            selected: false,
             onTap: onAddFeed,
           ),
+
           const Spacer(),
-          railItem(
+
+          // ── Utilities ───────────────────────────────────────────────
+          railAction(
             Icons.lightbulb_outline_rounded,
             l10n.suggestedFeeds,
-            selected: false,
             onTap: onOpenDiscover,
           ),
-          const SizedBox(height: 6),
-          railItem(
+          const SizedBox(height: 4),
+          railAction(
             Icons.settings_outlined,
             l10n.settingsTab,
-            selected: false,
             onTap: onOpenSettings,
           ),
           const SizedBox(height: 14),

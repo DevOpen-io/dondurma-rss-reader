@@ -110,7 +110,7 @@ void main() {
     final htmlFinder = find.byType(Html);
     expect(htmlFinder, findsOneWidget);
     final width = tester.getSize(htmlFinder).width;
-    // Pane is ~980px; content must be a comfortable column (~680-720),
+    // Pane is ~980px; content must be a comfortable column (≤840 cap),
     // never the ~60px strip the MediaQuery padding bug produced.
     expect(width, greaterThan(500));
     expect(width, lessThanOrEqualTo(980));

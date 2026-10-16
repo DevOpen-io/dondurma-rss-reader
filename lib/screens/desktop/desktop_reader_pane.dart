@@ -4,6 +4,9 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
 import '../../providers/article_page_provider.dart';
+import '../../providers/settings_provider.dart';
+import '../../utils/share_actions.dart';
+import '../../widgets/in_app_browser.dart';
 import '../article_screen.dart';
 
 /// Right column of the desktop layout: the selected article rendered by the
@@ -52,6 +55,21 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _openLink(BuildContext context, FeedItem item) {
+    var url = item.link.trim();
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      url = 'https://$url';
+    }
+    final settings = context.read<SettingsProvider>();
+    openInAppBrowser(
+      context,
+      url,
+      title: item.title,
+      adBlockEnabled: settings.adBlockEnabled,
+      browserMode: settings.browserMode,
+    );
   }
 
   @override
@@ -111,7 +129,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
                 const Spacer(),
                 if (widget.totalCount > 1)
                   Padding(
-                    padding: const EdgeInsets.only(right: 14),
+                    padding: const EdgeInsets.only(right: 10),
                     child: Text(
                       l10n.articlePosition(
                         widget.currentIndex + 1,
@@ -124,6 +142,24 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
                       ),
                     ),
                   ),
+                // Open/share live here in the pane toolbar — the embedded
+                // ArticlePage suppresses its app-bar actions so the two
+                // toolbars never stack.
+                IconButton(
+                  icon: const Icon(Icons.launch_rounded, size: 20),
+                  tooltip: l10n.openInBrowser,
+                  onPressed: current.link.isNotEmpty
+                      ? () => _openLink(context, current)
+                      : null,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.share_rounded, size: 20),
+                  tooltip: l10n.shareArticle,
+                  onPressed: current.link.isNotEmpty
+                      ? () => shareArticleLink(context, current)
+                      : null,
+                ),
+                const SizedBox(width: 6),
               ],
             ),
           ),

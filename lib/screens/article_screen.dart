@@ -287,19 +287,22 @@ class _ArticlePageState extends State<ArticlePage> {
               controller: widget.scrollController,
               slivers: [
                 // ── Collapsing AppBar with hero image ────────────────────
+                // Embedded (desktop reader pane): the pane's own toolbar
+                // already carries position + open/share, so the app bar is
+                // hero-only and unpinned — no double chrome stacked above
+                // the article.
+                if (!widget.embedded || hasHero)
                 SliverAppBar(
                   expandedHeight: hasHero ? 280 : 0,
-                  pinned: true,
+                  pinned: !widget.embedded,
                   stretch: true,
-                  // Embedded (desktop reader pane): no back navigation — the
-                  // pane owns selection; suppress the implicit leading too.
                   automaticallyImplyLeading: !widget.embedded,
                   leading: widget.embedded
                       ? const SizedBox.shrink()
                       : CircleBackButton(
                           onPressed: () => Navigator.pop(context),
                         ),
-                  title: widget.totalCount > 1
+                  title: !widget.embedded && widget.totalCount > 1
                       ? Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 12,
@@ -325,7 +328,9 @@ class _ArticlePageState extends State<ArticlePage> {
                         )
                       : null,
                   centerTitle: true,
-                  actions: [
+                  actions: widget.embedded
+                      ? null
+                      : [
                     // Open in browser (icon only)
                     CircleActionButton(
                       icon: Icons.launch_rounded,
@@ -346,7 +351,7 @@ class _ArticlePageState extends State<ArticlePage> {
                         tooltip: l10n.shareArticle,
                       ),
                     const SizedBox(width: 4),
-                  ],
+                      ],
                   flexibleSpace: hasHero
                       ? FlexibleSpaceBar(
                           stretchModes: const [StretchMode.zoomBackground],
@@ -394,7 +399,9 @@ class _ArticlePageState extends State<ArticlePage> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Center(
                       child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 720),
+                        // Desktop reader column: wide enough to use the
+                        // pane, capped so lines stay readable (~75ch).
+                        constraints: const BoxConstraints(maxWidth: 840),
                         child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [

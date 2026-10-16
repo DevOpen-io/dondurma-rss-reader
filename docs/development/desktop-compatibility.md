@@ -31,11 +31,13 @@ and macOS (Intel + Apple Silicon) on the `feature/multiplatform-desktop` branch.
 3. **OPML export depended on share sheet** — desktop now uses a native
    `getSaveLocation` save dialog; mobile share flow unchanged
    (`lib/services/opml_service.dart`, `lib/utils/share_actions.dart`).
-4. **No desktop layout** — added adaptive three-pane shell
-   (`lib/screens/desktop/`): navigation sidebar, article list, embedded reader.
+4. **No desktop layout** — added adaptive four-zone shell
+   (`lib/screens/desktop/`): a permanent app-level navigation rail, a
+   feed/category explorer pane, the article list, and the embedded reader.
    Below `kDesktopNarrowBreakpoint` (860 logical px) the existing mobile
-   `HomeScreen` renders unchanged; below `kDesktopRailBreakpoint` (1150) the
-   sidebar collapses to an icon rail.
+   `HomeScreen` renders unchanged; below `kDesktopExplorerBreakpoint`
+   (1360) the explorer demotes to a drawer opened from the rail's Feeds
+   button, keeping app navigation and content navigation visibly separate.
 5. **No window management** — `DesktopWindowService` wraps `window_manager` for
    title/min-size/startup options; never invoked on mobile.
 6. **`syncBackground` toggle meaningless on desktop** — hidden when
@@ -52,7 +54,14 @@ and macOS (Intel + Apple Silicon) on the `feature/multiplatform-desktop` branch.
 
 ## Desktop UX delivered
 
-- Three-pane adaptive layout (sidebar / list / reader) with rail collapse.
+- Four-zone adaptive layout (app rail / feed explorer / list / reader).
+  The rail carries app destinations; the explorer carries the feed tree;
+  below 1360 px the explorer demotes to a drawer.
+- Reader pane toolbar owns prev/next, position, open-in-browser and share;
+  the embedded `ArticlePage` suppresses its app-bar chrome (hero image
+  stays, unpinned) so no double toolbar stacks above the article.
+- Article content column caps at 840 px — comfortably centered inside the
+  flex-width reader pane rather than stretching edge to edge.
 - `ArticlePage` exposed with an `embedded` mode so the mobile PageView reader
   and the desktop pane share the exact same article UI.
 - Keyboard shortcuts: Ctrl/Cmd+R refresh, Ctrl/Cmd+F search focus,
@@ -96,7 +105,8 @@ and macOS (Intel + Apple Silicon) on the `feature/multiplatform-desktop` branch.
 
 1. Launch the app; window opens centered with sensible default size.
 2. Resize below 860 px → mobile single-column layout appears; resize back.
-3. Between 860–1150 px → sidebar becomes an icon rail.
+3. Between 860–1360 px → the feed explorer collapses to a drawer; the
+   rail's Feeds button opens it. Above 1360 px it pins inline.
 4. Add a feed via Ctrl+N or the sidebar button; confirm fetch populates list.
 5. Select an article with mouse and with ↑/↓ + Enter; reader pane updates.
 6. Right-click a list row → context menu actions work.

@@ -14,10 +14,11 @@ import '../../widgets/folders/feed_action_sheet.dart';
 import '../../widgets/folders/folder_dialogs.dart';
 import '../../widgets/folders/move_feed_sheet.dart';
 
-/// Left navigation column of the desktop layout: app identity, primary
-/// destinations (Articles / Bookmarks), the category+feed tree, and
-/// Discover/Settings entries. Selection writes through to [FeedProvider]'s
-/// existing category/feed filters — no second filter engine.
+/// Content-navigation column of the desktop layout: the category+feed
+/// tree with add affordances. App-level destinations (All News, Bookmarks,
+/// Discover, Settings) live in the rail — this pane is feed explorer only.
+/// Selection writes through to [FeedProvider]'s existing category/feed
+/// filters — no second filter engine.
 class DesktopSidebar extends StatefulWidget {
   /// Currently selected library section.
   final DesktopSection section;
@@ -29,20 +30,12 @@ class DesktopSidebar extends StatefulWidget {
   final VoidCallback onAddFeed;
   final VoidCallback onAddCategory;
 
-  /// Opens Discover and Settings as pushed routes — both are self-contained
-  /// screens with their own Scaffold/AppBar, so embedding them inside the
-  /// pane would nest navigation badly.
-  final VoidCallback onOpenDiscover;
-  final VoidCallback onOpenSettings;
-
   const DesktopSidebar({
     super.key,
     required this.section,
     required this.onSectionChanged,
     required this.onAddFeed,
     required this.onAddCategory,
-    required this.onOpenDiscover,
-    required this.onOpenSettings,
   });
 
   @override
@@ -67,39 +60,44 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
     final tt = Theme.of(context).textTheme;
 
     return Material(
+      // One step lighter than the rail — reads as content chrome rather
+      // than app chrome.
       color: cs.surfaceContainerLow,
       child: Column(
         children: [
-          // ── App identity ─────────────────────────────────────────────
+          // ── Explorer header: title + add affordances ──────────────────
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 14),
+            padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
             child: Row(
               children: [
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.asset(
-                    'assets/logo.ico',
-                    width: 28,
-                    height: 28,
-                  ),
-                ),
-                const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    l10n.appName,
-                    style: tt.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: -0.3,
+                    l10n.feedsTab,
+                    style: tt.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_rounded, size: 20),
+                  tooltip: l10n.semanticAddFeed,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.onAddFeed,
+                ),
+                IconButton(
+                  icon: const Icon(
+                    Icons.create_new_folder_outlined,
+                    size: 19,
+                  ),
+                  tooltip: l10n.addFolder,
+                  visualDensity: VisualDensity.compact,
+                  onPressed: widget.onAddCategory,
                 ),
               ],
             ),
           ),
 
-          // ── Library + feed tree ──────────────────────────────────────
+          // ── Category + feed tree ─────────────────────────────────────
           Expanded(
             child: Scrollbar(
               controller: _scrollController,
@@ -123,27 +121,6 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                   controller: _scrollController,
                   padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
                   children: [
-                    _NavItem(
-                      icon: Icons.dynamic_feed_rounded,
-                      label: l10n.allNews,
-                      count: feed.unreadCount(),
-                      selected: inArticles && feed.selectedCategory == null,
-                      onTap: () {
-                        feed.selectCategory(null);
-                        widget.onSectionChanged(DesktopSection.articles);
-                      },
-                    ),
-                    _NavItem(
-                      icon: Icons.bookmark_outline_rounded,
-                      label: l10n.bookmarksTab,
-                      count: bookmarks.bookmarkedItemIds.length,
-                      selected:
-                          widget.section == DesktopSection.bookmarks,
-                      onTap: () => widget.onSectionChanged(
-                        DesktopSection.bookmarks,
-                      ),
-                    ),
-
                     _SectionLabel(l10n.categories),
                     for (final category in nonUncategorized)
                       _CategoryNode(
@@ -174,30 +151,6 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                         onSelect: () =>
                             widget.onSectionChanged(DesktopSection.articles),
                       ),
-                    _ActionRow(
-                      icon: Icons.add,
-                      label: l10n.semanticAddFeed,
-                      onTap: widget.onAddFeed,
-                    ),
-                    _ActionRow(
-                      icon: Icons.create_new_folder_outlined,
-                      label: l10n.addFolder,
-                      onTap: widget.onAddCategory,
-                    ),
-
-                    _SectionLabel(l10n.discover),
-                    _NavItem(
-                      icon: Icons.lightbulb_outline_rounded,
-                      label: l10n.suggestedFeeds,
-                      selected: false,
-                      onTap: widget.onOpenDiscover,
-                    ),
-                    _NavItem(
-                      icon: Icons.settings_outlined,
-                      label: l10n.settingsTab,
-                      selected: false,
-                      onTap: widget.onOpenSettings,
-                    ),
                   ],
                 );
               },
@@ -227,130 +180,6 @@ class _SectionLabel extends StatelessWidget {
           color: cs.onSurfaceVariant.withValues(alpha: 0.7),
           fontWeight: FontWeight.w700,
           letterSpacing: 1.1,
-        ),
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final int? count;
-  final bool selected;
-  final VoidCallback onTap;
-
-  const _NavItem({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.count,
-    this.selected = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
-      child: Material(
-        color: selected
-            ? cs.primaryContainer.withValues(alpha: 0.5)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          hoverColor: cs.onSurface.withValues(alpha: 0.05),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 9,
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  size: 18,
-                  color: selected ? cs.primary : cs.onSurfaceVariant,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Tooltip(
-                    message: label,
-                    waitDuration: const Duration(milliseconds: 600),
-                    child: Text(
-                      label,
-                      style: tt.bodyMedium?.copyWith(
-                        fontWeight: selected
-                            ? FontWeight.w700
-                            : FontWeight.w500,
-                        color: selected
-                            ? cs.onSurface
-                            : cs.onSurface.withValues(alpha: 0.8),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                if (count != null && count! > 0)
-                  Text(
-                    '$count',
-                    style: tt.labelSmall?.copyWith(
-                      color: selected ? cs.primary : cs.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _ActionRow extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  const _ActionRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 1.5),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        hoverColor: cs.onSurface.withValues(alpha: 0.05),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: cs.onSurfaceVariant),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  label,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: cs.onSurface.withValues(alpha: 0.75),
-                    fontWeight: FontWeight.w500,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
