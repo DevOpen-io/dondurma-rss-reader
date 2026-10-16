@@ -1085,4 +1085,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get filterClear => 'Borrar filtros';
+
+  @override
+  String get linkCopiedToClipboard => 'Enlace copiado al portapapeles';
+
+  @override
+  String get selectArticleToRead => 'Selecciona un artículo para leer';
+
+  @override
+  String get previousArticle => 'Artículo anterior';
+
+  @override
+  String get nextArticle => 'Siguiente artículo';
+
+  @override
+  String get searchArticles => 'Buscar artículos';
+
+  @override
+  String get articles => 'Artículos';
+
+  @override
+  String get refreshFeeds => 'Actualizar fuentes';
 }

@@ -4,20 +4,26 @@ import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 
 import '../models/feed_item.dart';
+import '../utils/platform_caps.dart';
 
 /// Saves app data into HomeWidget shared storage so Android/iOS home screen
 /// widgets can read and display the latest state.
+///
+/// `home_widget` has no desktop implementation — all entry points no-op
+/// there so callers never need their own platform check.
 class WidgetUpdateService {
   static const _appGroupId = 'group.io.devopen.dondurma';
   static bool _initialized = false;
 
   static void initialize() {
+    if (!PlatformCaps.supportsHomeWidget) return;
     HomeWidget.setAppGroupId(_appGroupId);
     _initialized = true;
   }
 
   /// Updates the feed-based widgets (Latest, Category).
   static Future<void> updateFeedWidgets(List<FeedItem> allItems) async {
+    if (!PlatformCaps.supportsHomeWidget) return;
     if (!_initialized) initialize();
     try {
       final sorted = allItems.toList()

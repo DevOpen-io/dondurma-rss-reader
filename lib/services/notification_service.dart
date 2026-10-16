@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../models/feed_item.dart';
+import '../utils/platform_caps.dart';
 
 /// Singleton service that wraps [FlutterLocalNotificationsPlugin].
 ///
@@ -47,10 +48,23 @@ class NotificationService {
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
+    const linuxSettings = LinuxInitializationSettings(
+      defaultActionName: 'Open',
+    );
+    // Windows toast activation requires a stable AUMID + callback GUID.
+    // The GUID identifies this app's notification activator — it is fixed,
+    // not per-install.
+    const windowsSettings = WindowsInitializationSettings(
+      appName: 'Dondurma RSS Reader',
+      appUserModelId: 'io.devopen.dondurma',
+      guid: '9f4c2a1e-3b7d-4f8a-9c2e-5d6a1b8e3f04',
+    );
     const initSettings = InitializationSettings(
       android: androidSettings,
       iOS: darwinSettings,
       macOS: darwinSettings,
+      linux: linuxSettings,
+      windows: windowsSettings,
     );
     try {
       await _plugin.initialize(
@@ -74,11 +88,14 @@ class NotificationService {
     }
   }
 
-  /// Requests notification permissions on Android 13+ and iOS.
+  /// Requests notification permissions on Android 13+ and iOS/macOS.
   ///
-  /// Returns `true` if permission was granted, `false` otherwise.
+  /// Returns `true` if permission was granted, `false` otherwise. Linux and
+  /// Windows notifications need no runtime prompt — returns `true` without
+  /// touching the plugin.
   Future<bool> requestPermission() async {
     if (!_initialized) return false;
+    if (!PlatformCaps.usesNotificationPermissionPrompt) return true;
 
     try {
       // Android 13+
@@ -167,6 +184,9 @@ class NotificationService {
     const details = NotificationDetails(
       android: androidDetails,
       iOS: iosDetails,
+      macOS: iosDetails,
+      linux: LinuxNotificationDetails(),
+      windows: WindowsNotificationDetails(),
     );
 
     try {

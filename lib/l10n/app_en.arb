@@ -461,5 +461,12 @@
   "filterOptionUnread": "Unread",
   "filterOptionRead": "Read",
   "filterApply": "Apply filters",
-  "filterClear": "Clear filters"
+  "filterClear": "Clear filters",
+  "linkCopiedToClipboard": "Link copied to clipboard",
+  "selectArticleToRead": "Select an article to read",
+  "previousArticle": "Previous article",
+  "nextArticle": "Next article",
+  "searchArticles": "Search articles",
+  "articles": "Articles",
+  "refreshFeeds": "Refresh feeds"
 }

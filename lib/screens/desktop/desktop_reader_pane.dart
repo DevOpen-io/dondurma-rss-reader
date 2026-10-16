@@ -1,0 +1,127 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../../models/feed_item.dart';
+import '../../providers/article_page_provider.dart';
+import '../article_screen.dart';
+
+/// Right column of the desktop layout: the selected article rendered by the
+/// same [ArticlePage] used by the mobile reader, plus previous/next
+/// navigation driven by the middle column's order.
+class DesktopReaderPane extends StatelessWidget {
+  /// Currently selected article; null shows the empty state.
+  final FeedItem? item;
+
+  /// Position inside the current list (0-based) and total count.
+  final int currentIndex;
+  final int totalCount;
+
+  final VoidCallback? onPrevious;
+  final VoidCallback? onNext;
+
+  const DesktopReaderPane({
+    super.key,
+    required this.item,
+    required this.currentIndex,
+    required this.totalCount,
+    this.onPrevious,
+    this.onNext,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+
+    final current = item;
+    if (current == null) {
+      return Material(
+        color: cs.surface,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.article_outlined,
+                size: 56,
+                color: cs.onSurface.withValues(alpha: 0.15),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                l10n.selectArticleToRead,
+                style: TextStyle(
+                  color: cs.onSurface.withValues(alpha: 0.5),
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Material(
+      color: cs.surface,
+      child: Column(
+        children: [
+          // ── Navigation toolbar ───────────────────────────────────────
+          SizedBox(
+            height: 46,
+            child: Row(
+              children: [
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_up_rounded),
+                  tooltip: l10n.previousArticle,
+                  onPressed: onPrevious,
+                  iconSize: 22,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                  tooltip: l10n.nextArticle,
+                  onPressed: onNext,
+                  iconSize: 22,
+                ),
+                const Spacer(),
+                if (totalCount > 1)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 14),
+                    child: Text(
+                      l10n.articlePosition(currentIndex + 1, totalCount),
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.8),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Divider(
+            height: 1,
+            color: cs.outlineVariant.withValues(alpha: 0.35),
+          ),
+          // ── Article body ─────────────────────────────────────────────
+          Expanded(
+            // Keyed by article id so switching items builds a fresh
+            // ArticlePageProvider + scroll state instead of reusing stale
+            // page state.
+            child: ChangeNotifierProvider(
+              key: ValueKey('reader-${current.id}'),
+              create: (_) => ArticlePageProvider(item: current),
+              child: ArticlePage(
+                item: current,
+                currentIndex: currentIndex,
+                totalCount: totalCount,
+                isActive: true,
+                embedded: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

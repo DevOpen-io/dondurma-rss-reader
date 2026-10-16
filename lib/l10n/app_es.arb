@@ -351,5 +351,12 @@
   "filterOptionUnread": "No leído",
   "filterOptionRead": "Leído",
   "filterApply": "Aplicar filtros",
-  "filterClear": "Borrar filtros"
+  "filterClear": "Borrar filtros",
+  "linkCopiedToClipboard": "Enlace copiado al portapapeles",
+  "selectArticleToRead": "Selecciona un artículo para leer",
+  "previousArticle": "Artículo anterior",
+  "nextArticle": "Siguiente artículo",
+  "searchArticles": "Buscar artículos",
+  "articles": "Artículos",
+  "refreshFeeds": "Actualizar fuentes"
 }

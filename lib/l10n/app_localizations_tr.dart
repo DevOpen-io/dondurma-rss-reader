@@ -1073,4 +1073,25 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get filterClear => 'Temizle';
+
+  @override
+  String get linkCopiedToClipboard => 'Bağlantı panoya kopyalandı';
+
+  @override
+  String get selectArticleToRead => 'Okumak için bir makale seçin';
+
+  @override
+  String get previousArticle => 'Önceki makale';
+
+  @override
+  String get nextArticle => 'Sonraki makale';
+
+  @override
+  String get searchArticles => 'Makalelerde ara';
+
+  @override
+  String get articles => 'Makaleler';
+
+  @override
+  String get refreshFeeds => 'Kaynakları yenile';
 }

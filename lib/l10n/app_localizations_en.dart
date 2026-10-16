@@ -1070,4 +1070,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get filterClear => 'Clear filters';
+
+  @override
+  String get linkCopiedToClipboard => 'Link copied to clipboard';
+
+  @override
+  String get selectArticleToRead => 'Select an article to read';
+
+  @override
+  String get previousArticle => 'Previous article';
+
+  @override
+  String get nextArticle => 'Next article';
+
+  @override
+  String get searchArticles => 'Search articles';
+
+  @override
+  String get articles => 'Articles';
+
+  @override
+  String get refreshFeeds => 'Refresh feeds';
 }

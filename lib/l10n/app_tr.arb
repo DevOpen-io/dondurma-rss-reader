@@ -351,5 +351,12 @@
   "filterOptionUnread": "Okunmamış",
   "filterOptionRead": "Okunmuş",
   "filterApply": "Filtrele",
-  "filterClear": "Temizle"
+  "filterClear": "Temizle",
+  "linkCopiedToClipboard": "Bağlantı panoya kopyalandı",
+  "selectArticleToRead": "Okumak için bir makale seçin",
+  "previousArticle": "Önceki makale",
+  "nextArticle": "Sonraki makale",
+  "searchArticles": "Makalelerde ara",
+  "articles": "Makaleler",
+  "refreshFeeds": "Kaynakları yenile"
 }

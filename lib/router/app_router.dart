@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import '../screens/home_screen.dart';
+import '../screens/desktop/desktop_home_screen.dart';
 import '../screens/article_screen.dart';
 import '../screens/debug_screen.dart';
 import '../screens/onboarding_screen.dart';
@@ -36,7 +36,7 @@ final appRouter = GoRouter(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
     ),
-    GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
+    GoRoute(path: '/', builder: (context, state) => const AdaptiveHomeScreen()),
     GoRoute(
       path: '/article',
       pageBuilder: (context, state) {

@@ -2079,6 +2079,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear filters'**
   String get filterClear;
+
+  /// No description provided for @linkCopiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard'**
+  String get linkCopiedToClipboard;
+
+  /// No description provided for @selectArticleToRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an article to read'**
+  String get selectArticleToRead;
+
+  /// No description provided for @previousArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous article'**
+  String get previousArticle;
+
+  /// No description provided for @nextArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next article'**
+  String get nextArticle;
+
+  /// No description provided for @searchArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search articles'**
+  String get searchArticles;
+
+  /// No description provided for @articles.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles'**
+  String get articles;
+
+  /// No description provided for @refreshFeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh feeds'**
+  String get refreshFeeds;
 }
 
 class _AppLocalizationsDelegate

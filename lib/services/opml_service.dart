@@ -4,6 +4,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart';
 import '../models/feed_subscription.dart';
+import '../utils/platform_caps.dart';
 
 /// Service responsible for exporting and importing feed subscriptions
 /// using the OPML (Outline Processor Markup Language) format.
@@ -125,13 +126,28 @@ class OpmlService {
     return result;
   }
 
-  /// Exports [subscriptions] as an OPML file and shares it via the system
-  /// share sheet.
+  /// Exports [subscriptions] as an OPML file.
   ///
-  /// Returns `true` on success or dismissal, `false` if an error occurred.
+  /// Mobile shares via the system sheet; desktop uses the native save dialog
+  /// so the user picks the destination. Returns `true` on success or user
+  /// cancellation, `false` if an error occurred.
   Future<bool> exportOpml(List<FeedSubscription> subscriptions) async {
     try {
       final opmlContent = generateOpml(subscriptions);
+
+      if (!PlatformCaps.supportsShareSheet) {
+        const typeGroup = XTypeGroup(label: 'OPML', extensions: ['opml']);
+        final location = await getSaveLocation(
+          acceptedTypeGroups: [typeGroup],
+          suggestedName: 'dondurma_subscriptions.opml',
+        );
+        if (location == null) return true; // cancelled — not an error
+        var path = location.path;
+        if (!path.toLowerCase().endsWith('.opml')) path = '$path.opml';
+        await File(path).writeAsString(opmlContent, flush: true);
+        return true;
+      }
+
       final dir = await getTemporaryDirectory();
       final file = File('${dir.path}/ice_cream_subscriptions.opml');
       await file.writeAsString(opmlContent);

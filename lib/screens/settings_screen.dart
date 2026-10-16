@@ -16,6 +16,7 @@ import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import '../utils/app_toast.dart';
+import '../utils/platform_caps.dart';
 import '../utils/time_format.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import '../widgets/keyword_input_sheet.dart';
@@ -504,15 +505,20 @@ class SettingsScreen extends StatelessWidget {
                     .read<SettingsProvider>()
                     .setCacheIntervalSeconds(v!),
               ),
-              const SettingsTileDivider(),
-              SettingsSwitchTile(
-                icon: Icons.sync_rounded,
-                title: l10n.syncBackground,
-                subtitle: l10n.syncBackgroundDesc,
-                value: settings.syncBackground,
-                onChanged: (v) =>
-                    context.read<SettingsProvider>().setSyncBackground(v),
-              ),
+              // OS-level background scheduling exists only on mobile —
+              // hiding the toggle on desktop avoids a control that does
+              // nothing. The foreground sync interval above still applies.
+              if (PlatformCaps.supportsBackgroundScheduler) ...[
+                const SettingsTileDivider(),
+                SettingsSwitchTile(
+                  icon: Icons.sync_rounded,
+                  title: l10n.syncBackground,
+                  subtitle: l10n.syncBackgroundDesc,
+                  value: settings.syncBackground,
+                  onChanged: (v) =>
+                      context.read<SettingsProvider>().setSyncBackground(v),
+                ),
+              ],
             ],
           ),
 

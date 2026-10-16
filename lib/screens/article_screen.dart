@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import 'package:share_plus/share_plus.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
 import '../providers/article_page_provider.dart';
@@ -23,6 +22,7 @@ import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
+import '../utils/share_actions.dart';
 import '../utils/time_format.dart';
 import 'dart:math' as math;
 
@@ -78,7 +78,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
       itemBuilder: (context, index) {
         return ChangeNotifierProvider(
           create: (_) => ArticlePageProvider(item: widget.items[index]),
-          child: _ArticlePage(
+          child: ArticlePage(
             item: widget.items[index],
             currentIndex: index,
             totalCount: widget.items.length,
@@ -95,24 +95,36 @@ class _ArticleScreenState extends State<ArticleScreen> {
 // reading progress, and estimated reading time via ArticlePageProvider.
 // =============================================================================
 
-class _ArticlePage extends StatefulWidget {
+/// A single article page: collapsing hero, HTML content, full-text toggle,
+/// durable-copy status, and reading progress.
+///
+/// Public so the desktop three-pane layout can embed it in the reader column
+/// with `embedded: true` (no back button or position badge — the pane owns
+/// navigation and selection).
+class ArticlePage extends StatefulWidget {
   final FeedItem item;
   final int currentIndex;
   final int totalCount;
   final bool isActive;
 
-  const _ArticlePage({
+  /// True when rendered inside the desktop reader pane instead of the
+  /// swipeable [ArticleScreen] PageView.
+  final bool embedded;
+
+  const ArticlePage({
+    super.key,
     required this.item,
     required this.currentIndex,
     required this.totalCount,
     required this.isActive,
+    this.embedded = false,
   });
 
   @override
-  State<_ArticlePage> createState() => _ArticlePageState();
+  State<ArticlePage> createState() => _ArticlePageState();
 }
 
-class _ArticlePageState extends State<_ArticlePage> {
+class _ArticlePageState extends State<ArticlePage> {
   ArticlePageProvider? _articlePageProvider;
 
   @override
@@ -131,7 +143,7 @@ class _ArticlePageState extends State<_ArticlePage> {
   }
 
   @override
-  void didUpdateWidget(covariant _ArticlePage oldWidget) {
+  void didUpdateWidget(covariant ArticlePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive) {
       _maybeCheckAutoFullText();
@@ -272,9 +284,14 @@ class _ArticlePageState extends State<_ArticlePage> {
                   expandedHeight: hasHero ? 280 : 0,
                   pinned: true,
                   stretch: true,
-                  leading: CircleBackButton(
-                    onPressed: () => Navigator.pop(context),
-                  ),
+                  // Embedded (desktop reader pane): no back navigation — the
+                  // pane owns selection; suppress the implicit leading too.
+                  automaticallyImplyLeading: !widget.embedded,
+                  leading: widget.embedded
+                      ? const SizedBox.shrink()
+                      : CircleBackButton(
+                          onPressed: () => Navigator.pop(context),
+                        ),
                   title: widget.totalCount > 1
                       ? Container(
                           padding: const EdgeInsets.symmetric(
@@ -318,14 +335,7 @@ class _ArticlePageState extends State<_ArticlePage> {
                     if (widget.item.link.isNotEmpty)
                       CircleActionButton(
                         icon: Icons.share_rounded,
-                        onPressed: () {
-                          SharePlus.instance.share(
-                            ShareParams(
-                              text: widget.item.link,
-                              subject: widget.item.title,
-                            ),
-                          );
-                        },
+                        onPressed: () => shareArticleLink(context, widget.item),
                         tooltip: l10n.shareArticle,
                       ),
                     const SizedBox(width: 4),
