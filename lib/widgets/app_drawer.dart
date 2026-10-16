@@ -89,9 +89,10 @@ class AppDrawer extends StatelessWidget {
                       _buildSectionHeader(context, l10n.categories),
                       _buildDrawerItem(
                         icon: Icons.article_outlined,
-                        title: l10n.allNews,
+                        title: l10n.allArticles,
                         count: provider.unreadCount(),
-                        isSelected: provider.selectedCategory == null,
+                        isSelected: provider.selectedCategory == null &&
+                            provider.selectedFeedUrl == null,
                         context: context,
                         onTap: () {
                           provider.selectCategory(null);
@@ -296,12 +297,31 @@ class AppDrawer extends StatelessWidget {
     final bool isCategorySelected =
         provider.selectedCategory == targetCategory &&
         provider.selectedFeedUrl == null;
+    final bool isAncestorCategory =
+        provider.selectedFeedParentCategory == targetCategory;
 
     final count = provider.unreadCount(category: targetCategory);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2.0),
-      child: ExpansionTile(
+      child: Semantics(
+        selected: isCategorySelected,
+        hint: isAncestorCategory
+            ? AppLocalizations.of(context).semanticAncestorCategory
+            : null,
+        child: Container(
+          decoration: isAncestorCategory
+              ? BoxDecoration(
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border(
+                    left: BorderSide(
+                      color: cs.primary.withValues(alpha: 0.75),
+                      width: 3,
+                    ),
+                  ),
+                )
+              : null,
+          child: ExpansionTile(
         initiallyExpanded: provider.selectedCategory == targetCategory,
         tilePadding: const EdgeInsets.only(left: 10, right: 10),
         childrenPadding: const EdgeInsets.only(left: 12, right: 8, bottom: 8),
@@ -311,10 +331,14 @@ class AppDrawer extends StatelessWidget {
         ),
         backgroundColor: isCategorySelected
             ? cs.primaryContainer.withValues(alpha: 0.22)
-            : Colors.transparent,
+            : isAncestorCategory
+                ? cs.primary.withValues(alpha: 0.05)
+                : Colors.transparent,
         collapsedBackgroundColor: isCategorySelected
             ? cs.primaryContainer.withValues(alpha: 0.35)
-            : Colors.transparent,
+            : isAncestorCategory
+                ? cs.primary.withValues(alpha: 0.05)
+                : Colors.transparent,
         iconColor: cs.onSurfaceVariant,
         collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
         leading: _buildIconChip(
@@ -324,7 +348,9 @@ class AppDrawer extends StatelessWidget {
             size: 17,
             color: isCategorySelected
                 ? cs.onPrimaryContainer
-                : cs.onSurfaceVariant,
+                : isAncestorCategory
+                    ? cs.primary.withValues(alpha: 0.8)
+                    : cs.onSurfaceVariant,
           ),
           isSelected: isCategorySelected,
         ),
@@ -346,10 +372,14 @@ class AppDrawer extends StatelessWidget {
                         style: tt.bodyMedium?.copyWith(
                           color: isCategorySelected
                               ? cs.primary
-                              : cs.onSurface.withValues(alpha: 0.8),
+                              : isAncestorCategory
+                                  ? cs.onSurface
+                                  : cs.onSurface.withValues(alpha: 0.8),
                           fontWeight: isCategorySelected
                               ? FontWeight.w700
-                              : FontWeight.w500,
+                              : isAncestorCategory
+                                  ? FontWeight.w600
+                                  : FontWeight.w500,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -398,7 +428,9 @@ class AppDrawer extends StatelessWidget {
 
           return Padding(
             padding: const EdgeInsets.only(left: 22.0, top: 2.0),
-            child: Material(
+            child: Semantics(
+              selected: isFeedSelected,
+              child: Material(
               color: isFeedSelected
                   ? cs.primary.withValues(alpha: 0.08)
                   : Colors.transparent,
@@ -470,8 +502,11 @@ class AppDrawer extends StatelessWidget {
                 ),
               ),
             ),
+            ),
           );
         }).toList(),
+          ),
+        ),
       ),
     );
   }

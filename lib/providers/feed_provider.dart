@@ -12,6 +12,7 @@ import 'package:html/parser.dart' show parse;
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
+import '../models/refresh_progress.dart';
 import '../services/article_identity.dart';
 import '../services/feed_backoff.dart';
 import '../services/feed_date_groups.dart';
@@ -91,11 +92,21 @@ class FeedProvider extends ChangeNotifier {
   bool _isSyncing = false;
   bool get isSyncing => _isSyncing;
 
+  /// Incremental refresh status — a dedicated [ValueNotifier] so per-feed
+  /// progress repaints only the small toolbar indicator instead of the
+  /// entire provider listener tree.
+  final ValueNotifier<RefreshProgress> refreshProgress =
+      ValueNotifier(const RefreshProgress.idle());
+
   /// Set when a refresh is requested while one is already running. The in-flight
   /// [refreshAll] runs exactly one more pass when it finishes, so overlapping
   /// triggers collapse into a single trailing refresh instead of stacking.
   bool _refreshQueued = false;
   Completer<void>? _refreshWaiter;
+
+  /// True while the current/queued pass carries a user request — the
+  /// completion toast only fires for user-initiated passes.
+  bool _refreshIsUserInitiated = false;
 
   /// Immutable snapshot owned by this provider. The upstream provider is
   /// mutable, so its current list cannot represent previous subscription state.
@@ -247,6 +258,22 @@ class FeedProvider extends ChangeNotifier {
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
 
+  /// Category that owns the individually selected feed — the ancestor node
+  /// nav trees highlight when [selectedFeedUrl] is set. `null` when the
+  /// selection is a category, the global view, or nothing.
+  ///
+  /// Resolved live from the subscription so feed moves and category renames
+  /// keep the ancestor indicator on the real parent.
+  String? get selectedFeedParentCategory {
+    if (_selectedFeedUrl == null) return null;
+    if (subscriptionProvider != null) {
+      for (final sub in subscriptionProvider!.subscriptions) {
+        if (sub.url == _selectedFeedUrl) return sub.category;
+      }
+    }
+    return _selectedCategory;
+  }
+
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
@@ -351,7 +378,9 @@ class FeedProvider extends ChangeNotifier {
     _setUnmetered(results);
     if (!_isOffline) return;
     final hasNetwork = results.any((r) => r != ConnectivityResult.none);
-    if (hasNetwork) refreshAll();
+    // Connectivity appearing mid-sync genuinely changes the inputs — an
+    // in-flight pass that ran fully offline must be followed by a real one.
+    if (hasNetwork) refreshAll(queueIfRunning: true);
   }
 
   /// Called by the `ChangeNotifierProxyProvider3` whenever any upstream
@@ -455,9 +484,11 @@ class FeedProvider extends ChangeNotifier {
       _saveCachedItems().ignore();
     }
 
-    // If subscriptions were added/removed, kick off a fresh fetch.
+    // If subscriptions were added/removed, kick off a fresh fetch. A running
+    // pass fetched the OLD set, so this is a real input change — it earns a
+    // trailing pass rather than just attaching to the current one.
     if (subscriptionsChanged) {
-      refreshAll();
+      refreshAll(queueIfRunning: true);
     }
   }
 
@@ -740,7 +771,11 @@ class FeedProvider extends ChangeNotifier {
     final filtered = applyFeedFilters(
       items: _items,
       readItemIds: _readItemIds,
-      selectedCategory: _selectedCategory,
+      // Feed-scoped views track the live parent category (moves/renames);
+      // a stale snapshot would AND-filter the feed's items out.
+      selectedCategory: _selectedFeedUrl != null
+          ? selectedFeedParentCategory
+          : _selectedCategory,
       selectedFeedUrl: _selectedFeedUrl,
       searchQuery: _searchQuery,
       readFilter: _readFilter,
@@ -791,6 +826,12 @@ class FeedProvider extends ChangeNotifier {
     _dateGroupsCacheHash = hash;
     return _dateGroupsCache!;
   }
+
+  /// The date-grouped view of the visible render window. The returned
+  /// instance is memoized and replaced whenever data changes — suitable for
+  /// `context.select` so widgets rebuild only on real data changes, not on
+  /// status-only notifications (`isLoading`, connectivity flips).
+  FeedDateGroups get dateGroups => _dateGroups;
 
   /// Items published today, within the current render window.
   List<FeedItem> get todayItems => _dateGroups.today;
@@ -955,7 +996,8 @@ class FeedProvider extends ChangeNotifier {
       );
       await _applyNewSubscriptionResult(subscription, prefetched);
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to add feed $url: $e');
       _knownSubscriptionUrls = previousKnownUrls;
       rethrow;
     } finally {
@@ -972,12 +1014,9 @@ class FeedProvider extends ChangeNotifier {
         .where((item) => item.feedUrl != subscription.url)
         .toList();
     merged.addAll(result.items);
-    merged.sort((a, b) {
-      if (a.pubDate == null && b.pubDate == null) return 0;
-      if (a.pubDate == null) return 1;
-      if (b.pubDate == null) return -1;
-      return b.pubDate!.compareTo(a.pubDate!);
-    });
+    // Clamps implausible future dates (mislabeled tz, CMS clock skew) so
+    // they can't pin above legitimately newer items.
+    sortByEffectivePubDateDesc(merged, DateTime.now());
     _items = merged;
 
     final validators = _loadFeedValidators();
@@ -1018,21 +1057,37 @@ class FeedProvider extends ChangeNotifier {
 
   /// Fetches all subscribed feeds with bounded concurrency, merges bookmarks,
   /// sorts by date, fires notifications for new articles, and persists cache.
-  Future<void> refreshAll() async {
+  ///
+  /// Calls arriving while a pass is already running normally *attach* to it —
+  /// a manual click, a timer tick, or a resume asking for "a sync" is already
+  /// served by the in-flight pass. Pass `queueIfRunning: true` only when the
+  /// caller knows the inputs changed (new subscription, regained
+  /// connectivity) so the in-flight pass is followed by one fresh pass —
+  /// never an unbounded queue.
+  /// [userInitiated] marks passes driven by an explicit user action (refresh
+  /// button, pull-to-refresh). A user request arriving mid-pass attaches to
+  /// the running pass — no duplicate pass — and still marks it so the
+  /// completion toast summarizes the operation the user is waiting for.
+  Future<void> refreshAll({
+    bool queueIfRunning = false,
+    bool userInitiated = false,
+  }) async {
     await _initialization;
     if (subscriptionProvider == null) return;
 
-    // Coalesce overlapping refreshes. The periodic timer, app-resume, and
-    // subscription-change triggers can all fire close together; without this a
-    // second full-feed fetch storm would run in parallel, doubling HTTP load.
-    // Instead, record that one more pass is needed and let the in-flight call
-    // run it when it finishes.
     if (_isSyncing) {
-      _refreshQueued = true;
+      if (queueIfRunning) _refreshQueued = true;
+      if (userInitiated) {
+        _refreshIsUserInitiated = true;
+        refreshProgress.value = refreshProgress.value.copyWith(
+          userInitiated: true,
+        );
+      }
       return (_refreshWaiter ??= Completer<void>()).future;
     }
 
     _isSyncing = true;
+    _refreshIsUserInitiated = userInitiated;
     Object? failure;
     StackTrace? failureStack;
     try {
@@ -1043,11 +1098,17 @@ class FeedProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       failure = error;
       failureStack = stackTrace;
+      refreshProgress.value = refreshProgress.value.copyWith(
+        phase: RefreshPhase.failed,
+        inFlight: 0,
+        completedAt: DateTime.now(),
+      );
       rethrow;
     } finally {
       // Always clear the guard, even if a fetch/persist step throws — otherwise
       // the provider would deadlock and never refresh again.
       _isSyncing = false;
+      _refreshIsUserInitiated = false;
       final waiter = _refreshWaiter;
       _refreshWaiter = null;
       if (waiter != null && !waiter.isCompleted) {
@@ -1076,16 +1137,45 @@ class FeedProvider extends ChangeNotifier {
     // Pick up cooldowns the background isolate wrote since the last
     // pass — a stale in-memory snapshot must never bypass a fresh 429.
     _loadFeedBackoff();
+    final subscriptions = subscriptionProvider!.subscriptions;
+    refreshProgress.value = RefreshProgress(
+      phase: RefreshPhase.refreshing,
+      total: subscriptions.length,
+      startedAt: DateTime.now(),
+      completedAt: refreshProgress.value.completedAt,
+      userInitiated: _refreshIsUserInitiated,
+    );
     final result = await _refresher.refresh(
-      subscriptions: subscriptionProvider!.subscriptions,
+      subscriptions: subscriptions,
       existingItems: _items,
       validators: _loadFeedValidators(),
       bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
       redirects: _loadFeedRedirects(),
+      onProgress: ({
+        required total,
+        required completed,
+        required succeeded,
+        required failed,
+        required skipped,
+        required inFlight,
+      }) {
+        refreshProgress.value = refreshProgress.value.copyWith(
+          total: total,
+          completed: completed,
+          succeeded: succeeded,
+          failed: failed,
+          skipped: skipped,
+          inFlight: inFlight,
+        );
+      },
     );
 
     if (resetGeneration != _resetGeneration) {
       _isLoading = false;
+      refreshProgress.value = refreshProgress.value.copyWith(
+        phase: RefreshPhase.idle,
+        inFlight: 0,
+      );
       if (!_disposed) notifyListeners();
       return;
     }
@@ -1097,6 +1187,20 @@ class FeedProvider extends ChangeNotifier {
     _items = result.items;
     _isOffline = !result.online;
     _isLoading = false;
+    refreshProgress.value = refreshProgress.value.copyWith(
+      // online==false with real HTTP errors means every feed failed for a
+      // definitive reason — report 'failed', not 'offline'. Offline is only
+      // when failures were connectivity-unproven.
+      phase: !result.online
+          ? (result.feedErrors.isEmpty
+              ? RefreshPhase.offline
+              : RefreshPhase.failed)
+          : result.feedErrors.isNotEmpty
+              ? RefreshPhase.completedWithErrors
+              : RefreshPhase.completed,
+      inFlight: 0,
+      completedAt: DateTime.now(),
+    );
     _invalidateFilterCache();
     if (!_disposed) notifyListeners();
 
@@ -1598,6 +1702,7 @@ class FeedProvider extends ChangeNotifier {
     _disposed = true;
     _cacheTimer?.cancel();
     _connectivitySub?.cancel();
+    refreshProgress.dispose();
     _feedService.dispose();
     if (_ownsPreparation) _preparation.dispose();
     super.dispose();

@@ -8,6 +8,7 @@ import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
+import 'adaptive_dialog.dart';
 
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
@@ -78,13 +79,10 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         .where((c) => c != 'Uncategorized' && c.isNotEmpty)
         .toList();
 
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => _CategorySheet(
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (ctx) => _CategorySheet(
         categories: categories,
         currentCategory: _categoryController.text.trim(),
         onSelect: (cat) {
@@ -93,6 +91,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         },
         colorScheme: colorScheme,
         l10n: l10n,
+        ),
       ),
     );
   }

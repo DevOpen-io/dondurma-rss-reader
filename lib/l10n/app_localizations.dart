@@ -430,6 +430,18 @@ abstract class AppLocalizations {
   /// **'All News'**
   String get allNews;
 
+  /// No description provided for @allArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'All Articles'**
+  String get allArticles;
+
+  /// No description provided for @semanticAncestorCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Contains the selected feed'**
+  String get semanticAncestorCategory;
+
   /// No description provided for @uncategorized.
   ///
   /// In en, this message translates to:
@@ -814,6 +826,30 @@ abstract class AppLocalizations {
   /// **'Relaxed'**
   String get lineSpacingRelaxed;
 
+  /// No description provided for @readingWidth.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading Width'**
+  String get readingWidth;
+
+  /// No description provided for @readingWidthComfortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Comfortable'**
+  String get readingWidthComfortable;
+
+  /// No description provided for @readingWidthExpanded.
+  ///
+  /// In en, this message translates to:
+  /// **'Expanded'**
+  String get readingWidthExpanded;
+
+  /// No description provided for @readingWidthFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Full width'**
+  String get readingWidthFull;
+
   /// No description provided for @contentFiltering.
   ///
   /// In en, this message translates to:
@@ -874,6 +910,18 @@ abstract class AppLocalizations {
   /// **'Share Article'**
   String get shareArticle;
 
+  /// No description provided for @focusReadMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Read Mode'**
+  String get focusReadMode;
+
+  /// No description provided for @exitFocusMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Focus Mode'**
+  String get exitFocusMode;
+
   /// No description provided for @readOnOriginalWebpage.
   ///
   /// In en, this message translates to:
@@ -915,6 +963,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh'**
   String get refresh;
+
+  /// No description provided for @refreshingFeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refreshing feeds · {completed} / {total}'**
+  String refreshingFeeds(int completed, int total);
+
+  /// No description provided for @updatedJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Updated just now'**
+  String get updatedJustNow;
+
+  /// No description provided for @refreshSummaryFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{checked} checked · {failed} failed'**
+  String refreshSummaryFailed(int checked, int failed);
+
+  /// No description provided for @refreshToastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{RSS updated: 1 source refreshed} other{RSS updated: {count} sources refreshed}}'**
+  String refreshToastSuccess(int count);
+
+  /// No description provided for @refreshToastPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'RSS updated: {successful} successful, {failed} failed, {skipped} skipped'**
+  String refreshToastPartial(int successful, int failed, int skipped);
+
+  /// No description provided for @refreshToastFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Could not refresh 1 RSS source} other{Could not refresh {count} RSS sources}}'**
+  String refreshToastFailed(int count);
+
+  /// No description provided for @refreshToastEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No feeds to refresh — add a source first'**
+  String get refreshToastEmpty;
 
   /// No description provided for @brightness.
   ///
@@ -2079,6 +2169,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Clear filters'**
   String get filterClear;
+
+  /// No description provided for @linkCopiedToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Link copied to clipboard'**
+  String get linkCopiedToClipboard;
+
+  /// No description provided for @selectArticleToRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Select an article to read'**
+  String get selectArticleToRead;
+
+  /// No description provided for @previousArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous article'**
+  String get previousArticle;
+
+  /// No description provided for @nextArticle.
+  ///
+  /// In en, this message translates to:
+  /// **'Next article'**
+  String get nextArticle;
+
+  /// No description provided for @searchArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'Search articles'**
+  String get searchArticles;
+
+  /// No description provided for @articles.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles'**
+  String get articles;
+
+  /// No description provided for @refreshFeeds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh feeds'**
+  String get refreshFeeds;
 }
 
 class _AppLocalizationsDelegate

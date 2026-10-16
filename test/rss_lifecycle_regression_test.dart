@@ -1041,6 +1041,84 @@ void main() {
     expect(result.unprovenUrls, contains(url));
   });
 
+  test('refresh reports per-feed progress with accurate counters', () async {
+    // Two healthy feeds, one 404 — progress must advance once per feed and
+    // land on exact totals instead of an ambiguous boolean.
+    server.handlers['/ok-a.xml'] = (request) async =>
+        _respond200(request, _rss('A', ['a1']));
+    server.handlers['/ok-b.xml'] = (request) async =>
+        _respond200(request, _rss('B', ['b1']));
+    // '/gone.xml' intentionally has no handler — the server answers 404.
+
+    final subs = [
+      FeedSubscription(
+        url: server.url('/ok-a.xml'),
+        name: 'A',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/ok-b.xml'),
+        name: 'B',
+        category: 'Test',
+      ),
+      FeedSubscription(
+        url: server.url('/gone.xml'),
+        name: 'G',
+        category: 'Test',
+      ),
+    ];
+
+    final refresher = FeedRefresher(
+      feedService: FeedService(),
+      observedArticleStore: ObservedArticleStore.forBox(Hive.box('feeds')),
+      hostGap: Duration.zero,
+    );
+
+    final snapshots = <({int completed, int succeeded, int failed})>[];
+    var lastTotal = 0;
+    var lastInFlight = -1;
+    final result = await refresher.refresh(
+      subscriptions: subs,
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+      onProgress:
+          ({
+            required total,
+            required completed,
+            required succeeded,
+            required failed,
+            required skipped,
+            required inFlight,
+          }) {
+            snapshots.add((
+              completed: completed,
+              succeeded: succeeded,
+              failed: failed,
+            ));
+            lastTotal = total;
+            lastInFlight = inFlight;
+          },
+    );
+
+    // Emissions fire on dispatch and on settle, so there is more than one
+    // per feed — what matters is monotonic counters and exact final tallies.
+    expect(snapshots, isNotEmpty);
+    for (var i = 1; i < snapshots.length; i++) {
+      expect(
+        snapshots[i].completed,
+        greaterThanOrEqualTo(snapshots[i - 1].completed),
+      );
+    }
+    expect(snapshots.last.completed, 3);
+    expect(snapshots.last.succeeded, 2);
+    expect(snapshots.last.failed, 1);
+    expect(lastTotal, 3);
+    expect(lastInFlight, 0);
+    expect(result.feedErrors.keys, contains(server.url('/gone.xml')));
+  });
+
   test('a 429 on one feed cools sibling feeds on the same host', () async {
     // A second loopback server stands in for an unrelated authority —
     // its different port means a different origin.

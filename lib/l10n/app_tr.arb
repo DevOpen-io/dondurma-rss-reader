@@ -60,6 +60,8 @@
   },
   "categories": "KATEGORİLER",
   "allNews": "Tüm Haberler",
+  "allArticles": "Tüm Makaleler",
+  "semanticAncestorCategory": "Seçili akışı içeren kategori",
   "uncategorized": "KATEGORİSİZ",
   "randomBlogs": "Rastgele Bloglar",
   "discover": "KEŞFET",
@@ -124,6 +126,10 @@
   "lineSpacingTight": "Dar",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Geniş",
+  "readingWidth": "Okuma Genişliği",
+  "readingWidthComfortable": "Rahat",
+  "readingWidthExpanded": "Genişletilmiş",
+  "readingWidthFull": "Tam genişlik",
   "contentFiltering": "İçerik Filtreleme",
   "globalExcludedKeywords": "Genel Hariç Tutulan Kelimeler",
   "globalExcludedKeywordsDesc": "Tüm kaynaklarda bu kelimeleri içeren makaleleri gizle",
@@ -134,6 +140,8 @@
   "noKeywordsAdded": "Henüz kelime eklenmedi.",
   "openInBrowser": "Tarayıcıda Aç",
   "shareArticle": "Makaleyi Paylaş",
+  "focusReadMode": "Odaklanmış Okuma Modu",
+  "exitFocusMode": "Odak Modundan Çık",
   "readOnOriginalWebpage": "Orijinal Web Sitesinde Oku",
   "invalidUrlFormat": "Geçersiz URL biçimi",
   "close": "Kapat",
@@ -141,6 +149,26 @@
   "back": "Geri",
   "forward": "İleri",
   "refresh": "Yenile",
+  "refreshingFeeds": "Akışlar yenileniyor · {completed} / {total}",
+  "updatedJustNow": "Az önce güncellendi",
+  "refreshSummaryFailed": "{checked} kontrol edildi · {failed} başarısız",
+  "refreshToastSuccess": "{count, plural, =1{RSS yenilendi: 1 kaynak güncellendi} other{RSS yenilendi: {count} kaynak güncellendi}}",
+  "@refreshToastSuccess": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastPartial": "RSS yenilendi: {successful} başarılı, {failed} başarısız, {skipped} atlandı",
+  "@refreshToastPartial": {
+    "placeholders": {
+      "successful": {"type": "int"},
+      "failed": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "refreshToastFailed": "{count, plural, =1{1 RSS kaynağı yenilenemedi} other{{count} RSS kaynağı yenilenemedi}}",
+  "@refreshToastFailed": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastEmpty": "Yenilenecek akış yok — önce bir kaynak ekleyin",
   "brightness": "Parlaklık",
   "brightnessSystem": "Sistem",
   "brightnessLight": "Açık",
@@ -351,5 +379,12 @@
   "filterOptionUnread": "Okunmamış",
   "filterOptionRead": "Okunmuş",
   "filterApply": "Filtrele",
-  "filterClear": "Temizle"
+  "filterClear": "Temizle",
+  "linkCopiedToClipboard": "Bağlantı panoya kopyalandı",
+  "selectArticleToRead": "Okumak için bir makale seçin",
+  "previousArticle": "Önceki makale",
+  "nextArticle": "Sonraki makale",
+  "searchArticles": "Makalelerde ara",
+  "articles": "Makaleler",
+  "refreshFeeds": "Kaynakları yenile"
 }

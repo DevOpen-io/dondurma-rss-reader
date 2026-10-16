@@ -190,6 +190,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get allNews => 'Todas las noticias';
 
   @override
+  String get allArticles => 'Todos los artículos';
+
+  @override
+  String get semanticAncestorCategory => 'Contiene la fuente seleccionada';
+
+  @override
   String get uncategorized => 'SIN CATEGORÍA';
 
   @override
@@ -404,6 +410,18 @@ class AppLocalizationsEs extends AppLocalizations {
   String get lineSpacingRelaxed => 'Amplio';
 
   @override
+  String get readingWidth => 'Ancho de lectura';
+
+  @override
+  String get readingWidthComfortable => 'Cómodo';
+
+  @override
+  String get readingWidthExpanded => 'Expandido';
+
+  @override
+  String get readingWidthFull => 'Ancho completo';
+
+  @override
   String get contentFiltering => 'Filtrado de contenido';
 
   @override
@@ -435,6 +453,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shareArticle => 'Compartir artículo';
 
   @override
+  String get focusReadMode => 'Modo de lectura enfocada';
+
+  @override
+  String get exitFocusMode => 'Salir del modo de lectura';
+
+  @override
   String get readOnOriginalWebpage => 'Leer en la página web original';
 
   @override
@@ -454,6 +478,50 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get refresh => 'Actualizar';
+
+  @override
+  String refreshingFeeds(int completed, int total) {
+    return 'Actualizando fuentes · $completed / $total';
+  }
+
+  @override
+  String get updatedJustNow => 'Actualizado ahora';
+
+  @override
+  String refreshSummaryFailed(int checked, int failed) {
+    return '$checked comprobados · $failed fallidos';
+  }
+
+  @override
+  String refreshToastSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'RSS actualizado: $count fuentes actualizadas',
+      one: 'RSS actualizado: 1 fuente actualizada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String refreshToastPartial(int successful, int failed, int skipped) {
+    return 'RSS actualizado: $successful correctas, $failed fallidas, $skipped omitidas';
+  }
+
+  @override
+  String refreshToastFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'No se pudieron actualizar $count fuentes RSS',
+      one: 'No se pudo actualizar 1 fuente RSS',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refreshToastEmpty =>
+      'No hay fuentes para actualizar — añade una primero';
 
   @override
   String get brightness => 'Brillo';
@@ -1085,4 +1153,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get filterClear => 'Borrar filtros';
+
+  @override
+  String get linkCopiedToClipboard => 'Enlace copiado al portapapeles';
+
+  @override
+  String get selectArticleToRead => 'Selecciona un artículo para leer';
+
+  @override
+  String get previousArticle => 'Artículo anterior';
+
+  @override
+  String get nextArticle => 'Siguiente artículo';
+
+  @override
+  String get searchArticles => 'Buscar artículos';
+
+  @override
+  String get articles => 'Artículos';
+
+  @override
+  String get refreshFeeds => 'Actualizar fuentes';
 }

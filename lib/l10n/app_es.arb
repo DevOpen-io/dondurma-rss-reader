@@ -60,6 +60,8 @@
   },
   "categories": "CATEGORÍAS",
   "allNews": "Todas las noticias",
+  "allArticles": "Todos los artículos",
+  "semanticAncestorCategory": "Contiene la fuente seleccionada",
   "uncategorized": "SIN CATEGORÍA",
   "randomBlogs": "Blogs variados",
   "discover": "DESCUBRIR",
@@ -124,6 +126,10 @@
   "lineSpacingTight": "Compacto",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Amplio",
+  "readingWidth": "Ancho de lectura",
+  "readingWidthComfortable": "Cómodo",
+  "readingWidthExpanded": "Expandido",
+  "readingWidthFull": "Ancho completo",
   "contentFiltering": "Filtrado de contenido",
   "globalExcludedKeywords": "Palabras clave excluidas globales",
   "globalExcludedKeywordsDesc": "Oculta los artículos que contengan estas palabras en todas las fuentes",
@@ -134,6 +140,8 @@
   "noKeywordsAdded": "Aún no se han añadido palabras clave.",
   "openInBrowser": "Abrir en el navegador",
   "shareArticle": "Compartir artículo",
+  "focusReadMode": "Modo de lectura enfocada",
+  "exitFocusMode": "Salir del modo de lectura",
   "readOnOriginalWebpage": "Leer en la página web original",
   "invalidUrlFormat": "Formato de URL no válido",
   "close": "Cerrar",
@@ -141,6 +149,26 @@
   "back": "Atrás",
   "forward": "Adelante",
   "refresh": "Actualizar",
+  "refreshingFeeds": "Actualizando fuentes · {completed} / {total}",
+  "updatedJustNow": "Actualizado ahora",
+  "refreshSummaryFailed": "{checked} comprobados · {failed} fallidos",
+  "refreshToastSuccess": "{count, plural, =1{RSS actualizado: 1 fuente actualizada} other{RSS actualizado: {count} fuentes actualizadas}}",
+  "@refreshToastSuccess": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastPartial": "RSS actualizado: {successful} correctas, {failed} fallidas, {skipped} omitidas",
+  "@refreshToastPartial": {
+    "placeholders": {
+      "successful": {"type": "int"},
+      "failed": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "refreshToastFailed": "{count, plural, =1{No se pudo actualizar 1 fuente RSS} other{No se pudieron actualizar {count} fuentes RSS}}",
+  "@refreshToastFailed": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastEmpty": "No hay fuentes para actualizar — añade una primero",
   "brightness": "Brillo",
   "brightnessSystem": "Sistema",
   "brightnessLight": "Claro",
@@ -351,5 +379,12 @@
   "filterOptionUnread": "No leído",
   "filterOptionRead": "Leído",
   "filterApply": "Aplicar filtros",
-  "filterClear": "Borrar filtros"
+  "filterClear": "Borrar filtros",
+  "linkCopiedToClipboard": "Enlace copiado al portapapeles",
+  "selectArticleToRead": "Selecciona un artículo para leer",
+  "previousArticle": "Artículo anterior",
+  "nextArticle": "Siguiente artículo",
+  "searchArticles": "Buscar artículos",
+  "articles": "Artículos",
+  "refreshFeeds": "Actualizar fuentes"
 }

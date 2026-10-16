@@ -189,6 +189,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get allNews => 'Tüm Haberler';
 
   @override
+  String get allArticles => 'Tüm Makaleler';
+
+  @override
+  String get semanticAncestorCategory => 'Seçili akışı içeren kategori';
+
+  @override
   String get uncategorized => 'KATEGORİSİZ';
 
   @override
@@ -396,6 +402,18 @@ class AppLocalizationsTr extends AppLocalizations {
   String get lineSpacingRelaxed => 'Geniş';
 
   @override
+  String get readingWidth => 'Okuma Genişliği';
+
+  @override
+  String get readingWidthComfortable => 'Rahat';
+
+  @override
+  String get readingWidthExpanded => 'Genişletilmiş';
+
+  @override
+  String get readingWidthFull => 'Tam genişlik';
+
+  @override
   String get contentFiltering => 'İçerik Filtreleme';
 
   @override
@@ -427,6 +445,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shareArticle => 'Makaleyi Paylaş';
 
   @override
+  String get focusReadMode => 'Odaklanmış Okuma Modu';
+
+  @override
+  String get exitFocusMode => 'Odak Modundan Çık';
+
+  @override
   String get readOnOriginalWebpage => 'Orijinal Web Sitesinde Oku';
 
   @override
@@ -446,6 +470,50 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get refresh => 'Yenile';
+
+  @override
+  String refreshingFeeds(int completed, int total) {
+    return 'Akışlar yenileniyor · $completed / $total';
+  }
+
+  @override
+  String get updatedJustNow => 'Az önce güncellendi';
+
+  @override
+  String refreshSummaryFailed(int checked, int failed) {
+    return '$checked kontrol edildi · $failed başarısız';
+  }
+
+  @override
+  String refreshToastSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'RSS yenilendi: $count kaynak güncellendi',
+      one: 'RSS yenilendi: 1 kaynak güncellendi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String refreshToastPartial(int successful, int failed, int skipped) {
+    return 'RSS yenilendi: $successful başarılı, $failed başarısız, $skipped atlandı';
+  }
+
+  @override
+  String refreshToastFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count RSS kaynağı yenilenemedi',
+      one: '1 RSS kaynağı yenilenemedi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refreshToastEmpty =>
+      'Yenilenecek akış yok — önce bir kaynak ekleyin';
 
   @override
   String get brightness => 'Parlaklık';
@@ -1073,4 +1141,25 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get filterClear => 'Temizle';
+
+  @override
+  String get linkCopiedToClipboard => 'Bağlantı panoya kopyalandı';
+
+  @override
+  String get selectArticleToRead => 'Okumak için bir makale seçin';
+
+  @override
+  String get previousArticle => 'Önceki makale';
+
+  @override
+  String get nextArticle => 'Sonraki makale';
+
+  @override
+  String get searchArticles => 'Makalelerde ara';
+
+  @override
+  String get articles => 'Makaleler';
+
+  @override
+  String get refreshFeeds => 'Kaynakları yenile';
 }

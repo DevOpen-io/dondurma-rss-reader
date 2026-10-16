@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "ice_cream_rss_reader" "\0"
+            VALUE "CompanyName", "DevOpen" "\0"
+            VALUE "FileDescription", "Dondurma RSS Reader" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "ice_cream_rss_reader" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "ice_cream_rss_reader.exe" "\0"
-            VALUE "ProductName", "ice_cream_rss_reader" "\0"
+            VALUE "InternalName", "dondurma" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2026 DevOpen. All rights reserved." "\0"
+            VALUE "OriginalFilename", "dondurma.exe" "\0"
+            VALUE "ProductName", "Dondurma RSS Reader" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

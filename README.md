@@ -25,6 +25,26 @@ Fast, private RSS/Atom reader built with Flutter and Material 3. No accounts, al
 - 10 FlexColorScheme palettes; system/light/dark; reading typography controls
 - Responsive widths, semantic controls, EN/TR/ES localization
 - Modal-aware global toast feedback respecting reduced-motion settings
+- Windows, Linux, and macOS desktop builds with an adaptive three-pane layout,
+  keyboard shortcuts, right-click menus, and native file dialogs
+
+### Desktop
+
+Windows 10/11, Linux (GNOME/KDE/Cinnamon), and macOS (Intel/Apple Silicon)
+share the same codebase. `AdaptiveHomeScreen` picks a three-pane desktop shell
+on wide desktop windows and falls back to the mobile layout below 860 px.
+
+```bash
+flutter config --enable-linux-desktop   # or --enable-windows-desktop / --enable-macos-desktop
+flutter run -d linux                    # windows / macos
+flutter build linux --release           # bundle: build/linux/x64/release/bundle
+```
+
+Portable artifacts (`dondurma-linux-x64.tar.gz`, `dondurma-windows-x64.zip`,
+`dondurma-macos.zip`) are produced by `.github/workflows/desktop-build.yml`.
+Desktop limitations — no post-exit background fetch, no home widgets/tray,
+no embedded WebView on Windows/Linux — are documented in
+[desktop compatibility](docs/development/desktop-compatibility.md).
 
 ### Architecture
 
@@ -35,6 +55,7 @@ lib/
 ├── providers/      # settings, subscriptions, bookmarks, feeds, article state
 ├── services/       # feed, offline records/media, preparation, OS integrations
 ├── screens/        # onboarding, home tabs, article, settings, legal, debug
+│   └── desktop/    # adaptive three-pane shell: sidebar, list, reader
 ├── widgets/        # reusable article, folder, home, settings UI
 ├── router/         # GoRouter routes and onboarding redirect
 ├── theme/          # Material 3 themes
@@ -79,6 +100,8 @@ Details: [developer guide](docs/development/README.md) · [product guide](docs/p
 - 10 renk şeması; sistem/açık/koyu; okuma tipografisi ayarları
 - Duyarlı genişlik, semantik kontroller, EN/TR/ES
 - Azaltılmış hareket ayarına uyan, modal farkındalıklı global toast
+- Windows, Linux ve macOS masaüstü derlemeleri; uyarlanır üç panelli arayüz,
+  klavye kısayolları, sağ tık menüleri ve yerel dosya iletişimleri
 
 ### Geliştirme
 

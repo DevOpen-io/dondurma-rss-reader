@@ -17,6 +17,7 @@ Dondurma RSS Reader belgeleri konu ve kullanım amacına göre düzenlenir. Proj
 | [Kurulum ve doğrulama](development/README.md) | Bağımlılıklar, çalıştırma, test ve yerelleştirme |
 | [Mimari ve çalışma zamanı](development/architecture.md) | Provider'lar, servisler, Hive, RSS hattı, bildirimler ve platform bağlantıları |
 | [Çevrimdışı saklama](development/offline-storage.md) | Makale sahipliği, medya, hazırlık, cache üyeliği ve temizleme |
+| [Masaüstü uyumluluğu](development/desktop-compatibility.md) | Windows/Linux/macOS denetimi, bağımlılık matrisi, sınırlar ve smoke testi |
 
 ## Tasarım ve geçmiş uygulama planları
 

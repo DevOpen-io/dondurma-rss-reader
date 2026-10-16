@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../adaptive_dialog.dart';
 
 /// Modal bottom sheet for the runtime feed filter: read status (single-select)
 /// plus categories (multi-select). Applied via [FeedProvider.applySheetFilter];
@@ -11,12 +12,10 @@ import '../../providers/subscription_provider.dart';
 class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({super.key});
 
-  static Future<void> show(BuildContext context) => showModalBottomSheet<void>(
-    context: context,
+  static Future<void> show(BuildContext context) => showAdaptiveSheet<void>(
+    context,
+    const FilterBottomSheet(),
     showDragHandle: true,
-    isScrollControlled: true,
-    useSafeArea: true,
-    builder: (_) => const FilterBottomSheet(),
   );
 
   @override

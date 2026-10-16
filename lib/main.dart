@@ -20,12 +20,15 @@ import 'router/app_router.dart';
 import 'services/article_preparation_service.dart';
 import 'services/article_record_store.dart';
 import 'services/background_fetch_service.dart';
+import 'services/desktop_window_service.dart';
 import 'services/feed_backoff.dart';
 import 'services/notification_service.dart';
 import 'services/widget_update_service.dart';
 import 'models/feed_item.dart';
 import 'utils/app_toast.dart';
 import 'utils/host_pacer.dart';
+import 'utils/platform_caps.dart';
+import 'package:window_manager/window_manager.dart' show windowManager;
 
 /// Custom scroll behavior that uses iOS-style bouncing physics on all
 /// platforms and enables mouse/trackpad drag for desktop.
@@ -47,7 +50,12 @@ class PremiumScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  WidgetUpdateService.initialize();
+  if (PlatformCaps.isDesktop) {
+    await windowManager.ensureInitialized();
+  }
+  if (PlatformCaps.supportsHomeWidget) {
+    WidgetUpdateService.initialize();
+  }
   await Hive.initFlutter();
   await Hive.openBox('settings');
   await Hive.openBox('feeds');
@@ -72,15 +80,23 @@ void main() async {
   });
 
   // Home screen widget tap → open the tapped article inside the app.
-  HomeWidget.widgetClicked.listen(_openArticleFromWidget);
-  HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
-    if (uri == null) return;
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _openArticleFromWidget(uri),
-    );
-  });
+  if (PlatformCaps.supportsHomeWidget) {
+    HomeWidget.widgetClicked.listen(_openArticleFromWidget);
+    HomeWidget.initiallyLaunchedFromHomeWidget().then((uri) {
+      if (uri == null) return;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _openArticleFromWidget(uri),
+      );
+    });
+  }
 
   await _initBackgroundFetch();
+
+  if (PlatformCaps.isDesktop) {
+    final windowService = DesktopWindowService.instance;
+    await windowService.queryDisplays();
+    await windowService.init(box: Hive.box('settings'));
+  }
 
   // Ağır işleri arka plana fırlatıyoruz
   _initHeavyServicesInBackground();
@@ -143,7 +159,12 @@ void main() async {
 /// Initializes WorkManager and schedules the periodic background fetch when
 /// background sync is enabled. Unlike the previous foreground service, this
 /// shows NO persistent notification while it runs.
+///
+/// Mobile only — `workmanager` has no Windows/Linux implementation and its
+/// macOS path is unverified. Desktop refresh runs through FeedProvider's
+/// in-process timer while the app is open.
 Future<void> _initBackgroundFetch() async {
+  if (!PlatformCaps.supportsBackgroundScheduler) return;
   await Workmanager().initialize(callbackDispatcher);
 
   final bool syncEnabled = Hive.box(
@@ -157,11 +178,14 @@ Future<void> _initBackgroundFetch() async {
 }
 
 void _initHeavyServicesInBackground() {
-  NotificationService.instance.requestPermission().catchError((e) {
-    debugPrint('Notification permission error: $e');
-    return false;
-  });
+  if (PlatformCaps.usesNotificationPermissionPrompt) {
+    NotificationService.instance.requestPermission().catchError((e) {
+      debugPrint('Notification permission error: $e');
+      return false;
+    });
+  }
 
+  if (!PlatformCaps.supportsAdBlockWebView) return;
   AdBlockerWebviewController.instance
       .initialize(
         FilterConfig(filterTypes: [FilterType.easyList, FilterType.adGuard]),

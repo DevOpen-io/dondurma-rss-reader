@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_subscription.dart';
 import '../../providers/subscription_provider.dart';
+import '../adaptive_dialog.dart';
 import '../category_icon.dart';
 import '../home/add_category_dialog.dart';
 
@@ -24,13 +25,9 @@ class MoveToCategorySheet extends StatelessWidget {
     FeedSubscription sub, {
     void Function(FeedSubscription sub, String category)? onMoved,
   }) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => MoveToCategorySheet(sub: sub, onMoved: onMoved),
+    showAdaptiveSheet<void>(
+      context,
+      MoveToCategorySheet(sub: sub, onMoved: onMoved),
     );
   }
 
@@ -44,13 +41,9 @@ class MoveToCategorySheet extends StatelessWidget {
   }
 
   Future<void> _createAndMove(BuildContext sheetCtx) async {
-    final name = await showModalBottomSheet<String>(
-      context: sheetCtx,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => const AddCategoryDialog(),
+    final name = await showAdaptiveSheet<String>(
+      sheetCtx,
+      const AddCategoryDialog(),
     );
     if (name == null || !sheetCtx.mounted) return;
     await _move(sheetCtx, name);

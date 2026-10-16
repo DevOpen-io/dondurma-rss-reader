@@ -13,6 +13,7 @@ import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../services/article_status.dart';
+import '../services/feed_date_groups.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
@@ -783,7 +784,14 @@ class _FeedItemContent extends StatelessWidget {
     final now = DateTime.now();
     final d = item.pubDate!;
     final diff = now.difference(d);
-    if (diff.isNegative || diff.inMinutes < 1) return 'now';
+    if (diff.isNegative) {
+      // Small clock skew reads as "now"; beyond the allowance show the real
+      // (future) date instead of silently disguising it.
+      if (diff.abs() <= kFuturePubDateAllowance) return 'now';
+      final local = d.toLocal();
+      return '${local.month}/${local.day}';
+    }
+    if (diff.inMinutes < 1) return 'now';
     if (diff.inMinutes < 60) return '${diff.inMinutes}m';
     if (diff.inHours < 24) return '${diff.inHours}h';
     if (diff.inDays < 7) return '${diff.inDays}d';

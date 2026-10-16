@@ -91,6 +91,8 @@
   },
   "categories": "CATEGORIES",
   "allNews": "All News",
+  "allArticles": "All Articles",
+  "semanticAncestorCategory": "Contains the selected feed",
   "uncategorized": "UNCATEGORIZED",
   "randomBlogs": "Random Blogs",
   "discover": "DISCOVER",
@@ -186,6 +188,10 @@
   "lineSpacingTight": "Tight",
   "lineSpacingNormal": "Normal",
   "lineSpacingRelaxed": "Relaxed",
+  "readingWidth": "Reading Width",
+  "readingWidthComfortable": "Comfortable",
+  "readingWidthExpanded": "Expanded",
+  "readingWidthFull": "Full width",
   "contentFiltering": "Content Filtering",
   "globalExcludedKeywords": "Global Excluded Keywords",
   "globalExcludedKeywordsDesc": "Hide articles containing these words across all feeds",
@@ -196,6 +202,8 @@
   "noKeywordsAdded": "No keywords added yet.",
   "openInBrowser": "Open in Browser",
   "shareArticle": "Share Article",
+  "focusReadMode": "Focus Read Mode",
+  "exitFocusMode": "Exit Focus Mode",
   "readOnOriginalWebpage": "Read on Original Webpage",
   "invalidUrlFormat": "Invalid URL format",
   "close": "Close",
@@ -203,6 +211,46 @@
   "back": "Back",
   "forward": "Forward",
   "refresh": "Refresh",
+  "refreshingFeeds": "Refreshing feeds · {completed} / {total}",
+  "@refreshingFeeds": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedJustNow": "Updated just now",
+  "refreshSummaryFailed": "{checked} checked · {failed} failed",
+  "refreshToastSuccess": "{count, plural, =1{RSS updated: 1 source refreshed} other{RSS updated: {count} sources refreshed}}",
+  "@refreshToastSuccess": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastPartial": "RSS updated: {successful} successful, {failed} failed, {skipped} skipped",
+  "@refreshToastPartial": {
+    "placeholders": {
+      "successful": {"type": "int"},
+      "failed": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "refreshToastFailed": "{count, plural, =1{Could not refresh 1 RSS source} other{Could not refresh {count} RSS sources}}",
+  "@refreshToastFailed": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastEmpty": "No feeds to refresh — add a source first",
+  "@refreshSummaryFailed": {
+    "placeholders": {
+      "checked": {
+        "type": "int"
+      },
+      "failed": {
+        "type": "int"
+      }
+    }
+  },
   "brightness": "Brightness",
   "brightnessSystem": "System",
   "brightnessLight": "Light",
@@ -461,5 +509,12 @@
   "filterOptionUnread": "Unread",
   "filterOptionRead": "Read",
   "filterApply": "Apply filters",
-  "filterClear": "Clear filters"
+  "filterClear": "Clear filters",
+  "linkCopiedToClipboard": "Link copied to clipboard",
+  "selectArticleToRead": "Select an article to read",
+  "previousArticle": "Previous article",
+  "nextArticle": "Next article",
+  "searchArticles": "Search articles",
+  "articles": "Articles",
+  "refreshFeeds": "Refresh feeds"
 }

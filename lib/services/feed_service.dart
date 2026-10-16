@@ -10,6 +10,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
+import 'feed_date_groups.dart';
 import '../utils/retry_after.dart';
 import 'article_identity.dart';
 
@@ -84,13 +85,8 @@ class FeedService {
   /// reverse-chronological, but that is not guaranteed.
   static List<FeedItem> capItems(List<FeedItem> items) {
     if (items.length <= maxItemsPerFeed) return items;
-    final sorted = items.toList()
-      ..sort((a, b) {
-        if (a.pubDate == null && b.pubDate == null) return 0;
-        if (a.pubDate == null) return 1;
-        if (b.pubDate == null) return -1;
-        return b.pubDate!.compareTo(a.pubDate!);
-      });
+    final sorted = items.toList();
+    sortByEffectivePubDateDesc(sorted, DateTime.now());
     return sorted.take(maxItemsPerFeed).toList();
   }
 
@@ -272,7 +268,9 @@ class FeedService {
         finalUrl: finalUrl,
       );
     } catch (e) {
-      debugPrint('Error fetching feed $url: $e');
+      // No logging here — callers report failures with their own context
+      // (refresh pass, background task, add-feed), and logging at this layer
+      // would duplicate every error in the console.
       if (e is FeedFetchException) rethrow;
       if (e is SocketException ||
           e is http.ClientException ||

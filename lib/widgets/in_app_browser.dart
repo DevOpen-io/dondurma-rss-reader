@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart'
-    show kIsWeb, TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -9,19 +7,14 @@ import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../l10n/app_localizations.dart';
 import '../utils/motion.dart';
+import '../utils/platform_caps.dart';
 
 /// Returns `true` when the current platform supports WebView.
 ///
 /// `webview_flutter` v4.x ships native implementations for Android, iOS, and
 /// macOS. On Web, Windows, and Linux there is no native WebView — we fall back
 /// to [url_launcher] instead.
-bool get _webViewSupported {
-  if (kIsWeb) return false;
-  final platform = defaultTargetPlatform;
-  return platform == TargetPlatform.android ||
-      platform == TargetPlatform.iOS ||
-      platform == TargetPlatform.macOS;
-}
+bool get _webViewSupported => PlatformCaps.supportsEmbeddedWebView;
 
 /// Modern Chrome User-Agent to avoid YouTube / Google rejecting the WebView.
 const _kBrowserUserAgent =

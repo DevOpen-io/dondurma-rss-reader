@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_subscription.dart';
+import '../adaptive_dialog.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../utils/app_toast.dart';
@@ -358,15 +359,9 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                   ),
                   const SizedBox(height: 6),
                   InkWell(
-                    onTap: () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(
-                          top: Radius.circular(24),
-                        ),
-                      ),
-                      builder: (ctx) => KeywordInputSheet(
+                    onTap: () => showAdaptiveSheet<void>(
+                      context,
+                      KeywordInputSheet(
                         title: l10n.excludedKeywords,
                         initialKeywords: _keywords,
                         onSave: (kw) => setState(() => _keywords = kw),
