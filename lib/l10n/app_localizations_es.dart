@@ -190,6 +190,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get allNews => 'Todas las noticias';
 
   @override
+  String get allArticles => 'Todos los artículos';
+
+  @override
+  String get semanticAncestorCategory => 'Contiene la fuente seleccionada';
+
+  @override
   String get uncategorized => 'SIN CATEGORÍA';
 
   @override

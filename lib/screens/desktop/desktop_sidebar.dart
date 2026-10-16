@@ -188,7 +188,11 @@ class _SectionLabel extends StatelessWidget {
 
 /// Expandable category node listing its feeds — mirrors the mobile drawer's
 /// semantics (select category vs select feed) without the drawer chrome.
-class _CategoryNode extends StatelessWidget {
+///
+/// Two emphasis levels: `isSelected` (the category itself is the active
+/// scope — full primary treatment) and `isAncestor` (a feed inside it is
+/// selected — thin left accent + brighter label, no selection fill).
+class _CategoryNode extends StatefulWidget {
   final String title;
   final String category;
   final List<FeedSubscription> feedSources;
@@ -211,113 +215,190 @@ class _CategoryNode extends StatelessWidget {
   });
 
   @override
+  State<_CategoryNode> createState() => _CategoryNodeState();
+}
+
+class _CategoryNodeState extends State<_CategoryNode> {
+  /// Programmatic expand for ancestor reveal without touching the user's
+  /// manual collapse/expand choices.
+  final ExpansibleController _expansion = ExpansibleController();
+
+  bool _wasAncestor = false;
+
+  bool get _isSelected =>
+      widget.active &&
+      widget.feed.selectedCategory == widget.category &&
+      widget.feed.selectedFeedUrl == null;
+
+  bool get _isAncestor =>
+      widget.active &&
+      widget.feed.selectedFeedParentCategory == widget.category;
+
+  @override
+  void didUpdateWidget(covariant _CategoryNode oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Reveal the selected feed when its parent became ancestor — never
+    // collapse a category the user opened or close a stale ancestor.
+    final ancestor = _isAncestor;
+    if (ancestor && !_wasAncestor && !_expansion.isExpanded) {
+      _expansion.expand();
+    }
+    _wasAncestor = ancestor;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final feed = widget.feed;
+    final category = widget.category;
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
-    final isSelected =
-        active && feed.selectedCategory == category && feed.selectedFeedUrl == null;
+    final isSelected = _isSelected;
+    final isAncestor = _isAncestor;
     final count = feed.unreadCount(category: category);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 1.5),
       child: Theme(
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          initiallyExpanded: feed.selectedCategory == category,
-          tilePadding: const EdgeInsets.only(left: 12, right: 8),
-          childrenPadding: const EdgeInsets.only(left: 8, bottom: 4),
-          dense: true,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          collapsedShape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          backgroundColor: isSelected
-              ? cs.primaryContainer.withValues(alpha: 0.3)
-              : Colors.transparent,
-          collapsedBackgroundColor: isSelected
-              ? cs.primaryContainer.withValues(alpha: 0.5)
-              : Colors.transparent,
-          iconColor: cs.onSurfaceVariant,
-          collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
-          leading: CategoryIcon(
-            category: category,
-            size: 17,
-            color: isSelected ? cs.primary : cs.onSurfaceVariant,
-          ),
-          title: Row(
+        child: Semantics(
+          selected: isSelected,
+          hint: isAncestor ? l10n.semanticAncestorCategory : null,
+          child: Stack(
             children: [
-              Expanded(
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () {
-                    feed.selectCategory(category);
-                    onSelect();
-                  },
-                  child: Text(
-                    title,
-                    style: tt.bodyMedium?.copyWith(
-                      color: isSelected
-                          ? cs.primary
-                          : cs.onSurface.withValues(alpha: 0.8),
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
+              ExpansionTile(
+                controller: _expansion,
+                initiallyExpanded: feed.selectedCategory == category,
+                tilePadding: const EdgeInsets.only(left: 12, right: 8),
+                childrenPadding: const EdgeInsets.only(left: 8, bottom: 4),
+                dense: true,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                collapsedShape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                backgroundColor: isSelected
+                    ? cs.primaryContainer.withValues(alpha: 0.3)
+                    : isAncestor
+                    ? cs.primary.withValues(alpha: 0.05)
+                    : Colors.transparent,
+                collapsedBackgroundColor: isSelected
+                    ? cs.primaryContainer.withValues(alpha: 0.5)
+                    : isAncestor
+                    ? cs.primary.withValues(alpha: 0.05)
+                    : Colors.transparent,
+                iconColor: cs.onSurfaceVariant,
+                collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
+                leading: CategoryIcon(
+                  category: category,
+                  size: 17,
+                  color: isSelected
+                      ? cs.primary
+                      : isAncestor
+                      ? cs.primary.withValues(alpha: 0.8)
+                      : cs.onSurfaceVariant,
+                ),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () {
+                          feed.selectCategory(category);
+                          widget.onSelect();
+                        },
+                        child: Text(
+                          widget.title,
+                          style: tt.bodyMedium?.copyWith(
+                            color: isSelected
+                                ? cs.primary
+                                : isAncestor
+                                ? cs.onSurface
+                                : cs.onSurface.withValues(alpha: 0.8),
+                            fontWeight: isSelected
+                                ? FontWeight.w700
+                                : isAncestor
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    if (count > 0) ...[
+                      const SizedBox(width: 6),
+                      Text(
+                        '$count',
+                        style: tt.labelSmall?.copyWith(
+                          color: isSelected
+                              ? cs.primary
+                              : isAncestor
+                              ? cs.primary.withValues(alpha: 0.8)
+                              : cs.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                    if (!widget.isUncategorized)
+                      Semantics(
+                        label: l10n.semanticCategoryOptions,
+                        button: true,
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(16),
+                          onTap: () => _showCategoryActions(context),
+                          child: SizedBox(
+                            width: 32,
+                            height: 32,
+                            child: Icon(
+                              Icons.more_horiz,
+                              size: 16,
+                              color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
+                children: [
+                  for (final sub in widget.feedSources)
+                    _FeedRow(sub: sub, feed: feed, onSelect: widget.onSelect),
+                ],
               ),
-              if (count > 0) ...[
-                const SizedBox(width: 6),
-                Text(
-                  '$count',
-                  style: tt.labelSmall?.copyWith(
-                    color: isSelected ? cs.primary : cs.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              if (!isUncategorized)
-                Semantics(
-                  label: l10n.semanticCategoryOptions,
-                  button: true,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(16),
-                    onTap: () => _showCategoryActions(context),
-                    child: SizedBox(
-                      width: 32,
-                      height: 32,
-                      child: Icon(
-                        Icons.more_horiz,
-                        size: 16,
-                        color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+              // Ancestor accent: a slim bar at the node's left edge — the
+              // "contains selected feed" cue that never reads as selection.
+              if (isAncestor)
+                Positioned(
+                  left: 0,
+                  top: 10,
+                  bottom: 10,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 3,
+                      decoration: BoxDecoration(
+                        color: cs.primary.withValues(alpha: 0.75),
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
                   ),
                 ),
             ],
           ),
-          children: [
-            for (final sub in feedSources)
-              _FeedRow(sub: sub, feed: feed, onSelect: onSelect),
-          ],
         ),
       ),
     );
   }
 
   void _showCategoryActions(BuildContext context) {
+    final category = widget.category;
     showAdaptiveSheet<void>(
       context,
       CategoryActionSheet(
         category: category,
         onMarkAllRead: () {
           Navigator.pop(context);
-          feed.markAllInCategoryAsRead(category);
+          widget.feed.markAllInCategoryAsRead(category);
         },
         onChangeIcon: () {
           Navigator.pop(context);
@@ -348,7 +429,10 @@ class _CategoryNode extends StatelessWidget {
       builder: (dialogContext) => AlertDialog(
         title: Text(l10n.deleteFolder),
         content: Text(
-          l10n.deleteFolderConfirm(category, feedSources.length),
+          l10n.deleteFolderConfirm(
+            widget.category,
+            widget.feedSources.length,
+          ),
         ),
         actions: [
           TextButton(
@@ -362,7 +446,7 @@ class _CategoryNode extends StatelessWidget {
             onPressed: () {
               context
                   .read<SubscriptionProvider>()
-                  .removeCategory(category)
+                  .removeCategory(widget.category)
                   .then((_) {
                     if (context.mounted) {
                       context.read<FeedProvider>().refreshAll();
@@ -402,7 +486,9 @@ class _FeedRow extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(left: 22, top: 1, bottom: 1),
-      child: Material(
+      child: Semantics(
+        selected: isSelected,
+        child: Material(
         color: isSelected
             ? cs.primary.withValues(alpha: 0.08)
             : Colors.transparent,
@@ -473,6 +559,7 @@ class _FeedRow extends StatelessWidget {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

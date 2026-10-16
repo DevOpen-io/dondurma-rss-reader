@@ -258,6 +258,22 @@ class FeedProvider extends ChangeNotifier {
   String? get selectedCategory => _selectedCategory;
   String? get selectedFeedUrl => _selectedFeedUrl;
 
+  /// Category that owns the individually selected feed — the ancestor node
+  /// nav trees highlight when [selectedFeedUrl] is set. `null` when the
+  /// selection is a category, the global view, or nothing.
+  ///
+  /// Resolved live from the subscription so feed moves and category renames
+  /// keep the ancestor indicator on the real parent.
+  String? get selectedFeedParentCategory {
+    if (_selectedFeedUrl == null) return null;
+    if (subscriptionProvider != null) {
+      for (final sub in subscriptionProvider!.subscriptions) {
+        if (sub.url == _selectedFeedUrl) return sub.category;
+      }
+    }
+    return _selectedCategory;
+  }
+
   String _searchQuery = '';
   String get searchQuery => _searchQuery;
 
@@ -755,7 +771,11 @@ class FeedProvider extends ChangeNotifier {
     final filtered = applyFeedFilters(
       items: _items,
       readItemIds: _readItemIds,
-      selectedCategory: _selectedCategory,
+      // Feed-scoped views track the live parent category (moves/renames);
+      // a stale snapshot would AND-filter the feed's items out.
+      selectedCategory: _selectedFeedUrl != null
+          ? selectedFeedParentCategory
+          : _selectedCategory,
       selectedFeedUrl: _selectedFeedUrl,
       searchQuery: _searchQuery,
       readFilter: _readFilter,
@@ -989,10 +1009,13 @@ class FeedProvider extends ChangeNotifier {
         .toList();
     merged.addAll(result.items);
     merged.sort((a, b) {
-      if (a.pubDate == null && b.pubDate == null) return 0;
+      if (a.pubDate == null && b.pubDate == null) {
+        return a.id.compareTo(b.id);
+      }
       if (a.pubDate == null) return 1;
       if (b.pubDate == null) return -1;
-      return b.pubDate!.compareTo(a.pubDate!);
+      final byDate = b.pubDate!.compareTo(a.pubDate!);
+      return byDate != 0 ? byDate : a.id.compareTo(b.id);
     });
     _items = merged;
 

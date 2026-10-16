@@ -314,6 +314,13 @@ class _AppRail extends StatelessWidget {
     this.explorerToggle,
   });
 
+  /// True when the article pane shows the unscoped global timeline
+  /// (All Articles): no category or individual-feed selection.
+  static bool _isGlobalFeedScope(BuildContext context) {
+    final feed = context.watch<FeedProvider>();
+    return feed.selectedCategory == null && feed.selectedFeedUrl == null;
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -416,9 +423,15 @@ class _AppRail extends StatelessWidget {
           // ── Primary destinations ────────────────────────────────────
           railItem(
             Icons.dynamic_feed_rounded,
-            l10n.allNews,
-            selected: section == DesktopSection.articles,
-            onTap: () => onSectionChanged(DesktopSection.articles),
+            l10n.allArticles,
+            // Global view is only "active" when no feed/category scope is
+            // narrowing the article list.
+            selected: section == DesktopSection.articles &&
+                _isGlobalFeedScope(context),
+            onTap: () {
+              context.read<FeedProvider>().selectCategory(null);
+              onSectionChanged(DesktopSection.articles);
+            },
           ),
           railItem(
             Icons.bookmark_outline_rounded,

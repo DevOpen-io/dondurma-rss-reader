@@ -60,6 +60,8 @@
   },
   "categories": "CATEGORÍAS",
   "allNews": "Todas las noticias",
+  "allArticles": "Todos los artículos",
+  "semanticAncestorCategory": "Contiene la fuente seleccionada",
   "uncategorized": "SIN CATEGORÍA",
   "randomBlogs": "Blogs variados",
   "discover": "DESCUBRIR",

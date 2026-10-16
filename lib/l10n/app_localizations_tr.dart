@@ -189,6 +189,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get allNews => 'Tüm Haberler';
 
   @override
+  String get allArticles => 'Tüm Makaleler';
+
+  @override
+  String get semanticAncestorCategory => 'Seçili akışı içeren kategori';
+
+  @override
   String get uncategorized => 'KATEGORİSİZ';
 
   @override

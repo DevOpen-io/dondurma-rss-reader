@@ -187,6 +187,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allNews => 'All News';
 
   @override
+  String get allArticles => 'All Articles';
+
+  @override
+  String get semanticAncestorCategory => 'Contains the selected feed';
+
+  @override
   String get uncategorized => 'UNCATEGORIZED';
 
   @override

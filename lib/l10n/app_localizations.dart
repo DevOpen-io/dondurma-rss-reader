@@ -430,6 +430,18 @@ abstract class AppLocalizations {
   /// **'All News'**
   String get allNews;
 
+  /// No description provided for @allArticles.
+  ///
+  /// In en, this message translates to:
+  /// **'All Articles'**
+  String get allArticles;
+
+  /// No description provided for @semanticAncestorCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Contains the selected feed'**
+  String get semanticAncestorCategory;
+
   /// No description provided for @uncategorized.
   ///
   /// In en, this message translates to:

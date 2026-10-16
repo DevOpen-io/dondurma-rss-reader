@@ -91,6 +91,8 @@
   },
   "categories": "CATEGORIES",
   "allNews": "All News",
+  "allArticles": "All Articles",
+  "semanticAncestorCategory": "Contains the selected feed",
   "uncategorized": "UNCATEGORIZED",
   "randomBlogs": "Random Blogs",
   "discover": "DISCOVER",
