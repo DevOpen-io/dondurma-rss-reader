@@ -827,6 +827,12 @@ class FeedProvider extends ChangeNotifier {
     return _dateGroupsCache!;
   }
 
+  /// The date-grouped view of the visible render window. The returned
+  /// instance is memoized and replaced whenever data changes — suitable for
+  /// `context.select` so widgets rebuild only on real data changes, not on
+  /// status-only notifications (`isLoading`, connectivity flips).
+  FeedDateGroups get dateGroups => _dateGroups;
+
   /// Items published today, within the current render window.
   List<FeedItem> get todayItems => _dateGroups.today;
 
@@ -1008,15 +1014,9 @@ class FeedProvider extends ChangeNotifier {
         .where((item) => item.feedUrl != subscription.url)
         .toList();
     merged.addAll(result.items);
-    merged.sort((a, b) {
-      if (a.pubDate == null && b.pubDate == null) {
-        return a.id.compareTo(b.id);
-      }
-      if (a.pubDate == null) return 1;
-      if (b.pubDate == null) return -1;
-      final byDate = b.pubDate!.compareTo(a.pubDate!);
-      return byDate != 0 ? byDate : a.id.compareTo(b.id);
-    });
+    // Clamps implausible future dates (mislabeled tz, CMS clock skew) so
+    // they can't pin above legitimately newer items.
+    sortByEffectivePubDateDesc(merged, DateTime.now());
     _items = merged;
 
     final validators = _loadFeedValidators();

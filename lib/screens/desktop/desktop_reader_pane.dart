@@ -5,6 +5,7 @@ import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
 import '../../providers/article_page_provider.dart';
 import '../../providers/settings_provider.dart';
+import '../../utils/motion.dart';
 import '../../utils/share_actions.dart';
 import '../../widgets/in_app_browser.dart';
 import '../article_screen.dart';
@@ -23,6 +24,11 @@ class DesktopReaderPane extends StatefulWidget {
   final VoidCallback? onPrevious;
   final VoidCallback? onNext;
 
+  /// Focus Read Mode is active — hides the list/explorer for distraction-free
+  /// reading. The toggle is offered once an article is loaded.
+  final bool focusMode;
+  final VoidCallback? onToggleFocusMode;
+
   const DesktopReaderPane({
     super.key,
     required this.item,
@@ -30,6 +36,8 @@ class DesktopReaderPane extends StatefulWidget {
     required this.totalCount,
     this.onPrevious,
     this.onNext,
+    this.focusMode = false,
+    this.onToggleFocusMode,
   });
 
   @override
@@ -145,6 +153,19 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
                 // Open/share live here in the pane toolbar — the embedded
                 // ArticlePage suppresses its app-bar actions so the two
                 // toolbars never stack.
+                if (widget.onToggleFocusMode != null)
+                  IconButton(
+                    icon: Icon(
+                      widget.focusMode
+                          ? Icons.fullscreen_exit_rounded
+                          : Icons.fullscreen_rounded,
+                      size: 20,
+                    ),
+                    tooltip: widget.focusMode
+                        ? l10n.exitFocusMode
+                        : l10n.focusReadMode,
+                    onPressed: widget.onToggleFocusMode,
+                  ),
                 IconButton(
                   icon: const Icon(Icons.launch_rounded, size: 20),
                   tooltip: l10n.openInBrowser,
@@ -171,20 +192,33 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
           Expanded(
             // Keyed by article id so switching items builds a fresh
             // ArticlePageProvider + scroll state instead of reusing stale
-            // page state.
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              child: ChangeNotifierProvider(
-                key: ValueKey('reader-${current.id}'),
-                create: (_) => ArticlePageProvider(item: current),
-                child: ArticlePage(
-                  item: current,
-                  currentIndex: widget.currentIndex,
-                  totalCount: widget.totalCount,
-                  isActive: true,
-                  embedded: true,
-                  scrollController: _scrollController,
+            // page state. The TweenAnimationBuilder keyed on the same id
+            // gives a one-shot fade-in — no crossfade, so only a single
+            // article subtree is ever mounted.
+            child: TweenAnimationBuilder<double>(
+              key: ValueKey('reader-fade-${current.id}'),
+              tween: Tween(begin: 0, end: 1),
+              duration: motionDuration(
+                context,
+                const Duration(milliseconds: 160),
+              ),
+              curve: Curves.easeOut,
+              builder: (context, value, child) =>
+                  Opacity(opacity: value, child: child),
+              child: Scrollbar(
+                controller: _scrollController,
+                thumbVisibility: true,
+                child: ChangeNotifierProvider(
+                  key: ValueKey('reader-${current.id}'),
+                  create: (_) => ArticlePageProvider(item: current),
+                  child: ArticlePage(
+                    item: current,
+                    currentIndex: widget.currentIndex,
+                    totalCount: widget.totalCount,
+                    isActive: true,
+                    embedded: true,
+                    scrollController: _scrollController,
+                  ),
                 ),
               ),
             ),

@@ -1,6 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
@@ -11,7 +13,9 @@ import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/models/refresh_progress.dart';
+import 'package:ice_cream_rss_reader/screens/desktop/desktop_home_screen.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
 import 'package:ice_cream_rss_reader/screens/home_screen.dart';
 import 'package:ice_cream_rss_reader/utils/platform_caps.dart';
@@ -297,6 +301,109 @@ void main() {
     // Exactly one spinner: the pill's — no competing refresh circles.
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  group('Escape navigation', () {
+    Widget homeApp() => MultiProvider(
+      providers: providers(),
+      child: MaterialApp(
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: const AdaptiveHomeScreen(),
+      ),
+    );
+
+    Future<void> pumpDesktop(WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1600, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      await tester.pumpWidget(homeApp());
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('dashboard Escape is a no-op (no pop, no exception)', (
+      tester,
+    ) async {
+      if (!PlatformCaps.isDesktop) return;
+      await pumpDesktop(tester);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DesktopHomeScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Escape pops the pushed Settings route', (tester) async {
+      if (!PlatformCaps.isDesktop) return;
+      await pumpDesktop(tester);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byType(DesktopHomeScreen),
+          matching: find.byTooltip('Settings'),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Settings'), findsWidgets);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DesktopHomeScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Focus Read Mode toggles and Escape exits it', (tester) async {
+      if (!PlatformCaps.isDesktop) return;
+
+      Hive.box('feeds').put(
+        'cachedItemsJson',
+        jsonEncode([
+          FeedItem(
+            id: 'a1',
+            siteName: 'Feed',
+            title: 'Article One',
+            description: 'body',
+            timeAgo: 'now',
+            siteIcon: Icons.article,
+            iconColor: Colors.blue,
+            iconBackgroundColor: Colors.white,
+            link: 'https://x/a1',
+            feedUrl: 'https://x/feed',
+            pubDate: DateTime.utc(2026, 10, 17),
+          ).toJson(),
+        ]),
+      );
+      await pumpDesktop(tester);
+
+      await tester.tap(find.text('Article One').first);
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byTooltip('Focus Read Mode'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Exit Focus Mode'), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Focus Read Mode'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('consecutive Escape presses stay safe', (tester) async {
+      if (!PlatformCaps.isDesktop) return;
+      await pumpDesktop(tester);
+
+      await tester.tap(find.byTooltip('Settings'));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+        await tester.pumpAndSettle();
+      }
+
+      expect(find.byType(DesktopHomeScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
   });
 
   testWidgets('a category literally named All News stays a normal node', (

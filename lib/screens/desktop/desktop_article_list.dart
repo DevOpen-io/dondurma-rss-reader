@@ -14,6 +14,7 @@ import '../../providers/bookmark_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../services/image_cache_service.dart';
+import '../../utils/motion.dart';
 import '../../utils/share_actions.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/feed_list_item.dart' show confirmBookmarkToggle;
@@ -92,7 +93,10 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
       if (ctx != null) {
         Scrollable.ensureVisible(
           ctx,
-          duration: const Duration(milliseconds: 120),
+          duration: motionDuration(
+            ctx,
+            const Duration(milliseconds: 120),
+          ),
           alignment: 0.5,
         );
       }

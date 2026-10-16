@@ -453,6 +453,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get shareArticle => 'Compartir artículo';
 
   @override
+  String get focusReadMode => 'Modo de lectura enfocada';
+
+  @override
+  String get exitFocusMode => 'Salir del modo de lectura';
+
+  @override
   String get readOnOriginalWebpage => 'Leer en la página web original';
 
   @override

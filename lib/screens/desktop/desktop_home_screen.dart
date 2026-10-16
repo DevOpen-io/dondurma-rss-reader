@@ -8,6 +8,8 @@ import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
 import '../../providers/bookmark_provider.dart';
 import '../../providers/feed_provider.dart';
+import '../../services/feed_date_groups.dart';
+import '../../utils/motion.dart';
 import '../../utils/platform_caps.dart';
 import '../../widgets/adaptive_dialog.dart';
 import '../../widgets/add_feed_dialog.dart';
@@ -78,6 +80,9 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   /// pin breakpoint can't strand it in the wrong state.
   bool _explorerCollapsed = false;
 
+  /// Focus Read Mode: rail + explorer + list hide, reader takes the window.
+  bool _focusMode = false;
+
   final FocusNode _searchFocusNode = FocusNode();
   final FocusNode _listFocusNode = FocusNode();
 
@@ -92,7 +97,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   // Selection
   // -------------------------------------------------------------------------
 
-  List<FeedItem> get _currentItems {
+  List<FeedItem> _currentItems(FeedDateGroups groups) {
     final feed = context.read<FeedProvider>();
     if (_section == DesktopSection.bookmarks) {
       final bookmarks = context.read<BookmarkProvider>().bookmarkedItems;
@@ -101,11 +106,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
           item.copyWith(isRead: feed.isRead(item.id)),
       ];
     }
-    return [
-      ...feed.todayItems,
-      ...feed.yesterdayItems,
-      ...feed.olderItems,
-    ];
+    return [...groups.today, ...groups.yesterday, ...groups.older];
   }
 
   void _selectArticle(FeedItem item) {
@@ -115,10 +116,10 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     }
   }
 
-  FeedItem? _resolveSelected() {
+  FeedItem? _resolveSelected(FeedDateGroups groups) {
     final id = _selectedArticleId;
     if (id == null) return null;
-    final items = _currentItems;
+    final items = _currentItems(groups);
     for (final item in items) {
       if (item.id == id) return item;
     }
@@ -136,8 +137,28 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     return null;
   }
 
+  /// Escape layering: Focus Mode exits first, a focused search field is
+  /// dismissed next, then the dashboard swallows the key (no destructive
+  /// action at the root). Pushed routes handle their own Escape pop.
+  void _onEscape() {
+    if (_focusMode) {
+      setState(() => _focusMode = false);
+      return;
+    }
+    if (_searchFocusNode.hasFocus) {
+      _searchFocusNode.unfocus();
+      return;
+    }
+  }
+
+  void _toggleFocusMode() {
+    final groups = context.read<FeedProvider>().dateGroups;
+    if (!_focusMode && _resolveSelected(groups) == null) return;
+    setState(() => _focusMode = !_focusMode);
+  }
+
   void _navigate(int delta) {
-    final items = _currentItems;
+    final items = _currentItems(context.read<FeedProvider>().dateGroups);
     if (items.isEmpty) return;
     final idx = _selectedArticleId == null
         ? -1
@@ -158,17 +179,24 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
       showAdaptiveSheet<void>(context, const AddCategoryDialog());
 
   void _openDiscover() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const ExploreFeedsPage()));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            const _EscapePopScope(child: ExploreFeedsPage()),
+      ),
+    );
   }
 
   void _openSettings() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => Scaffold(
-          appBar: AppBar(title: Text(AppLocalizations.of(context).settingsTab)),
-          body: const SettingsScreen(),
+        builder: (_) => _EscapePopScope(
+          child: Scaffold(
+            appBar: AppBar(
+              title: Text(AppLocalizations.of(context).settingsTab),
+            ),
+            body: const SettingsScreen(),
+          ),
         ),
       ),
     );
@@ -183,12 +211,17 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     final cs = Theme.of(context).colorScheme;
     final meta = PlatformCaps.useMetaShortcuts;
 
-    // Rebuild on provider changes so list/selection stay in sync.
-    context.watch<FeedProvider>();
+    // Narrow rebuild triggers: the date-groups instance is replaced only on
+    // real data changes (filter/read/fetch), so status-only notifications
+    // like isLoading toggles don't rebuild the whole shell or re-copy the
+    // item list. Bookmarks mutate in place, so keep the full watch there.
+    final groups = context.select<FeedProvider, FeedDateGroups>(
+      (p) => p.dateGroups,
+    );
     context.watch<BookmarkProvider>();
 
-    final items = _currentItems;
-    final selected = _resolveSelected();
+    final items = _currentItems(groups);
+    final selected = _resolveSelected(groups);
     final selectedIndex = selected == null
         ? -1
         : items.indexWhere((i) => i.id == selected.id);
@@ -219,6 +252,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
             _showAddFeed,
         SingleActivator(LogicalKeyboardKey.comma, control: !meta, meta: meta):
             _openSettings,
+        const SingleActivator(LogicalKeyboardKey.escape): _onEscape,
       },
       child: Scaffold(
         // When the explorer isn't pinned it lives in the scaffold drawer,
@@ -227,8 +261,11 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
         body: Row(
           children: [
             // ── App-level navigation rail (always present) ─────────────
-            SizedBox(
-              width: 72,
+            // Focus Read Mode hides the side panes behind a width animation
+            // — the reader stays mounted the whole time.
+            _PaneSlot(
+              width: _focusMode ? 0 : 72,
+              naturalWidth: 72,
               child: _AppRail(
                 section: _section,
                 onSectionChanged: (s) => setState(() => _section = s),
@@ -243,17 +280,22 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                     : null,
               ),
             ),
-            divider,
+            if (!_focusMode) divider,
 
             // ── Feed/category explorer (content navigation) ────────────
-            if (explorerPinned) ...[
-              SizedBox(width: 280, child: explorer),
-              divider,
-            ],
+            // Collapses to width 0 instead of unmounting: ExpansionTile
+            // state, scroll position and the nav tree survive the toggle.
+            _PaneSlot(
+              width: _focusMode || !explorerPinned ? 0 : 280,
+              naturalWidth: 280,
+              child: explorer,
+            ),
+            if (!_focusMode && explorerPinned) divider,
 
             // ── Article list ───────────────────────────────────────────
-            SizedBox(
-              width: explorerPinned ? 380 : 360,
+            _PaneSlot(
+              width: _focusMode ? 0 : (explorerPinned ? 380 : 360),
+              naturalWidth: explorerPinned ? 380 : 360,
               child: DesktopArticleListPane(
                 items: items,
                 selectedId: selected?.id,
@@ -262,7 +304,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 listFocusNode: _listFocusNode,
               ),
             ),
-            divider,
+            if (!_focusMode) divider,
 
             // ── Reader ─────────────────────────────────────────────────
             Expanded(
@@ -270,6 +312,8 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 item: selected,
                 currentIndex: selectedIndex < 0 ? 0 : selectedIndex,
                 totalCount: items.length,
+                focusMode: _focusMode,
+                onToggleFocusMode: _toggleFocusMode,
                 onPrevious: selectedIndex > 0 ? () => _navigate(-1) : null,
                 onNext: selectedIndex >= 0 && selectedIndex < items.length - 1
                     ? () => _navigate(1)
@@ -342,7 +386,10 @@ class _AppRail extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 150),
+                    duration: motionDuration(
+                      context,
+                      const Duration(milliseconds: 150),
+                    ),
                     width: 44,
                     height: 28,
                     decoration: BoxDecoration(
@@ -470,6 +517,74 @@ class _AppRail extends StatelessWidget {
           const SizedBox(height: 14),
         ],
       ),
+    );
+  }
+}
+
+/// Fixed-width pane slot that animates between collapsed (0) and its target
+/// width instead of mounting/unmounting — child state (scroll positions,
+/// ExpansionTile state, focus nodes) survives Focus Read Mode toggles.
+///
+/// Honors reduced-motion: [motionDuration] collapses the animation to zero
+/// when the OS asks for it.
+class _PaneSlot extends StatelessWidget {
+  final double width;
+
+  /// The child's real width — it always lays out at this size and the slot
+  /// clips it while animating, so collapsing never reflows the content.
+  final double naturalWidth;
+  final Widget child;
+
+  const _PaneSlot({
+    required this.width,
+    required this.naturalWidth,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedContainer(
+      duration: motionDuration(context, const Duration(milliseconds: 240)),
+      curve: Curves.easeOutCubic,
+      width: width,
+      // ClipRect, not Container.clipBehavior — a clipping Container without
+      // a decoration asserts in debug and crashes on `decoration!` in
+      // profile/release.
+      child: ClipRect(
+        child: OverflowBox(
+          alignment: Alignment.centerLeft,
+          minWidth: 0,
+          maxWidth: double.infinity,
+          child: SizedBox(
+            width: naturalWidth,
+            height: double.infinity,
+            child: child,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Escape-to-pop for pushed secondary screens (Settings, Discover).
+///
+/// Desktop-only wrapper: dialogs, menus and dropdowns already dismiss on
+/// Escape through their modal barrier, so this only wraps full routes that
+/// otherwise have no keyboard back affordance. `Focus(autofocus)` keeps the
+/// shortcut live even when the page hasn't claimed primary focus yet.
+class _EscapePopScope extends StatelessWidget {
+  final Widget child;
+
+  const _EscapePopScope({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.escape): () =>
+            Navigator.of(context).maybePop(),
+      },
+      child: Focus(autofocus: true, child: child),
     );
   }
 }

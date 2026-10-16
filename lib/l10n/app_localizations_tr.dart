@@ -445,6 +445,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get shareArticle => 'Makaleyi Paylaş';
 
   @override
+  String get focusReadMode => 'Odaklanmış Okuma Modu';
+
+  @override
+  String get exitFocusMode => 'Odak Modundan Çık';
+
+  @override
   String get readOnOriginalWebpage => 'Orijinal Web Sitesinde Oku';
 
   @override

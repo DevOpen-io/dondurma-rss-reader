@@ -7,6 +7,7 @@ import '../../providers/bookmark_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../utils/app_toast.dart';
+import '../../utils/motion.dart';
 import '../../widgets/adaptive_dialog.dart';
 import '../../widgets/category_icon.dart';
 import '../../widgets/folders/category_action_sheet.dart';
@@ -377,6 +378,13 @@ class _CategoryNodeState extends State<_CategoryNode> {
             children: [
               ExpansionTile(
                 controller: _expansion,
+                expansionAnimationStyle: AnimationStyle(
+                  duration: motionDuration(
+                    context,
+                    const Duration(milliseconds: 200),
+                  ),
+                  curve: Curves.easeOutCubic,
+                ),
                 initiallyExpanded: feed.selectedCategory == category,
                 tilePadding: const EdgeInsets.only(left: 12, right: 8),
                 childrenPadding: const EdgeInsets.only(left: 8, bottom: 4),

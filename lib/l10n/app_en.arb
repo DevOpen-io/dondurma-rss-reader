@@ -202,6 +202,8 @@
   "noKeywordsAdded": "No keywords added yet.",
   "openInBrowser": "Open in Browser",
   "shareArticle": "Share Article",
+  "focusReadMode": "Focus Read Mode",
+  "exitFocusMode": "Exit Focus Mode",
   "readOnOriginalWebpage": "Read on Original Webpage",
   "invalidUrlFormat": "Invalid URL format",
   "close": "Close",

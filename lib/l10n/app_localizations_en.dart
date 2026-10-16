@@ -447,6 +447,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareArticle => 'Share Article';
 
   @override
+  String get focusReadMode => 'Focus Read Mode';
+
+  @override
+  String get exitFocusMode => 'Exit Focus Mode';
+
+  @override
   String get readOnOriginalWebpage => 'Read on Original Webpage';
 
   @override

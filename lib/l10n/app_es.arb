@@ -140,6 +140,8 @@
   "noKeywordsAdded": "Aún no se han añadido palabras clave.",
   "openInBrowser": "Abrir en el navegador",
   "shareArticle": "Compartir artículo",
+  "focusReadMode": "Modo de lectura enfocada",
+  "exitFocusMode": "Salir del modo de lectura",
   "readOnOriginalWebpage": "Leer en la página web original",
   "invalidUrlFormat": "Formato de URL no válido",
   "close": "Cerrar",

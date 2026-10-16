@@ -910,6 +910,18 @@ abstract class AppLocalizations {
   /// **'Share Article'**
   String get shareArticle;
 
+  /// No description provided for @focusReadMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus Read Mode'**
+  String get focusReadMode;
+
+  /// No description provided for @exitFocusMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit Focus Mode'**
+  String get exitFocusMode;
+
   /// No description provided for @readOnOriginalWebpage.
   ///
   /// In en, this message translates to:
