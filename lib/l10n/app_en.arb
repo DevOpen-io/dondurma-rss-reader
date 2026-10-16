@@ -220,6 +220,23 @@
   },
   "updatedJustNow": "Updated just now",
   "refreshSummaryFailed": "{checked} checked · {failed} failed",
+  "refreshToastSuccess": "{count, plural, =1{RSS updated: 1 source refreshed} other{RSS updated: {count} sources refreshed}}",
+  "@refreshToastSuccess": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastPartial": "RSS updated: {successful} successful, {failed} failed, {skipped} skipped",
+  "@refreshToastPartial": {
+    "placeholders": {
+      "successful": {"type": "int"},
+      "failed": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "refreshToastFailed": "{count, plural, =1{Could not refresh 1 RSS source} other{Could not refresh {count} RSS sources}}",
+  "@refreshToastFailed": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastEmpty": "No feeds to refresh — add a source first",
   "@refreshSummaryFailed": {
     "placeholders": {
       "checked": {

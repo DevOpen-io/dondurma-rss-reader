@@ -958,6 +958,30 @@ abstract class AppLocalizations {
   /// **'{checked} checked · {failed} failed'**
   String refreshSummaryFailed(int checked, int failed);
 
+  /// No description provided for @refreshToastSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{RSS updated: 1 source refreshed} other{RSS updated: {count} sources refreshed}}'**
+  String refreshToastSuccess(int count);
+
+  /// No description provided for @refreshToastPartial.
+  ///
+  /// In en, this message translates to:
+  /// **'RSS updated: {successful} successful, {failed} failed, {skipped} skipped'**
+  String refreshToastPartial(int successful, int failed, int skipped);
+
+  /// No description provided for @refreshToastFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Could not refresh 1 RSS source} other{Could not refresh {count} RSS sources}}'**
+  String refreshToastFailed(int count);
+
+  /// No description provided for @refreshToastEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No feeds to refresh — add a source first'**
+  String get refreshToastEmpty;
+
   /// No description provided for @brightness.
   ///
   /// In en, this message translates to:

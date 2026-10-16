@@ -12,6 +12,7 @@ import '../../utils/platform_caps.dart';
 import '../../widgets/adaptive_dialog.dart';
 import '../../widgets/add_feed_dialog.dart';
 import '../../widgets/home/add_category_dialog.dart';
+import '../../widgets/refresh_completion_listener.dart';
 import '../explore_feeds_page.dart';
 import '../home_screen.dart';
 import '../settings_screen.dart';
@@ -39,10 +40,16 @@ class AdaptiveHomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!PlatformCaps.isDesktop) return const HomeScreen();
-    final width = MediaQuery.sizeOf(context).width;
-    if (width < kDesktopNarrowBreakpoint) return const HomeScreen();
-    return const DesktopHomeScreen();
+    final Widget home;
+    if (!PlatformCaps.isDesktop) {
+      home = const HomeScreen();
+    } else {
+      final width = MediaQuery.sizeOf(context).width;
+      home = width < kDesktopNarrowBreakpoint
+          ? const HomeScreen()
+          : const DesktopHomeScreen();
+    }
+    return RefreshCompletionListener(child: home);
   }
 }
 
@@ -203,7 +210,9 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     return CallbackShortcuts(
       bindings: {
         SingleActivator(LogicalKeyboardKey.keyR, control: !meta, meta: meta):
-            () => unawaited(context.read<FeedProvider>().refreshAll()),
+            () => unawaited(
+              context.read<FeedProvider>().refreshAll(userInitiated: true),
+            ),
         SingleActivator(LogicalKeyboardKey.keyF, control: !meta, meta: meta):
             _searchFocusNode.requestFocus,
         SingleActivator(LogicalKeyboardKey.keyN, control: !meta, meta: meta):

@@ -231,6 +231,9 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
                                   color: cs.onSurfaceVariant,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
                                 ),
                               ),
                             ],
@@ -250,19 +253,17 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                       RefreshPhase.failed ||
                       RefreshPhase.refreshing => l10n.refresh,
                     };
+                    // Failures surface once in the completion toast — the
+                    // button always returns to the plain idle icon.
                     return IconButton(
                       icon: Icon(
-                        progress.phase == RefreshPhase.completedWithErrors
-                            ? Icons.sync_problem_rounded
-                            : Icons.refresh_rounded,
+                        Icons.refresh_rounded,
                         size: 20,
-                        color:
-                            progress.phase == RefreshPhase.completedWithErrors
-                                ? cs.error
-                                : cs.onSurfaceVariant,
+                        color: cs.onSurfaceVariant,
                       ),
                       tooltip: tooltip,
-                      onPressed: () => provider.refreshAll(),
+                      onPressed: () =>
+                          provider.refreshAll(userInitiated: true),
                     );
                   },
                 ),

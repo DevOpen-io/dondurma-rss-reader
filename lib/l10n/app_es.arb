@@ -148,6 +148,23 @@
   "refreshingFeeds": "Actualizando fuentes · {completed} / {total}",
   "updatedJustNow": "Actualizado ahora",
   "refreshSummaryFailed": "{checked} comprobados · {failed} fallidos",
+  "refreshToastSuccess": "{count, plural, =1{RSS actualizado: 1 fuente actualizada} other{RSS actualizado: {count} fuentes actualizadas}}",
+  "@refreshToastSuccess": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastPartial": "RSS actualizado: {successful} correctas, {failed} fallidas, {skipped} omitidas",
+  "@refreshToastPartial": {
+    "placeholders": {
+      "successful": {"type": "int"},
+      "failed": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "refreshToastFailed": "{count, plural, =1{No se pudo actualizar 1 fuente RSS} other{No se pudieron actualizar {count} fuentes RSS}}",
+  "@refreshToastFailed": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastEmpty": "No hay fuentes para actualizar — añade una primero",
   "brightness": "Brillo",
   "brightnessSystem": "Sistema",
   "brightnessLight": "Claro",

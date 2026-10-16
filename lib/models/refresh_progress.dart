@@ -48,6 +48,10 @@ class RefreshProgress {
   final DateTime? startedAt;
   final DateTime? completedAt;
 
+  /// True when a user action (refresh button, pull-to-refresh) requested or
+  /// attached to this pass. Only such passes raise the completion toast.
+  final bool userInitiated;
+
   const RefreshProgress({
     required this.phase,
     this.total = 0,
@@ -58,6 +62,7 @@ class RefreshProgress {
     this.inFlight = 0,
     this.startedAt,
     this.completedAt,
+    this.userInitiated = false,
   });
 
   const RefreshProgress.idle() : this(phase: RefreshPhase.idle);
@@ -72,6 +77,7 @@ class RefreshProgress {
     int? inFlight,
     DateTime? startedAt,
     DateTime? completedAt,
+    bool? userInitiated,
   }) {
     return RefreshProgress(
       phase: phase ?? this.phase,
@@ -83,6 +89,7 @@ class RefreshProgress {
       inFlight: inFlight ?? this.inFlight,
       startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
+      userInitiated: userInitiated ?? this.userInitiated,
     );
   }
 }

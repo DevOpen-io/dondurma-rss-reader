@@ -481,6 +481,37 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String refreshToastSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'RSS actualizado: $count fuentes actualizadas',
+      one: 'RSS actualizado: 1 fuente actualizada',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String refreshToastPartial(int successful, int failed, int skipped) {
+    return 'RSS actualizado: $successful correctas, $failed fallidas, $skipped omitidas';
+  }
+
+  @override
+  String refreshToastFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'No se pudieron actualizar $count fuentes RSS',
+      one: 'No se pudo actualizar 1 fuente RSS',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refreshToastEmpty =>
+      'No hay fuentes para actualizar — añade una primero';
+
+  @override
   String get brightness => 'Brillo';
 
   @override

@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
+import '../models/refresh_progress.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/app_drawer.dart';
@@ -200,7 +202,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return RefreshIndicator(
       onRefresh: () async {
-        await provider.refreshAll();
+        await provider.refreshAll(userInitiated: true);
       },
       child: provider.isLoading && provider.items.isEmpty
           ? const FeedListSkeleton()
@@ -429,12 +431,27 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     Expanded(
                       child: ConstrainedWidth(
-                        child: _buildHomeBody(
-                          context,
-                          provider,
-                          todayItems,
-                          yesterdayItems,
-                          olderItems,
+                        child: Stack(
+                          children: [
+                            _buildHomeBody(
+                              context,
+                              provider,
+                              todayItems,
+                              yesterdayItems,
+                              olderItems,
+                            ),
+                            // Compact pull-to-refresh progress — floats above
+                            // the list so it never shifts layout or crowds
+                            // the AppBar actions.
+                            Positioned(
+                              top: 8,
+                              left: 0,
+                              right: 0,
+                              child: _RefreshProgressPill(
+                                progress: provider.refreshProgress,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ),
@@ -641,4 +658,70 @@ final class _ItemEntry extends _FeedListEntry {
 final class _WidgetEntry extends _FeedListEntry {
   final Widget child;
   const _WidgetEntry(this.child);
+}
+
+/// Compact floating refresh-progress pill for the mobile feed tab.
+///
+/// Pull-to-refresh has no persistent toolbar button, so while a pass runs
+/// this pill shows `completed / total` above the list. Listens to the shared
+/// [RefreshProgress] notifier — only the pill rebuilds per feed.
+class _RefreshProgressPill extends StatelessWidget {
+  const _RefreshProgressPill({required this.progress});
+
+  final ValueListenable<RefreshProgress> progress;
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<RefreshProgress>(
+      valueListenable: progress,
+      builder: (context, value, _) {
+        if (value.phase != RefreshPhase.refreshing || value.total == 0) {
+          return const SizedBox.shrink();
+        }
+        final cs = Theme.of(context).colorScheme;
+        return Center(
+          child: Semantics(
+            liveRegion: true,
+            label: AppLocalizations.of(
+              context,
+            ).refreshingFeeds(value.completed, value.total),
+            child: Material(
+              color: cs.surfaceContainerHigh,
+              elevation: 3,
+              borderRadius: BorderRadius.circular(20),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 13,
+                      height: 13,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: cs.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${value.completed} / ${value.total}',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: cs.onSurfaceVariant,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

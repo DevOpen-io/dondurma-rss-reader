@@ -104,6 +104,10 @@ class FeedProvider extends ChangeNotifier {
   bool _refreshQueued = false;
   Completer<void>? _refreshWaiter;
 
+  /// True while the current/queued pass carries a user request — the
+  /// completion toast only fires for user-initiated passes.
+  bool _refreshIsUserInitiated = false;
+
   /// Immutable snapshot owned by this provider. The upstream provider is
   /// mutable, so its current list cannot represent previous subscription state.
   Set<String> _knownSubscriptionUrls = const {};
@@ -1037,16 +1041,30 @@ class FeedProvider extends ChangeNotifier {
   /// caller knows the inputs changed (new subscription, regained
   /// connectivity) so the in-flight pass is followed by one fresh pass —
   /// never an unbounded queue.
-  Future<void> refreshAll({bool queueIfRunning = false}) async {
+  /// [userInitiated] marks passes driven by an explicit user action (refresh
+  /// button, pull-to-refresh). A user request arriving mid-pass attaches to
+  /// the running pass — no duplicate pass — and still marks it so the
+  /// completion toast summarizes the operation the user is waiting for.
+  Future<void> refreshAll({
+    bool queueIfRunning = false,
+    bool userInitiated = false,
+  }) async {
     await _initialization;
     if (subscriptionProvider == null) return;
 
     if (_isSyncing) {
       if (queueIfRunning) _refreshQueued = true;
+      if (userInitiated) {
+        _refreshIsUserInitiated = true;
+        refreshProgress.value = refreshProgress.value.copyWith(
+          userInitiated: true,
+        );
+      }
       return (_refreshWaiter ??= Completer<void>()).future;
     }
 
     _isSyncing = true;
+    _refreshIsUserInitiated = userInitiated;
     Object? failure;
     StackTrace? failureStack;
     try {
@@ -1067,6 +1085,7 @@ class FeedProvider extends ChangeNotifier {
       // Always clear the guard, even if a fetch/persist step throws — otherwise
       // the provider would deadlock and never refresh again.
       _isSyncing = false;
+      _refreshIsUserInitiated = false;
       final waiter = _refreshWaiter;
       _refreshWaiter = null;
       if (waiter != null && !waiter.isCompleted) {
@@ -1101,6 +1120,7 @@ class FeedProvider extends ChangeNotifier {
       total: subscriptions.length,
       startedAt: DateTime.now(),
       completedAt: refreshProgress.value.completedAt,
+      userInitiated: _refreshIsUserInitiated,
     );
     final result = await _refresher.refresh(
       subscriptions: subscriptions,
@@ -1145,8 +1165,13 @@ class FeedProvider extends ChangeNotifier {
     _isOffline = !result.online;
     _isLoading = false;
     refreshProgress.value = refreshProgress.value.copyWith(
+      // online==false with real HTTP errors means every feed failed for a
+      // definitive reason — report 'failed', not 'offline'. Offline is only
+      // when failures were connectivity-unproven.
       phase: !result.online
-          ? RefreshPhase.offline
+          ? (result.feedErrors.isEmpty
+              ? RefreshPhase.offline
+              : RefreshPhase.failed)
           : result.feedErrors.isNotEmpty
               ? RefreshPhase.completedWithErrors
               : RefreshPhase.completed,

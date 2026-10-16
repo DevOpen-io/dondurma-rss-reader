@@ -473,6 +473,37 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String refreshToastSuccess(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'RSS yenilendi: $count kaynak güncellendi',
+      one: 'RSS yenilendi: 1 kaynak güncellendi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String refreshToastPartial(int successful, int failed, int skipped) {
+    return 'RSS yenilendi: $successful başarılı, $failed başarısız, $skipped atlandı';
+  }
+
+  @override
+  String refreshToastFailed(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count RSS kaynağı yenilenemedi',
+      one: '1 RSS kaynağı yenilenemedi',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get refreshToastEmpty =>
+      'Yenilenecek akış yok — önce bir kaynak ekleyin';
+
+  @override
   String get brightness => 'Parlaklık';
 
   @override

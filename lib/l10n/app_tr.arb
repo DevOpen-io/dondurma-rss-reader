@@ -148,6 +148,23 @@
   "refreshingFeeds": "Akışlar yenileniyor · {completed} / {total}",
   "updatedJustNow": "Az önce güncellendi",
   "refreshSummaryFailed": "{checked} kontrol edildi · {failed} başarısız",
+  "refreshToastSuccess": "{count, plural, =1{RSS yenilendi: 1 kaynak güncellendi} other{RSS yenilendi: {count} kaynak güncellendi}}",
+  "@refreshToastSuccess": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastPartial": "RSS yenilendi: {successful} başarılı, {failed} başarısız, {skipped} atlandı",
+  "@refreshToastPartial": {
+    "placeholders": {
+      "successful": {"type": "int"},
+      "failed": {"type": "int"},
+      "skipped": {"type": "int"}
+    }
+  },
+  "refreshToastFailed": "{count, plural, =1{1 RSS kaynağı yenilenemedi} other{{count} RSS kaynağı yenilenemedi}}",
+  "@refreshToastFailed": {
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "refreshToastEmpty": "Yenilenecek akış yok — önce bir kaynak ekleyin",
   "brightness": "Parlaklık",
   "brightnessSystem": "Sistem",
   "brightnessLight": "Açık",
