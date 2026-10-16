@@ -74,8 +74,11 @@ class NotificationService {
       _initialized = true;
 
       // Handle the case where the app was launched by tapping a notification
-      // while it was terminated.
-      final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+      // while it was terminated. Linux/Windows plugin implementations do
+      // not implement this method.
+      final launchDetails = PlatformCaps.supportsNotificationLaunchDetails
+          ? await _plugin.getNotificationAppLaunchDetails()
+          : null;
       if (launchDetails != null &&
           launchDetails.didNotificationLaunchApp &&
           launchDetails.notificationResponse?.payload != null) {

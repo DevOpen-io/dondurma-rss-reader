@@ -235,6 +235,7 @@ Future<void> runBgFetch() async {
             allowInitialization: !result.notModified,
           );
         } catch (e) {
+          debugPrint('[BG] fetch failed for ${sub.url}: $e');
           backoff.recordFailure(sub.url, e, DateTime.now());
           return (
             subscription: sub,

@@ -54,6 +54,12 @@ abstract final class PlatformCaps {
   static bool get usesNotificationPermissionPrompt =>
       isAndroid || isIOS || isMacOS;
 
+  /// `getNotificationAppLaunchDetails` is implemented by the Android and
+  /// Darwin (iOS/macOS) notification plugins only; the Linux and Windows
+  /// federated implementations throw `UnimplementedError`.
+  static bool get supportsNotificationLaunchDetails =>
+      isAndroid || isIOS || isMacOS;
+
   /// Modifier key for desktop shortcuts.
   static bool get useMetaShortcuts => isMacOS;
 }

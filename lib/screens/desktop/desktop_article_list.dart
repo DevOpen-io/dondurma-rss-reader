@@ -390,8 +390,10 @@ class _DesktopArticleTile extends StatelessWidget {
           ).format(item.pubDate!.toLocal())
         : '';
 
+    // NOTE: never forward `key` into the returned tree — the widget already
+    // owns it via its constructor; passing it to Material reserves the same
+    // GlobalKey twice ("Multiple widgets used the same GlobalKey").
     return Material(
-      key: key,
       color: selected
           ? cs.primaryContainer.withValues(alpha: 0.4)
           : Colors.transparent,

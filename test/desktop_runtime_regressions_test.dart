@@ -90,6 +90,21 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
   }
 
+  Widget listPane(
+    List<FeedItem> items, {
+    String? selectedId,
+    ValueChanged<FeedItem>? onSelect,
+  }) =>
+      app(
+        DesktopArticleListPane(
+          items: items,
+          selectedId: selectedId,
+          onSelect: onSelect ?? (_) {},
+          searchFocusNode: FocusNode(),
+          listFocusNode: FocusNode(),
+        ),
+      );
+
   group('GlobalKey collisions', () {
     testWidgets('duplicate item ids no longer duplicate tile keys', (
       tester,
@@ -104,22 +119,81 @@ void main() {
         makeItem('other', 'Unique'),
       ];
 
-      await tester.pumpWidget(
-        app(
-          DesktopArticleListPane(
-            items: items,
-            selectedId: null,
-            onSelect: (_) {},
-            searchFocusNode: FocusNode(),
-            listFocusNode: FocusNode(),
-          ),
-        ),
-      );
+      await tester.pumpWidget(listPane(items));
       await tester.pumpAndSettle();
 
       expect(tester.takeException(), isNull);
       expect(find.text('Duplicate 0'), findsOneWidget);
       expect(find.text('Unique'), findsOneWidget);
+    });
+
+    testWidgets('large list survives rapid rebuilds and selection', (
+      tester,
+    ) async {
+      if (!PlatformCaps.isDesktop) return;
+      surface(tester, const Size(1600, 900));
+
+      var items = [
+        for (var i = 0; i < 150; i++) makeItem('a$i', 'Article $i'),
+      ];
+      var selected = 0;
+      await tester.pumpWidget(
+        listPane(
+          items,
+          selectedId: items[selected].id,
+          onSelect: (_) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+
+      // Repeated rebuilds: prepend items (reorders every index), then
+      // re-select — this used to re-reserve tile keys across wrappers.
+      for (var round = 0; round < 5; round++) {
+        items = [makeItem('new$round', 'Prepended $round'), ...items];
+        selected = round;
+        await tester.pumpWidget(
+          listPane(items, selectedId: items[selected].id),
+        );
+        await tester.pump();
+        expect(tester.takeException(), isNull, reason: 'round=$round');
+      }
+
+      // Rapid scroll through the rebuilt list.
+      await tester.fling(
+        find.descendant(
+          of: find.byType(DesktopArticleListPane),
+          matching: find.byType(ListView),
+        ),
+        const Offset(0, -2000),
+        1500,
+      );
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('same key never appears twice while resizing', (
+      tester,
+    ) async {
+      if (!PlatformCaps.isDesktop) return;
+      surface(tester, const Size(1600, 900));
+
+      final items = [
+        for (var i = 0; i < 60; i++) makeItem('s$i', 'Sized $i'),
+      ];
+      await tester.pumpWidget(listPane(items));
+      await tester.pumpAndSettle();
+
+      for (final s in const [
+        Size(1024, 768),
+        Size(1920, 1080),
+        Size(900, 600),
+        Size(1600, 900),
+      ]) {
+        tester.view.physicalSize = s;
+        await tester.pump();
+        expect(tester.takeException(), isNull, reason: 'size=$s');
+      }
     });
   });
 

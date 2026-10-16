@@ -272,7 +272,9 @@ class FeedService {
         finalUrl: finalUrl,
       );
     } catch (e) {
-      debugPrint('Error fetching feed $url: $e');
+      // No logging here — callers report failures with their own context
+      // (refresh pass, background task, add-feed), and logging at this layer
+      // would duplicate every error in the console.
       if (e is FeedFetchException) rethrow;
       if (e is SocketException ||
           e is http.ClientException ||

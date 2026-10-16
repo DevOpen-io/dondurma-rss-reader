@@ -955,7 +955,8 @@ class FeedProvider extends ChangeNotifier {
       );
       await _applyNewSubscriptionResult(subscription, prefetched);
       return true;
-    } catch (_) {
+    } catch (e) {
+      debugPrint('Failed to add feed $url: $e');
       _knownSubscriptionUrls = previousKnownUrls;
       rethrow;
     } finally {
