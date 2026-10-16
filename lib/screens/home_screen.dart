@@ -201,6 +201,12 @@ class _HomeScreenState extends State<HomeScreen> {
     entries.add(const _WidgetEntry(SizedBox(height: 80)));
 
     return RefreshIndicator(
+      // The pull gesture stays, but its own spinner is hidden — the
+      // floating progress pill (completed / total) is the single global
+      // refresh indicator for this screen.
+      color: Colors.transparent,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
       onRefresh: () async {
         await provider.refreshAll(userInitiated: true);
       },

@@ -97,16 +97,15 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
             ),
           ),
 
-          // ── Category + feed tree ─────────────────────────────────────
+          // ── Categories header + fixed global destination + tree ──────
+          // All Articles is pinned above the scrollable category/feed list
+          // so it stays reachable no matter how deep the tree scrolls.
           Expanded(
-            child: Scrollbar(
-              controller: _scrollController,
-              thumbVisibility: true,
-              child: Consumer3<
-                FeedProvider,
-                SubscriptionProvider,
-                BookmarkProvider
-              >(
+            child: Consumer3<
+              FeedProvider,
+              SubscriptionProvider,
+              BookmarkProvider
+            >(
               builder: (context, feed, subs, bookmarks, _) {
                 final categories = subs.categoriesOrdered;
                 final nonUncategorized = categories
@@ -114,47 +113,74 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                     .toList();
                 final hasUncategorized = categories.contains('Uncategorized');
 
-                final inArticles =
-                    widget.section == DesktopSection.articles;
+                final inArticles = widget.section == DesktopSection.articles;
+                final globalSelected =
+                    inArticles &&
+                    feed.selectedCategory == null &&
+                    feed.selectedFeedUrl == null;
 
-                return ListView(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _SectionLabel(l10n.categories),
-                    for (final category in nonUncategorized)
-                      _CategoryNode(
-                        key: ValueKey('cat-$category'),
-                        title: category,
-                        category: category,
-                        feedSources: subs.subscriptions
-                            .where((s) => s.category == category)
-                            .toList(),
-                        feed: feed,
-                        subs: subs,
-                        active: inArticles,
-                        onSelect: () =>
-                            widget.onSectionChanged(DesktopSection.articles),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 0, 10, 4),
+                      child: _AllArticlesTile(
+                        title: l10n.allArticles,
+                        count: feed.unreadCount(),
+                        selected: globalSelected,
+                        onTap: () {
+                          feed.selectCategory(null);
+                          widget.onSectionChanged(DesktopSection.articles);
+                        },
                       ),
-                    if (hasUncategorized)
-                      _CategoryNode(
-                        key: const ValueKey('cat-uncategorized'),
-                        title: l10n.randomBlogs,
-                        category: 'Uncategorized',
-                        feedSources: subs.subscriptions
-                            .where((s) => s.category == 'Uncategorized')
-                            .toList(),
-                        feed: feed,
-                        subs: subs,
-                        active: inArticles,
-                        isUncategorized: true,
-                        onSelect: () =>
-                            widget.onSectionChanged(DesktopSection.articles),
+                    ),
+                    Expanded(
+                      child: Scrollbar(
+                        controller: _scrollController,
+                        thumbVisibility: true,
+                        child: ListView(
+                          controller: _scrollController,
+                          padding: const EdgeInsets.fromLTRB(10, 0, 10, 12),
+                          children: [
+                            for (final category in nonUncategorized)
+                              _CategoryNode(
+                                key: ValueKey('cat-$category'),
+                                title: category,
+                                category: category,
+                                feedSources: subs.subscriptions
+                                    .where((s) => s.category == category)
+                                    .toList(),
+                                feed: feed,
+                                subs: subs,
+                                active: inArticles,
+                                onSelect: () => widget.onSectionChanged(
+                                  DesktopSection.articles,
+                                ),
+                              ),
+                            if (hasUncategorized)
+                              _CategoryNode(
+                                key: const ValueKey('cat-uncategorized'),
+                                title: l10n.randomBlogs,
+                                category: 'Uncategorized',
+                                feedSources: subs.subscriptions
+                                    .where((s) => s.category == 'Uncategorized')
+                                    .toList(),
+                                feed: feed,
+                                subs: subs,
+                                active: inArticles,
+                                isUncategorized: true,
+                                onSelect: () => widget.onSectionChanged(
+                                  DesktopSection.articles,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
+                    ),
                   ],
                 );
               },
-              ),
             ),
           ),
         ],
@@ -164,6 +190,89 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
 }
 
 enum DesktopSection { articles, bookmarks }
+
+/// Fixed global destination at the top of the Categories explorer.
+///
+/// Visually distinct from `_CategoryNode`: a flat nav row (icon + label +
+/// counter) rather than an expandable tree node, so a user category with
+/// the same name can never be confused with the built-in global view.
+class _AllArticlesTile extends StatelessWidget {
+  final String title;
+  final int count;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _AllArticlesTile({
+    required this.title,
+    required this.count,
+    required this.selected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: title,
+      child: Material(
+        color: selected
+            ? cs.primary.withValues(alpha: 0.10)
+            : Colors.transparent,
+        borderRadius: BorderRadius.circular(10),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(10),
+          hoverColor: cs.onSurface.withValues(alpha: 0.05),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 9,
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.dynamic_feed_rounded,
+                  size: 17,
+                  color: selected ? cs.primary : cs.onSurfaceVariant,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: tt.bodyMedium?.copyWith(
+                      color: selected
+                          ? cs.primary
+                          : cs.onSurface.withValues(alpha: 0.8),
+                      fontWeight: selected
+                          ? FontWeight.w700
+                          : FontWeight.w500,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (count > 0) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '$count',
+                    style: tt.labelSmall?.copyWith(
+                      color: selected ? cs.primary : cs.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 class _SectionLabel extends StatelessWidget {
   final String text;

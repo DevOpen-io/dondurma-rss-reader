@@ -314,13 +314,6 @@ class _AppRail extends StatelessWidget {
     this.explorerToggle,
   });
 
-  /// True when the article pane shows the unscoped global timeline
-  /// (All Articles): no category or individual-feed selection.
-  static bool _isGlobalFeedScope(BuildContext context) {
-    final feed = context.watch<FeedProvider>();
-    return feed.selectedCategory == null && feed.selectedFeedUrl == null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
@@ -421,16 +414,30 @@ class _AppRail extends StatelessWidget {
           const SizedBox(height: 14),
 
           // ── Primary destinations ────────────────────────────────────
+          // Feeds = the RSS workspace itself (explorer + list + reader).
+          // It does not reset feed/category scope — All Articles lives at
+          // the top of the explorer for the global timeline.
           railItem(
-            Icons.dynamic_feed_rounded,
-            l10n.allArticles,
-            // Global view is only "active" when no feed/category scope is
-            // narrowing the article list.
-            selected: section == DesktopSection.articles &&
-                _isGlobalFeedScope(context),
+            Icons.rss_feed_rounded,
+            l10n.feedsTab,
+            selected: section == DesktopSection.articles,
             onTap: () {
-              context.read<FeedProvider>().selectCategory(null);
+              // Restore the workspace; fall back to the global timeline
+              // when the remembered feed no longer exists.
+              final feed = context.read<FeedProvider>();
+              final sel = feed.selectedFeedUrl;
+              if (sel != null &&
+                  !(feed.subscriptionProvider?.subscriptions.any(
+                        (s) => s.url == sel,
+                      ) ??
+                      false)) {
+                feed.selectCategory(null);
+              }
               onSectionChanged(DesktopSection.articles);
+              if (explorerInDrawer) {
+                (explorerToggle ??
+                    () => Scaffold.of(context).openDrawer())();
+              }
             },
           ),
           railItem(
@@ -439,14 +446,6 @@ class _AppRail extends StatelessWidget {
             selected: section == DesktopSection.bookmarks,
             onTap: () => onSectionChanged(DesktopSection.bookmarks),
           ),
-          if (explorerInDrawer)
-            railItem(
-              Icons.view_sidebar_outlined,
-              l10n.feedsTab,
-              selected: false,
-              onTap: explorerToggle ??
-                  () => Scaffold.of(context).openDrawer(),
-            ),
           const SizedBox(height: 8),
           railAction(
             Icons.add_rounded,

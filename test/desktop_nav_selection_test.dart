@@ -11,7 +11,9 @@ import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/models/refresh_progress.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
+import 'package:ice_cream_rss_reader/screens/home_screen.dart';
 import 'package:ice_cream_rss_reader/utils/platform_caps.dart';
 
 /// Navigation hierarchy regressions:
@@ -190,6 +192,110 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(feedOf(tester).selectedFeedParentCategory, 'Science');
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('All Articles tile is pinned above the scrollable tree', (
+    tester,
+  ) async {
+    if (!PlatformCaps.isDesktop) return;
+    await seed(tester);
+
+    // Not a descendant of the scrollable ListView — it lives in the fixed
+    // section header column, so it can't scroll away.
+    expect(find.text('All Articles'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ListView),
+        matching: find.text('All Articles'),
+      ),
+      findsNothing,
+    );
+
+    // Deep-scroll the tree; the tile must stay put and visible.
+    await tester.fling(
+      find.descendant(
+        of: find.byType(DesktopSidebar),
+        matching: find.byType(ListView),
+      ),
+      const Offset(0, -400),
+      800,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('All Articles'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('All Articles tap clears scope and shows selected state', (
+    tester,
+  ) async {
+    if (!PlatformCaps.isDesktop) return;
+    await seed(tester);
+
+    feedOf(tester).selectFeed('https://a.example/feed');
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('All Articles'));
+    await tester.pumpAndSettle();
+
+    expect(feedOf(tester).selectedCategory, isNull);
+    expect(feedOf(tester).selectedFeedUrl, isNull);
+    expect(ancestorBars(tester), 0);
+
+    final tile = tester.widget<Semantics>(
+      find.ancestor(
+        of: find.text('All Articles'),
+        matching: find.byWidgetPredicate(
+          (w) => w is Semantics && w.properties.selected == true,
+        ),
+      ),
+    );
+    expect(tile.properties.selected, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('mobile home exposes a single global refresh indicator', (
+    tester,
+  ) async {
+    // Phone-sized surface; platform gate irrelevant — this is the shared
+    // mobile shell.
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(
+      MultiProvider(
+        providers: providers(),
+        child: MaterialApp(
+          localizationsDelegates:
+              AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const HomeScreen(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Pull-to-refresh gesture stays, but the indicator widget itself is
+    // transparent — the pill is the only visible global spinner.
+    final indicator = tester.widget<RefreshIndicator>(
+      find.byType(RefreshIndicator),
+    );
+    expect(indicator.color, Colors.transparent);
+    expect(indicator.backgroundColor, Colors.transparent);
+
+    final ctx = tester.element(find.byType(HomeScreen));
+    ctx.read<FeedProvider>().refreshProgress.value = RefreshProgress(
+      phase: RefreshPhase.refreshing,
+      total: 10,
+      completed: 3,
+      startedAt: DateTime.now(),
+    );
+    await tester.pump();
+
+    expect(find.text('3 / 10'), findsOneWidget);
+    // Exactly one spinner: the pill's — no competing refresh circles.
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
