@@ -11,5 +11,6 @@
 | Tema ve UI iyileştirmeleri | — | [2026-06-09](plans/2026-06-09-premium-ui-polish.md) | Büyük ölçüde uygulanmış tarihsel plan |
 | Global toast | [2026-08-01](specs/2026-08-01-global-toast-overlay-design.md) | — | Uygulanmış |
 | Bildirim güvenilirliği | [2026-08-24](specs/2026-08-24-notification-reliability-design.md) | — | Uygulanmış |
+| Kademeli feed yenileme | [2026-10-24](specs/2026-10-24-incremental-feed-refresh-design.md) | — | Tasarım onayı bekleniyor |
 
 İşaretlenmemiş kutular özgün planın yazım durumunu korur; yeni iş talebi veya eksik özellik kanıtı değildir. Her kayıttaki kaynak dosyası yolları, aksi belirtilmedikçe depo köküne göredir.
