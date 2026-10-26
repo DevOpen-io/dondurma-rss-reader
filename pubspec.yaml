@@ -61,6 +61,9 @@ dependencies:
   window_manager: ^0.5.2
   screen_retriever: ^0.2.2
   meta: ^1.19.0
+  hooks: ^2.2.0
+  native_toolchain_c: ^0.19.5
+  code_assets: ^2.1.0
 
 dev_dependencies:
   flutter_test:

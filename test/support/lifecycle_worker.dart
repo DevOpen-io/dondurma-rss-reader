@@ -7,14 +7,12 @@ import 'package:ice_cream_rss_reader/services/lifecycle_coordinator.dart';
 
 void lifecycleIsolateWorker(List<Object> args) async {
   final root = args[0] as String;
-  final library = args[1] as String;
-  final output = args[2] as SendPort;
-  final mode = args[3] as String;
+  final output = args[1] as SendPort;
+  final mode = args[2] as String;
   final input = ReceivePort();
   try {
     final coordinator = LifecycleCoordinator(
       directory: Directory(root),
-      nativeLibraryPath: library,
       onContention: () => output.send(['busy']),
     );
     final ticket = await coordinator.beginWork();
@@ -52,20 +50,17 @@ Future<void> _event(String event) async {
 Future<void> main(List<String> args) async {
   final mode = args[0];
   final root = Directory(args[1]);
-  final library = args[2];
   final commands = stdin
       .transform(utf8.decoder)
       .transform(const LineSplitter());
   var coordinator = LifecycleCoordinator(
     directory: root,
-    nativeLibraryPath: library,
     onContention: () => stdout.writeln(jsonEncode({'event': 'busy'})),
   );
   if (mode == 'crash-journal') {
     await coordinator.initialize();
     coordinator = LifecycleCoordinator(
       directory: root,
-      nativeLibraryPath: library,
       beforeJournalReplace: (staged, target) async {
         if ((jsonDecode(await staged.readAsString()) as Map)['resetPending'] ==
             true) {

@@ -1,22 +1,19 @@
-# Lifecycle mutex — phase 1
+# Lifecycle mutex
 
-This is a narrowly scoped **Linux/local-filesystem** backend for
-`lib/services/lifecycle_coordinator.dart`. It is **not packaged into Flutter
-runners and not connected to application data writers**. Other platforms fail
-closed in the Dart binding. No Dart package dependency is added.
+Native backend for `lib/services/lifecycle_coordinator.dart`: `flock(2)` on
+Linux, Android, macOS and iOS; `LockFileEx` on Windows. `hook/build.dart`
+(Dart build hooks + `native_toolchain_c`) compiles it for every native target,
+so `flutter build`, `flutter test` and `dart run` bundle it automatically.
+Web has no native code and uses the single-isolate gate instead.
 
-## Build and tests
+## Verification scope
 
-```sh
-cc -shared -fPIC -Wall -Wextra -Werror \
-  -o /tmp/liblifecycle_mutex.so native/lifecycle/lifecycle_mutex.c
-flutter test test/lifecycle_coordinator_test.dart
-```
-
-The tests build their own temporary library, require `cc` and `dart` on PATH,
-and launch both actual Dart isolates and fresh Dart processes. Do not check in
-compiled binaries. Android/iOS/macOS/Windows packaging and platform backends
-are future work; Linux test results are not evidence for those platforms.
+`flutter test test/lifecycle_coordinator_test.dart` launches real Dart
+isolates and fresh `dart run` processes (Linux). The Android APK packages the
+library for arm64-v8a, armeabi-v7a and x86_64, but no device run was done.
+The macOS/iOS path is the same POSIX source; the Windows path is compiled
+only on Windows hosts. Linux results are not evidence for those platforms.
+Do not check in compiled binaries.
 
 ## Why a native shim?
 

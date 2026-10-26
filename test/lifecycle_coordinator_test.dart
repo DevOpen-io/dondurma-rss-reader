@@ -40,29 +40,8 @@ class _Worker {
 }
 
 void main() {
-  late Directory binaries;
-  late String library;
   late Directory root;
 
-  setUpAll(() async {
-    if (!Platform.isLinux) return;
-    binaries = await Directory.systemTemp.createTemp('lifecycle-native-');
-    library = '${binaries.path}/liblifecycle_mutex.so';
-    final build = await Process.run('cc', [
-      '-shared',
-      '-fPIC',
-      '-Wall',
-      '-Wextra',
-      '-Werror',
-      '-o',
-      library,
-      'native/lifecycle/lifecycle_mutex.c',
-    ]);
-    expect(build.exitCode, 0, reason: '${build.stderr}');
-  });
-  tearDownAll(() async {
-    if (Platform.isLinux) await binaries.delete(recursive: true);
-  });
   setUp(() async {
     root = await Directory.systemTemp.createTemp('lifecycle-coordinator-');
   });
@@ -75,7 +54,6 @@ void main() {
     Future<void> Function(File, File)? beforeReplace,
   }) => LifecycleCoordinator(
     directory: root,
-    nativeLibraryPath: library,
     onContention: onContention,
     beforeJournalReplace: beforeReplace,
   );
@@ -87,14 +65,14 @@ void main() {
         File('test/support/lifecycle_worker.dart').absolute.path,
         mode,
         root.path,
-        library,
       ]),
     );
     addTearDown(worker.close);
     return worker;
   }
 
-  // This backend is intentionally disabled on unverified platforms.
+  // Process/isolate evidence is collected on Linux; other targets compile
+  // the same backend but are not verified by this suite.
   final unsupported = !Platform.isLinux;
 
   test(
@@ -432,7 +410,6 @@ void main() {
         streams.add(stream);
         final isolate = await Isolate.spawn(lifecycleIsolateWorker, <Object>[
           root.path,
-          library,
           port.sendPort,
           'increment',
         ]);
@@ -530,7 +507,6 @@ void main() {
       final messages = StreamIterator(port.cast<List>());
       final isolate = await Isolate.spawn(lifecycleIsolateWorker, <Object>[
         root.path,
-        library,
         port.sendPort,
         'hold',
       ], onExit: exited.sendPort);
@@ -637,7 +613,6 @@ void main() {
       ).setLastModified(DateTime(2000));
       final contender = LifecycleCoordinator(
         directory: root,
-        nativeLibraryPath: library,
         lockTimeout: const Duration(milliseconds: 30),
         retryInterval: const Duration(milliseconds: 2),
       );
@@ -708,7 +683,6 @@ void main() {
     );
     final other = LifecycleCoordinator(
       directory: Directory('${root.path}/other-domain'),
-      nativeLibraryPath: library,
     );
     var ran = false;
     await expectLater(
@@ -754,17 +728,11 @@ void main() {
     'new directory bootstrap and symlink alias resolve to the same journal',
     () async {
       final nested = Directory('${root.path}/new/nested');
-      final first = LifecycleCoordinator(
-        directory: nested,
-        nativeLibraryPath: library,
-      );
+      final first = LifecycleCoordinator(directory: nested);
       final ticket = await first.beginWork();
       final alias = Link('${root.path}/alias');
       await alias.create(nested.path);
-      final second = LifecycleCoordinator(
-        directory: Directory(alias.path),
-        nativeLibraryPath: library,
-      );
+      final second = LifecycleCoordinator(directory: Directory(alias.path));
       expect((await second.initialize()).ticket.resetEpoch, ticket.resetEpoch);
       expect(await second.withPublication(ticket, () async => true), isTrue);
     },

@@ -191,21 +191,20 @@ final class _CriticalSection {
   bool active = true;
 }
 
-/// Phase-1 foundation ONLY. Nothing in the app uses this coordinator yet.
+/// Shared publication/reset authority across isolates and processes.
 ///
-/// Linux/local-filesystem backend requires the explicitly built C helper.
-/// Other platforms fail closed, rather than silently selecting unsafe locks.
+/// The native mutex is built for every native target by hook/build.dart;
+/// there is no fallback to expiring leases or process-scoped Dart locks.
 /// Never delete/replace the permanent lock file while any process uses it.
 /// No network work belongs in a publication or cleanup callback.
 final class LifecycleCoordinator {
   LifecycleCoordinator({
     required this.directory,
-    required String nativeLibraryPath,
     this.lockTimeout = const Duration(seconds: 10),
     this.retryInterval = const Duration(milliseconds: 5),
     @visibleForTesting this.onContention,
     @visibleForTesting this.beforeJournalReplace,
-  }) : _native = LifecycleMutexBindings(nativeLibraryPath) {
+  }) : _native = LifecycleMutexBindings() {
     if (lockTimeout <= Duration.zero || retryInterval <= Duration.zero) {
       throw ArgumentError('Lifecycle lock durations must be positive');
     }

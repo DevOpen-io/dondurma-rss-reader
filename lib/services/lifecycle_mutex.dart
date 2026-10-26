@@ -1,61 +1,43 @@
+@DefaultAsset('package:ice_cream_rss_reader/services/lifecycle_mutex.dart')
+library;
+
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
 
-/// Linux-only phase-1 binding, deliberately requiring an explicit library.
-/// No fallback to expiring leases or process-scoped Dart file locks exists.
-final class LifecycleMutexBindings {
-  LifecycleMutexBindings(String libraryPath) {
-    if (!Platform.isLinux) {
-      throw UnsupportedError(
-        'Lifecycle mutex backend is verified on Linux only',
-      );
-    }
-    final library = DynamicLibrary.open(libraryPath);
-    final abi = library.lookupFunction<Int32 Function(), int Function()>(
-      'lifecycle_mutex_abi',
-    );
-    if (abi() != 1) throw StateError('Unsupported lifecycle mutex ABI');
-    _allocate = library
-        .lookupFunction<
-          Pointer<Void> Function(IntPtr),
-          Pointer<Void> Function(int)
-        >('lifecycle_allocate');
-    _free = library
-        .lookupFunction<
-          Void Function(Pointer<Void>),
-          void Function(Pointer<Void>)
-        >('lifecycle_free');
-    _open = library
-        .lookupFunction<
-          Pointer<Void> Function(Pointer<Uint8>),
-          Pointer<Void> Function(Pointer<Uint8>)
-        >('lifecycle_mutex_open');
-    _tryLock = library
-        .lookupFunction<
-          Int32 Function(Pointer<Void>),
-          int Function(Pointer<Void>)
-        >('lifecycle_mutex_try_lock');
-    final closeAddress = library
-        .lookup<NativeFunction<Void Function(Pointer<Void>)>>(
-          'lifecycle_mutex_close',
-        );
-    _close = closeAddress.asFunction<void Function(Pointer<Void>)>();
-    _finalizer = NativeFinalizer(closeAddress);
-    _syncDirectory = library
-        .lookupFunction<
-          Int32 Function(Pointer<Uint8>),
-          int Function(Pointer<Uint8>)
-        >('lifecycle_sync_directory');
-  }
+// Compiled for every native target by hook/build.dart. There is no fallback
+// to expiring leases or process-scoped Dart file locks.
+@Native<Int32 Function()>(symbol: 'lifecycle_mutex_abi')
+external int _abi();
 
-  late final Pointer<Void> Function(int) _allocate;
-  late final void Function(Pointer<Void>) _free;
-  late final Pointer<Void> Function(Pointer<Uint8>) _open;
-  late final int Function(Pointer<Void>) _tryLock;
-  late final void Function(Pointer<Void>) _close;
-  late final int Function(Pointer<Uint8>) _syncDirectory;
-  late final NativeFinalizer _finalizer;
+@Native<Pointer<Void> Function(IntPtr)>(symbol: 'lifecycle_allocate')
+external Pointer<Void> _allocate(int size);
+
+@Native<Void Function(Pointer<Void>)>(symbol: 'lifecycle_free')
+external void _free(Pointer<Void> pointer);
+
+@Native<Pointer<Void> Function(Pointer<Uint8>)>(symbol: 'lifecycle_mutex_open')
+external Pointer<Void> _open(Pointer<Uint8> path);
+
+@Native<Int32 Function(Pointer<Void>)>(symbol: 'lifecycle_mutex_try_lock')
+external int _tryLock(Pointer<Void> mutex);
+
+@Native<Void Function(Pointer<Void>)>(symbol: 'lifecycle_mutex_close')
+external void _close(Pointer<Void> mutex);
+
+@Native<Int32 Function(Pointer<Uint8>)>(symbol: 'lifecycle_sync_directory')
+external int _syncDirectory(Pointer<Uint8> path);
+
+final _finalizer = NativeFinalizer(
+  Native.addressOf<NativeFunction<Void Function(Pointer<Void>)>>(_close).cast(),
+);
+
+/// Platform mutex backend: flock(2) on POSIX, LockFileEx on Windows.
+/// Verified on Linux; other native targets compile the same source.
+final class LifecycleMutexBindings {
+  LifecycleMutexBindings() {
+    if (_abi() != 1) throw StateError('Unsupported lifecycle mutex ABI');
+  }
 
   T _withPath<T>(String path, T Function(Pointer<Uint8>) action) {
     if (path.contains('\u0000')) throw ArgumentError('NUL in lifecycle path');
@@ -77,7 +59,7 @@ final class LifecycleMutexBindings {
     if (pointer == nullptr) {
       throw FileSystemException('Cannot open lifecycle mutex', path);
     }
-    return LifecycleMutexHandle._(this, pointer);
+    return LifecycleMutexHandle._(pointer);
   }
 
   void syncDirectory(String path) {
@@ -95,25 +77,24 @@ final class LifecycleMutexBindings {
 /// deterministic; native finalization is a safety net, not a timed lease.
 /// Finalization after individual isolate death has no bounded latency promise.
 final class LifecycleMutexHandle implements Finalizable {
-  LifecycleMutexHandle._(this._bindings, this._pointer) {
-    _bindings._finalizer.attach(this, _pointer, detach: this);
+  LifecycleMutexHandle._(this._pointer) {
+    _finalizer.attach(this, _pointer, detach: this);
   }
-  final LifecycleMutexBindings _bindings;
   Pointer<Void> _pointer;
 
   bool tryAcquire() {
     if (_pointer == nullptr) throw StateError('Lifecycle mutex already closed');
-    final result = _bindings._tryLock(_pointer);
+    final result = _tryLock(_pointer);
     if (result < 0) {
-      throw FileSystemException('Lifecycle flock failed (errno ${-result})');
+      throw FileSystemException('Lifecycle lock failed (error ${-result})');
     }
     return result == 1;
   }
 
   void close() {
     if (_pointer == nullptr) return;
-    _bindings._finalizer.detach(this);
-    _bindings._close(_pointer);
+    _finalizer.detach(this);
+    _close(_pointer);
     _pointer = nullptr;
   }
 }
