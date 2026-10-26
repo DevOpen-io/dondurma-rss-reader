@@ -16,6 +16,7 @@ import 'article_record_store.dart';
 import 'feed_backoff.dart';
 import 'feed_service.dart';
 import 'full_text_extraction_service.dart';
+import 'lifecycle_gate.dart';
 
 /// Offline preparation engine: ensures a saved article's full text and all of
 /// its images are durably stored, per the #39 contract —
@@ -42,7 +43,9 @@ class ArticlePreparationService {
     HostPacer? hostPacer,
     FeedBackoff? backoff,
     DateTime Function()? now,
+    LifecycleGate? gate,
   }) : _backoff = backoff,
+       _gate = gate ?? LifecycleGate.current,
        _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
        _media = mediaStore ?? ArticleMediaStore(),
        _client = client ?? http.Client(),
@@ -68,6 +71,7 @@ class ArticlePreparationService {
 
   final ArticleRecordStore _records;
   final ArticleMediaStore _media;
+  final LifecycleGate? _gate;
   final http.Client _client;
   final bool _ownsClient;
   final Future<String?> Function(String url) _extract;
@@ -212,7 +216,35 @@ class ArticlePreparationService {
   late final ArticleCleanupService _cleanup = ArticleCleanupService(
     records: _records,
     media: _media,
+    gate: _gate,
   );
+
+  /// Lifecycle ticket for one unit of work, captured before its inputs are
+  /// read. Null when ungated; throws while a reset is pending.
+  Future<LifecycleTicket?> _beginWork() async => _gate?.beginWork();
+
+  /// Runs a multi-resource publication (managed file + manifest) under the
+  /// lifecycle gate. Returns false when the ticket's era is over.
+  Future<bool> _publish(
+    LifecycleTicket? ticket,
+    Future<void> Function() action,
+  ) async {
+    final gate = _gate;
+    if (gate == null) {
+      await action();
+      return true;
+    }
+    try {
+      await gate.withPublication(ticket!, action);
+      return true;
+    } on StaleLifecycleTicket {
+      return false;
+    } on LifecycleResetPending {
+      return false;
+    } on TimeoutException {
+      return false;
+    }
+  }
 
   /// The store's persisted lifecycle epoch — capture before a unit of work
   /// and pass to mutations as `expectedEpoch` to fence out resets.
@@ -404,6 +436,14 @@ class ArticlePreparationService {
       _enqueue(() => _prepareArticle(articleId));
 
   Future<int> _prepareArticle(String articleId) async {
+    final LifecycleTicket? ticket;
+    try {
+      ticket = await _beginWork();
+    } on LifecycleResetPending {
+      return 0;
+    } on TimeoutException {
+      return 0;
+    }
     // Fence before reading the snapshot. A reset between read and epoch
     // capture must not license old content to mutate a new-era record.
     final epoch = await _records.currentEpoch();
@@ -411,7 +451,7 @@ class ArticlePreparationService {
     if (record == null || record.tombstoned || record.owners.isEmpty) {
       return 0;
     }
-    await _prepareRecord(record, _now().toUtc(), epoch, manual: true);
+    await _prepareRecord(record, _now().toUtc(), epoch, ticket, manual: true);
     return 1;
   }
 
@@ -424,6 +464,14 @@ class ArticlePreparationService {
   }
 
   Future<int> _preparePending() async {
+    final LifecycleTicket? ticket;
+    try {
+      ticket = await _beginWork();
+    } on LifecycleResetPending {
+      return 0;
+    } on TimeoutException {
+      return 0;
+    }
     final now = _now().toUtc();
     // Fence before the snapshot: a reset during either read must reject
     // all old commits, never license stale content with the new epoch.
@@ -435,7 +483,7 @@ class ArticlePreparationService {
       if (!_hasDueWork(record, now)) continue;
       attempted++;
       try {
-        await _prepareRecord(record, now, epoch);
+        await _prepareRecord(record, now, epoch, ticket);
       } catch (_) {
         // One bad record never forfeits the rest of the sweep — its durable
         // state is retried at the next eligible opportunity.
@@ -465,7 +513,8 @@ class ArticlePreparationService {
   Future<void> _prepareRecord(
     ArticleRecord record,
     DateTime now,
-    int epoch, {
+    int epoch,
+    LifecycleTicket? ticket, {
     bool manual = false,
   }) async {
     final id = record.id;
@@ -557,7 +606,14 @@ class ArticlePreparationService {
     ];
     await Future.wait([
       for (final piece in pending)
-        _preparePiece(id, piece.key, epoch, record.generation, manual: manual),
+        _preparePiece(
+          id,
+          piece.key,
+          epoch,
+          record.generation,
+          ticket,
+          manual: manual,
+        ),
     ]);
   }
 
@@ -565,71 +621,103 @@ class ArticlePreparationService {
     String id,
     String url,
     int epoch,
-    int generation, {
+    int generation,
+    LifecycleTicket? ticket, {
     bool manual = false,
   }) async {
     await _semaphore.acquire();
     try {
       final outcome = await _fetchAndStore(url, manual: manual);
-      await _records.mutate(id, expectedEpoch: epoch, (current) {
-        if (current == null ||
-            current.tombstoned ||
-            current.generation != generation) {
-          return current;
-        }
-        if (current.owners.isEmpty) return current;
-        final existing = current.media[url];
-        if (existing == null) return current;
-        // Deferred by a host cooldown learned mid-queue: not an attempt —
-        // the piece stays pending with its retry state untouched.
-        if (outcome.deferred) return current;
-        // Never downgrade a piece another pass already completed.
-        if (existing.state == MediaState.ready) return current;
-        // A permanent failure is fenced too: a racing pass's transient
-        // failure must not resurrect it into the retry cycle.
-        if (existing.state == MediaState.gone && outcome.ready == null) {
-          return current;
-        }
-        final attempts = existing.attempts + 1;
-        final media = {...current.media};
-        if (outcome.ready != null) {
-          media[url] = outcome.ready!.copyWith(attempts: attempts);
-        } else if (outcome.gone) {
-          media[url] = existing.copyWith(
-            state: MediaState.gone,
-            attempts: attempts,
-          );
-        } else {
-          // The later of doubling backoff and server Retry-After wins —
-          // a manual retry must not bypass a 429 wait either. A stored
-          // (possibly longer, e.g. Retry-After) wait is never shortened.
-          var retryAt = _now().add(backoffFor(attempts));
-          var waitSource = 'backoff';
-          final server = outcome.retryAfter;
-          if (server != null && server.isAfter(retryAt)) {
-            retryAt = server;
-            waitSource = 'server';
+      await _publish(ticket, () async {
+        MediaEntry? ready;
+        final bytes = outcome.bytes;
+        if (bytes != null) {
+          // Bytes reach the shared URL file only for the era and record
+          // generation that requested them: a stale response must neither
+          // create a file after a reset nor overwrite newer bytes (A/J).
+          final current = await _records.read(id);
+          final entry = current?.media[url];
+          if (current != null &&
+              !current.tombstoned &&
+              current.generation == generation &&
+              current.owners.isNotEmpty &&
+              entry != null &&
+              entry.state != MediaState.ready &&
+              await _records.currentEpoch() == epoch) {
+            ready = await _media.put(url, bytes);
           }
-          final stored = existing.nextRetryAt;
-          if (stored != null && stored.isAfter(retryAt)) {
-            retryAt = stored;
-            // A kept legacy wait keeps its protection: unknown origin is
-            // treated like a server wait, not a bypassable backoff.
-            waitSource = existing.waitSource ?? 'server';
-          }
-          media[url] = existing.copyWith(
-            state: MediaState.failed,
-            attempts: attempts,
-            nextRetryAt: () => retryAt,
-            waitSource: () => waitSource,
-          );
         }
-        return current.copyWith(media: media);
+        await _commitPiece(id, url, epoch, generation, outcome, ready);
       });
     } finally {
       _semaphore.release();
     }
   }
+
+  Future<void> _commitPiece(
+    String id,
+    String url,
+    int epoch,
+    int generation,
+    _PieceOutcome outcome,
+    MediaEntry? ready,
+  ) => _records.mutate(id, expectedEpoch: epoch, (current) {
+    if (current == null ||
+        current.tombstoned ||
+        current.generation != generation) {
+      return current;
+    }
+    if (current.owners.isEmpty) return current;
+    final existing = current.media[url];
+    if (existing == null) return current;
+    // Deferred by a host cooldown learned mid-queue: not an attempt —
+    // the piece stays pending with its retry state untouched.
+    if (outcome.deferred) return current;
+    // Never downgrade a piece another pass already completed.
+    if (existing.state == MediaState.ready) return current;
+    // A permanent failure is fenced too: a racing pass's transient
+    // failure must not resurrect it into the retry cycle.
+    if (existing.state == MediaState.gone && ready == null) {
+      return current;
+    }
+    // Bytes that were not published (stale record) commit nothing.
+    if (outcome.bytes != null && ready == null) return current;
+    final attempts = existing.attempts + 1;
+    final media = {...current.media};
+    if (ready != null) {
+      media[url] = ready.copyWith(attempts: attempts);
+    } else if (outcome.gone) {
+      media[url] = existing.copyWith(
+        state: MediaState.gone,
+        attempts: attempts,
+      );
+    } else {
+      // The later of doubling backoff and server Retry-After wins —
+      // a manual retry must not bypass a 429 wait either. A stored
+      // (possibly longer, e.g. Retry-After) wait is never shortened.
+      var retryAt = _now().add(backoffFor(attempts));
+      var waitSource = 'backoff';
+      final server = outcome.retryAfter;
+      if (server != null && server.isAfter(retryAt)) {
+        retryAt = server;
+        waitSource = 'server';
+      }
+      final stored = existing.nextRetryAt;
+      if (stored != null && stored.isAfter(retryAt)) {
+        retryAt = stored;
+        // A kept legacy wait keeps its protection: unknown origin is
+        // treated like a server wait, not a bypassable backoff.
+        waitSource = existing.waitSource ?? 'server';
+      }
+      media[url] = existing.copyWith(
+        state: MediaState.failed,
+        attempts: attempts,
+        nextRetryAt: () => retryAt,
+        waitSource: () => waitSource,
+      );
+    }
+    return current.copyWith(media: media);
+  });
 
   /// Downloads [url] into the media pool. Returns the ready manifest entry
   /// on success; [gone] for permanent failures (404/410, non-image payload,
@@ -640,14 +728,16 @@ class ArticlePreparationService {
   /// All retry math uses a fresh `_now()` at response time — the sweep's
   /// `now` may be minutes stale after semaphore and pacing waits, and a
   /// `Retry-After` relative to a dead timestamp schedules wrong.
-  Future<({MediaEntry? ready, DateTime? retryAfter, bool gone, bool deferred})>
-  _fetchAndStore(String url, {bool manual = false}) async {
+  Future<_PieceOutcome> _fetchAndStore(
+    String url, {
+    bool manual = false,
+  }) async {
     try {
       await _paceHost(url);
       // The queue wait may have spanned a sibling's 429 — honor the
       // cooldown learned in the meantime instead of firing anyway.
       if (_hostCooled(url, _now(), manual: manual)) {
-        return (ready: null, retryAfter: null, gone: false, deferred: true);
+        return (bytes: null, retryAfter: null, gone: false, deferred: true);
       }
       final response = await _client
           .get(
@@ -663,10 +753,10 @@ class ArticlePreparationService {
           // Soft-404 HTML / captive portal / oversize / empty payload —
           // structural, not transient: retrying would fetch the same
           // non-image forever (an empty put throws, looping the wait).
-          return (ready: null, retryAfter: null, gone: true, deferred: false);
+          return (bytes: null, retryAfter: null, gone: true, deferred: false);
         }
         return (
-          ready: await _media.put(url, response.bodyBytes),
+          bytes: response.bodyBytes,
           retryAfter: null,
           gone: false,
           deferred: false,
@@ -693,13 +783,22 @@ class ArticlePreparationService {
         );
       }
       return (
-        ready: null,
+        bytes: null,
         retryAfter: retryAfter,
         gone: response.statusCode == 404 || response.statusCode == 410,
         deferred: false,
       );
     } catch (_) {
-      return (ready: null, retryAfter: null, gone: false, deferred: false);
+      return (bytes: null, retryAfter: null, gone: false, deferred: false);
     }
   }
 }
+
+/// Downloaded bytes are staged in memory; they reach the media pool only
+/// inside the gated publication of [ArticlePreparationService._preparePiece].
+typedef _PieceOutcome = ({
+  Uint8List? bytes,
+  DateTime? retryAfter,
+  bool gone,
+  bool deferred,
+});

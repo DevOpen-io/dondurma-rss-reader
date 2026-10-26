@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'article_identity.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
+import 'lifecycle_gate.dart';
 
 /// Outcome of one [ArticleCleanupService.sweep] pass. [failed] means the
 /// pass could not prove the full lifecycle ran — the store was unreadable,
@@ -45,11 +48,14 @@ class ArticleCleanupService {
   ArticleCleanupService({
     required ArticleRecordStore records,
     required ArticleMediaStore media,
+    LifecycleGate? gate,
   }) : _records = records,
-       _media = media;
+       _media = media,
+       _gate = gate ?? LifecycleGate.current;
 
   final ArticleRecordStore _records;
   final ArticleMediaStore _media;
+  final LifecycleGate? _gate;
 
   /// Files younger than this may still be mid-commit on another queue —
   /// never collect them on a scan that cannot serialize with writers.
@@ -63,6 +69,26 @@ class ArticleCleanupService {
   Future<CleanupResult> sweep({bool Function(String id)? isBookmarked}) async {
     var failed = false;
     var tombstoned = 0;
+    const blocked = CleanupResult(
+      tombstoned: 0,
+      deletedFiles: 0,
+      prunedSeen: 0,
+      failed: true,
+    );
+
+    // Deletion publishes under the lifecycle gate with the ticket of the
+    // pass; a pending or later reset owns cleanup instead.
+    final gate = _gate;
+    LifecycleTicket? ticket;
+    if (gate != null) {
+      try {
+        ticket = await gate.beginWork();
+      } on LifecycleResetPending {
+        return blocked;
+      } on TimeoutException {
+        return blocked;
+      }
+    }
 
     // The pass is fenced to the lifecycle epoch it started on — wipeAll
     // does not ride the register queue, so a reset can land mid-sweep; a
@@ -73,14 +99,7 @@ class ArticleCleanupService {
     // 1. Ownerless live records leave the lifecycle through the tombstone
     //    fence — hard-deleting would let a stale write resurrect them.
     final before = await _records.listRecordsForGc();
-    if (!before.clean) {
-      return const CleanupResult(
-        tombstoned: 0,
-        deletedFiles: 0,
-        prunedSeen: 0,
-        failed: true,
-      );
-    }
+    if (!before.clean) return blocked;
 
     // 1a. 'bookmark' claims are reconciled BOTH ways against the caller's
     //    live set: a stale claim the set denies is stripped, and a live
@@ -153,13 +172,44 @@ class ArticleCleanupService {
           after.records,
           minAge: _orphanGrace,
         );
-        for (final file in orphans) {
-          // Count only proven deletions — a refused write means the space
-          // is NOT reclaimed, and the pass reports partial failure.
-          if (await _media.delete(file)) {
-            deleted++;
-          } else {
+        Future<void> collect() async {
+          // The scan's verdict is stale by now: re-read references at
+          // decision time, so a claim landing after the orphan scan keeps
+          // its file. Gated media publication cannot interleave here.
+          final latest = await _records.listRecordsForGc();
+          if (!latest.clean || (await _records.currentEpoch()) != epoch) {
             failed = true;
+            return;
+          }
+          final referenced = {
+            for (final record in latest.records)
+              for (final entry in record.media.values) entry.file,
+          };
+          for (final file in orphans) {
+            if (referenced.contains(file)) continue;
+            // Count only proven deletions — a refused write means the space
+            // is NOT reclaimed, and the pass reports partial failure.
+            if (await _media.delete(file)) {
+              deleted++;
+            } else {
+              failed = true;
+            }
+          }
+        }
+
+        if (orphans.isNotEmpty) {
+          if (gate == null) {
+            await collect();
+          } else {
+            try {
+              await gate.withPublication(ticket!, collect);
+            } on StaleLifecycleTicket {
+              failed = true;
+            } on LifecycleResetPending {
+              failed = true;
+            } on TimeoutException {
+              failed = true;
+            }
           }
         }
         // 3. Forget observation stamps whose article ended its lifecycle

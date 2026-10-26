@@ -16,6 +16,7 @@ import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
+import 'package:ice_cream_rss_reader/services/app_lifecycle_gate.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
@@ -336,6 +337,9 @@ void main() {
         FeedSubscription(url: url, name: 'Old', category: 'Test'),
       ]);
       await Hive.box('settings').put('notificationsEnabled', false);
+      // As at every app entry point, this isolate runs under the app gate.
+      LifecycleGate.current = await openAppLifecycleGate();
+      addTearDown(() => LifecycleGate.current = null);
       final providers = _providers(wire: false);
       try {
         await providers.feed
@@ -355,9 +359,12 @@ void main() {
             generation: 1,
           ),
         );
-        await ObservedArticleStore.forBox(
-          box,
-        ).claimFeedBatch(feedUrl: current.feedUrl, items: [current]);
+        // New-era writers start their work with a new-era ticket.
+        await ObservedArticleStore.forBox(box).claimFeedBatch(
+          feedUrl: current.feedUrl,
+          items: [current],
+          ticket: await LifecycleGate.current!.beginWork(),
+        );
         await _seedCache([current]);
         await box.put(
           'feedValidators',

@@ -5,62 +5,14 @@ import 'dart:math';
 
 import 'package:meta/meta.dart';
 
+import 'lifecycle_gate.dart';
 import 'lifecycle_mutex.dart';
 
-final class LifecycleJournalException implements Exception {
-  LifecycleJournalException(this.message);
-  final String message;
-  @override
-  String toString() => 'LifecycleJournalException: $message';
-}
-
-final class StaleLifecycleTicket implements Exception {
-  @override
-  String toString() => 'StaleLifecycleTicket';
-}
-
-final class LifecycleResetPending implements Exception {
-  @override
-  String toString() => 'LifecycleResetPending';
-}
-
-/// Capture with beginWork BEFORE reading inputs or starting HTTP/extraction.
-/// Reacquiring a ticket after an old response arrives does not authorize it.
-final class LifecycleTicket {
-  const LifecycleTicket._(this.storageId, this.resetEpoch);
-  final String storageId;
-  final String resetEpoch;
-
-  Map<String, Object> toJson() => {
-    'ticketVersion': 1,
-    'storageId': storageId,
-    'resetEpoch': resetEpoch,
-  };
-
-  factory LifecycleTicket.fromJson(Map<String, dynamic> json) {
-    if (json['ticketVersion'] is! int ||
-        json['ticketVersion'] != 1 ||
-        !_isNonce(json['storageId']) ||
-        json['resetEpoch'] is! String) {
-      throw FormatException('Invalid lifecycle ticket');
-    }
-    return LifecycleTicket._(
-      json['storageId'] as String,
-      json['resetEpoch'] as String,
-    );
-  }
-}
-
-final class LifecycleReset {
-  const LifecycleReset._(this.ticket, this.resetId);
-  final LifecycleTicket ticket;
-  final String resetId;
-}
+export 'lifecycle_gate.dart';
 
 const _maxCleanupStages = 128;
 
-bool _isNonce(Object? value) =>
-    value is String && RegExp(r'^[0-9a-f]{64}$').hasMatch(value);
+bool _isNonce(Object? value) => isLifecycleNonce(value);
 bool _isStage(String value) =>
     RegExp(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$').hasMatch(value);
 
@@ -86,9 +38,9 @@ final class LifecycleState {
   final bool resetPending;
   final List<String> requiredCleanupStages;
   final List<String> completedCleanupStages;
-  LifecycleTicket get ticket => LifecycleTicket._(storageId, resetEpoch);
+  LifecycleTicket get ticket => LifecycleTicket.internal(storageId, resetEpoch);
   LifecycleReset? get pendingReset =>
-      resetPending ? LifecycleReset._(ticket, resetId!) : null;
+      resetPending ? LifecycleReset.internal(ticket, resetId!) : null;
 
   Map<String, Object?> toJson() => {
     'schemaVersion': schemaVersion,
@@ -197,7 +149,7 @@ final class _CriticalSection {
 /// there is no fallback to expiring leases or process-scoped Dart locks.
 /// Never delete/replace the permanent lock file while any process uses it.
 /// No network work belongs in a publication or cleanup callback.
-final class LifecycleCoordinator {
+final class LifecycleCoordinator implements LifecycleGate {
   LifecycleCoordinator({
     required this.directory,
     this.lockTimeout = const Duration(seconds: 10),
@@ -359,12 +311,14 @@ final class LifecycleCoordinator {
 
   Future<LifecycleState> initialize() => _locked(_load);
 
+  @override
   Future<LifecycleTicket> beginWork() => _locked((root) async {
     final state = await _load(root);
     if (state.resetPending) throw LifecycleResetPending();
     return state.ticket;
   });
 
+  @override
   Future<T> withPublication<T>(
     LifecycleTicket ticket,
     Future<T> Function() action,
@@ -378,6 +332,7 @@ final class LifecycleCoordinator {
     return action();
   });
 
+  @override
   Future<LifecycleReset> beginReset({required List<String> cleanupStages}) {
     final stages = List<String>.of(cleanupStages);
     if (stages.length > _maxCleanupStages ||
@@ -416,6 +371,7 @@ final class LifecycleCoordinator {
 
   /// The action must be idempotent: a crash after it but before journal commit
   /// intentionally causes replay. It executes under the publication mutex.
+  @override
   Future<LifecycleState> performCleanupStage(
     LifecycleReset reset,
     String stage,
@@ -438,6 +394,7 @@ final class LifecycleCoordinator {
     return after;
   });
 
+  @override
   Future<LifecycleState> completeReset(LifecycleReset reset) =>
       _locked((root) async {
         final state = await _load(root);
@@ -456,6 +413,7 @@ final class LifecycleCoordinator {
   /// No app cleanup is inferred. Every recorded stage needs a handler before
   /// any callback runs; extra handlers are ignored. Failure leaves
   /// pending=true for a later explicit retry.
+  @override
   Future<LifecycleState> recoverPendingReset({
     required Map<String, Future<void> Function()> cleanupStages,
   }) {

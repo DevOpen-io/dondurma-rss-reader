@@ -15,7 +15,9 @@ import '../models/feed_subscription.dart';
 import '../models/refresh_progress.dart';
 import '../services/article_identity.dart';
 import '../services/feed_backoff.dart';
+import '../services/app_reset_service.dart';
 import '../services/feed_cache_policy.dart';
+import '../services/lifecycle_gate.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
@@ -310,6 +312,11 @@ class FeedProvider extends ChangeNotifier {
   /// Lazily cached reference to the `'feeds'` Hive box.
   Box get _box => Hive.box('feeds');
 
+  /// The isolate's lifecycle gate, resolved at use time so a gate installed
+  /// after construction (entry point, test setup) still governs resets.
+  final LifecycleGate? _injectedGate;
+  LifecycleGate? get _gate => _injectedGate ?? LifecycleGate.current;
+
   // ---------------------------------------------------------------------------
   // Initialization & dependency updates
   // ---------------------------------------------------------------------------
@@ -322,7 +329,9 @@ class FeedProvider extends ChangeNotifier {
     ArticlePreparationService? preparation,
     HostPacer? hostPacer,
     FeedBackoff? backoff,
-  }) : _scheduleRefreshPublish = scheduleRefreshPublish ?? Timer.new,
+    LifecycleGate? gate,
+  }) : _injectedGate = gate,
+       _scheduleRefreshPublish = scheduleRefreshPublish ?? Timer.new,
        _feedService = feedService ?? FeedService(),
        _ownsPreparation = preparation == null,
        _hostPacer = hostPacer ?? HostPacer(),
@@ -1764,8 +1773,21 @@ class FeedProvider extends ChangeNotifier {
 
   /// Clears all feed data, caches, and read states, resetting to default.
   /// Returns false when the durable record sidecar could not be wiped —
-  /// the caller must not claim a clean erase then (#40 honesty rule).
+  /// the caller must not claim a clean erase then (#40 honesty rule). With
+  /// a lifecycle gate the wipe is a journaled reset: a failure leaves it
+  /// pending, so no new work starts until startup recovery finishes it.
   Future<bool> factoryReset() async {
+    discardStateForReset();
+    final wiped = await AppResetService.run(_gate, [
+      (AppResetService.feeds, wipeStorageForReset),
+    ]);
+    finishReset();
+    return wiped;
+  }
+
+  /// In-memory half of a reset, run BEFORE the storage stages: voids every
+  /// in-flight apply phase and fences queued writes.
+  void discardStateForReset() {
     _items.clear();
     _selectedCategory = null;
     _selectedFeedUrl = null;
@@ -1793,36 +1815,23 @@ class FeedProvider extends ChangeNotifier {
     _feedBackoff.reset();
     _needsInitialReconcile = true; // the next era bootstraps owners again
     _knownSubscriptionUrls = const {};
-    await _bumpCacheEpoch(); // fence bg writers before the wipe…
-    await _box.clear();
-    await _bumpCacheEpoch(); // …and after — clear() erased the first bump.
     // Queued record writes enqueued before the reset must no-op — a delayed
     // registration can never resurrect a wiped record (#40).
     _preparation.resetFence();
-    // Records + firstSeen live in a sidecar file outside the box — reset
-    // must drop durable claims too, or ghost owners keep driving downloads.
-    // wipeAll also bumps the store's lifecycle epoch, fencing bg-isolate
-    // mutations that captured the old epoch.
-    var recordsWiped = await ArticleRecordStore.forBox(_box).wipeAll();
-    // Notification observation history is personal reading metadata —
-    // same reset boundary, same requirement to not resurface (#40). A
-    // failed observed wipe is reported through the same honesty channel.
-    recordsWiped = await _observedArticleStore.wipeAll() && recordsWiped;
-    // Managed media pool: every m_*/tmp file the app created goes, foreign
-    // content in the directory stays.
-    await ArticleMediaStore().deleteAllManaged();
-    if (!recordsWiped) {
-      debugPrint(
-        'FeedProvider.factoryReset: record sidecar wipe failed — durable '
-        'claims may persist and self-heal on the next reconcile.',
-      );
-    }
+  }
+
+  /// The feed storage stage: cache box, durable records, observation
+  /// history and managed media. Throws when a sidecar wipe fails.
+  Future<void> wipeStorageForReset() =>
+      AppResetService.wipeFeedStorage(observed: _observedArticleStore);
+
+  /// Publishes the empty post-reset state.
+  void finishReset() {
     // Widgets read from shared storage — publish the empty state so stale
     // articles/categories don't survive the reset.
     unawaited(WidgetUpdateService.updateFeedWidgets(const []));
     _invalidateFilterCache();
     if (!_disposed) notifyListeners();
-    return recordsWiped;
   }
 
   @override

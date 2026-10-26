@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -17,6 +18,7 @@ import 'feed_service.dart';
 import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
 import 'full_text_extraction_service.dart';
+import 'lifecycle_gate.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -59,6 +61,34 @@ Future<void> registerBgFetch() async {
 /// (Hive handles re-initialization and already-open boxes gracefully).
 Future<void> runBgFetch() async {
   try {
+    // The task's lifecycle ticket is captured before any input is read or
+    // request sent: everything it publishes later belongs to this era, and
+    // a reset in between turns those publications into no-ops.
+    final gate = LifecycleGate.current;
+    final LifecycleTicket? ticket;
+    try {
+      ticket = await gate?.beginWork();
+    } on LifecycleResetPending {
+      debugPrint('[BG] reset pending — skipping this pass');
+      return;
+    }
+    Future<bool> publish(Future<void> Function() action) async {
+      if (gate == null) {
+        await action();
+        return true;
+      }
+      try {
+        await gate.withPublication(ticket!, action);
+        return true;
+      } on StaleLifecycleTicket {
+        return false;
+      } on LifecycleResetPending {
+        return false;
+      } on TimeoutException {
+        return false;
+      }
+    }
+
     await Hive.initFlutter();
     await Future.wait([
       Hive.openBox('settings'),
@@ -69,6 +99,12 @@ Future<void> runBgFetch() async {
 
     final settingsBox = Hive.box('settings');
     final feedsBox = Hive.box('feeds');
+    // Write fences captured with the inputs, not after HTTP: an epoch read
+    // late would license old responses into a newer era.
+    final cacheEpoch = feedsBox.get(tempCacheEpochKey);
+    final recordEpoch = await ArticleRecordStore.forBox(
+      feedsBox,
+    ).currentEpoch();
     // Read-only in this isolate — bookmark ids exclude articles from temp
     // slots so a saved article never consumes a transient one (#37).
     final bookmarksBox = Hive.box('bookmarks');
@@ -250,7 +286,7 @@ Future<void> runBgFetch() async {
       }),
     );
     feedService.dispose();
-    try {
+    await publish(() async {
       await feedsBox.put('feedValidators', jsonEncode(validators));
       // Merge both slots before writing this isolate's own — the
       // foreground may have recorded a fresher cooldown (or a clear)
@@ -266,7 +302,7 @@ Future<void> runBgFetch() async {
         }
       }
       await feedsBox.put('feedBackoffUntil.bg', jsonEncode(backoff.snapshot()));
-    } catch (_) {}
+    }).catchError((_) => false);
 
     final allItems = results.expand((result) => result.items).toList();
     debugPrint('[BG] fetched ${allItems.length} items total');
@@ -280,6 +316,7 @@ Future<void> runBgFetch() async {
         observationEpoch: result.subscription.notificationEpoch,
         items: result.items,
         allowInitialization: result.allowInitialization,
+        ticket: ticket,
       );
       claimedItems.addAll(claim.claimedItems);
     }
@@ -306,8 +343,13 @@ Future<void> runBgFetch() async {
         bookmarkedItems,
         pacer,
         backoff,
+        cacheEpoch: cacheEpoch,
+        recordEpoch: recordEpoch,
+        publish: publish,
       );
-      await WidgetUpdateService.updateFeedWidgets(persisted);
+      if (persisted != null) {
+        await WidgetUpdateService.updateFeedWidgets(persisted);
+      }
     }
 
     final newItems = NotificationDeliveryPolicy.eligibleItems(
@@ -347,7 +389,9 @@ Future<void> runBgFetch() async {
     // `connected` constraint does not distinguish transport cost. Progress is
     // durable, so a task killed mid-sweep simply resumes next time.
     final connectivity = await Connectivity().checkConnectivity();
-    if (ArticlePreparationService.unmeteredNetwork(connectivity)) {
+    // A task whose era ended has no business starting new downloads.
+    if (ArticlePreparationService.unmeteredNetwork(connectivity) &&
+        await publish(() async {})) {
       // Inside this isolate all same-host traffic shares one schedule
       // and one cooldown policy — feed fetches above, article
       // extraction, and media downloads. (Extraction is a singleton
@@ -367,7 +411,7 @@ Future<void> runBgFetch() async {
         // in memory — persist them to this isolate's slot before the
         // task ends, merging both slots first so a concurrent
         // foreground write isn't dropped.
-        try {
+        await publish(() async {
           for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
             try {
               final latest = feedsBox.get(key);
@@ -383,7 +427,7 @@ Future<void> runBgFetch() async {
             'feedBackoffUntil.bg',
             jsonEncode(backoff.snapshot()),
           );
-        } catch (_) {}
+        }).catchError((_) => false);
       }
     }
   } catch (e) {
@@ -394,8 +438,9 @@ Future<void> runBgFetch() async {
 /// Recomputes temp membership and persists the transient snapshot under the
 /// same contract as the foreground (#37): global newest-N unique,
 /// non-bookmarked, keyword-clean members; bookmarked items ride along
-/// uncounted so they stay browsable offline.
-Future<List<FeedItem>> _persistBgCache(
+/// uncounted so they stay browsable offline. Returns null when the task's
+/// era ended before the snapshot could publish.
+Future<List<FeedItem>?> _persistBgCache(
   Box feedsBox,
   Box settingsBox,
   List<FeedItem> items,
@@ -403,8 +448,11 @@ Future<List<FeedItem>> _persistBgCache(
   Set<String> bookmarkedIds,
   List<FeedItem> bookmarkedItems,
   HostPacer pacer,
-  FeedBackoff backoff,
-) async {
+  FeedBackoff backoff, {
+  required Object? cacheEpoch,
+  required int recordEpoch,
+  required Future<bool> Function(Future<void> Function()) publish,
+}) async {
   final int limit = settingsBox.get('offlineCacheLimit', defaultValue: 50);
   final autoFullText = settingsBox.get('autoFullText', defaultValue: false);
   final globalKeywords =
@@ -422,14 +470,11 @@ Future<List<FeedItem>> _persistBgCache(
     records: store,
     preparation: preparation,
   );
-  // Fenced against a foreground cache wipe: the epoch key changes under
-  // clearCache/factoryReset, so a write started before the wipe must not
-  // land after it (the foreground's in-memory generation can't reach here).
-  final cacheEpoch = feedsBox.get(tempCacheEpochKey);
-  // The record store carries its own lifecycle epoch — every mutation this
-  // isolate issues is fenced to it, so a factory reset landing mid-pass
-  // rejects the rest of the record writes, not just the snapshot put.
-  final recordEpoch = await store.currentEpoch();
+  // [cacheEpoch] fences against a foreground cache wipe: the key changes
+  // under clearCache/factoryReset (the foreground's in-memory generation
+  // can't reach here). [recordEpoch] fences every record mutation this
+  // isolate issues, so a reset landing mid-pass rejects them all. Both were
+  // captured before the task's HTTP started.
 
   final Set<String> selectedIds;
   try {
@@ -482,14 +527,20 @@ Future<List<FeedItem>> _persistBgCache(
   // record lifecycle epoch — always a fresh disk read — is the real one.
   // A mismatch means a clear/reset landed mid-task: return EMPTY, not the
   // wiped-era snapshot — the caller publishes this to the widget and must
-  // not resurrect articles the reset just removed.
-  if (feedsBox.get(tempCacheEpochKey) != cacheEpoch ||
-      await store.currentEpoch() != recordEpoch) {
-    return const <FeedItem>[];
-  }
-  final maps = selected.map((e) => e.toJson()).toList();
-  await feedsBox.put('cachedItemsJson', jsonEncode(maps));
-  return selected;
+  // not resurrect articles the reset just removed. The put publishes under
+  // the task's lifecycle ticket; a stale ticket returns null (no publish).
+  List<FeedItem>? published;
+  await publish(() async {
+    if (feedsBox.get(tempCacheEpochKey) != cacheEpoch ||
+        await store.currentEpoch() != recordEpoch) {
+      published = const <FeedItem>[];
+      return;
+    }
+    final maps = selected.map((e) => e.toJson()).toList();
+    await feedsBox.put('cachedItemsJson', jsonEncode(maps));
+    published = selected;
+  });
+  return published;
 }
 
 List<FeedItem> _readBgCache(Box feedsBox) {

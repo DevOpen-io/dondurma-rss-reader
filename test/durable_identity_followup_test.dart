@@ -16,6 +16,7 @@ import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_cleanup_service.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
+import 'package:ice_cream_rss_reader/services/lifecycle_coordinator.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_persistence.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
@@ -138,9 +139,16 @@ Future<void> _registerRemote(String path, Map<String, dynamic> json) async {
 }
 
 Future<void> _lateRemoteWriter(List<Object> args) async {
+  // Optional lifecycle directory: a gated writer captures its ticket first,
+  // before any input or epoch read, exactly like a background task.
+  final gate = args.length > 3
+      ? LifecycleCoordinator(directory: Directory(args[3] as String))
+      : null;
+  final ticket = await gate?.beginWork();
   final archive = _fileStore(args[0] as String);
   final observation = ObservedArticleStore(
     FileObservedArticlePersistence(stateFile: File(args[1] as String)),
+    gate: gate,
   );
   final output = args[2] as SendPort;
   final continuePort = ReceivePort();
@@ -159,6 +167,7 @@ Future<void> _lateRemoteWriter(List<Object> args) async {
     feedUrl: _item('a').feedUrl,
     observationEpoch: 'old-subscription',
     items: [_item('a')],
+    ticket: ticket,
   );
   service.dispose();
   output.send([registered.name, claimed.initializedFeed]);
@@ -368,7 +377,7 @@ void main() {
   });
 
   test(
-    'KNOWN late background observation recreates history; captured archive epoch rejects old ownership',
+    'ungated writer (no lifecycle gate, reset outside it) recreates history; archive epoch still rejects old ownership',
     () async {
       final observedPath = '${root.path}/observed.json';
       final observation = ObservedArticleStore(
@@ -400,7 +409,7 @@ void main() {
         messages.current,
         ['rejected', true],
         reason:
-            'KNOWN: observation has no durable reset epoch; background supplies no claimCheck',
+            'Without a gate only the archive epoch fences; acceptance B covers the gated path',
       );
       expect((await records.read('shared-guid'))!.body, _item('b').content);
       final observedState =
@@ -442,53 +451,49 @@ void main() {
     },
   );
 
-  test(
-    'KNOWN media bytes can land after reset despite rejected manifest write',
-    () async {
-      final requested = Completer<void>();
-      final release = Completer<http.Response>();
-      const image = 'https://images.test/old-private.png';
-      final service = ArticlePreparationService(
-        recordStore: records,
-        mediaStore: media,
-        minHostGap: Duration.zero,
-        client: MockClient((_) {
-          requested.complete();
-          return release.future;
-        }),
-      );
-      await service.registerArticle(_item('a').copyWith(imageUrl: image), {
-        'bookmark',
-      }, fullText: false);
-      final pending = service.prepareArticle('shared-guid');
-      await requested.future;
-      service.resetFence();
-      expect(await records.wipeAll(), isTrue);
-      await media.deleteAllManaged();
-      release.complete(
-        http.Response.bytes(
-          [1, 2, 3],
-          200,
-          headers: {'content-type': 'image/png'},
-        ),
-      );
-      await pending;
-      expect(
-        await records.listRecords(),
-        isEmpty,
-      ); // Epoch fence protects the manifest.
-      final file = File(
-        (await media.pathFor(ArticleMediaStore.fileNameFor(image)))!,
-      );
-      expect(
-        await file.exists(),
-        isTrue,
-        reason:
-            'KNOWN: no common reset/rename lock protects physical media publication',
-      );
-      service.dispose();
-    },
-  );
+  test('media bytes cannot land after reset (formerly KNOWN)', () async {
+    final requested = Completer<void>();
+    final release = Completer<http.Response>();
+    const image = 'https://images.test/old-private.png';
+    final service = ArticlePreparationService(
+      recordStore: records,
+      mediaStore: media,
+      minHostGap: Duration.zero,
+      client: MockClient((_) {
+        requested.complete();
+        return release.future;
+      }),
+    );
+    await service.registerArticle(_item('a').copyWith(imageUrl: image), {
+      'bookmark',
+    }, fullText: false);
+    final pending = service.prepareArticle('shared-guid');
+    await requested.future;
+    service.resetFence();
+    expect(await records.wipeAll(), isTrue);
+    await media.deleteAllManaged();
+    release.complete(
+      http.Response.bytes(
+        [1, 2, 3],
+        200,
+        headers: {'content-type': 'image/png'},
+      ),
+    );
+    await pending;
+    expect(
+      await records.listRecords(),
+      isEmpty,
+    ); // Epoch fence protects the manifest.
+    final file = File(
+      (await media.pathFor(ArticleMediaStore.fileNameFor(image)))!,
+    );
+    expect(
+      await file.exists(),
+      isFalse,
+      reason: 'Stale bytes publish only inside the gated era check',
+    );
+    service.dispose();
+  });
 
   // Positive acceptance assertions, deliberately NOT KNOWN characterizations.
   // These must remain red until the cross-isolate publication protocol exists.
@@ -556,15 +561,26 @@ void main() {
           await messages.cancel();
           output.close();
         });
+        final lifecycle = '${root.path}/lifecycle';
+        final gate = LifecycleCoordinator(directory: Directory(lifecycle));
         await Isolate.spawn(_lateRemoteWriter, <Object>[
           path,
           observedPath,
           output.sendPort,
+          lifecycle,
         ]);
         expect(await messages.moveNext(), isTrue);
         final release = messages.current as SendPort;
-        expect(await records.wipeAll(), isTrue);
-        expect(await observation.wipeAll(), isTrue);
+        final reset = await gate.beginReset(
+          cleanupStages: ['archive', 'observation'],
+        );
+        await gate.performCleanupStage(reset, 'archive', () async {
+          expect(await records.wipeAll(), isTrue);
+        });
+        await gate.performCleanupStage(reset, 'observation', () async {
+          expect(await observation.wipeAll(), isTrue);
+        });
+        await gate.completeReset(reset);
         release.send(true);
         expect(await messages.moveNext(), isTrue);
         final result = messages.current as List;

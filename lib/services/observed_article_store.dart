@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:hive_ce/hive.dart';
 
 import '../models/feed_item.dart';
 import 'article_identity.dart';
+import 'lifecycle_gate.dart';
 import 'observed_article_persistence.dart';
 import 'observed_article_persistence_stub.dart'
     if (dart.library.io) 'observed_article_persistence_io.dart'
@@ -27,13 +29,17 @@ class ObservedClaimResult {
 }
 
 class ObservedArticleStore {
-  ObservedArticleStore.forBox(Box box)
-    : this(persistence_factory.createObservedArticlePersistence(box));
+  ObservedArticleStore.forBox(Box box, {LifecycleGate? gate})
+    : this(
+        persistence_factory.createObservedArticlePersistence(box),
+        gate: gate,
+      );
 
   ObservedArticleStore(
     this._persistence, {
     this.retention = const Duration(days: 14),
-  });
+    LifecycleGate? gate,
+  }) : _gate = gate ?? LifecycleGate.current;
 
   static const int schemaVersion = 1;
 
@@ -50,12 +56,54 @@ class ObservedArticleStore {
 
   final ObservedArticlePersistence _persistence;
   final Duration retention;
+  final LifecycleGate? _gate;
 
+  static const _rejected = ObservedClaimResult(
+    claimedItems: [],
+    initializedFeed: false,
+    lockTimedOut: false,
+  );
+
+  /// [ticket] is the lifecycle ticket captured when the caller's work began
+  /// (before HTTP). With a gate, the claim — including namespace
+  /// initialization — publishes only while that era is current.
   Future<ObservedClaimResult> claimFeedBatch({
     required String feedUrl,
     String observationEpoch = 'legacy-v1',
     required Iterable<FeedItem> items,
     bool allowInitialization = true,
+    DateTime? observedAt,
+    bool Function()? claimCheck,
+    LifecycleTicket? ticket,
+  }) async {
+    Future<ObservedClaimResult> claim() => _claimFeedBatch(
+      feedUrl: feedUrl,
+      observationEpoch: observationEpoch,
+      items: items,
+      allowInitialization: allowInitialization,
+      observedAt: observedAt,
+      claimCheck: claimCheck,
+    );
+    final gate = _gate;
+    if (gate == null) return claim();
+    // No ticket means no proof of era: fail closed, never initialize.
+    if (ticket == null) return _rejected;
+    try {
+      return await gate.withPublication(ticket, claim);
+    } on StaleLifecycleTicket {
+      return _rejected;
+    } on LifecycleResetPending {
+      return _rejected;
+    } on TimeoutException {
+      return const ObservedClaimResult.timeout();
+    }
+  }
+
+  Future<ObservedClaimResult> _claimFeedBatch({
+    required String feedUrl,
+    required String observationEpoch,
+    required Iterable<FeedItem> items,
+    required bool allowInitialization,
     DateTime? observedAt,
     bool Function()? claimCheck,
   }) async {
@@ -65,13 +113,7 @@ class ObservedArticleStore {
         final state = _decodeState(await _persistence.read());
         // Recheck inside the lock, after disk IO: a reset/unsubscribe may
         // have invalidated the caller while it waited for another writer.
-        if (claimCheck != null && !claimCheck()) {
-          return const ObservedClaimResult(
-            claimedItems: [],
-            initializedFeed: false,
-            lockTimedOut: false,
-          );
-        }
+        if (claimCheck != null && !claimCheck()) return _rejected;
         _prune(state, now);
 
         final feedKey =
