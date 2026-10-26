@@ -1,5 +1,7 @@
 # Dondurma RSS Reader — Incremental Refresh Stability Audit
 
+> **Güncel durum (2026-10-26):** Aşağıdaki açıkların hepsi kapatıldı: kaynak bazlı kimlik/archive schema 2 ve reset sonrası medya/observation resurrection, ortak lifecycle gate ile. Ayrıntı: [lifecycle coordinator](lifecycle-coordinator-phase1.md). Aşağıdaki metin tarihsel kayıttır.
+
 > **Takip denetimi:** [Durable identity follow-up](durable-identity-followup.md).
 > Arşiv/read kimliği migration'ı uygulanmadı; yanlış offline body ve global read coupling artık deterministik karakterizasyonlarla doğrulandı.
 > Üç preparation lifecycle hatası düzeltildi; reset sonrası fiziksel medya ve geç background observation resurrection açıkları ayrıca kanıtlandı, henüz çözülmedi.

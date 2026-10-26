@@ -1,6 +1,6 @@
 # Product Status and Backlog
 
-Source comparison: 2026-10-11. Checked items describe implementation in the repository, not store approval or device verification. Source code wins when this file drifts.
+Source comparison: 2026-10-26. Checked items describe implementation in the repository, not store approval or device verification. Source code wins when this file drifts.
 
 [Product guide](guide.md) · [Technical roadmap](roadmap.md) · [Documentation index](../README.md)
 
@@ -28,6 +28,10 @@ Source comparison: 2026-10-11. Checked items describe implementation in the repo
 - [x] Automatic unmetered preparation, explicit single-article preparation, retry scheduling
 - [x] Ownership-aware cleanup, reset fences, and durable article-status UI
 - [x] Shared feed/extraction/media host pacing, persisted feed/host cooldowns, bounded Retry-After handling
+- [x] Lifecycle gate for multi-writer storage (native file lock; in-memory on web) with journaled, resumable factory reset (2026-10-26)
+- [x] Per-source article identity: read state and saved copies keyed by feed + article ID; schema-1 archive migrated lazily, unproven copies quarantined in Settings > Legacy archive (2026-10-26)
+- [x] Proven same article from another source reuses already-extracted content as its own copy (2026-10-26)
+- [x] GitHub releases with signed APK, Windows installer, macOS DMG and Linux AppImage on every CI-green main push (2026-10-26)
 
 ## Backlog
 

@@ -6,7 +6,7 @@
 
 Dart SDK kısıtı [pubspec.yaml](../../pubspec.yaml) içinde `^3.11.0` olarak tanımlıdır. CI'ın kullandığı Flutter sürümü [build-and-release.yml](../../.github/workflows/build-and-release.yml) içindeki `FLUTTER_VERSION` alanıdır. Tekrarlanabilir doğrulama için bu sürümü kullanın; sürüm numarasının asıl kaynağı workflow'dur.
 
-Android build için Android SDK ve Java 17; iOS build için macOS, Xcode ve projenin Swift Package Manager yapılandırması gerekir. Platform bağımlılıkları, imzalama ve mağaza gönderimi [yayın rehberinde](../operations/releases.md) açıklanır.
+Android build için Android SDK ve Java 17; iOS build için macOS, Xcode ve projenin Swift Package Manager yapılandırması gerekir. Native hedefler [lifecycle mutex](../../native/lifecycle/README.md) C kodunu Dart build hook'larıyla derler; bu yüzden platformun C derleyicisi (Linux'ta clang, Windows'ta MSVC, Apple'da Xcode, Android'de NDK) bulunmalıdır. Platform bağımlılıkları, imzalama ve mağaza gönderimi [yayın rehberinde](../operations/releases.md) açıklanır.
 
 ## Kurulum ve çalıştırma
 
@@ -62,7 +62,7 @@ Yerel Android denemesi için:
 flutter build apk --debug
 ```
 
-İmzalı Android/iOS build, credential gereksinimleri, tag kuralları ve gönderimden bağımsız doğrulama komutları [yayın rehberindedir](../operations/releases.md). Yayın tag'i iki mağazaya gönderimi başlatır; doğrulama için debug build veya rehberdeki gönderimsiz adımları kullanın.
+İmzalı Android/iOS build, credential gereksinimleri, tag kuralları, GitHub indirme sürümleri (APK, Windows kurulumu, macOS DMG, Linux AppImage) ve gönderimden bağımsız doğrulama komutları [yayın rehberindedir](../operations/releases.md). Yayın tag'i iki mağazaya gönderimi başlatır; doğrulama için debug build veya rehberdeki gönderimsiz adımları kullanın.
 
 ## Belgeleri güncelleme
 

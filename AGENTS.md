@@ -19,6 +19,7 @@ Read the relevant guide before changing that area. Historical plans and audits r
 - Preserve refresh coalescing, bounded concurrency and filter-cache invalidation based on actual filter inputs.
 - Advance notification observation before delivery gating. Keep first-feed initialization silent and observed history independent of article cache; suppressed claims never backfill.
 - Preserve durable article ownership and reset/generation fences. Cache eviction removes `tempCache` ownership while preserving bookmarks.
+- Publish multi-writer storage (media, GC, observation, background cache) under a `LifecycleGate` ticket; run factory reset through `AppResetService`. Article identity is per source (`ArticleRef`: feed URL + normalized ID).
 - Keep `FeedSubscription.fullTextEnabled` tri-state: `null` follows global `autoFullText`.
 - Use `lib/utils/app_toast.dart` for transient feedback; respect reduced motion and modal placement.
 - Edit EN/TR/ES ARB sources and regenerate localization Dart; generated `app_localizations*.dart` files are not edited manually.

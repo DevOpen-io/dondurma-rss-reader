@@ -29,12 +29,17 @@ Dondurma RSS Reader belgeleri konu ve kullanım amacına göre düzenlenir. Proj
 | --- | --- |
 | [RSS motoru — PR #60 denetimi](audits/rss-engine-pr-60.md) | Cooldown, pacing, extraction ve isolate yarışları hakkında tarihsel rapor |
 | [iOS uygulanabilirlik araştırması — 2026-10-03](research/2026-10-03-ios-viability-audit.md) | İnceleme tarihindeki iOS yapılandırma eksikleri ve doğrulama sınırları |
+| [Çoklu platform performans denetimi — 2026-10-17](performance/multiplatform-audit.md) | Masaüstü/mobil performans ve doğruluk ölçümleri |
+| [Kademeli yenileme kararlılık denetimi](audits/incremental-refresh-stability-audit.md) | Kademeli yenileme sonrası kimlik ve hazırlık yaşam döngüsü bulguları |
+| [Durable identity takibi](audits/durable-identity-followup.md) | Kaynak bazlı kimlik ve archive schema 2 kararları |
+| [Reset yayın protokolü denetimi](audits/reset-publication-protocol-audit.md) | Reset ile eşzamanlı yayınların çakışma analizi |
+| [Lifecycle coordinator Phase 1](audits/lifecycle-coordinator-phase1.md) | Native mutex, reset journal'ı ve ticket'lı yayın uygulaması |
 
 Bu belgelerdeki commit, test sayısı, sürüm ve platform değerlendirmeleri kendi inceleme zamanlarına aittir.
 
 ## Yayın ve gizlilik
 
-- [Mağaza yayın rehberi](operations/releases.md): GitHub Actions, imzalama, Fastlane, gönderim ve hata kurtarma.
+- [Mağaza yayın rehberi](operations/releases.md): GitHub Actions, imzalama, Fastlane, gönderim, GitHub indirme sürümleri ve hata kurtarma.
 - [Play sürüm notları](../fastlane/metadata/android/README.md): sürüme bağlı changelog dosyalarının biçimi.
 - [Privacy policy — English](privacy-policy.en.md).
 - [Gizlilik politikası — Türkçe](privacy-policy.tr.md).

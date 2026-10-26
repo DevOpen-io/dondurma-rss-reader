@@ -10,7 +10,7 @@ Fast, private RSS/Atom reader built with Flutter and Material 3. No accounts, al
 
 ## English
 
-[App Store](https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr) · [Google Play](https://play.google.com/store/apps/details?id=io.devopen.dondurma)
+[App Store](https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr) · [Google Play](https://play.google.com/store/apps/details?id=io.devopen.dondurma) · [GitHub Releases](https://github.com/DevOpen-io/dondurma-rss-reader/releases/latest) (APK, Windows installer, macOS DMG, Linux AppImage)
 
 ### Features
 
@@ -19,7 +19,9 @@ Fast, private RSS/Atom reader built with Flutter and Material 3. No accounts, al
 - Swipe read/bookmark actions; PageView navigation, progress, reading time, image carousel
 - Global and per-feed full-text extraction with isolate processing
 - Built-in WebView, EasyList/AdGuard, DarkReader, external browser modes
+- Incremental refresh that keeps the visible article in place
 - Offline article/image cache; foreground and Workmanager background sync
+- Per-source read state and saved copies; legacy archive for pre-migration copies
 - Local notifications, per-feed controls, quiet hours, digest selection
 - Latest-news and category home-screen widgets
 - 10 FlexColorScheme palettes; system/light/dark; reading typography controls
@@ -40,8 +42,12 @@ flutter run -d linux                    # windows / macos
 flutter build linux --release           # bundle: build/linux/x64/release/bundle
 ```
 
-Portable artifacts (`dondurma-linux-x64.tar.gz`, `dondurma-windows-x64.zip`,
-`dondurma-macos.zip`) are produced by `.github/workflows/desktop-build.yml`.
+Every CI-green push to `main` publishes a GitHub release with the signed APK,
+a Windows x64 installer, a macOS DMG and a Linux x86_64 AppImage
+(`.github/workflows/github-apk-release.yml`). Windows and macOS builds are not
+code-signed. `.github/workflows/desktop-build.yml` builds portable CI artifacts
+for branches and pull requests. Native builds compile a small C library through
+Dart build hooks, so a C toolchain (clang, MSVC or Xcode) is required.
 Desktop limitations — no post-exit background fetch, no home widgets/tray,
 no embedded WebView on Windows/Linux — are documented in
 [desktop compatibility](docs/development/desktop-compatibility.md).
@@ -51,9 +57,9 @@ no embedded WebView on Windows/Linux — are documented in
 ```text
 lib/
 ├── main.dart       # startup, Hive migration, providers, OS integrations
-├── models/         # FeedItem, FeedSubscription
+├── models/         # FeedItem, FeedSubscription, refresh progress, suggestions
 ├── providers/      # settings, subscriptions, bookmarks, feeds, article state
-├── services/       # feed, offline records/media, preparation, OS integrations
+├── services/       # feed, offline records/media, preparation, lifecycle gate, OS integrations
 ├── screens/        # onboarding, home tabs, article, settings, legal, debug
 │   └── desktop/    # adaptive three-pane shell: sidebar, list, reader
 ├── widgets/        # reusable article, folder, home, settings UI
@@ -65,15 +71,15 @@ lib/
 
 Five `ChangeNotifier` providers power UI state. `FeedProvider` receives subscription, settings, and bookmark state through `ChangeNotifierProxyProvider3`. Hive CE uses `settings`, `feeds`, and `bookmarks` boxes.
 
-Durable article records and a shared media pool support offline preparation independently of disposable image caches. See [architecture](docs/development/architecture.md) and [offline storage](docs/development/offline-storage.md). Native platform behavior requires platform-specific verification; dated findings are indexed under [audits and research](docs/README.md#denetim-ve-araştırma).
+Durable article records and a shared media pool support offline preparation independently of disposable image caches. Multi-writer storage publishes through a lifecycle gate (native file lock, in-memory on web); factory reset is journaled and resumes on next start. See [architecture](docs/development/architecture.md) and [offline storage](docs/development/offline-storage.md). Native platform behavior requires platform-specific verification; dated findings are indexed under [audits and research](docs/README.md#denetim-ve-araştırma).
 
 ### Development
 
 Requires Flutter compatible with Dart `^3.11.0`.
 
 ```bash
-git clone https://github.com/DevOpen-io/Dondurma-Rss-Reader.git
-cd Dondurma-Rss-Reader
+git clone https://github.com/DevOpen-io/dondurma-rss-reader.git
+cd dondurma-rss-reader
 flutter pub get
 flutter test
 flutter run
@@ -85,7 +91,7 @@ Details: [developer guide](docs/development/README.md) · [product guide](docs/p
 
 ## Türkçe
 
-[App Store](https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr) · [Google Play](https://play.google.com/store/apps/details?id=io.devopen.dondurma)
+[App Store](https://apps.apple.com/tr/app/dondurma-rss-reader/id6782334224?l=tr) · [Google Play](https://play.google.com/store/apps/details?id=io.devopen.dondurma) · [GitHub Releases](https://github.com/DevOpen-io/dondurma-rss-reader/releases/latest) (APK, Windows kurulumu, macOS DMG, Linux AppImage)
 
 ### Özellikler
 
@@ -94,7 +100,9 @@ Details: [developer guide](docs/development/README.md) · [product guide](docs/p
 - Kaydırarak okundu/yer imi; PageView, okuma ilerlemesi/süresi, görsel galerisi
 - Genel ve akış bazlı tam metin çıkarma; isolate tabanlı işleme
 - Yerleşik WebView, EasyList/AdGuard, DarkReader, harici tarayıcı modları
+- Görünen makaleyi yerinde tutan kademeli yenileme
 - Çevrimdışı makale/görsel önbelleği; ön plan ve Workmanager senkronizasyonu
+- Kaynak bazlı okundu durumu ve kayıtlı kopyalar; eski sürüm kopyaları için eski arşiv
 - Yerel bildirimler, akış kontrolleri, sessiz saatler, özet seçimi
 - Son haberler ve kategori ana ekran widget'ları
 - 10 renk şeması; sistem/açık/koyu; okuma tipografisi ayarları

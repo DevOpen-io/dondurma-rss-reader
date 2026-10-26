@@ -1,6 +1,6 @@
 # Dondurma RSS Reader — Durable Identity Follow-up
 
-> **Güncel durum (2026-10-26):** Kaynak bazlı kimlik uygulandı: okundu durumu (`readItemRefs`, legacy ID tek seferlik bağlama), archive schema 2 (`ArticleRef` anahtarlı, ayrı dosya, kilit altında lazy migration, belirsiz kayıtlar karantinada), status/membership/bookmark claim/saved-copy okuması instance bazlı. Eski KNOWN kimlik testleri bağımsız kimliği doğrulayacak şekilde çevrildi. Ertelenen: DocumentRef ile içerik paylaşımı (dedup) ve karantina için ayrı UI. Aşağıdaki metin tarihsel kayıttır.
+> **Güncel durum (2026-10-26):** Kaynak bazlı kimlik uygulandı: okundu durumu (`readItemRefs`, legacy ID tek seferlik bağlama), archive schema 2 (`ArticleRef` anahtarlı, ayrı dosya, kilit altında lazy migration, belirsiz kayıtlar karantinada), status/membership/bookmark claim/saved-copy okuması instance bazlı. Eski KNOWN kimlik testleri bağımsız kimliği doğrulayacak şekilde çevrildi. Sonradan eklendi: kanıtlanmış aynı makale için içerik kopyalama (aynı normalize link + başlık; kayıtlar ayrı kalır) ve karantina için Ayarlar > Eski arşiv ekranı. Aşağıdaki metin tarihsel kayıttır.
 
 > **Yeni takip:** [Reset publication protocol audit](reset-publication-protocol-audit.md).
 > Ortak reset protokolü tamamlanmadı. Olumlu A/B/C/J/E2 güvenlik acceptance'ları hâlâ kırmızı; önceki 573 başarılı test aşağıda tarihsel baseline olarak korunuyor.

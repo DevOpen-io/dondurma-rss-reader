@@ -87,7 +87,10 @@ and macOS (Intel + Apple Silicon) on the `feature/multiplatform-desktop` branch.
   support for `onDidReceiveNotificationResponse`; verified at compile time,
   device-level verification pending.
 - **Windows/macOS native builds not verified on this host** (Linux). CI matrix
-  in `.github/workflows/desktop-build.yml` provides the reproducible path.
+  in `.github/workflows/desktop-build.yml` provides the reproducible path;
+  `.github/workflows/github-apk-release.yml` packages the Windows installer,
+  macOS DMG and Linux AppImage for GitHub releases. Windows/macOS packages are
+  not code-signed or notarized.
 
 ## Verification status
 
