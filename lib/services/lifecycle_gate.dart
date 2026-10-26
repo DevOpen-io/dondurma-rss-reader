@@ -189,5 +189,16 @@ final class MemoryLifecycleGate implements LifecycleGate {
   @override
   Future<void> recoverPendingReset({
     required Map<String, Future<void> Function()> cleanupStages,
-  }) async {}
+  }) => _locked(() async {
+    if (_resetId == null) return;
+    if (_required.any((stage) => !cleanupStages.containsKey(stage))) {
+      throw ArgumentError('Recovery handlers must cover the recorded plan');
+    }
+    for (final stage in _required.skip(_completed.length)) {
+      await cleanupStages[stage]!();
+      _completed.add(stage);
+    }
+    _resetId = null;
+    _epoch = _nonce();
+  });
 }

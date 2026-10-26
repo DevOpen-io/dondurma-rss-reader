@@ -54,4 +54,20 @@ void main() {
     });
     expect((await later.future).resetEpoch, ticket.resetEpoch);
   });
+
+  test('recovery finishes the remaining recorded stages', () async {
+    final gate = MemoryLifecycleGate();
+    final reset = await gate.beginReset(cleanupStages: ['a', 'b']);
+    final ran = <String>[];
+    await gate.performCleanupStage(reset, 'a', () async => ran.add('a'));
+    await gate.recoverPendingReset(
+      cleanupStages: {
+        'a': () async => ran.add('a-again'),
+        'b': () async => ran.add('b'),
+        'extra': () async => ran.add('extra'),
+      },
+    );
+    expect(ran, ['a', 'b']);
+    await gate.beginWork();
+  });
 }
