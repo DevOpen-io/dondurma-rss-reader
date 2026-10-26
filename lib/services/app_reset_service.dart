@@ -101,7 +101,8 @@ abstract final class AppResetService {
     final archived = await ArticleRecordStore.forBox(box).wipeAll();
     final history = await (observed ?? ObservedArticleStore.forBox(box))
         .wipeAll();
-    await ArticleMediaStore().deleteAllManaged();
+    // Web has no file system, so no managed media pool exists there.
+    if (!kIsWeb) await ArticleMediaStore().deleteAllManaged();
     if (!archived || !history) {
       throw StateError('Feed sidecar wipe failed');
     }
