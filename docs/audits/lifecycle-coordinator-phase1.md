@@ -295,3 +295,12 @@ Bağımsız review sonrası TDD ile (önce kırmızı test, sonra düzeltme):
 Doğrulama: `flutter analyze` temiz; coordinator **28/28**; scheduler **12/12** (3 koşu); tam suite **607 başarılı / 5 başarısız** (yalnız A, B, C, E2, J acceptance). Scheduler teardown hatası bu koşularda görülmedi; §9'daki "her koşuda 10/1" bulgusu bu ortamda tekrar etmedi.
 
 Açık kalanlar (bu review'da değiştirilmedi): Android/diğer platform backend'i; read/status/durable record'ların hâlâ global `id` kullanması (source-local identity yarım); `AnchoredFeedList`'in primary olmayan controller'ı ve rebuild başına O(n) maliyeti; desktop/feed_provider diff'lerindeki format gürültüsü; commit ayrıştırması.
+
+## 12. Phase 2 ve kimlik (2026-10-26)
+
+- Native mutex build hook ile tüm native hedeflere derlenir (`hook/build.dart`; POSIX flock, Windows LockFileEx). Android APK üç ABI için paketler; cihazda çalıştırılmadı. macOS/iOS/Windows burada derlenmedi.
+- `LifecycleGate` arayüzü; web için `MemoryLifecycleGate`. Girişler (`main`, Workmanager dispatcher) gate'i kurar ve yarım reset'i okumadan önce tamamlar. Journal açılamazsa (bozuk) isolate loglayarak gate'siz çalışır — bilinçli erişilebilirlik tercihi.
+- Ticket'lı yayınlar: medya byte+manifest, GC son referans+silme, observation claim, background validator/cache/claim, foreground refresh/add-feed claim'leri. Foreground Hive yazıları aynı isolate'taki `_resetGeneration` ile sınırlıdır.
+- A/B/C/E2/J yeşil; G (yarım reset recovery) testi eklendi. Archive schema 2 ve kaynak bazlı okundu durumu için `durable-identity-followup.md` başındaki nota bakın.
+- Doğrulama: `flutter analyze` temiz, `flutter test` 638/638, `flutter build linux --debug`, `apk --debug`, `web` başarılı; Linux uygulaması gerçek veriyle çalıştırıldı (v1→v2 migration, hata yok).
+

@@ -1,5 +1,7 @@
 # Dondurma RSS Reader — Reset Publication Protocol Audit
 
+> **Güncel durum (2026-10-26):** Bu rapordaki protokol uygulandı. Ortak lifecycle gate (native flock/LockFileEx mutex, web'de tek-isolate gate), ticket'lı medya/GC/observation/background yayını, journal'lı fabrika sıfırlaması ve startup recovery mevcut. A/B/C/E2/J acceptance testleri yeşil (yalnız setup reset'i gate üzerinden yürütür ve ticket verir; assertion'lar değişmedi). Tam suite 638/638. Ayrıntı: `lifecycle-coordinator-phase1.md` §11 ve `docs/development/offline-storage.md`. Aşağıdaki metin tarihsel kayıttır.
+
 ## 1. Initial repository state
 
 - Dal: `main`.

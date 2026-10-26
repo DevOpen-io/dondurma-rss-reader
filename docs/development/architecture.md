@@ -74,7 +74,8 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 
 - `subscriptions`: JSON `FeedSubscription` listesi
 - `custom_categories`, `category_icons`, `category_order`
-- `cachedItemsJson`, `readItemIds`
+- `cachedItemsJson`
+- `readItemRefs`: kaynak bazlı okundu işaretleri (`(feedUrl, id)` typed key) ve henüz bağlanmamış legacy ID'ler; `readItemIds` yalnız migration girdisidir, yeniden yazılmaz
 - `feedValidators`: URL bazlı ETag/Last-Modified
 - `feedRedirects`: abonelik URL'sinden öğrenilen son URL'ye eşleme
 - `feedBackoffUntil`, `feedBackoffUntil.bg`: ön plan ve arka plan yazarlarının ayrı cooldown snapshot'ları

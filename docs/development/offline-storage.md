@@ -46,6 +46,10 @@ Hazırlık servisi `HostPacer` ve `FeedBackoff`'u kendi isolate'ındaki feed/ext
 
 [ArticleCleanupService](../../lib/services/article_cleanup_service.dart) sahipsiz kaydı tombstone yapar, hiçbir canlı manifest'in kullanmadığı medya dosyalarını koruma süresinden sonra bırakır. Paylaşılan görseli başka bir makale kullanıyorsa dosya kalır. Kayıt verisi çözümlenemiyorsa dosyanın sahipsiz olduğu kanıtlanamaz; temizleme dosya silmeden durur.
 
+Kayıtlar kaynak instance'ına göre (`ArticleRef`: abonelik URL'si + normalize ID, typed key) `.article-archive.v2.json` içinde tutulur; aynı GUID'i taşıyan iki feed iki ayrı kayıttır. Schema-1 `.article-archive.json` yalnız migration girdisidir: v2 yokken store kilidi altında bir kez türetilir, bilinen tek instance ile eşleşmeyen kayıt karantinaya alınır (byte ve manifest korunur, GC referansı sayılır, hiçbir instance'ın offline kopyası gösterilmez). Epoch taşınır; reset iki dosyayı da temizler.
+
+Çok kaynaklı yayınlar ortak yaşam döngüsü kapısından geçer ([lifecycle_gate](../../lib/services/lifecycle_gate.dart), native [mutex](../../native/lifecycle/README.md)): iş başlarken ticket alınır; medya byte'ı + manifest, GC'nin son referans kararı + silme, observation claim'i ve background cache/validator yazıları o ticket ile kapı altında yayınlanır. Fabrika sıfırlaması journal'lı bir reset'tir ([AppResetService](../../lib/services/app_reset_service.dart)); yarıda kalırsa uygulama ve background girişleri depolamayı okumadan önce tamamlar.
+
 Generation, tombstone ve persisted epoch kontrolleri eski async işlerin silinen kayıtları diriltmesini önler. `ArticlePreparationService.resetFence()` kuyruktaki eski mutasyonları sınırlar; `cacheEpoch` cache temizliğiyle yarışan background yazılarına karşı kullanılır. Fabrika sıfırlaması ve cache temizleme aynı yaşam döngüsü değildir: cache temizliği yer imlerini korur.
 
 ## UI durumu ve testler
