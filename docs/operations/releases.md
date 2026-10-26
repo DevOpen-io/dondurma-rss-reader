@@ -17,6 +17,21 @@ either submission job starts. Submissions are serialized across workflow runs;
 an active release is never cancelled. GitHub concurrency retains at most one
 pending run, so wait for the active release to finish before tagging another.
 
+## GitHub download releases
+
+[The GitHub release workflow](../../.github/workflows/github-apk-release.yml)
+runs after CI passes on every main push and publishes one GitHub release
+(`apk-v…` tag, not a store tag) with four downloads: the signed Android APK, a
+Windows x64 installer built with Inno Setup from
+[`windows/installer/dondurma.iss`](../../windows/installer/dondurma.iss), a
+macOS `.dmg` and a Linux x86_64 AppImage. The release job waits for all four
+builds, so one failed platform blocks the release instead of shipping a partial
+set; re-run the failed job. Superseded main commits are skipped. The Windows
+installer bundles the Visual C++ runtime and installs per user without an
+admin prompt. Windows and macOS builds are not code-signed or notarized, so
+SmartScreen and Gatekeeper warn on first launch; the release notes explain how
+to open them.
+
 ## Configure GitHub
 
 Add these repository Actions secrets in Settings → Secrets and variables →
