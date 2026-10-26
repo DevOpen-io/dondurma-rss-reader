@@ -304,3 +304,5 @@ Açık kalanlar (bu review'da değiştirilmedi): Android/diğer platform backend
 - A/B/C/E2/J yeşil; G (yarım reset recovery) testi eklendi. Archive schema 2 ve kaynak bazlı okundu durumu için `durable-identity-followup.md` başındaki nota bakın.
 - Doğrulama: `flutter analyze` temiz, `flutter test` 638/638, `flutter build linux --debug`, `apk --debug`, `web` başarılı; Linux uygulaması gerçek veriyle çalıştırıldı (v1→v2 migration, hata yok).
 
+- Çalışma zamanı doğrulaması (2026-10-26): Android emülatörü (API 36, x86_64) — native mutex yüklendi, `files/lifecycle` journal/marker/lock oluştu, v1→v2 arşiv migration'ı hata vermeden çalıştı; Workmanager job'u zamanı gelmeden zorlanamadığı için background isolate girişi cihazda tetiklenmedi (C testi kapsıyor). Web: headless Chrome'da açılış, Hive ve onboarding yönlendirmesi hatasız. Windows/macOS/iOS bu Linux makinede derlenemez/çalıştırılamaz.
+- Karantina kayıtları için Ayarlar > Eski arşiv ekranı eklendi (EN/TR/ES, "kaynak doğrulanmadı" etiketi). Tam suite 640/640.
