@@ -1158,4 +1158,18 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get refreshFeeds => 'Refresh feeds';
+
+  @override
+  String get legacyArchive => 'Legacy archive';
+
+  @override
+  String get legacyArchiveDesc =>
+      'Copies saved before the per-source update whose source could not be proven';
+
+  @override
+  String get legacyArchiveEmpty => 'No legacy copies.';
+
+  @override
+  String get legacyArchiveUnverified =>
+      'Source unverified — shown as it was saved, never matched to a feed article.';
 }

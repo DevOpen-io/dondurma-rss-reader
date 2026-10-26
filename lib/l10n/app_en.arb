@@ -516,5 +516,9 @@
   "nextArticle": "Next article",
   "searchArticles": "Search articles",
   "articles": "Articles",
-  "refreshFeeds": "Refresh feeds"
+  "refreshFeeds": "Refresh feeds",
+  "legacyArchive": "Legacy archive",
+  "legacyArchiveDesc": "Copies saved before the per-source update whose source could not be proven",
+  "legacyArchiveEmpty": "No legacy copies.",
+  "legacyArchiveUnverified": "Source unverified — shown as it was saved, never matched to a feed article."
 }

@@ -386,5 +386,9 @@
   "nextArticle": "Sonraki makale",
   "searchArticles": "Makalelerde ara",
   "articles": "Makaleler",
-  "refreshFeeds": "Kaynakları yenile"
+  "refreshFeeds": "Kaynakları yenile",
+  "legacyArchive": "Eski arşiv",
+  "legacyArchiveDesc": "Kaynak bazlı güncellemeden önce kaydedilmiş, kaynağı kanıtlanamayan kopyalar",
+  "legacyArchiveEmpty": "Eski kopya yok.",
+  "legacyArchiveUnverified": "Kaynak doğrulanmadı — kaydedildiği gibi gösterilir, hiçbir akış makalesine eşlenmez."
 }

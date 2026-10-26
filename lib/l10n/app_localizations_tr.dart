@@ -1162,4 +1162,18 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get refreshFeeds => 'Kaynakları yenile';
+
+  @override
+  String get legacyArchive => 'Eski arşiv';
+
+  @override
+  String get legacyArchiveDesc =>
+      'Kaynak bazlı güncellemeden önce kaydedilmiş, kaynağı kanıtlanamayan kopyalar';
+
+  @override
+  String get legacyArchiveEmpty => 'Eski kopya yok.';
+
+  @override
+  String get legacyArchiveUnverified =>
+      'Kaynak doğrulanmadı — kaydedildiği gibi gösterilir, hiçbir akış makalesine eşlenmez.';
 }

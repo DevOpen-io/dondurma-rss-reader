@@ -1174,4 +1174,18 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get refreshFeeds => 'Actualizar fuentes';
+
+  @override
+  String get legacyArchive => 'Archivo heredado';
+
+  @override
+  String get legacyArchiveDesc =>
+      'Copias guardadas antes de la actualización por origen cuyo origen no se pudo comprobar';
+
+  @override
+  String get legacyArchiveEmpty => 'No hay copias heredadas.';
+
+  @override
+  String get legacyArchiveUnverified =>
+      'Origen no verificado: se muestra tal como se guardó y nunca se asocia a un artículo del feed.';
 }

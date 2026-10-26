@@ -386,5 +386,9 @@
   "nextArticle": "Siguiente artículo",
   "searchArticles": "Buscar artículos",
   "articles": "Artículos",
-  "refreshFeeds": "Actualizar fuentes"
+  "refreshFeeds": "Actualizar fuentes",
+  "legacyArchive": "Archivo heredado",
+  "legacyArchiveDesc": "Copias guardadas antes de la actualización por origen cuyo origen no se pudo comprobar",
+  "legacyArchiveEmpty": "No hay copias heredadas.",
+  "legacyArchiveUnverified": "Origen no verificado: se muestra tal como se guardó y nunca se asocia a un artículo del feed."
 }

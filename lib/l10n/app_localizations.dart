@@ -2211,6 +2211,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refresh feeds'**
   String get refreshFeeds;
+
+  /// No description provided for @legacyArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Legacy archive'**
+  String get legacyArchive;
+
+  /// No description provided for @legacyArchiveDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Copies saved before the per-source update whose source could not be proven'**
+  String get legacyArchiveDesc;
+
+  /// No description provided for @legacyArchiveEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No legacy copies.'**
+  String get legacyArchiveEmpty;
+
+  /// No description provided for @legacyArchiveUnverified.
+  ///
+  /// In en, this message translates to:
+  /// **'Source unverified — shown as it was saved, never matched to a feed article.'**
+  String get legacyArchiveUnverified;
 }
 
 class _AppLocalizationsDelegate

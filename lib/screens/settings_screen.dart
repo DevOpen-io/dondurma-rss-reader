@@ -25,6 +25,7 @@ import '../widgets/adaptive_dialog.dart';
 import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
 import '../widgets/constrained_width.dart';
+import 'legacy_archive_screen.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -556,6 +557,17 @@ class SettingsScreen extends StatelessWidget {
           const SizedBox(height: 4),
           SettingsCard(
             children: [
+              SettingsActionTile(
+                icon: Icons.inventory_2_outlined,
+                title: l10n.legacyArchive,
+                subtitle: l10n.legacyArchiveDesc,
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const LegacyArchiveScreen(),
+                  ),
+                ),
+              ),
+              const SettingsTileDivider(),
               SettingsActionTile(
                 icon: Icons.delete_sweep_outlined,
                 title: l10n.clearCache,
