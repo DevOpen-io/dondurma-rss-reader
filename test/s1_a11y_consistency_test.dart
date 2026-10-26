@@ -367,6 +367,12 @@ void main() {
   });
 
   group('Navigation window', () {
+    test('shared GUID opens the selected source, not the first match', () {
+      final a = buildItem(id: 'shared').copyWith(feedUrl: 'a');
+      final b = buildItem(id: 'shared').copyWith(feedUrl: 'b');
+      final window = articleNavigationWindow([a, b], b);
+      expect(window.items[window.initialIndex].feedUrl, 'b');
+    });
     testWidgets('unknown id opens its own item, never index 0', (tester) async {
       final others = [
         buildItem(id: 'a'),

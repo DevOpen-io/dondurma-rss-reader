@@ -57,11 +57,21 @@ class ObservedArticleStore {
     required Iterable<FeedItem> items,
     bool allowInitialization = true,
     DateTime? observedAt,
+    bool Function()? claimCheck,
   }) async {
     final now = (observedAt ?? DateTime.now()).toUtc();
     try {
       final exclusive = await _persistence.runExclusive(() async {
         final state = _decodeState(await _persistence.read());
+        // Recheck inside the lock, after disk IO: a reset/unsubscribe may
+        // have invalidated the caller while it waited for another writer.
+        if (claimCheck != null && !claimCheck()) {
+          return const ObservedClaimResult(
+            claimedItems: [],
+            initializedFeed: false,
+            lockTimedOut: false,
+          );
+        }
         _prune(state, now);
 
         final feedKey =

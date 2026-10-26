@@ -148,11 +148,11 @@ Future<void> _seedCache(Iterable<FeedItem> items) => Hive.box('feeds').put(
   BookmarkProvider bookmarks,
   FeedProvider feed,
 })
-_providers({bool wire = true}) {
+_providers({bool wire = true, HostPacer? pacer}) {
   final subscriptions = SubscriptionProvider();
   final settings = SettingsProvider();
   final bookmarks = BookmarkProvider();
-  final feed = FeedProvider();
+  final feed = FeedProvider(hostPacer: pacer);
   if (wire) feed.update(subscriptions, settings, bookmarks);
   return (
     subscriptions: subscriptions,
@@ -218,6 +218,406 @@ void main() {
       await tempDirectory.delete(recursive: true);
     }
   });
+
+  test(
+    'bookmarks with shared GUID survive independent toggles and restart',
+    () async {
+      final a = _item('feed-a', 'shared');
+      final b = _item('feed-b', 'shared');
+      final bookmarks = BookmarkProvider();
+      bookmarks.toggleBookmark(a);
+      await bookmarks.persistBookmarks();
+      bookmarks.toggleBookmark(b);
+      await bookmarks.persistBookmarks();
+      expect(bookmarks.bookmarkedItems.map((i) => i.feedUrl), [
+        'feed-a',
+        'feed-b',
+      ]);
+      bookmarks.dispose();
+      final restarted = BookmarkProvider();
+      expect(restarted.bookmarkedItems.length, 2);
+      expect(await restarted.removeBookmark(a), isTrue);
+      expect(restarted.bookmarkedItems.single.feedUrl, 'feed-b');
+      expect(restarted.bookmarkedItemIds, contains('shared'));
+      await restarted.persistBookmarks();
+      restarted.dispose();
+      final offline = BookmarkProvider();
+      expect(offline.bookmarkedItems.single.feedUrl, 'feed-b');
+      offline.dispose();
+    },
+  );
+
+  test('legacy ID-only bookmark can be removed and stays removed', () async {
+    await Hive.box('bookmarks').put('bookmarkedItemIds', ['legacy', 'other']);
+    final item = _item('feed-a', 'legacy');
+    final bookmarks = BookmarkProvider();
+    expect(bookmarks.isBookmarked(item.id, feedUrl: item.feedUrl), isTrue);
+    expect(await bookmarks.removeBookmark(item), isTrue);
+    expect(bookmarks.isBookmarked(item.id), isFalse);
+    bookmarks.dispose();
+    final restarted = BookmarkProvider();
+    expect(restarted.isBookmarked(item.id), isFalse);
+    // Persisting the removal must not drop the other legacy memberships.
+    expect(restarted.isBookmarked('other', feedUrl: 'feed-b'), isTrue);
+    restarted.dispose();
+  });
+
+  test(
+    'fast feed is visible before slow feed completes, without early persistence',
+    () async {
+      final fast = server.url('/incremental-fast.xml');
+      final slow = server.url('/incremental-slow.xml');
+      final releaseSlow = Completer<void>();
+      server.handlers['/incremental-fast.xml'] = (request) =>
+          _respond200(request, _rss('Fast', ['fast-new']));
+      server.handlers['/incremental-slow.xml'] = (request) async {
+        await releaseSlow.future;
+        await _respond200(request, _rss('Slow', ['slow-new']));
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: fast, name: 'Fast', category: 'Test'),
+        FeedSubscription(url: slow, name: 'Slow', category: 'Test'),
+      ]);
+      await _seedCache([_item(fast, 'fast-old'), _item(slow, 'slow-old')]);
+      final providers = _providers();
+      try {
+        await _waitUntil(
+          () => providers.feed.items.any((i) => i.id == 'fast-new'),
+        );
+        expect(providers.feed.isSyncing, isTrue);
+        expect(
+          providers.feed.items.map((i) => i.id),
+          containsAll(['fast-new', 'slow-old']),
+        );
+        expect(
+          providers.feed.items.map((i) => i.id),
+          isNot(contains('fast-old')),
+        );
+        expect(_persistedItems().map((i) => i.id), ['fast-old', 'slow-old']);
+        expect(providers.feed.refreshProgress.value.completed, 1);
+        releaseSlow.complete();
+        await _waitForRefresh(providers.feed);
+        expect(
+          providers.feed.items.map((i) => i.id),
+          containsAll(['fast-new', 'slow-new']),
+        );
+        expect(
+          providers.feed.items.map((i) => i.id),
+          isNot(contains('slow-old')),
+        );
+        expect(
+          _persistedItems().map((i) => i.id),
+          containsAll(['fast-new', 'slow-new']),
+        );
+      } finally {
+        if (!releaseSlow.isCompleted) releaseSlow.complete();
+        await _waitForRefresh(providers.feed);
+        providers.feed.dispose();
+      }
+    },
+  );
+
+  test(
+    'reset publication acceptance C old background HTTP cannot replace new lifecycle projections',
+    () async {
+      final url = server.url('/reset-publication-old.xml');
+      final requested = Completer<void>();
+      final release = Completer<void>();
+      server.handlers['/reset-publication-old.xml'] = (request) async {
+        requested.complete();
+        await release.future;
+        await _respond200(
+          request,
+          _rss('Old', ['pre-reset-item']),
+          etag: 'old-etag',
+        );
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'Old', category: 'Test'),
+      ]);
+      await Hive.box('settings').put('notificationsEnabled', false);
+      final providers = _providers(wire: false);
+      try {
+        await providers.feed
+            .refreshAll(); // Finish startup, no foreground fetch.
+        final background = runBgFetch();
+        await requested.future;
+        expect(await providers.feed.factoryReset(), isTrue);
+        final box = Hive.box('feeds');
+        final records = ArticleRecordStore.forBox(box);
+        final current = _item('https://current.test/rss', 'post-reset-item');
+        await records.write(
+          ArticleRecord(
+            id: current.id,
+            feedUrl: current.feedUrl,
+            body: '<p>current</p>',
+            owners: {'bookmark'},
+            generation: 1,
+          ),
+        );
+        await ObservedArticleStore.forBox(
+          box,
+        ).claimFeedBatch(feedUrl: current.feedUrl, items: [current]);
+        await _seedCache([current]);
+        await box.put(
+          'feedValidators',
+          jsonEncode({
+            'current-key': {'etag': 'current-etag'},
+          }),
+        );
+        release.complete();
+        await background;
+        final observation =
+            jsonDecode(
+                  await File(
+                    '${box.path}.observed-articles.json',
+                  ).readAsString(),
+                )
+                as Map;
+        final feeds = observation['feeds'] as Map;
+        final validators =
+            jsonDecode(box.get('feedValidators') as String) as Map;
+        expect(
+          {
+            'oldArchivePresent': await records.read('pre-reset-item') != null,
+            'newArchivePresent': await records.read(current.id) != null,
+            'oldObservationPresent': feeds.keys.any(
+              (key) => key.toString().startsWith('$url\u0000'),
+            ),
+            'newObservationPresent': feeds.keys.any(
+              (key) => key.toString().startsWith('${current.feedUrl}\u0000'),
+            ),
+            'cachedIds': _persistedItems().map((i) => i.id).toList(),
+            'validatorKeys': validators.keys.toList(),
+          },
+          {
+            'oldArchivePresent': false,
+            'newArchivePresent': true,
+            'oldObservationPresent': false,
+            'newObservationPresent': true,
+            'cachedIds': ['post-reset-item'],
+            'validatorKeys': ['current-key'],
+          },
+        );
+      } finally {
+        if (!release.isCompleted) release.complete();
+        providers.feed.dispose();
+      }
+    },
+  );
+
+  test('clearing cache cancels an unpublished source batch', () async {
+    final release = Completer<void>();
+    final cleared = Completer<void>();
+    final fast = server.url('/unpublished-fast.xml');
+    final slow = server.url('/unpublished-slow.xml');
+    server.handlers['/unpublished-fast.xml'] = (request) =>
+        _respond200(request, _rss('Fast', ['unpublished-fast']));
+    server.handlers['/unpublished-slow.xml'] = (request) async {
+      await release.future;
+      await _respond200(request, _rss('Slow', ['unpublished-slow']));
+    };
+    await _seedSubscriptions([
+      FeedSubscription(url: fast, name: 'Fast', category: 'Test'),
+      FeedSubscription(url: slow, name: 'Slow', category: 'Test'),
+    ]);
+    final providers = _providers();
+    var clearing = false;
+    providers.feed.refreshProgress.addListener(() {
+      if (!clearing && providers.feed.refreshProgress.value.completed == 1) {
+        clearing = true;
+        providers.feed.clearCache().then(
+          cleared.complete,
+          onError: cleared.completeError,
+        );
+      }
+    });
+    try {
+      await cleared.future.timeout(const Duration(seconds: 4));
+      await Future<void>.delayed(const Duration(milliseconds: 150));
+      expect(providers.feed.items, isEmpty);
+      release.complete();
+      await _waitForRefresh(providers.feed);
+      expect(providers.feed.items, isEmpty);
+      expect(_persistedItems(), isEmpty);
+    } finally {
+      if (!release.isCompleted) release.complete();
+      await _waitForRefresh(providers.feed);
+      providers.feed.dispose();
+    }
+  });
+
+  test(
+    'cache clearing fences article publication but retains a learned Retry-After',
+    () async {
+      final url = server.url('/clear-cooldown.xml');
+      server.handlers['/clear-cooldown.xml'] = (request) async {
+        request.response.statusCode = HttpStatus.tooManyRequests;
+        request.response.headers.set(HttpHeaders.retryAfterHeader, '600');
+        await request.response.close();
+      };
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'Limited', category: 'Test'),
+      ]);
+      final providers = _providers();
+      Future<void>? clearing;
+      providers.feed.refreshProgress.addListener(() {
+        if (providers.feed.refreshProgress.value.completed == 1) {
+          clearing ??= providers.feed.clearCache();
+        }
+      });
+      try {
+        await _waitUntil(() => clearing != null);
+        await clearing;
+        await _waitForRefresh(providers.feed);
+        final backoff = FeedBackoff();
+        backoff.load(
+          jsonDecode(Hive.box('feeds').get('feedBackoffUntil') as String)
+              as Map<String, dynamic>,
+        );
+        expect(backoff.isBackedOff(url, DateTime.now()), isTrue);
+        expect(_persistedItems(), isEmpty);
+      } finally {
+        await _waitForRefresh(providers.feed);
+        providers.feed.dispose();
+      }
+    },
+  );
+
+  test('final merge uses bookmarks changed while a feed is blocked', () async {
+    final release = Completer<void>();
+    final url = server.url('/bookmark-race.xml');
+    server.handlers['/bookmark-race.xml'] = (request) async {
+      await release.future;
+      await _respond200(request, _rss('Feed', ['fresh-bookmark-race']));
+    };
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Feed', category: 'Test'),
+    ]);
+    final oldBookmark = _item('unsubscribed', 'old-bookmark');
+    final newBookmark = _item('unsubscribed', 'new-bookmark');
+    await Hive.box(
+      'bookmarks',
+    ).put('bookmarkedItemsJson', jsonEncode([oldBookmark.toJson()]));
+    final providers = _providers();
+    try {
+      await _waitUntil(() => server.counts['/bookmark-race.xml'] == 1);
+      await providers.bookmarks.removeBookmark(oldBookmark);
+      providers.bookmarks.toggleBookmark(newBookmark);
+      release.complete();
+      await _waitForRefresh(providers.feed);
+      expect(
+        providers.feed.items.map((i) => i.id),
+        containsAll(['fresh-bookmark-race', 'new-bookmark']),
+      );
+      expect(
+        providers.feed.items.map((i) => i.id),
+        isNot(contains('old-bookmark')),
+      );
+    } finally {
+      if (!release.isCompleted) release.complete();
+      await _waitForRefresh(providers.feed);
+      providers.feed.dispose();
+    }
+  });
+
+  for (final action in ['clear', 'reset', 'dispose', 'unsubscribe']) {
+    test(
+      'late feed result is fenced after $action during incremental refresh',
+      () async {
+        final fast = server.url('/fence-fast-$action.xml');
+        final slow = server.url('/fence-slow-$action.xml');
+        final release = Completer<void>();
+        server.handlers['/fence-fast-$action.xml'] = (request) =>
+            _respond200(request, _rss('Fast', ['fence-fast-$action']));
+        server.handlers['/fence-slow-$action.xml'] = (request) async {
+          await release.future;
+          await _respond200(request, _rss('Slow', ['fence-slow-$action']));
+        };
+        await _seedSubscriptions([
+          FeedSubscription(url: fast, name: 'Fast', category: 'Test'),
+          FeedSubscription(url: slow, name: 'Slow', category: 'Test'),
+        ]);
+        final providers = _providers();
+        var disposed = false;
+        try {
+          await _waitUntil(
+            () => providers.feed.items.any((i) => i.feedUrl == fast),
+          );
+          switch (action) {
+            case 'clear':
+              await providers.feed.clearCache();
+            case 'reset':
+              expect(await providers.feed.factoryReset(), isTrue);
+            case 'dispose':
+              providers.feed.dispose();
+              disposed = true;
+            case 'unsubscribe':
+              await providers.subscriptions.removeFeed(slow);
+              providers.feed.update(
+                providers.subscriptions,
+                providers.settings,
+                providers.bookmarks,
+              );
+          }
+          release.complete();
+          await _waitForRefresh(providers.feed);
+          expect(providers.feed.items.any((i) => i.feedUrl == slow), isFalse);
+          if (action == 'reset') expect(providers.feed.items, isEmpty);
+          if (action == 'clear' || action == 'reset' || action == 'dispose') {
+            expect(_persistedItems(), isEmpty);
+          }
+        } finally {
+          if (!release.isCompleted) release.complete();
+          await _waitForRefresh(providers.feed);
+          if (!disposed) providers.feed.dispose();
+        }
+      },
+    );
+  }
+
+  test(
+    'nearby source completions publish as one batch before a blocked source',
+    () async {
+      final release = Completer<void>();
+      final urls = [for (var i = 0; i < 5; i++) server.url('/batch-$i.xml')];
+      for (var i = 0; i < 5; i++) {
+        server.handlers['/batch-$i.xml'] = (request) async {
+          if (i == 4) await release.future;
+          await _respond200(request, _rss('Batch', ['batch-item-$i']));
+        };
+      }
+      await _seedSubscriptions([
+        for (final url in urls)
+          FeedSubscription(url: url, name: 'Batch', category: 'Test'),
+      ]);
+      final providers = _providers(pacer: HostPacer(minGap: Duration.zero));
+      var publishes = 0;
+      var previousCount = 0;
+      providers.feed.addListener(() {
+        final count = providers.feed.items
+            .where((i) => i.id.startsWith('batch-item-'))
+            .length;
+        if (count != previousCount) {
+          previousCount = count;
+          publishes++;
+        }
+      });
+      try {
+        await _waitUntil(() => previousCount == 4);
+        expect(providers.feed.isSyncing, isTrue);
+        expect(publishes, 1);
+        release.complete();
+        await _waitForRefresh(providers.feed);
+        expect(previousCount, 5);
+        expect(publishes, 2);
+      } finally {
+        if (!release.isCompleted) release.complete();
+        await _waitForRefresh(providers.feed);
+        providers.feed.dispose();
+      }
+    },
+  );
 
   test(
     'subscription mutation schedules foreground refresh from immutable snapshot',

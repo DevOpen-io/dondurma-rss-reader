@@ -40,7 +40,9 @@ String truncateLabel(String text, int maxChars) {
   List<FeedItem> allItems,
   FeedItem item,
 ) {
-  final index = allItems.indexWhere((i) => i.id == item.id);
+  final index = allItems.indexWhere(
+    (i) => i.id == item.id && i.feedUrl == item.feedUrl,
+  );
   if (index < 0) return (items: [item], initialIndex: 0);
   final start = (index - _articleNavigationWindowRadius).clamp(
     0,
@@ -58,7 +60,7 @@ String truncateLabel(String text, int maxChars) {
 /// control) triggered it. Cancelling leaves every record untouched.
 Future<void> confirmBookmarkToggle(BuildContext context, FeedItem item) async {
   final bookmarks = context.read<BookmarkProvider>();
-  if (!bookmarks.isBookmarked(item.id)) {
+  if (!bookmarks.isBookmarked(item.id, feedUrl: item.feedUrl)) {
     bookmarks.toggleBookmark(item);
     return;
   }
@@ -84,7 +86,7 @@ Future<void> confirmBookmarkToggle(BuildContext context, FeedItem item) async {
   // The record may have been removed while the dialog was open; never apply
   // the action to a stale or different record.
   final provider = context.read<BookmarkProvider>();
-  if (!provider.isBookmarked(item.id)) return;
+  if (!provider.isBookmarked(item.id, feedUrl: item.feedUrl)) return;
   final ok = await provider.removeBookmark(item);
   if (!ok) {
     showAppToast(l10n.bookmarkRemoveFailed, type: AppToastType.error);
@@ -192,8 +194,9 @@ class _FeedListItemState extends State<FeedListItem>
       })
     >(
       selector: (context, feedProvider, bookmarkProvider) => (
-        isBookmarked: bookmarkProvider.bookmarkedItemIds.contains(
+        isBookmarked: bookmarkProvider.isBookmarked(
           widget.item.id,
+          feedUrl: widget.item.feedUrl,
         ),
         unmetered: feedProvider.unmetered,
         status: feedProvider.articleStatus(widget.item.id),

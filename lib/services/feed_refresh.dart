@@ -100,6 +100,8 @@ class FeedRefresher {
     required List<FeedItem> bookmarkedItems,
     required Map<String, String> redirects,
     FeedProgressCallback? onProgress,
+    void Function(String feedUrl, List<FeedItem> items)? onFreshFeed,
+    bool Function(String feedUrl, String observationEpoch)? canObserve,
   }) async {
     // Snapshot current items per feed so a 304 — or a transient error — reuses
     // the feed's existing articles instead of dropping them this cycle.
@@ -210,6 +212,12 @@ class FeedRefresher {
             dropValidator = true;
           }
         }
+        final canonicalItems = result.notModified
+            ? (existingByFeed[sub.url] ?? const <FeedItem>[])
+            : fetchUrl == sub.url
+            ? result.items
+            : result.items.map((i) => i.copyWith(feedUrl: sub.url)).toList();
+        if (!result.notModified) onFreshFeed?.call(sub.url, canonicalItems);
         backoff.recordSuccess(sub.url);
         succeeded++;
         completed++;
@@ -218,14 +226,8 @@ class FeedRefresher {
         return (
           url: sub.url,
           observationEpoch: sub.notificationEpoch,
-          items: result.notModified
-              ? (existingByFeed[sub.url] ?? const <FeedItem>[])
-              // Items parsed at a learned redirect URL carry the resolved URL
-              // as feedUrl — re-tag to canonical so cache/filter/prefetch
-              // lookups keyed by sub.url keep matching.
-              : fetchUrl == sub.url
-              ? result.items
-              : result.items.map((i) => i.copyWith(feedUrl: sub.url)).toList(),
+          // Learned redirects must still use the subscription's identity.
+          items: canonicalItems,
           succeeded: true,
           fresh: !result.notModified,
           etag: result.etag,
@@ -284,6 +286,9 @@ class FeedRefresher {
         observationEpoch: outcome.observationEpoch,
         items: outcome.items,
         allowInitialization: outcome.fresh,
+        claimCheck: canObserve == null
+            ? null
+            : () => canObserve(outcome.url, outcome.observationEpoch),
       );
       claimedItems.addAll(claim.claimedItems);
     }
@@ -293,10 +298,8 @@ class FeedRefresher {
     // it's worth re-sorting, persisting, notifying, and updating widgets.
     bool online = false;
     bool anyFreshBody = false;
-    final List<FeedItem> freshItems = [];
     final newValidators = Map<String, dynamic>.from(validators);
     for (final o in outcomes) {
-      freshItems.addAll(o.items);
       if (o.succeeded) online = true;
       if (o.fresh) {
         anyFreshBody = true;
@@ -327,45 +330,16 @@ class FeedRefresher {
       }
     }
 
-    final List<FeedItem> items;
-    if (online) {
-      // A fresh parse drops prefetched bodies — carry them over so offline
-      // content survives refresh cycles (as read/bookmark flags do).
-      FeedCachePolicy.carryOverPrefetchedText(
-        existingItems: existingItems,
-        freshItems: freshItems,
-      );
-
-      // Merge bookmarks into the list so they are always visible.
-      // Use a Set for O(1) lookup — avoids O(bookmarks × items) scan.
-      final freshIds = freshItems.map((i) => i.id).toSet();
-      for (final saved in bookmarkedItems) {
-        if (!freshIds.contains(saved.id)) {
-          freshItems.add(saved);
-          freshIds.add(saved.id);
-        }
-      }
-
-      freshItems.sort((a, b) {
-        if (a.pubDate == null && b.pubDate == null) return 0;
-        if (a.pubDate == null) return 1;
-        if (b.pubDate == null) return -1;
-        return b.pubDate!.compareTo(a.pubDate!);
-      });
-      items = freshItems;
-    } else {
-      // Offline: keep existing items but still ensure bookmarks are present.
-      final merged = List<FeedItem>.of(existingItems);
-      final existingIds = merged.map((i) => i.id).toSet();
-      for (final saved in bookmarkedItems) {
-        if (!existingIds.contains(saved.id)) {
-          merged.add(saved);
-          existingIds.add(saved.id);
-        }
-      }
-      debugPrint('FeedRefresher: all fetches failed — keeping cached items.');
-      items = merged;
-    }
+    final items = FeedCachePolicy.mergeVisibleFeeds(
+      existingItems: existingItems,
+      freshItemsByFeed: {
+        for (final o in outcomes)
+          if (o.fresh) o.url: o.items,
+      },
+      subscribedFeedUrls: subscriptions.map((s) => s.url),
+      bookmarkedItems: bookmarkedItems,
+      now: DateTime.now(),
+    );
 
     // Recorded feed errors: definitive failures (HTTP status, parse) always
     // count; connectivity failures only count when some other feed reached

@@ -140,13 +140,19 @@ class ArticlePreparationService {
   void resetFence() => _queueEpoch++;
 
   Future<StoreWriteResult> _enqueueGuarded(
-    Future<StoreWriteResult> Function() work,
+    Future<StoreWriteResult> Function(bool Function() isCurrent) work,
   ) {
     final enqueuedAt = _queueEpoch;
-    return _enqueueRegister(
-      () async =>
-          enqueuedAt == _queueEpoch ? work() : StoreWriteResult.rejected,
-    );
+    // Also pass the check into the locked mutation: the work may already
+    // have left this queue and be waiting for another writer during reset.
+    bool isCurrent() => enqueuedAt == _queueEpoch;
+    return _enqueueRegister(() async {
+      if (!isCurrent()) return StoreWriteResult.rejected;
+      final result = await work(isCurrent);
+      // A fence landing mid-mutation turned it into a no-op the store still
+      // reports as applied; claim listeners must not see that as success.
+      return isCurrent() ? result : StoreWriteResult.rejected;
+    });
   }
 
   /// Runs [update] on the register queue so owner strips serialize FIFO
@@ -157,7 +163,11 @@ class ArticlePreparationService {
     ArticleRecord? Function(ArticleRecord? current) update, {
     int? expectedEpoch,
   }) => _enqueueGuarded(
-    () => _records.mutate(id, update, expectedEpoch: expectedEpoch),
+    (isCurrent) => _records.mutate(
+      id,
+      (current) => isCurrent() ? update(current) : current,
+      expectedEpoch: expectedEpoch,
+    ),
   );
 
   /// One lifecycle sweep on the register queue: tombstones ownerless
@@ -272,7 +282,13 @@ class ArticlePreparationService {
   }) {
     if (owners.isEmpty) return Future.value(StoreWriteResult.rejected);
     return _enqueueGuarded(
-      () => _registerArticle(item, owners, fullText, expectedEpoch, claimCheck),
+      (isCurrent) => _registerArticle(
+        item,
+        owners,
+        fullText,
+        expectedEpoch,
+        () => isCurrent() && (claimCheck?.call() ?? true),
+      ),
     );
   }
 
@@ -388,11 +404,13 @@ class ArticlePreparationService {
       _enqueue(() => _prepareArticle(articleId));
 
   Future<int> _prepareArticle(String articleId) async {
+    // Fence before reading the snapshot. A reset between read and epoch
+    // capture must not license old content to mutate a new-era record.
+    final epoch = await _records.currentEpoch();
     final record = await _records.read(articleId);
     if (record == null || record.tombstoned || record.owners.isEmpty) {
       return 0;
     }
-    final epoch = await _records.currentEpoch();
     await _prepareRecord(record, _now().toUtc(), epoch, manual: true);
     return 1;
   }
@@ -407,11 +425,10 @@ class ArticlePreparationService {
 
   Future<int> _preparePending() async {
     final now = _now().toUtc();
-    final records = await _records.listRecords();
-    // Fence the whole pass: a factory reset landing mid-sweep must reject
-    // every remaining commit — a stale `ready` write into the new era
-    // could mark a manifest ready for bytes wipeAll already deleted.
+    // Fence before the snapshot: a reset during either read must reject
+    // all old commits, never license stale content with the new epoch.
     final epoch = await _records.currentEpoch();
+    final records = await _records.listRecords();
     var attempted = 0;
     for (final record in records) {
       if (record.tombstoned || record.owners.isEmpty) continue;
@@ -472,7 +489,11 @@ class ArticlePreparationService {
           html = await _extract(record.link);
         } catch (_) {}
         await _records.mutate(id, expectedEpoch: epoch, (current) {
-          if (current == null || current.tombstoned) return current;
+          if (current == null ||
+              current.tombstoned ||
+              current.generation != record.generation) {
+            return current;
+          }
           if (current.owners.isEmpty) return current;
           // A slower overlapping pass that already succeeded never gets
           // downgraded by this one's failure.
@@ -515,7 +536,12 @@ class ArticlePreparationService {
 
     // 2. Media: every due non-ready piece gets at most one attempt this pass.
     final fresh = await _records.read(id);
-    if (fresh == null || fresh.tombstoned || fresh.owners.isEmpty) return;
+    if (fresh == null ||
+        fresh.tombstoned ||
+        fresh.owners.isEmpty ||
+        fresh.generation != record.generation) {
+      return;
+    }
     final pending = <MapEntry<String, MediaEntry>>[
       for (final e in fresh.media.entries)
         if (e.value.state != MediaState.ready &&
@@ -531,21 +557,26 @@ class ArticlePreparationService {
     ];
     await Future.wait([
       for (final piece in pending)
-        _preparePiece(id, piece.key, epoch, manual: manual),
+        _preparePiece(id, piece.key, epoch, record.generation, manual: manual),
     ]);
   }
 
   Future<void> _preparePiece(
     String id,
     String url,
-    int epoch, {
+    int epoch,
+    int generation, {
     bool manual = false,
   }) async {
     await _semaphore.acquire();
     try {
       final outcome = await _fetchAndStore(url, manual: manual);
       await _records.mutate(id, expectedEpoch: epoch, (current) {
-        if (current == null || current.tombstoned) return current;
+        if (current == null ||
+            current.tombstoned ||
+            current.generation != generation) {
+          return current;
+        }
         if (current.owners.isEmpty) return current;
         final existing = current.media[url];
         if (existing == null) return current;

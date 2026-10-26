@@ -46,6 +46,31 @@ void main() {
     ),
   );
 
+  test(
+    'claim validity is checked after waiting for the storage lock',
+    () async {
+      final locked = Completer<void>();
+      final release = Completer<void>();
+      var current = true;
+      final pending =
+          store(
+            afterLockAcquired: () async {
+              locked.complete();
+              await release.future;
+            },
+          ).claimFeedBatch(
+            feedUrl: 'https://feed.test/rss',
+            items: const [],
+            claimCheck: () => current,
+          );
+      await locked.future;
+      current = false;
+      release.complete();
+      expect((await pending).initializedFeed, isFalse);
+      expect(await stateFile.exists(), isFalse);
+    },
+  );
+
   group('initialization and durable deduplication', () {
     test(
       '304 cannot initialize empty legacy feed before authoritative 200',

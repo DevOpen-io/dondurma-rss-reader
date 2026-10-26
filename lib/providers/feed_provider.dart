@@ -15,6 +15,7 @@ import '../models/feed_subscription.dart';
 import '../models/refresh_progress.dart';
 import '../services/article_identity.dart';
 import '../services/feed_backoff.dart';
+import '../services/feed_cache_policy.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
@@ -47,7 +48,7 @@ import 'subscription_provider.dart';
 /// [applyFeedFilters] (filter pipeline), [groupFeedItemsByDate] (sections),
 /// and `feed_decisions.dart` (pure sync/filter predicates).
 class FeedProvider extends ChangeNotifier {
-  final FeedService _feedService = FeedService();
+  final FeedService _feedService;
   late final ObservedArticleStore _observedArticleStore;
   late final FeedRefresher _refresher;
   late final Future<void> _initialization;
@@ -68,10 +69,14 @@ class FeedProvider extends ChangeNotifier {
   bool _isLoadingMore = false;
 
   Timer? _cacheTimer;
+  Timer? _refreshPublishTimer;
+  final Timer Function(Duration, void Function()) _scheduleRefreshPublish;
 
   /// Tracks whether the first load has completed, so we don't fire
   /// notifications on initial startup.
   bool _hasLoadedOnce = false;
+  @visibleForTesting
+  bool get hasLoadedOnce => _hasLoadedOnce;
 
   /// Throttles in-app notifications to at most one burst per 15 minutes.
   DateTime? _lastNotificationTime;
@@ -95,8 +100,9 @@ class FeedProvider extends ChangeNotifier {
   /// Incremental refresh status — a dedicated [ValueNotifier] so per-feed
   /// progress repaints only the small toolbar indicator instead of the
   /// entire provider listener tree.
-  final ValueNotifier<RefreshProgress> refreshProgress =
-      ValueNotifier(const RefreshProgress.idle());
+  final ValueNotifier<RefreshProgress> refreshProgress = ValueNotifier(
+    const RefreshProgress.idle(),
+  );
 
   /// Set when a refresh is requested while one is already running. The in-flight
   /// [refreshAll] runs exactly one more pass when it finishes, so overlapping
@@ -132,6 +138,7 @@ class FeedProvider extends ChangeNotifier {
   List<String>? _lastGlobalKeywords;
   Map<String, List<String>>? _lastFeedKeywords;
   Set<String>? _lastBookmarkIds;
+  Set<(String, String)>? _lastBookmarkInstances;
   Map<String, bool?>? _knownFullTextPrefs;
   int _lastClaimVersion = -1;
 
@@ -308,11 +315,16 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   FeedProvider({
+    FeedService? feedService,
+    @visibleForTesting
+    Timer Function(Duration, void Function())? scheduleRefreshPublish,
     ObservedArticleStore? observedArticleStore,
     ArticlePreparationService? preparation,
     HostPacer? hostPacer,
     FeedBackoff? backoff,
-  }) : _ownsPreparation = preparation == null,
+  }) : _scheduleRefreshPublish = scheduleRefreshPublish ?? Timer.new,
+       _feedService = feedService ?? FeedService(),
+       _ownsPreparation = preparation == null,
        _hostPacer = hostPacer ?? HostPacer(),
        _feedBackoff = backoff ?? FeedBackoff() {
     _preparation =
@@ -414,17 +426,27 @@ class FeedProvider extends ChangeNotifier {
           s.url: List<String>.of(s.excludedKeywords),
     };
     final nextBookmarkIds = Set<String>.of(book.bookmarkedItemIds);
-    final inputsChanged = feedFilterInputsChanged(
-      prevGlobalKeywords: _lastGlobalKeywords,
-      nextGlobalKeywords: nextGlobalKeywords,
-      prevFeedKeywords: _lastFeedKeywords,
-      nextFeedKeywords: nextFeedKeywords,
-      prevBookmarkIds: _lastBookmarkIds,
-      nextBookmarkIds: nextBookmarkIds,
+    final nextBookmarkInstances = {
+      for (final item in book.bookmarkedItems) (item.feedUrl, item.id),
+    };
+    final bookmarkInstancesChanged = !setEquals(
+      _lastBookmarkInstances,
+      nextBookmarkInstances,
     );
+    final inputsChanged =
+        bookmarkInstancesChanged ||
+        feedFilterInputsChanged(
+          prevGlobalKeywords: _lastGlobalKeywords,
+          nextGlobalKeywords: nextGlobalKeywords,
+          prevFeedKeywords: _lastFeedKeywords,
+          nextFeedKeywords: nextFeedKeywords,
+          prevBookmarkIds: _lastBookmarkIds,
+          nextBookmarkIds: nextBookmarkIds,
+        );
     _lastGlobalKeywords = nextGlobalKeywords;
     _lastFeedKeywords = nextFeedKeywords;
     _lastBookmarkIds = nextBookmarkIds;
+    _lastBookmarkInstances = nextBookmarkInstances;
 
     // A durable bookmark-claim mutation (strip/prepare) lands AFTER the
     // bookmark set already changed — its completion bumps this version.
@@ -458,7 +480,9 @@ class FeedProvider extends ChangeNotifier {
     if (inputsChanged) {
       // Rebuild filter output — cheap, O(n) walk already cached.
       _invalidateFilterCache();
-      Future.microtask(() => notifyListeners());
+      Future.microtask(() {
+        if (!_disposed) notifyListeners();
+      });
     }
 
     // Only recreate the background sync timer when interval or toggle changes.
@@ -787,7 +811,9 @@ class FeedProvider extends ChangeNotifier {
     // Apply dynamic read/bookmark state
     _filteredItemsCache = filtered.map((item) {
       final isRead = _readItemIds.contains(item.id);
-      final isBookmarked = bookmarkProvider?.isBookmarked(item.id) ?? false;
+      final isBookmarked =
+          bookmarkProvider?.isBookmarked(item.id, feedUrl: item.feedUrl) ??
+          false;
       return item.copyWith(isRead: isRead, isBookmarked: isBookmarked);
     }).toList();
 
@@ -1073,7 +1099,7 @@ class FeedProvider extends ChangeNotifier {
     bool userInitiated = false,
   }) async {
     await _initialization;
-    if (subscriptionProvider == null) return;
+    if (_disposed || subscriptionProvider == null) return;
 
     if (_isSyncing) {
       if (queueIfRunning) _refreshQueued = true;
@@ -1098,11 +1124,13 @@ class FeedProvider extends ChangeNotifier {
     } catch (error, stackTrace) {
       failure = error;
       failureStack = stackTrace;
-      refreshProgress.value = refreshProgress.value.copyWith(
-        phase: RefreshPhase.failed,
-        inFlight: 0,
-        completedAt: DateTime.now(),
-      );
+      if (!_disposed) {
+        refreshProgress.value = refreshProgress.value.copyWith(
+          phase: RefreshPhase.failed,
+          inFlight: 0,
+          completedAt: DateTime.now(),
+        );
+      }
       rethrow;
     } finally {
       // Always clear the guard, even if a fetch/persist step throws — otherwise
@@ -1137,7 +1165,40 @@ class FeedProvider extends ChangeNotifier {
     // Pick up cooldowns the background isolate wrote since the last
     // pass — a stale in-memory snapshot must never bypass a fresh 429.
     _loadFeedBackoff();
-    final subscriptions = subscriptionProvider!.subscriptions;
+    final cacheGeneration = _cacheGeneration;
+    final subscriptions = List<FeedSubscription>.of(
+      subscriptionProvider!.subscriptions,
+    );
+    final epochs = {for (final s in subscriptions) s.url: s.notificationEpoch};
+    final refreshGeneration = ++_refreshGeneration;
+    final freshByFeed = <String, List<FeedItem>>{};
+    var acceptingPublications = true;
+    bool isCurrent() =>
+        refreshGeneration == _refreshGeneration &&
+        !_disposed &&
+        resetGeneration == _resetGeneration &&
+        cacheGeneration == _cacheGeneration;
+    List<FeedItem> mergeCurrent() => FeedCachePolicy.mergeVisibleFeeds(
+      existingItems: _items,
+      freshItemsByFeed: {
+        for (final s in subscriptionProvider!.subscriptions)
+          if (epochs[s.url] == s.notificationEpoch &&
+              freshByFeed.containsKey(s.url))
+            s.url: freshByFeed[s.url]!,
+      },
+      subscribedFeedUrls: subscriptionProvider!.subscriptions.map((s) => s.url),
+      bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
+      now: DateTime.now(),
+    );
+    void publish() {
+      if (!acceptingPublications || !isCurrent()) return;
+      _refreshPublishTimer = null;
+      _items = mergeCurrent();
+      _isOffline = false;
+      _invalidateFilterCache();
+      notifyListeners();
+    }
+
     refreshProgress.value = RefreshProgress(
       phase: RefreshPhase.refreshing,
       total: subscriptions.length,
@@ -1145,32 +1206,78 @@ class FeedProvider extends ChangeNotifier {
       completedAt: refreshProgress.value.completedAt,
       userInitiated: _refreshIsUserInitiated,
     );
-    final result = await _refresher.refresh(
-      subscriptions: subscriptions,
-      existingItems: _items,
-      validators: _loadFeedValidators(),
-      bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
-      redirects: _loadFeedRedirects(),
-      onProgress: ({
-        required total,
-        required completed,
-        required succeeded,
-        required failed,
-        required skipped,
-        required inFlight,
-      }) {
-        refreshProgress.value = refreshProgress.value.copyWith(
-          total: total,
-          completed: completed,
-          succeeded: succeeded,
-          failed: failed,
-          skipped: skipped,
-          inFlight: inFlight,
-        );
-      },
-    );
+    final FeedRefreshResult result;
+    try {
+      result = await _refresher.refresh(
+        subscriptions: subscriptions,
+        existingItems: _items,
+        validators: _loadFeedValidators(),
+        bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
+        redirects: _loadFeedRedirects(),
+        // Observation survives cache eviction, but not a factory reset or
+        // the removal/replacement of this subscription namespace.
+        canObserve: (url, epoch) =>
+            !_disposed &&
+            resetGeneration == _resetGeneration &&
+            subscriptionProvider!.subscriptions.any(
+              (s) => s.url == url && s.notificationEpoch == epoch,
+            ),
+        onFreshFeed: (url, items) {
+          if (!isCurrent()) return;
+          freshByFeed[url] = items;
+          _refreshPublishTimer ??= _scheduleRefreshPublish(
+            const Duration(milliseconds: 100),
+            publish,
+          );
+        },
+        onProgress:
+            ({
+              required total,
+              required completed,
+              required succeeded,
+              required failed,
+              required skipped,
+              required inFlight,
+            }) {
+              if (!isCurrent()) return;
+              refreshProgress.value = refreshProgress.value.copyWith(
+                total: total,
+                completed: completed,
+                succeeded: succeeded,
+                failed: failed,
+                skipped: skipped,
+                inFlight: inFlight,
+              );
+            },
+      );
+    } catch (_) {
+      // Even a later orchestration/storage failure must not hide successful
+      // bodies already received, or leave the loading state stuck forever.
+      if (!_disposed) _isLoading = false;
+      if (isCurrent()) {
+        if (_refreshPublishTimer != null) {
+          _refreshPublishTimer!.cancel();
+          publish();
+        } else {
+          notifyListeners();
+        }
+      }
+      rethrow;
+    } finally {
+      acceptingPublications = false;
+      _refreshPublishTimer?.cancel();
+      _refreshPublishTimer = null;
+    }
 
-    if (resetGeneration != _resetGeneration) {
+    if (_disposed) return;
+    final suppressDelivery = !_hasLoadedOnce;
+    // Observation already advanced inside the refresher, so even an
+    // interrupted apply ends first-load suppression. Only a reset voids it.
+    if (resetGeneration == _resetGeneration) _hasLoadedOnce = true;
+    if (!isCurrent()) {
+      // Cache clearing invalidates article writes, not server Retry-After.
+      // Only a factory reset discards the old era's cooldown state.
+      if (resetGeneration == _resetGeneration) _saveFeedBackoff();
       _isLoading = false;
       refreshProgress.value = refreshProgress.value.copyWith(
         phase: RefreshPhase.idle,
@@ -1184,7 +1291,9 @@ class FeedProvider extends ChangeNotifier {
     _saveFeedRedirects(result.redirects);
     _saveFeedBackoff();
     _updateFeedErrors(result.feedErrors, result.unprovenUrls);
-    _items = result.items;
+    // Reconcile against live subscriptions/bookmarks and any articles added
+    // during this pass, not the stale inputs captured before HTTP started.
+    _items = mergeCurrent();
     _isOffline = !result.online;
     _isLoading = false;
     refreshProgress.value = refreshProgress.value.copyWith(
@@ -1193,23 +1302,35 @@ class FeedProvider extends ChangeNotifier {
       // when failures were connectivity-unproven.
       phase: !result.online
           ? (result.feedErrors.isEmpty
-              ? RefreshPhase.offline
-              : RefreshPhase.failed)
+                ? RefreshPhase.offline
+                : RefreshPhase.failed)
           : result.feedErrors.isNotEmpty
-              ? RefreshPhase.completedWithErrors
-              : RefreshPhase.completed,
+          ? RefreshPhase.completedWithErrors
+          : RefreshPhase.completed,
       inFlight: 0,
       completedAt: DateTime.now(),
     );
     _invalidateFilterCache();
     if (!_disposed) notifyListeners();
 
+    // Listeners may clear/reset/dispose synchronously on completion.
+    if (!isCurrent()) return;
+
     // First foreground load suppresses delivery only. Observation already
     // advanced above, so these articles cannot backfill on a later refresh.
-    if (_hasLoadedOnce) {
-      await _deliverClaimedArticles(result.claimedItems);
+    if (!suppressDelivery) {
+      final activeEpochs = {
+        for (final s in subscriptionProvider!.subscriptions)
+          s.url: s.notificationEpoch,
+      };
+      await _deliverClaimedArticles([
+        for (final item in result.claimedItems)
+          if (activeEpochs.containsKey(item.feedUrl) &&
+              activeEpochs[item.feedUrl] == epochs[item.feedUrl])
+            item,
+      ]);
     }
-    _hasLoadedOnce = true;
+    if (!isCurrent()) return;
 
     // Persist a new cache snapshot when a feed returned new data — and once
     // unconditionally, so the durable owner layer bootstraps even when the
@@ -1218,6 +1339,7 @@ class FeedProvider extends ChangeNotifier {
       _needsInitialReconcile = false;
       await _saveCachedItems();
     }
+    if (!isCurrent()) return;
 
     stopwatch.stop();
     _lastSyncDuration = stopwatch.elapsed;
@@ -1243,6 +1365,7 @@ class FeedProvider extends ChangeNotifier {
         final gen = _resetGeneration;
         try {
           final results = await Connectivity().checkConnectivity();
+          if (!isCurrent()) return;
           _setUnmetered(results);
           await _preparation.preparePending(unmetered: _unmetered);
           // A page/media 429 during the sweep cooled a shared host —
@@ -1465,6 +1588,7 @@ class FeedProvider extends ChangeNotifier {
   /// in-flight [cachedItemsJson] write started before the reset cannot land
   /// its stale snapshot after the delete.
   int _cacheGeneration = 0;
+  int _refreshGeneration = 0;
 
   /// Bumped only by [factoryReset]: an in-flight refresh that started before
   /// the reset must void its entire apply phase — items, validators,
@@ -1583,6 +1707,8 @@ class FeedProvider extends ChangeNotifier {
   /// that lose their last owner.
   Future<void> clearCache() async {
     _cacheGeneration++;
+    _refreshPublishTimer?.cancel();
+    _refreshPublishTimer = null;
     // Back to "loading": an empty+loaded map would flash "could not save"
     // on every bookmarked row until the refresh lands.
     _statusGeneration++;
@@ -1633,7 +1759,7 @@ class FeedProvider extends ChangeNotifier {
         )
         .ignore();
     unawaited(_refreshArticleStatuses());
-    notifyListeners();
+    if (!_disposed) notifyListeners();
   }
 
   /// Clears all feed data, caches, and read states, resetting to default.
@@ -1660,6 +1786,8 @@ class FeedProvider extends ChangeNotifier {
 
     _cacheGeneration++;
     _resetGeneration++; // an in-flight refresh's apply phase is now void
+    _refreshPublishTimer?.cancel();
+    _refreshPublishTimer = null;
     // Rate-limit state belongs to the wiped era too — otherwise an async
     // save (prep sweep, prefetch) could resurrect it into the new box.
     _feedBackoff.reset();
@@ -1693,14 +1821,17 @@ class FeedProvider extends ChangeNotifier {
     // articles/categories don't survive the reset.
     unawaited(WidgetUpdateService.updateFeedWidgets(const []));
     _invalidateFilterCache();
-    notifyListeners();
+    if (!_disposed) notifyListeners();
     return recordsWiped;
   }
 
   @override
   void dispose() {
     _disposed = true;
+    _cacheGeneration++;
+    _refreshGeneration++;
     _cacheTimer?.cancel();
+    _refreshPublishTimer?.cancel();
     _connectivitySub?.cancel();
     refreshProgress.dispose();
     _feedService.dispose();

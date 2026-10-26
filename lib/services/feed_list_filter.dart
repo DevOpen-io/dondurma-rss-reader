@@ -63,11 +63,13 @@ Iterable<FeedItem> applyFeedFilters({
   return deduplicateByLink(filtered);
 }
 
-/// The dedup key used by [deduplicateByLink]: the normalized absolute
-/// http(s) link when usable, otherwise the item's own id — which can never
-/// collide across genuinely different articles. Junk links (`#`,
-/// `about:blank`, relative paths) fall back to the id path.
-String dedupeKey({required String? link, required String id}) {
+/// Legacy offline-membership dedup key: the normalized absolute
+/// http(s) link when usable, otherwise the legacy global archive ID.
+/// Display instances use source-local fallback identities below.
+String dedupeKey({required String? link, required String id}) =>
+    _usableArticleLink(link) ?? id;
+
+String? _usableArticleLink(String? link) {
   var key = ArticleIdentity.normalizeArticleUrl(link);
   if (key != null) {
     final uri = Uri.tryParse(key);
@@ -77,16 +79,16 @@ String dedupeKey({required String? link, required String id}) {
       key = null;
     }
   }
-  return key ?? id;
+  return key;
 }
 
-/// Drops later items whose normalized article link was already yielded —
-/// the list arrives date-sorted, so the newest copy wins. Items with no
-/// usable link dedup on their own id, which can never collide.
+/// Drops duplicate article links globally; without a usable link only
+/// duplicates within the same source can be identified safely.
 Iterable<FeedItem> deduplicateByLink(Iterable<FeedItem> items) sync* {
-  final seen = <String>{};
+  final seen = <Object>{};
   for (final item in items) {
-    if (seen.add(dedupeKey(link: item.link, id: item.id))) yield item;
+    final Object key = _usableArticleLink(item.link) ?? (item.feedUrl, item.id);
+    if (seen.add(key)) yield item;
   }
 }
 

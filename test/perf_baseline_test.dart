@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/feed_date_groups.dart';
+import 'package:ice_cream_rss_reader/services/feed_cache_policy.dart';
 import 'package:ice_cream_rss_reader/services/feed_list_filter.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 
@@ -44,6 +45,42 @@ Duration _time(void Function() fn, {int warmups = 1, int runs = 5}) {
 
 void main() {
   final items = List.generate(10000, _item);
+
+  test('incremental merge measurement at 30, 100 and 200 feeds', () {
+    final now = DateTime.utc(2026, 10, 24);
+    for (final feedCount in [30, 100, 200]) {
+      final sample = [
+        for (var f = 0; f < feedCount; f++)
+          for (var i = 0; i < 50; i++)
+            _item(f * 50 + i).copyWith(feedUrl: 'https://feed-$f.test/rss'),
+      ];
+      final fresh = <String, List<FeedItem>>{};
+      for (final item in sample.take(250)) {
+        (fresh[item.feedUrl] ??= []).add(item);
+      }
+      final median = _time(
+        () {
+          final merged = FeedCachePolicy.mergeVisibleFeeds(
+            existingItems: sample,
+            freshItemsByFeed: fresh,
+            subscribedFeedUrls: [
+              for (var f = 0; f < feedCount; f++) 'https://feed-$f.test/rss',
+            ],
+            bookmarkedItems: const [],
+            now: now,
+          );
+          expect(merged.length, sample.length);
+        },
+        warmups: 3,
+        runs: 15,
+      );
+      // Debug/JIT host measurement, not a device frame-time benchmark.
+      // ignore: avoid_print
+      print(
+        'PERF|merge|feeds=$feedCount|items=${sample.length}|median=${median.inMicroseconds}us',
+      );
+    }
+  });
 
   test('perf baseline: filter / group / sort / json / parse', () {
     final filterMedian = _time(

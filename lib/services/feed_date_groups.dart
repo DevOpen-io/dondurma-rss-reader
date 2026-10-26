@@ -34,7 +34,7 @@ DateTime effectivePublicationDate(
 /// Sorts [items] newest-first by effective publication date, in place.
 ///
 /// Null dates sink to the bottom; equal effective dates (and equal nulls)
-/// tie-break on [FeedItem.id] so ordering is stable across refreshes.
+/// tie-break on [FeedItem.id] then feed URL across source-local collisions.
 /// The allowance deadline is hoisted out of the comparator — sorting 10k
 /// items performs ~140k comparisons, so per-comparison `now.add()` churn
 /// is worth avoiding.
@@ -47,13 +47,18 @@ void sortByEffectivePubDateDesc(
   items.sort((a, b) {
     final ap = a.pubDate;
     final bp = b.pubDate;
-    if (ap == null && bp == null) return a.id.compareTo(b.id);
+    int identityOrder() {
+      final id = a.id.compareTo(b.id);
+      return id != 0 ? id : a.feedUrl.compareTo(b.feedUrl);
+    }
+
+    if (ap == null && bp == null) return identityOrder();
     if (ap == null) return 1;
     if (bp == null) return -1;
     final ad = ap.isAfter(deadline) ? now : ap;
     final bd = bp.isAfter(deadline) ? now : bp;
     final c = bd.compareTo(ad);
-    return c != 0 ? c : a.id.compareTo(b.id);
+    return c != 0 ? c : identityOrder();
   });
 }
 
@@ -65,20 +70,21 @@ void sortByEffectivePubDateDesc(
 /// so articles near midnight land in the correct bucket.
 FeedDateGroups groupFeedItemsByDate(Iterable<FeedItem> items, DateTime now) {
   final localNow = now.toLocal();
-  final yesterday = localNow.subtract(const Duration(days: 1));
+  final yesterday = DateTime(localNow.year, localNow.month, localNow.day - 1);
   final today = <FeedItem>[];
   final yester = <FeedItem>[];
   final older = <FeedItem>[];
 
   for (final item in items) {
     final raw = item.pubDate;
-    final d = raw == null
-        ? null
-        : effectivePublicationDate(raw, now).toLocal();
+    final d = raw == null ? null : effectivePublicationDate(raw, now).toLocal();
+    // A plausible clock skew may cross midnight. It is still current,
+    // never an "older" article merely because tomorrow has no bucket.
     if (d != null &&
-        d.year == localNow.year &&
-        d.month == localNow.month &&
-        d.day == localNow.day) {
+        (d.isAfter(localNow) ||
+            (d.year == localNow.year &&
+                d.month == localNow.month &&
+                d.day == localNow.day))) {
       today.add(item);
     } else if (d != null &&
         d.year == yesterday.year &&

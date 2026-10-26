@@ -14,6 +14,14 @@ import '../services/article_record_store.dart';
 class BookmarkProvider extends ChangeNotifier {
   List<FeedItem> _savedBookmarks = [];
   Set<String> _bookmarkedItemIds = {};
+  Map<String, Set<String>> _snapshotFeedsById = {};
+
+  void _indexSnapshots() {
+    _snapshotFeedsById = {};
+    for (final item in _savedBookmarks) {
+      (_snapshotFeedsById[item.id] ??= {}).add(item.feedUrl);
+    }
+  }
 
   /// Bumped each time a durable bookmark-claim mutation lands — strip or
   /// prepare. FeedProvider diffs it in update() so the offline-status map
@@ -78,7 +86,7 @@ class BookmarkProvider extends ChangeNotifier {
         bool claimStillLive() =>
             !_disposed &&
             generation == _restoreGeneration &&
-            _bookmarkedItemIds.contains(item.id);
+            isBookmarked(item.id, feedUrl: item.feedUrl);
         if (_disposed || generation != _restoreGeneration) return;
         if (!claimStillLive()) continue;
         final fullText = _fullTextFor?.call(item.feedUrl) ?? true;
@@ -129,6 +137,8 @@ class BookmarkProvider extends ChangeNotifier {
         final result = prep != null
             ? await prep.mutateRecord(id, _stripBookmarkMutation(id))
             : await _recordStore.mutate(id, _stripBookmarkMutation(id));
+        // Fenced by a reset: nothing landed, and the new era owns cleanup.
+        if (result == StoreWriteResult.rejected) return;
         if (result != StoreWriteResult.failed) {
           // Claim is durable now — listeners may re-derive status labels.
           _claimLanded();
@@ -165,13 +175,14 @@ class BookmarkProvider extends ChangeNotifier {
       final List<dynamic> jsonList = jsonDecode(bookmarkedItemsData);
       _savedBookmarks = jsonList.map((e) => FeedItem.fromJson(e)).toList();
       _bookmarkedItemIds = _savedBookmarks.map((e) => e.id).toSet();
-    } else {
-      // Fallback for legacy ID-only bookmarks
-      final List<dynamic>? bookmarkedIds = _box.get('bookmarkedItemIds');
-      if (bookmarkedIds != null) {
-        _bookmarkedItemIds = bookmarkedIds.cast<String>().toSet();
-      }
     }
+    // Legacy ID-only memberships persist beside snapshots: once any
+    // snapshot is saved, the ID list is their only record.
+    final List<dynamic>? bookmarkedIds = _box.get('bookmarkedItemIds');
+    if (bookmarkedIds != null) {
+      _bookmarkedItemIds.addAll(bookmarkedIds.cast<String>());
+    }
+    _indexSnapshots();
     notifyListeners();
   }
 
@@ -190,17 +201,20 @@ class BookmarkProvider extends ChangeNotifier {
   /// (not awaited) to keep the UI responsive.
   void toggleBookmark(FeedItem originalItem) {
     final String id = originalItem.id;
-    final bool isPresent = _bookmarkedItemIds.contains(id);
+    final bool isPresent = isBookmarked(id, feedUrl: originalItem.feedUrl);
+    bool matches(FeedItem b) => b.id == id && b.feedUrl == originalItem.feedUrl;
 
     if (isPresent) {
-      _bookmarkedItemIds.remove(id);
-      _savedBookmarks.removeWhere((b) => b.id == id);
+      _savedBookmarks.removeWhere(matches);
+      if (!_savedBookmarks.any((b) => b.id == id)) {
+        _bookmarkedItemIds.remove(id);
+      }
       _stripBookmarkOwner(id);
     } else {
       _bookmarkedItemIds.add(id);
       final updatedItem = originalItem.copyWith(isBookmarked: true);
-      // Remove previously loaded if exists to avoid duplicates
-      _savedBookmarks.removeWhere((b) => b.id == id);
+      // Source-local snapshots coexist while durable owners retain legacy IDs.
+      _savedBookmarks.removeWhere(matches);
       _savedBookmarks.add(updatedItem);
       // New bookmark → persist the minimal record, then prepare this one
       // article in a single pass (the explicit-action metered permit).
@@ -209,7 +223,8 @@ class BookmarkProvider extends ChangeNotifier {
         // claimCheck runs INSIDE the store lock at mutation time: an
         // un-bookmark racing this delayed registration leaves no ghost
         // 'bookmark' owner behind — including on the retry.
-        bool claimStillLive() => _bookmarkedItemIds.contains(id);
+        bool claimStillLive() =>
+            !_disposed && isBookmarked(id, feedUrl: updatedItem.feedUrl);
         final fullText = _fullTextFor?.call(updatedItem.feedUrl) ?? true;
         unawaited(() async {
           var result = await prep.registerArticle(
@@ -221,8 +236,7 @@ class BookmarkProvider extends ChangeNotifier {
           // One immediate retry on storage failure — a rejected/failed
           // register would otherwise leave a bookmark with no durable
           // record and no later reconciliation.
-          if (result == StoreWriteResult.failed &&
-              _bookmarkedItemIds.contains(id)) {
+          if (result == StoreWriteResult.failed && claimStillLive()) {
             result = await prep.registerArticle(
               updatedItem,
               const {'bookmark'},
@@ -230,8 +244,7 @@ class BookmarkProvider extends ChangeNotifier {
               claimCheck: claimStillLive,
             );
           }
-          if (result == StoreWriteResult.applied &&
-              _bookmarkedItemIds.contains(id)) {
+          if (result == StoreWriteResult.applied && claimStillLive()) {
             // The claim landed — labels may already read "save requested".
             _claimLanded();
             // Prepare commits land inside this same call; the version bump
@@ -243,6 +256,7 @@ class BookmarkProvider extends ChangeNotifier {
       }
     }
 
+    _indexSnapshots();
     notifyListeners();
     // Fire-and-forget: persist bookmark states.
     _saveBookmarkStates();
@@ -259,10 +273,16 @@ class BookmarkProvider extends ChangeNotifier {
   /// Returns `false` and restores the in-memory record if the write fails so
   /// the article stays visibly bookmarked instead of silently rolling back.
   Future<bool> removeBookmark(FeedItem item) async {
-    final index = _savedBookmarks.indexWhere((b) => b.id == item.id);
-    if (index < 0) return true;
-    final removed = _savedBookmarks.removeAt(index);
-    _bookmarkedItemIds.remove(item.id);
+    bool matches(FeedItem b) => b.id == item.id && b.feedUrl == item.feedUrl;
+    final index = _savedBookmarks.indexWhere(matches);
+    // ID-only legacy bookmarks carry membership without any snapshot.
+    final legacy = index < 0 && isBookmarked(item.id, feedUrl: item.feedUrl);
+    if (index < 0 && !legacy) return true;
+    final removed = legacy ? null : _savedBookmarks.removeAt(index);
+    if (!_savedBookmarks.any((b) => b.id == item.id)) {
+      _bookmarkedItemIds.remove(item.id);
+    }
+    _indexSnapshots();
     notifyListeners();
     try {
       await persistBookmarks();
@@ -271,9 +291,12 @@ class BookmarkProvider extends ChangeNotifier {
     } catch (_) {
       // De-dupe in case the item was re-bookmarked while the write was in
       // flight, then restore the record at its original position.
-      _savedBookmarks.removeWhere((b) => b.id == item.id);
-      _savedBookmarks.insert(index.clamp(0, _savedBookmarks.length), removed);
+      _savedBookmarks.removeWhere(matches);
+      if (removed != null) {
+        _savedBookmarks.insert(index.clamp(0, _savedBookmarks.length), removed);
+      }
       _bookmarkedItemIds.add(item.id);
+      _indexSnapshots();
       notifyListeners();
       // The failed write may have been partially applied (first put ok,
       // second failed); converge disk with the restored state.
@@ -283,8 +306,13 @@ class BookmarkProvider extends ChangeNotifier {
   }
 
   /// Returns `true` if the article with [id] is bookmarked.
-  bool isBookmarked(String id) {
-    return _bookmarkedItemIds.contains(id);
+  bool isBookmarked(String id, {String? feedUrl}) {
+    if (!_bookmarkedItemIds.contains(id)) return false;
+    if (feedUrl == null) return true;
+    // ID-only legacy bookmarks have no source information. Preserve their
+    // global membership until an actual article snapshot becomes available.
+    final feeds = _snapshotFeedsById[id];
+    return feeds == null || feeds.contains(feedUrl);
   }
 
   /// Clears all bookmarks and resets to default state.
@@ -292,6 +320,7 @@ class BookmarkProvider extends ChangeNotifier {
     _restoreGeneration++;
     _savedBookmarks.clear();
     _bookmarkedItemIds.clear();
+    _snapshotFeedsById.clear();
     await _box.clear();
     notifyListeners();
   }

@@ -38,26 +38,17 @@ void main() {
 
     test('numeric +0300 offset normalizes to UTC', () {
       final items = parseRss('Sat, 17 Oct 2026 00:10:00 +0300');
-      expect(
-        items.single.pubDate,
-        DateTime.utc(2026, 10, 16, 21, 10),
-      );
+      expect(items.single.pubDate, DateTime.utc(2026, 10, 16, 21, 10));
     });
 
     test('numeric -0500 offset normalizes to UTC', () {
       final items = parseRss('Fri, 16 Oct 2026 18:30:00 -0500');
-      expect(
-        items.single.pubDate,
-        DateTime.utc(2026, 10, 16, 23, 30),
-      );
+      expect(items.single.pubDate, DateTime.utc(2026, 10, 16, 23, 30));
     });
 
     test('GMT abbreviation parses as UTC', () {
       final items = parseRss('Sat, 17 Oct 2026 00:39:34 GMT');
-      expect(
-        items.single.pubDate,
-        DateTime.utc(2026, 10, 17, 0, 39, 34),
-      );
+      expect(items.single.pubDate, DateTime.utc(2026, 10, 17, 0, 39, 34));
     });
 
     test('numeric +0530 (non-hour offset) is applied', () {
@@ -72,10 +63,7 @@ void main() {
 
     test('ISO 8601 with +03:00 offset parses correctly', () {
       final items = parseRss('2026-10-17T00:10:00+03:00');
-      expect(
-        items.single.pubDate,
-        DateTime.utc(2026, 10, 16, 21, 10),
-      );
+      expect(items.single.pubDate, DateTime.utc(2026, 10, 16, 21, 10));
     });
 
     test('date-only pubDate parses', () {
@@ -100,7 +88,8 @@ void main() {
       // invariant instead: same local calendar day as `now`.
       final localPub = DateTime.utc(2026, 10, 16, 22, 0).toLocal();
       final localNow = now.toLocal();
-      final sameDay = localPub.year == localNow.year &&
+      final sameDay =
+          localPub.year == localNow.year &&
           localPub.month == localNow.month &&
           localPub.day == localNow.day;
       if (sameDay) {
@@ -123,10 +112,9 @@ void main() {
     });
 
     test('null pubDate lands in older', () {
-      final groups = groupFeedItemsByDate(
-        [item('x', null)],
-        DateTime(2026, 10, 17),
-      );
+      final groups = groupFeedItemsByDate([
+        item('x', null),
+      ], DateTime(2026, 10, 17));
       expect(groups.older.single.id, 'x');
     });
   });
@@ -158,6 +146,42 @@ void main() {
       groupFeedItemsByDate([i], now);
       expect(i.pubDate, future);
     });
+  });
+
+  test('small future skew across midnight stays in today', () {
+    final now = DateTime(2026, 12, 31, 23, 50);
+    final future = item('tomorrow', DateTime(2027, 1, 1, 0, 5));
+    final groups = groupFeedItemsByDate([future], now);
+    expect(groups.today.single.id, 'tomorrow');
+    expect(future.pubDate, DateTime(2027, 1, 1, 0, 5));
+  });
+
+  test('yesterday uses local calendar arithmetic across DST', () {
+    // Run with TZ=America/New_York too: Nov 1 has 25 hours in 2026.
+    final now = DateTime(2026, 11, 1, 23, 30);
+    final groups = groupFeedItemsByDate([
+      item('yesterday', DateTime(2026, 10, 31, 12)),
+    ], now);
+    expect(groups.yesterday.single.id, 'yesterday');
+  });
+
+  test('yesterday remains correct after a 23-hour local day', () {
+    // America/New_York: March 8, 2026 skips one hour.
+    final now = DateTime(2026, 3, 9, 0, 30);
+    final groups = groupFeedItemsByDate([
+      item('yesterday', DateTime(2026, 3, 8, 12)),
+    ], now);
+    expect(groups.yesterday.single.id, 'yesterday');
+  });
+
+  test('equal dates and null dates tie-break across feeds', () {
+    for (final date in [DateTime.utc(2026), null]) {
+      final a = item('same', date).copyWith(feedUrl: 'a');
+      final b = item('same', date).copyWith(feedUrl: 'b');
+      final items = [b, a];
+      sortByEffectivePubDateDesc(items, DateTime.utc(2026));
+      expect(items.map((i) => i.feedUrl), ['a', 'b']);
+    }
   });
 
   group('JSON round-trip', () {

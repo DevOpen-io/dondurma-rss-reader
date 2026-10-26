@@ -466,7 +466,7 @@ Future<List<FeedItem>> _persistBgCache(
   // Snapshot candidates = fresh merge plus bookmarked articles the merge
   // dropped (unsubscribed feeds) — bookmarks ride along uncounted (#37).
   // selectedIds are canonical; item.id is raw — compare on the same side.
-  final inMerge = items.map((e) => e.id).toSet();
+  final inMerge = items.map((e) => (e.feedUrl, e.id)).toSet();
   final selected = [
     for (final item in items)
       if (selectedIds.contains(
@@ -475,7 +475,7 @@ Future<List<FeedItem>> _persistBgCache(
           bookmarkedIds.contains(item.id))
         item,
     for (final item in bookmarkedItems)
-      if (!inMerge.contains(item.id)) item,
+      if (inMerge.add((item.feedUrl, item.id))) item,
   ];
   // Two fences before the snapshot write: the persisted cache epoch is a
   // best-effort check (this isolate's box view may be stale), so the

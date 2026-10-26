@@ -23,6 +23,99 @@ FeedItem _item(
 );
 
 void main() {
+  test(
+    'visible merge replaces only settled feeds and preserves local data',
+    () {
+      final now = DateTime.utc(2026, 10, 24, 12);
+      final merged = FeedCachePolicy.mergeVisibleFeeds(
+        existingItems: [
+          _item('a', 'keep', prefetchedFullText: 'body'),
+          _item('a', 'gone'),
+          _item('b', 'waiting'),
+          _item('removed', 'stale'),
+        ],
+        freshItemsByFeed: {
+          'a': [
+            _item('a', 'new', pubDate: now),
+            _item('a', 'keep'),
+            _item('a', 'keep'),
+          ],
+        },
+        subscribedFeedUrls: ['a', 'b'],
+        bookmarkedItems: [_item('removed', 'saved')],
+        now: now,
+      );
+      expect(merged.map((i) => i.id), ['new', 'keep', 'saved', 'waiting']);
+      expect(
+        merged.singleWhere((i) => i.id == 'keep').prefetchedFullText,
+        'body',
+      );
+    },
+  );
+
+  for (final id in ['shared-guid', 'https://example.test/shared']) {
+    test('bookmark from removed feed survives colliding identity $id', () {
+      final merged = FeedCachePolicy.mergeVisibleFeeds(
+        existingItems: [_item('active', id)],
+        freshItemsByFeed: {
+          'active': [_item('active', id), _item('active', id)],
+        },
+        subscribedFeedUrls: ['active', 'active'],
+        bookmarkedItems: [
+          _item('removed', id, prefetchedFullText: 'saved body'),
+        ],
+        now: DateTime.utc(2026),
+      );
+      expect(merged.map((i) => (i.feedUrl, i.id)).toSet(), {
+        ('active', id),
+        ('removed', id),
+      });
+      expect(merged.length, 2);
+      expect(
+        merged.singleWhere((i) => i.feedUrl == 'removed').prefetchedFullText,
+        'saved body',
+      );
+    });
+  }
+
+  test('full text composite identity cannot collide on spaces', () {
+    final merged = FeedCachePolicy.carryOverPrefetchedText(
+      existingItems: [_item('feed a', 'b', prefetchedFullText: 'wrong body')],
+      freshItems: [_item('feed', 'a b')],
+    );
+    expect(merged.single.prefetchedFullText, isNull);
+  });
+
+  test(
+    'fresh body retains full text from bookmark even without a cached copy',
+    () {
+      final merged = FeedCachePolicy.mergeVisibleFeeds(
+        existingItems: const [],
+        freshItemsByFeed: {
+          'a': [_item('a', 'x')],
+        },
+        subscribedFeedUrls: ['a'],
+        bookmarkedItems: [_item('a', 'x', prefetchedFullText: 'saved body')],
+        now: DateTime.utc(2026),
+      );
+      expect(merged.single.prefetchedFullText, 'saved body');
+    },
+  );
+
+  test(
+    'background merge deduplicates within feeds, never across GUID namespaces',
+    () {
+      final merged = FeedCachePolicy.mergeFreshFeeds(
+        existingItems: [_item('b', 'x')],
+        freshItemsByFeed: {
+          'a': [_item('a', 'x'), _item('a', 'x')],
+        },
+        subscribedFeedUrls: ['a', 'a', 'b'],
+      );
+      expect(merged.map((i) => (i.feedUrl, i.id)), [('a', 'x'), ('b', 'x')]);
+    },
+  );
+
   group('FeedCachePolicy.carryOverPrefetchedText', () {
     test('re-attaches prefetched bodies onto freshly parsed items', () {
       final existing = [_item('a', 'x', prefetchedFullText: '<p>body</p>')];
