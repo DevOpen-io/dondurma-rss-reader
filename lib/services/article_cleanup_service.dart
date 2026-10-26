@@ -62,11 +62,13 @@ class ArticleCleanupService {
   static const Duration _orphanGrace = Duration(minutes: 2);
 
   /// Runs one lifecycle pass. [isBookmarked] is the caller's live-claim
-  /// verdict for canonical ids — evaluated inside the store lock at
+  /// verdict per source instance — evaluated inside the store lock at
   /// commit time. It reconciles `'bookmark'` claims both ways: stale
   /// claims the set denies are stripped, and live records that lost
   /// their claim have it restored.
-  Future<CleanupResult> sweep({bool Function(String id)? isBookmarked}) async {
+  Future<CleanupResult> sweep({
+    bool Function(ArticleRef ref)? isBookmarked,
+  }) async {
     var failed = false;
     var tombstoned = 0;
     const blocked = CleanupResult(
@@ -112,11 +114,12 @@ class ArticleCleanupService {
     if (isBookmarked != null) {
       for (final record in before.records) {
         if (record.tombstoned) continue;
-        final result = await _records.mutate(record.id, expectedEpoch: epoch, (
+        final ref = ArticleRef(record.feedUrl, record.id);
+        final result = await _records.mutate(ref, expectedEpoch: epoch, (
           current,
         ) {
           if (current == null || current.tombstoned) return current;
-          final live = isBookmarked(current.id);
+          final live = isBookmarked(ref);
           final has = current.owners.contains('bookmark');
           if (live == has) return current;
           final owners = {...current.owners};
@@ -133,7 +136,8 @@ class ArticleCleanupService {
       // landed after our snapshot — possibly from another isolate's
       // register — must never be tombstoned by a stale "ownerless" view.
       var fenced = false;
-      final result = await _records.mutate(record.id, expectedEpoch: epoch, (
+      final ref = ArticleRef(record.feedUrl, record.id);
+      final result = await _records.mutate(ref, expectedEpoch: epoch, (
         current,
       ) {
         if (current == null ||
@@ -143,8 +147,8 @@ class ArticleCleanupService {
         }
         fenced = true;
         return ArticleRecord(
-          id: ArticleIdentity.normalizeItemId(record.id) ?? record.id,
-          feedUrl: record.feedUrl,
+          id: ref.id,
+          feedUrl: ref.feedUrl,
           generation: current.generation + 1,
           tombstoned: true,
         );
@@ -168,10 +172,11 @@ class ArticleCleanupService {
         // not ours to act on.
         failed = true;
       } else {
-        final orphans = await _media.unreferencedFiles(
-          after.records,
-          minAge: _orphanGrace,
-        );
+        // Quarantined legacy records keep their bytes referenced.
+        final orphans = await _media.unreferencedFiles([
+          ...after.records,
+          ...after.quarantine,
+        ], minAge: _orphanGrace);
         Future<void> collect() async {
           // The scan's verdict is stale by now: re-read references at
           // decision time, so a claim landing after the orphan scan keeps
@@ -182,7 +187,7 @@ class ArticleCleanupService {
             return;
           }
           final referenced = {
-            for (final record in latest.records)
+            for (final record in [...latest.records, ...latest.quarantine])
               for (final entry in record.media.values) entry.file,
           };
           for (final file in orphans) {
@@ -217,13 +222,13 @@ class ArticleCleanupService {
         //    to dateless candidates whose subscription still carries them,
         //    and dropping them would silently restart the first-seen era
         //    (#40 §5).
-        final tombstonedIds = {
+        final tombstonedRefs = {
           for (final r in after.records)
-            if (r.tombstoned) r.id,
+            if (r.tombstoned) ArticleRef(r.feedUrl, r.id),
         };
-        for (final id in (await _records.allFirstSeen()).keys) {
-          if (!tombstonedIds.contains(id)) continue;
-          if (await _records.deleteFirstSeen(id, expectedEpoch: epoch) ==
+        for (final ref in (await _records.allFirstSeen()).keys) {
+          if (!tombstonedRefs.contains(ref)) continue;
+          if (await _records.deleteFirstSeen(ref, expectedEpoch: epoch) ==
               StoreWriteResult.applied) {
             pruned++;
           }

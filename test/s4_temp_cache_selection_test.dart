@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
@@ -34,6 +35,9 @@ void main() {
       tempDir.deleteSync(recursive: true);
     } catch (_) {}
   });
+
+  ArticleRef ref(String id, [String feed = 'https://f.com/feed']) =>
+      ArticleRef(feed, id);
 
   ArticleRecordStore newStore() =>
       ArticleRecordStore(FileObservedArticlePersistence(stateFile: stateFile));
@@ -84,16 +88,16 @@ void main() {
     Map<String, List<String>> feedKeywords = const {},
     bool fullText = true,
     DateTime? now,
-  }) => membership().reconcile(
+  }) async => (await membership().reconcile(
     items: items,
-    bookmarkedIds: bookmarked,
+    isBookmarked: (r) => bookmarked.contains(r.id),
     subscribedFeedUrls: subscribedFeedUrls,
     globalKeywords: globalKeywords,
     feedKeywordsMap: feedKeywords,
     limit: limit,
     fullTextFor: (_) => fullText,
     now: now,
-  );
+  )).map((r) => r.id).toSet();
 
   final day = DateTime.utc(2026, 1, 10, 12);
 
@@ -111,7 +115,7 @@ void main() {
       );
       expect(selected, {'b', 'c'});
       expect(
-        ownersOf(await newStore().read('d')),
+        ownersOf(await newStore().read(ref('d'))),
         isNot(contains('tempCache')),
       );
     });
@@ -209,7 +213,7 @@ void main() {
         items: [item('banned', title: 'banned thing', pubDate: day)],
         globalKeywords: ['banned'],
       );
-      expect(ownersOf(await newStore().read('banned')), isEmpty);
+      expect(ownersOf(await newStore().read(ref('banned'))), isEmpty);
     });
   });
 
@@ -240,7 +244,7 @@ void main() {
         limit: 1,
       );
       expect(selected, {'new'});
-      expect(ownersOf(await newStore().read('old')), isEmpty);
+      expect(ownersOf(await newStore().read(ref('old'))), isEmpty);
     });
 
     test('a stripped member loses only the tempCache owner', () async {
@@ -248,7 +252,7 @@ void main() {
       // A bookmark-owned member that also holds tempCache.
       await membership().reconcile(
         items: [item('x', pubDate: day)],
-        bookmarkedIds: const {},
+        isBookmarked: (_) => false,
         subscribedFeedUrls: const ['https://f.com/feed'],
         globalKeywords: const [],
         feedKeywordsMap: const {},
@@ -256,7 +260,7 @@ void main() {
         fullTextFor: (_) => true,
       );
       await store.mutate(
-        'x',
+        ref('x'),
         (c) => c!.copyWith(owners: {...c.owners, 'bookmark'}),
       );
       // Push it out of N with a newer candidate.
@@ -264,7 +268,7 @@ void main() {
         items: [item('y', pubDate: day.add(const Duration(hours: 1)))],
         limit: 1,
       );
-      expect(ownersOf(await store.read('x')), {'bookmark'});
+      expect(ownersOf(await store.read(ref('x'))), {'bookmark'});
     });
 
     test('shrinking N adapts membership immediately, N=0 empties it', () async {
@@ -275,10 +279,10 @@ void main() {
       ];
       await reconcile(items: items, limit: 3);
       expect(await reconcile(items: items, limit: 1), {'a'});
-      expect(ownersOf(await newStore().read('c')), isEmpty);
+      expect(ownersOf(await newStore().read(ref('c'))), isEmpty);
       expect(await reconcile(items: items, limit: 0), isEmpty);
       for (final id in ['a', 'b', 'c']) {
-        expect(ownersOf(await newStore().read(id)), isEmpty);
+        expect(ownersOf(await newStore().read(ref(id))), isEmpty);
       }
     });
 
@@ -307,7 +311,7 @@ void main() {
         limit: 1,
       );
       expect(selected, {'stay'});
-      expect(ownersOf(await store.read('gone')), isEmpty);
+      expect(ownersOf(await store.read(ref('gone'))), isEmpty);
     });
 
     test(
@@ -315,7 +319,9 @@ void main() {
       () async {
         final store = newStore();
         await reconcile(items: [item('x', pubDate: day)], limit: 5);
-        expect(ownersOf(await store.read('x')), {TempCacheMembership.owner});
+        expect(ownersOf(await store.read(ref('x'))), {
+          TempCacheMembership.owner,
+        });
         // A new keyword arrives matching only the live item's description;
         // the record's stored title ('t') stays clean — the live verdict
         // must still be authoritative.
@@ -325,7 +331,7 @@ void main() {
           limit: 5,
         );
         expect(selected, isEmpty);
-        expect(ownersOf(await store.read('x')), isEmpty);
+        expect(ownersOf(await store.read(ref('x'))), isEmpty);
       },
     );
 
@@ -345,17 +351,17 @@ void main() {
           limit: 5,
         );
         expect(selected, isEmpty);
-        expect(ownersOf(await store.read('v')), isEmpty);
+        expect(ownersOf(await store.read(ref('v'))), isEmpty);
       },
     );
 
     test('tombstoned records are never candidates again', () async {
       final store = newStore();
       await reconcile(items: [item('a', pubDate: day)], limit: 2);
-      await store.tombstone('a');
+      await store.tombstone(ref('a'));
       final selected = await reconcile(items: const [], limit: 2);
       expect(selected, isNot(contains('a')));
-      expect((await store.read('a'))!.tombstoned, isTrue);
+      expect((await store.read(ref('a')))!.tombstoned, isTrue);
     });
   });
 
@@ -375,7 +381,7 @@ void main() {
           limit: 1,
           now: t0,
         );
-        expect(await newStore().firstSeen('dateless'), t0);
+        expect(await newStore().firstSeen(ref('dateless')), t0);
 
         // A later pass must NOT re-stamp the observation time.
         final selected = await reconcile(
@@ -387,7 +393,7 @@ void main() {
           now: t1,
         );
         expect(selected, {'dateless'}); // still t0-newest, not re-stamped to t1
-        expect(await newStore().firstSeen('dateless'), t0);
+        expect(await newStore().firstSeen(ref('dateless')), t0);
       },
     );
 
@@ -402,13 +408,18 @@ void main() {
           items: [item('HTTPS://EXAMPLE.COM/x', pubDate: null)],
           now: t0,
         );
-        final stamped = await newStore().firstSeen('HTTPS://EXAMPLE.COM/x');
+        final stamped = await newStore().firstSeen(
+          ref('HTTPS://EXAMPLE.COM/x'),
+        );
         expect(stamped, t0);
         await reconcile(
           items: [item('HTTPS://EXAMPLE.COM/x', pubDate: null)],
           now: t1,
         );
-        expect(await newStore().firstSeen('HTTPS://EXAMPLE.COM/x'), stamped);
+        expect(
+          await newStore().firstSeen(ref('HTTPS://EXAMPLE.COM/x')),
+          stamped,
+        );
       },
     );
 
@@ -416,7 +427,7 @@ void main() {
       final t0 = DateTime.utc(2026, 1, 10);
       await reconcile(items: [item('dateless', pubDate: null)], now: t0);
       // A "restarted" store on the same file sees the same observation.
-      expect(await newStore().firstSeen('dateless'), t0);
+      expect(await newStore().firstSeen(ref('dateless')), t0);
     });
   });
 
@@ -429,13 +440,13 @@ void main() {
           limit: 1,
           fullText: false,
         );
-        expect((await newStore().read('a'))!.bodyState, MediaState.ready);
+        expect((await newStore().read(ref('a')))!.bodyState, MediaState.ready);
       },
     );
 
     test('fullText=true leaves the body pending for the sweep', () async {
       await reconcile(items: [item('a', pubDate: day)], limit: 1);
-      expect((await newStore().read('a'))!.bodyState, MediaState.pending);
+      expect((await newStore().read(ref('a')))!.bodyState, MediaState.pending);
     });
 
     test(
@@ -444,20 +455,20 @@ void main() {
         final store = newStore();
         // fullText=false settles the RSS body as final.
         await reconcile(items: [item('x', pubDate: day)], fullText: false);
-        expect((await store.read('x'))!.bodyState, MediaState.ready);
+        expect((await store.read(ref('x')))!.bodyState, MediaState.ready);
         // Flipping the preference on re-pends it for the extraction sweep.
         await reconcile(items: [item('x', pubDate: day)], fullText: true);
-        expect((await store.read('x'))!.bodyState, MediaState.pending);
+        expect((await store.read(ref('x')))!.bodyState, MediaState.pending);
         // An already-extracted body never loses its ready state.
         await store.mutate(
-          'x',
+          ref('x'),
           (c) => c!.copyWith(
             bodyState: MediaState.ready,
             bodySource: () => 'extracted',
           ),
         );
         await reconcile(items: [item('x', pubDate: day)], fullText: true);
-        final record = (await store.read('x'))!;
+        final record = (await store.read(ref('x')))!;
         expect(record.bodyState, MediaState.ready);
         expect(record.bodySource, 'extracted');
       },

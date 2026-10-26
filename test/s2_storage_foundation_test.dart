@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
@@ -12,6 +14,11 @@ void main() {
   late Directory tempDir;
   late File stateFile;
   late Directory mediaDir;
+
+  ArticleRef ref(
+    String id, [
+    String feedUrl = 'https://example.com/feed.xml',
+  ]) => ArticleRef(feedUrl, id);
 
   ArticleRecordStore newStore() =>
       ArticleRecordStore(FileObservedArticlePersistence(stateFile: stateFile));
@@ -73,7 +80,7 @@ void main() {
       expect(await newStore().write(record), StoreWriteResult.applied);
 
       // A fresh store on the same file = restart: state comes back off disk.
-      final read = await newStore().read('art-1');
+      final read = await newStore().read(ref('art-1'));
       expect(read, isNotNull);
       expect(read!.id, 'art-1');
       expect(read.body, 'Body of art-1');
@@ -85,30 +92,34 @@ void main() {
 
     test('missing keys return defaults without throwing', () async {
       final store = newStore();
-      expect(await store.read('nope'), isNull);
-      expect(await store.firstSeen('nope'), isNull);
-      expect(await store.isTombstoned('nope'), isFalse);
+      expect(await store.read(ref('nope')), isNull);
+      expect(await store.firstSeen(ref('nope')), isNull);
+      expect(await store.isTombstoned(ref('nope')), isFalse);
       expect(await store.listRecords(), isEmpty);
     });
 
     test('corrupt persisted state reads as empty, not as a crash', () async {
       await stateFile.writeAsString('{{{not json');
       final store = newStore();
-      expect(await store.read('x'), isNull);
-      expect(await store.firstSeen('x'), isNull);
+      expect(await store.read(ref('x')), isNull);
+      expect(await store.firstSeen(ref('x')), isNull);
     });
 
     test('corrupt record entry degrades to missing', () async {
       await stateFile.writeAsString(
-        '{"schema":1,"records":{"x":42},"seen":{}}',
+        jsonEncode({
+          'schema': ArticleRecordStore.schemaVersion,
+          'records': {ref('x').key: 42},
+          'seen': {},
+        }),
       );
-      expect(await newStore().read('x'), isNull);
+      expect(await newStore().read(ref('x')), isNull);
     });
 
     test('record ids are normalized like article ids', () async {
       final store = newStore();
       await store.write(buildRecord(id: 'HTTPS://Example.COM/A/'));
-      expect(await store.read('https://example.com/A/'), isNotNull);
+      expect(await store.read(ref('https://example.com/A/')), isNotNull);
     });
 
     test('listRecords enumerates every stored record', () async {
@@ -122,27 +133,27 @@ void main() {
     test('mutate returning null deletes the record', () async {
       final store = newStore();
       await store.write(buildRecord(id: 'del'));
-      expect(await store.deleteRecord('del'), StoreWriteResult.applied);
-      expect(await store.read('del'), isNull);
+      expect(await store.deleteRecord(ref('del')), StoreWriteResult.applied);
+      expect(await store.read(ref('del')), isNull);
     });
 
     test('write refuses to overwrite a tombstone; revive continues the '
         'generation sequence', () async {
       final store = newStore();
       await store.write(buildRecord(id: 'life', generation: 1));
-      await store.tombstone('life');
+      await store.tombstone(ref('life'));
 
       expect(
         await store.write(buildRecord(id: 'life', generation: 1)),
         StoreWriteResult.rejected,
       );
-      expect((await store.read('life'))!.tombstoned, isTrue);
+      expect((await store.read(ref('life')))!.tombstoned, isTrue);
 
       expect(
         await store.revive(buildRecord(id: 'life')),
         StoreWriteResult.applied,
       );
-      final revived = (await store.read('life'))!;
+      final revived = (await store.read(ref('life')))!;
       expect(revived.tombstoned, isFalse);
       expect(revived.generation, 3); // tombstone bumped 1→2, revive → 3
       // A stale write fenced to the pre-delete generation still loses.
@@ -160,13 +171,13 @@ void main() {
       () async {
         await stateFile.writeAsString('{"schema":99,"records":{"x":{}}}');
         final store = newStore();
-        expect(await store.read('x'), isNull);
+        expect(await store.read(ref('x')), isNull);
         expect(
           await store.write(buildRecord(id: 'new')),
           StoreWriteResult.failed,
         );
         expect(
-          await store.recordFirstSeen('x', DateTime.utc(2026)),
+          await store.recordFirstSeen(ref('x'), DateTime.utc(2026)),
           StoreWriteResult.failed,
         );
         // The foreign-schema payload was never rewritten.
@@ -176,15 +187,19 @@ void main() {
 
     test('non-String seen values decode as absent, not a crash', () async {
       await stateFile.writeAsString(
-        '{"schema":1,"records":{},"seen":{"x":42}}',
+        jsonEncode({
+          'schema': ArticleRecordStore.schemaVersion,
+          'records': {},
+          'seen': {ref('x').key: 42},
+        }),
       );
       final store = newStore();
-      expect(await store.firstSeen('x'), isNull);
+      expect(await store.firstSeen(ref('x')), isNull);
       expect(
-        await store.recordFirstSeen('x', DateTime.utc(2026, 3, 1)),
+        await store.recordFirstSeen(ref('x'), DateTime.utc(2026, 3, 1)),
         StoreWriteResult.applied,
       );
-      expect(await store.firstSeen('x'), DateTime.utc(2026, 3, 1));
+      expect(await store.firstSeen(ref('x')), DateTime.utc(2026, 3, 1));
     });
 
     test('lock timeout surfaces as failed, not an exception', () async {
@@ -213,7 +228,7 @@ void main() {
         await newStore().write(buildRecord(id: 'recovered')),
         StoreWriteResult.applied,
       );
-      expect(await newStore().read('recovered'), isNotNull);
+      expect(await newStore().read(ref('recovered')), isNotNull);
     });
 
     test(
@@ -229,12 +244,12 @@ void main() {
         ArticleRecord? bump(ArticleRecord? c) =>
             c!.copyWith(attempts: c.attempts + 1, generation: c.generation);
         await Future.wait([
-          a.mutate('shared', bump),
-          b.mutate('shared', bump),
-          a.mutate('shared', bump),
-          b.mutate('shared', bump),
+          a.mutate(ref('shared'), bump),
+          b.mutate(ref('shared'), bump),
+          a.mutate(ref('shared'), bump),
+          b.mutate(ref('shared'), bump),
         ]);
-        expect((await newStore().read('shared'))!.attempts, 4);
+        expect((await newStore().read(ref('shared')))!.attempts, 4);
       },
     );
 
@@ -245,12 +260,13 @@ void main() {
         // when the foreground tombstones first.
         await newStore().write(buildRecord(id: 'raced', generation: 1));
         final path = stateFile.path;
+        final raced = ref('raced');
 
         final remote = Isolate.run(() async {
           final store = ArticleRecordStore(
             FileObservedArticlePersistence(stateFile: File(path)),
           );
-          await store.tombstone('raced');
+          await store.tombstone(raced);
         });
         await remote;
 
@@ -259,7 +275,7 @@ void main() {
           1,
         );
         expect(local, StoreWriteResult.rejected);
-        expect((await newStore().read('raced'))!.tombstoned, isTrue);
+        expect((await newStore().read(ref('raced')))!.tombstoned, isTrue);
       },
     );
 
@@ -274,8 +290,8 @@ void main() {
         await store.write(buildRecord(id: 'anchored')),
         StoreWriteResult.applied,
       );
-      expect(await store.read('anchored'), isNotNull);
-      expect(File('${box.path}.article-archive.json').existsSync(), isTrue);
+      expect(await store.read(ref('anchored')), isNotNull);
+      expect(File('${box.path}.article-archive.v2.json').existsSync(), isTrue);
     });
   });
 
@@ -285,22 +301,28 @@ void main() {
       final t2 = DateTime.utc(2026, 1, 2, 10);
 
       expect(
-        await newStore().recordFirstSeen('art-2', t1),
+        await newStore().recordFirstSeen(ref('art-2'), t1),
         StoreWriteResult.applied,
       );
-      await newStore().recordFirstSeen('art-2', t2);
-      expect(await newStore().firstSeen('art-2'), t1);
+      await newStore().recordFirstSeen(ref('art-2'), t2);
+      expect(await newStore().firstSeen(ref('art-2')), t1);
 
       // Fresh store on the same file — the value really came from disk.
-      expect(await newStore().firstSeen('art-2'), t1);
+      expect(await newStore().firstSeen(ref('art-2')), t1);
     });
 
     test('records one firstSeen per distinct article', () async {
       final t = DateTime.utc(2026, 2, 1);
-      await newStore().recordFirstSeen('a', t);
-      await newStore().recordFirstSeen('b', t.add(const Duration(hours: 1)));
-      expect(await newStore().firstSeen('a'), t);
-      expect(await newStore().firstSeen('b'), t.add(const Duration(hours: 1)));
+      await newStore().recordFirstSeen(ref('a'), t);
+      await newStore().recordFirstSeen(
+        ref('b'),
+        t.add(const Duration(hours: 1)),
+      );
+      expect(await newStore().firstSeen(ref('a')), t);
+      expect(
+        await newStore().firstSeen(ref('b')),
+        t.add(const Duration(hours: 1)),
+      );
     });
   });
 
@@ -318,7 +340,10 @@ void main() {
         await store.writeIfGeneration(update, 3),
         StoreWriteResult.applied,
       );
-      expect((await store.read('art-3'))!.owners, {'bookmark', 'tempCache'});
+      expect((await store.read(ref('art-3')))!.owners, {
+        'bookmark',
+        'tempCache',
+      });
     });
 
     test('stale-generation writes are rejected, record unchanged', () async {
@@ -330,7 +355,7 @@ void main() {
         await store.writeIfGeneration(stale, 2),
         StoreWriteResult.rejected,
       );
-      expect((await store.read('art-4'))!.body, 'Body of art-4');
+      expect((await store.read(ref('art-4')))!.body, 'Body of art-4');
     });
 
     test(
@@ -343,36 +368,39 @@ void main() {
           await store.writeIfGeneration(mismatch, 5),
           StoreWriteResult.rejected,
         );
-        expect((await store.read('art-4b'))!.generation, 5);
+        expect((await store.read(ref('art-4b')))!.generation, 5);
       },
     );
 
     test('writes to a tombstoned record are rejected', () async {
       final store = newStore();
       await store.write(buildRecord(id: 'art-5', generation: 1));
-      expect(await store.tombstone('art-5'), StoreWriteResult.applied);
-      expect(await store.isTombstoned('art-5'), isTrue);
+      expect(await store.tombstone(ref('art-5')), StoreWriteResult.applied);
+      expect(await store.isTombstoned(ref('art-5')), isTrue);
 
       final zombie = buildRecord(id: 'art-5', generation: 2);
       expect(
         await store.writeIfGeneration(zombie, 2),
         StoreWriteResult.rejected,
       );
-      expect((await store.read('art-5'))!.tombstoned, isTrue);
-      expect((await store.read('art-5'))!.body, isNull);
+      expect((await store.read(ref('art-5')))!.tombstoned, isTrue);
+      expect((await store.read(ref('art-5')))!.body, isNull);
     });
 
     test('tombstone survives a restart', () async {
       await newStore().write(buildRecord(id: 'art-5b', generation: 1));
-      await newStore().tombstone('art-5b');
-      final read = await newStore().read('art-5b');
+      await newStore().tombstone(ref('art-5b'));
+      final read = await newStore().read(ref('art-5b'));
       expect(read!.tombstoned, isTrue);
       expect(read.generation, 2);
     });
 
     test('tombstoning a never-existing id still records the fence', () async {
-      expect(await newStore().tombstone('art-ghost'), StoreWriteResult.applied);
-      final read = await newStore().read('art-ghost');
+      expect(
+        await newStore().tombstone(ref('art-ghost')),
+        StoreWriteResult.applied,
+      );
+      final read = await newStore().read(ref('art-ghost'));
       expect(read!.tombstoned, isTrue);
       expect(read.generation, 1);
       expect(
@@ -391,7 +419,7 @@ void main() {
         await store.writeIfGeneration(ghost, 1),
         StoreWriteResult.rejected,
       );
-      expect(await store.read('art-6'), isNull);
+      expect(await store.read(ref('art-6')), isNull);
     });
   });
 

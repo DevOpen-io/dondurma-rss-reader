@@ -9,6 +9,7 @@ import 'package:http/testing.dart' as http_testing;
 import 'package:connectivity_plus/connectivity_plus.dart';
 
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
@@ -41,6 +42,8 @@ void main() {
       tempDir.deleteSync(recursive: true);
     } catch (_) {}
   });
+
+  ArticleRef ref(String id) => ArticleRef('https://example.com/feed.xml', id);
 
   ArticleRecordStore newStore() =>
       ArticleRecordStore(FileObservedArticlePersistence(stateFile: stateFile));
@@ -96,7 +99,7 @@ void main() {
         );
         expect(result, StoreWriteResult.applied);
 
-        final record = (await newStore().read('art-1'))!;
+        final record = (await newStore().read(ref('art-1')))!;
         expect(record.owners, {'bookmark'});
         expect(record.body, contains('<p>hi</p>'));
         expect(record.link, 'https://example.com/article/1');
@@ -120,7 +123,7 @@ void main() {
 
         // Mark one media entry ready, then re-register.
         await newStore().mutate(
-          'art-1',
+          ref('art-1'),
           (c) => c!.copyWith(
             media: {
               'https://example.com/existing.png': const MediaEntry(
@@ -133,7 +136,7 @@ void main() {
         );
         await svc.registerArticle(item(), const {'bookmark'});
 
-        final record = (await newStore().read('art-1'))!;
+        final record = (await newStore().read(ref('art-1')))!;
         expect(record.owners, {'tempCache', 'bookmark'});
         expect(
           record.media['https://example.com/existing.png']!.state,
@@ -147,19 +150,19 @@ void main() {
         await service().registerArticle(item(), const {}),
         StoreWriteResult.rejected,
       );
-      expect(await newStore().read('art-1'), isNull);
+      expect(await newStore().read(ref('art-1')), isNull);
     });
 
     test('a tombstoned record is revived, not silently overwritten', () async {
       final svc = service();
       await svc.registerArticle(item(), const {'bookmark'});
-      await newStore().tombstone('art-1');
+      await newStore().tombstone(ref('art-1'));
 
       expect(
         await svc.registerArticle(item(), const {'bookmark'}),
         StoreWriteResult.applied,
       );
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       expect(record.tombstoned, isFalse);
       expect(record.generation, greaterThan(2));
       // A stale writer fenced to the old generation still loses.
@@ -183,9 +186,9 @@ void main() {
               '<p>full</p><img src="https://example.com/new.png">',
         );
         await svc.registerArticle(item(), const {'bookmark'});
-        await svc.prepareArticle('art-1');
+        await svc.prepareArticle(ref('art-1'));
 
-        final record = (await newStore().read('art-1'))!;
+        final record = (await newStore().read(ref('art-1')))!;
         expect(record.body, contains('<p>full</p>'));
         expect(record.bodyState, MediaState.ready);
         expect(
@@ -208,9 +211,9 @@ void main() {
         await svc.registerArticle(item(content: '<p>rss body</p>'), const {
           'bookmark',
         });
-        await svc.prepareArticle('art-1');
+        await svc.prepareArticle(ref('art-1'));
 
-        final record = (await newStore().read('art-1'))!;
+        final record = (await newStore().read(ref('art-1')))!;
         expect(record.body, contains('rss body'));
         expect(record.bodyState, MediaState.failed);
         expect(record.nextRetryAt, isNotNull);
@@ -236,7 +239,7 @@ void main() {
             '<img src="https://h.example/2.png">',
       );
       await svc.registerArticle(item(), const {'bookmark'});
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
 
       expect(hits.length, 2);
       expect(hits[1].difference(hits[0]), greaterThanOrEqualTo(gap * 0.8));
@@ -261,7 +264,7 @@ void main() {
             '<img src="https://b.example/2.png">',
       );
       await svc.registerArticle(item(), const {'bookmark'});
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
 
       expect(hits.length, 2);
       expect(hits[1].difference(hits[0]), lessThan(gap));
@@ -278,10 +281,10 @@ void main() {
         item(imageUrl: 'https://example.com/a.png'),
         const {'bookmark'},
       );
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(calls, 1); // one attempt per piece per pass, even on failure
 
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       final entry = record.media['https://example.com/a.png']!;
       expect(entry.state, MediaState.failed);
       expect(entry.attempts, 1);
@@ -297,7 +300,7 @@ void main() {
       final svc = service(client: client, extract: (_) async => 'ok');
       await svc.registerArticle(item(), const {'bookmark'});
       await newStore().mutate(
-        'art-1',
+        ref('art-1'),
         (c) => c!.copyWith(
           bodyState: MediaState.ready,
           media: {
@@ -311,12 +314,12 @@ void main() {
           },
         ),
       );
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(calls, 0);
     });
 
     test('a missing record is a no-op', () async {
-      expect(await service().prepareArticle('ghost'), 0);
+      expect(await service().prepareArticle(ref('ghost')), 0);
     });
 
     test('a host cooldown learned by feed refresh skips extraction and '
@@ -356,7 +359,7 @@ void main() {
 
       expect(extractCalls, 0); // extraction skipped
       expect(httpCalls, 0); // media download skipped
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       // Nothing was attempted → no failure recorded; pieces stay
       // pending for a later pass and the RSS body is untouched.
       expect(record.bodyState, MediaState.pending);
@@ -395,7 +398,7 @@ void main() {
         const {'bookmark'},
       );
       // prepareArticle is the explicit (manual) path.
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(httpCalls, 0); // server mandate survives the explicit retry
     });
 
@@ -431,7 +434,7 @@ void main() {
           item(imageUrl: 'https://example.com/a.png'),
           const {'bookmark'},
         );
-        await svc.prepareArticle('art-1');
+        await svc.prepareArticle(ref('art-1'));
         expect(extractCalls, 1);
         expect(httpCalls, 1);
       },
@@ -476,7 +479,7 @@ void main() {
       await svc.preparePending(unmetered: true);
 
       expect(httpCalls, 1); // only the first piece ever hit the network
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       final a = record.media['https://example.com/a.png']!;
       final b = record.media['https://example.com/b.png']!;
       expect(a.state, MediaState.ready);
@@ -522,7 +525,7 @@ void main() {
       await svc.preparePending(unmetered: true);
 
       expect(extractCalls, 1); // extraction ran, deferred mid-request
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       expect(record.bodyState, MediaState.pending); // not failed
       expect(record.attempts, 0);
       expect(record.nextRetryAt, isNull);
@@ -558,7 +561,7 @@ void main() {
       await svc.preparePending(unmetered: true);
 
       expect(extractCalls, 1);
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       expect(record.bodyState, MediaState.failed);
       expect(record.attempts, 1);
       expect(record.nextRetryAt, isNotNull);
@@ -614,7 +617,7 @@ void main() {
       );
       await svc.preparePending(unmetered: true);
 
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       final entry = record.media['https://example.com/a.png']!;
       // Sweep-start math would store t0+5m (already past); the deadline
       // must anchor at the response instant ≈ t0+30m+5m.
@@ -635,9 +638,9 @@ void main() {
       await svc.registerArticle(item(imageUrl: 'https://e.com/i.png'), const {
         'bookmark',
       });
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(calls, 1);
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       await svc.preparePending(unmetered: true);
       expect(calls, 1); // ready is terminal for fetching
     });
@@ -654,7 +657,7 @@ void main() {
       });
       // Two enqueued passes on the same instance run strictly in order.
       await Future.wait([
-        svc.prepareArticle('art-1'),
+        svc.prepareArticle(ref('art-1')),
         svc.preparePending(unmetered: true),
       ]);
       expect(calls, 1);
@@ -673,10 +676,10 @@ void main() {
         item(imageUrl: 'https://e.com/dead.png'),
         const {'bookmark'},
       );
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(
         (await newStore().read(
-          'art-1',
+          ref('art-1'),
         ))!.media['https://e.com/dead.png']!.state,
         MediaState.gone,
       );
@@ -698,10 +701,10 @@ void main() {
         item(imageUrl: 'https://e.com/soft.png'),
         const {'bookmark'},
       );
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(
         (await newStore().read(
-          'art-1',
+          ref('art-1'),
         ))!.media['https://e.com/soft.png']!.state,
         MediaState.gone,
       );
@@ -722,10 +725,10 @@ void main() {
           item(imageUrl: 'https://e.com/huge.png'),
           const {'bookmark'},
         );
-        await svc.prepareArticle('art-1');
+        await svc.prepareArticle(ref('art-1'));
         expect(
           (await newStore().read(
-            'art-1',
+            ref('art-1'),
           ))!.media['https://e.com/huge.png']!.state,
           MediaState.gone,
         );
@@ -752,18 +755,18 @@ void main() {
         item(imageUrl: 'https://e.com/race.png'),
         const {'bookmark'},
       );
-      final passA = svcA.prepareArticle('art-1');
-      await svcB.prepareArticle('art-1'); // finishes first → gone
+      final passA = svcA.prepareArticle(ref('art-1'));
+      await svcB.prepareArticle(ref('art-1')); // finishes first → gone
       expect(
         (await newStore().read(
-          'art-1',
+          ref('art-1'),
         ))!.media['https://e.com/race.png']!.state,
         MediaState.gone,
       );
       gate.complete();
       await passA; // A's 500 lands after B's 404
       final entry = (await newStore().read(
-        'art-1',
+        ref('art-1'),
       ))!.media['https://e.com/race.png']!;
       expect(entry.state, MediaState.gone); // never re-armed
       expect(entry.nextRetryAt, isNull);
@@ -784,7 +787,7 @@ void main() {
         const {'bookmark'},
       );
       expect(await svc.preparePending(unmetered: true), 2);
-      final good = (await newStore().read('a-good'))!;
+      final good = (await newStore().read(ref('a-good')))!;
       expect(good.media['https://e.com/i.png']!.state, MediaState.ready);
     });
   });
@@ -817,7 +820,7 @@ void main() {
       });
       expect(await svc.preparePending(unmetered: true), 1);
       expect(imageCalls, 1);
-      final record = (await newStore().read('art-1'))!;
+      final record = (await newStore().read(ref('art-1')))!;
       expect(record.bodyState, MediaState.ready);
       expect(record.media['https://e.com/i.png']!.state, MediaState.ready);
     });
@@ -830,7 +833,10 @@ void main() {
       });
       final svc = service(client: client, extract: (_) async => 'ok');
       await svc.registerArticle(item(), const {'bookmark'});
-      await newStore().mutate('art-1', (c) => c!.copyWith(owners: const {}));
+      await newStore().mutate(
+        ref('art-1'),
+        (c) => c!.copyWith(owners: const {}),
+      );
       expect(await svc.preparePending(unmetered: true), 0);
       expect(calls, 0);
     });
@@ -843,7 +849,7 @@ void main() {
       await svc.registerArticle(item(), const {'bookmark'});
       // Body already ready, one media piece scheduled into the future.
       await newStore().mutate(
-        'art-1',
+        ref('art-1'),
         (c) => c!.copyWith(
           bodyState: MediaState.ready,
           media: {
@@ -863,9 +869,9 @@ void main() {
     test('tombstoned records are never resurrected by the sweep', () async {
       final svc = service(extract: (_) async => 'ok');
       await svc.registerArticle(item(), const {'bookmark'});
-      await newStore().tombstone('art-1');
+      await newStore().tombstone(ref('art-1'));
       expect(await svc.preparePending(unmetered: true), 0);
-      expect((await newStore().read('art-1'))!.tombstoned, isTrue);
+      expect((await newStore().read(ref('art-1')))!.tombstoned, isTrue);
     });
 
     test('at most three transfers run in parallel', () async {
@@ -888,7 +894,7 @@ void main() {
         ),
         const {'bookmark'},
       );
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       expect(peak, lessThanOrEqualTo(3));
     });
   });
@@ -936,10 +942,10 @@ void main() {
       await svc.registerArticle(item(imageUrl: 'https://e.com/r.png'), const {
         'bookmark',
       });
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
 
       final entry = (await newStore().read(
-        'art-1',
+        ref('art-1'),
       ))!.media['https://e.com/r.png']!;
       expect(entry.nextRetryAt, now.add(const Duration(seconds: 3600)));
     });
@@ -960,9 +966,9 @@ void main() {
         'bookmark',
       });
       // First attempt → attempts=1 → backoff 1min > 5s Retry-After.
-      await svc.prepareArticle('art-1');
+      await svc.prepareArticle(ref('art-1'));
       final entry = (await newStore().read(
-        'art-1',
+        ref('art-1'),
       ))!.media['https://e.com/r.png']!;
       expect(entry.nextRetryAt, now.add(const Duration(minutes: 1)));
     });

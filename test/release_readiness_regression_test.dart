@@ -13,6 +13,7 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/article_page_provider.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
@@ -24,8 +25,8 @@ import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.da
 import 'package:ice_cream_rss_reader/services/temp_cache_membership.dart';
 import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
 
-FeedItem _article() => FeedItem(
-  id: 'upgrade-article',
+FeedItem _article([String id = 'upgrade-article']) => FeedItem(
+  id: id,
   siteName: 'Example',
   title: 'Previously saved article',
   description: 'Legacy summary',
@@ -197,15 +198,15 @@ void main() {
       preparation: preparation,
     ).reconcile(
       items: [_article()],
-      bookmarkedIds: bookmarks.bookmarkedItemIds,
+      isBookmarked: bookmarks.isBookmarkedRef,
       subscribedFeedUrls: [_article().feedUrl],
       globalKeywords: const [],
       feedKeywordsMap: const {},
       limit: 0,
       fullTextFor: (_) => false,
     );
-    await preparation.sweepCleanup(isBookmarked: bookmarks.isBookmarked);
-    final restored = await records.read(_article().id);
+    await preparation.sweepCleanup(isBookmarked: bookmarks.isBookmarkedRef);
+    final restored = await records.read(ArticleRef.of(_article()));
     expect(restored, isNotNull);
     expect(restored!.owners, {'bookmark'});
     expect(restored.body, '<p>Legacy body</p>');
@@ -234,7 +235,7 @@ void main() {
       );
       addTearDown(restarted.dispose);
       await restarted.restoration;
-      final record = (await records.read(_article().id))!;
+      final record = (await records.read(ArticleRef.of(_article())))!;
       expect(record.body, contains('Saved body'));
       expect(record.bodySource, 'extracted');
       expect(record.media[imageUrl]!.state, MediaState.ready);
@@ -253,7 +254,7 @@ void main() {
     delayed.resume.complete();
     await bookmarks.restoration;
     expect(bookmarks.bookmarkedItems, isEmpty);
-    expect(await records.read(_article().id), isNull);
+    expect(await records.read(ArticleRef.of(_article())), isNull);
     expect(requests, isEmpty);
   });
 
@@ -267,14 +268,14 @@ void main() {
       expect(page.recordStatus!.hasActionable, isTrue);
       expect(page.recordStatus!.readyMedia, 0);
       final feed = feedProvider();
-      await feed.prepareArticleNow(_article().id);
+      await feed.prepareArticleNow(_article());
       await page.refreshSavedCopy(records: records, media: media);
       expect(requests, [imageUrl]);
       expect(page.recordStatus!.scope, ArticleScope.savedReady);
       expect(page.recordStatus!.readyMedia, 1);
       expect(
         await media.verify(
-          (await records.read(_article().id))!.media[imageUrl]!,
+          (await records.read(ArticleRef.of(_article())))!.media[imageUrl]!,
         ),
         isTrue,
       );
@@ -296,9 +297,11 @@ void main() {
       ),
       DateTime.now(),
     );
-    await feed.prepareArticleNow(_article().id);
+    await feed.prepareArticleNow(_article());
     expect(requests, isEmpty);
-    final entry = (await records.read(_article().id))!.media[imageUrl]!;
+    final entry = (await records.read(
+      ArticleRef.of(_article()),
+    ))!.media[imageUrl]!;
     expect(entry.state, MediaState.pending);
     expect(entry.attempts, 0);
   });
@@ -309,14 +312,19 @@ void main() {
     final feed = feedProvider();
     respond = (_) async =>
         http.Response('', 429, headers: {'retry-after': '300'});
-    await feed.prepareArticleNow('first');
+    await feed.prepareArticleNow(_article('first'));
     expect(
       backoff.isMandatedBackedOff(_article().feedUrl, DateTime.now()),
       isTrue,
     );
-    await feed.prepareArticleNow('second');
+    await feed.prepareArticleNow(_article('second'));
     expect(requests, [imageUrl]);
-    expect((await records.read('second'))!.media[imageUrl]!.attempts, 0);
+    expect(
+      (await records.read(
+        ArticleRef.of(_article('second')),
+      ))!.media[imageUrl]!.attempts,
+      0,
+    );
   });
 
   test('stale-lock recovery keeps 400 contending actions exclusive', () async {

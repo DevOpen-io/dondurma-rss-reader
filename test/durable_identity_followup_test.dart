@@ -12,6 +12,7 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/article_page_provider.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_cleanup_service.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
@@ -113,8 +114,8 @@ class _SnapshotHookStore extends ArticleRecordStore {
   }
 
   @override
-  Future<ArticleRecord?> read(String id) async {
-    final result = await super.read(id);
+  Future<ArticleRecord?> read(ArticleRef ref) async {
+    final result = await super.read(ref);
     await _hook();
     return result;
   }
@@ -206,11 +207,11 @@ void main() {
     minHostGap: Duration.zero,
   );
 
-  // These characterize unresolved production defects. Passing means the
-  // limitation is reproduced, NOT that independent identity is implemented.
-  group('KNOWN identity limitations — not migration acceptance tests', () {
+  // Formerly KNOWN characterizations of the shared-GUID defect. Setups are
+  // unchanged; the assertions now require independent source identity.
+  group('source-local durable identity (formerly KNOWN limitations)', () {
     test(
-      'independent bookmark snapshots restore into one mixed offline record',
+      'independent bookmark snapshots restore into separate offline records',
       () async {
         final a = _item('a');
         final b = _item('b');
@@ -231,18 +232,20 @@ void main() {
         final archive = await records.listRecords();
         expect(
           archive.length,
-          1,
-          reason: 'KNOWN: shared GUID still aliases durable identity',
+          2,
+          reason: 'A shared GUID must not alias durable identity',
         );
-        expect(archive.single.body, a.content);
-        expect(archive.single.link, a.link);
-        expect(archive.single.title, b.title);
+        final byFeed = {for (final r in archive) r.feedUrl: r};
+        expect(byFeed[a.feedUrl]!.body, a.content);
+        expect(byFeed[a.feedUrl]!.link, a.link);
+        expect(byFeed[b.feedUrl]!.body, b.content);
+        expect(byFeed[b.feedUrl]!.title, b.title);
         final page = ArticlePageProvider(item: b.copyWith(isBookmarked: true));
         await page.loadSavedCopy(records: records, media: media);
         expect(
           page.rawContent,
-          a.content,
-          reason: 'KNOWN: B displays the saved body of A',
+          b.content,
+          reason: 'B displays its own saved body',
         );
         page.dispose();
         bookmarks.dispose();
@@ -251,7 +254,7 @@ void main() {
     );
 
     test(
-      'interrupted legacy restoration preserves snapshots but restart cannot unmix archive identity',
+      'interrupted restoration preserves snapshots and restart restores both instances',
       () async {
         final snapshots = [_item('a').toJson(), _item('b').toJson()];
         await Hive.box(
@@ -286,9 +289,13 @@ void main() {
         );
         await restarted.restoration;
         expect(restarted.bookmarkedItems.length, 2);
-        final mixed = (await records.listRecords()).single;
-        expect(mixed.body, _item('a').content);
-        expect(mixed.title, _item('b').title);
+        final byFeed = {
+          for (final r in await records.listRecords()) r.feedUrl: r,
+        };
+        expect(byFeed.length, 2);
+        expect(byFeed[_item('a').feedUrl]!.body, _item('a').content);
+        expect(byFeed[_item('b').feedUrl]!.body, _item('b').content);
+        expect(byFeed[_item('b').feedUrl]!.title, _item('b').title);
         restarted.dispose();
         resumed.dispose();
       },
@@ -349,17 +356,17 @@ void main() {
     );
 
     test(
-      'unsubscribe cannot repair a mixed global temp-cache record',
+      'temp-cache membership keeps per-source records across unsubscribe',
       () async {
         final service = prep();
         final membership = TempCacheMembership(
           records: records,
           preparation: service,
         );
-        Future<Set<String>> reconcile(List<FeedItem> items) =>
+        Future<Set<ArticleRef>> reconcile(List<FeedItem> items) =>
             membership.reconcile(
               items: items,
-              bookmarkedIds: {},
+              isBookmarked: (_) => false,
               subscribedFeedUrls: items.map((i) => i.feedUrl),
               globalKeywords: [],
               feedKeywordsMap: {},
@@ -368,24 +375,26 @@ void main() {
               epoch: null,
             );
         await reconcile([_item('a'), _item('b')]);
-        expect(
-          (await records.listRecords()).single.feedUrl,
-          _item('b').feedUrl,
-        );
+        expect(await records.listRecords(), hasLength(2));
         await reconcile([_item('a')]);
-        final surviving = (await records.listRecords()).single;
+        final surviving = (await records.read(ArticleRef.of(_item('a'))))!;
         expect(
           surviving.feedUrl,
-          _item('b').feedUrl,
-          reason: 'KNOWN: active A inherited B archive provenance',
+          _item('a').feedUrl,
+          reason: 'Active A keeps its own archive provenance',
         );
-        expect(surviving.body, _item('b').content);
+        expect(surviving.body, _item('a').content);
+        expect(surviving.owners, {'tempCache'});
+        // B's instance lost only its temp claim; its content stays its own.
+        final released = (await records.read(ArticleRef.of(_item('b'))))!;
+        expect(released.owners, isEmpty);
+        expect(released.body, _item('b').content);
         service.dispose();
       },
     );
 
     test(
-      'actual foreground/background isolates union owners of different articles',
+      'foreground/background isolates keep owners of different articles apart',
       () async {
         final service = prep();
         await service.registerArticle(_item('a'), {
@@ -394,11 +403,12 @@ void main() {
         final remotePath = path;
         final json = _item('b').toJson();
         await Isolate.run(() => _registerRemote(remotePath, json));
-        final mixed = (await records.listRecords()).single;
-        expect(mixed.owners, {'bookmark', 'tempCache'});
-        expect(mixed.feedUrl, _item('a').feedUrl);
-        expect(mixed.body, _item('a').content);
-        expect(mixed.title, _item('b').title);
+        final a = (await records.read(ArticleRef.of(_item('a'))))!;
+        final b = (await records.read(ArticleRef.of(_item('b'))))!;
+        expect(a.owners, {'bookmark'});
+        expect(b.owners, {'tempCache'});
+        expect(a.body, _item('a').content);
+        expect(b.title, _item('b').title);
         service.dispose();
       },
     );
@@ -439,7 +449,10 @@ void main() {
         reason:
             'Without a gate only the archive epoch fences; acceptance B covers the gated path',
       );
-      expect((await records.read('shared-guid'))!.body, _item('b').content);
+      expect(
+        (await records.read(ArticleRef.of(_item('b'))))!.body,
+        _item('b').content,
+      );
       final observedState =
           jsonDecode(await File(observedPath).readAsString()) as Map;
       expect((observedState['feeds'] as Map).length, 1);
@@ -495,7 +508,7 @@ void main() {
     await service.registerArticle(_item('a').copyWith(imageUrl: image), {
       'bookmark',
     }, fullText: false);
-    final pending = service.prepareArticle('shared-guid');
+    final pending = service.prepareArticle(ArticleRef.of(_item('a')));
     await requested.future;
     service.resetFence();
     expect(await records.wipeAll(), isTrue);
@@ -545,7 +558,7 @@ void main() {
         await service.registerArticle(_item('a').copyWith(imageUrl: image), {
           'bookmark',
         }, fullText: false);
-        final pending = service.prepareArticle('shared-guid');
+        final pending = service.prepareArticle(ArticleRef.of(_item('a')));
         await requested.future;
         service.resetFence();
         expect(await records.wipeAll(), isTrue);
@@ -646,8 +659,10 @@ void main() {
         await service.registerArticle(_item('b').copyWith(imageUrl: image), {
           'bookmark',
         }, fullText: false);
-        await service.prepareArticle('shared-guid');
-        final entry = (await records.read('shared-guid'))!.media[image]!;
+        await service.prepareArticle(ArticleRef.of(_item('b')));
+        final entry = (await records.read(
+          ArticleRef.of(_item('b')),
+        ))!.media[image]!;
         expect(entry.state, MediaState.ready);
         expect(await media.read(entry), orderedEquals([7, 8, 9]));
       },
@@ -731,7 +746,12 @@ void main() {
           records: records,
           media: racingMedia,
         ).sweep();
-        expect((await records.read('new-owner'))!.owners, {'bookmark'});
+        expect(
+          (await records.read(
+            ArticleRef(_item('b').feedUrl, 'new-owner'),
+          ))!.owners,
+          {'bookmark'},
+        );
         expect(
           await file.exists(),
           isTrue,
@@ -754,7 +774,7 @@ void main() {
         for (final old in oldEpochs) {
           expect(
             await records.mutate(
-              'shared-guid',
+              ArticleRef.of(_item('a')),
               (_) => ArticleRecord(
                 id: 'shared-guid',
                 feedUrl: _item('a').feedUrl,
@@ -801,7 +821,7 @@ void main() {
         await old.registerArticle(_item('a').copyWith(imageUrl: image), {
           'bookmark',
         }, fullText: false);
-        final pending = old.prepareArticle('shared-guid');
+        final pending = old.prepareArticle(ArticleRef.of(_item('a')));
         await requested.future;
         old.resetFence();
         expect(await records.wipeAll(), isTrue);
@@ -809,7 +829,7 @@ void main() {
         await current.registerArticle(_item('b').copyWith(imageUrl: image), {
           'bookmark',
         }, fullText: false);
-        await current.prepareArticle('shared-guid');
+        await current.prepareArticle(ArticleRef.of(_item('b')));
         release.complete(
           http.Response.bytes(
             [1, 2, 3],
@@ -818,7 +838,7 @@ void main() {
           ),
         );
         await pending;
-        final record = (await records.read('shared-guid'))!;
+        final record = (await records.read(ArticleRef.of(_item('b'))))!;
         expect(record.feedUrl, _item('b').feedUrl);
         expect(record.media[image]!.state, MediaState.ready);
         // Equal byte lengths make verify() alone insufficient to catch this.
@@ -874,7 +894,7 @@ void main() {
           }
           final pending = mutation
               ? service.mutateRecord(
-                  'shared-guid',
+                  ArticleRef.of(_item('a')),
                   (_) => ArticleRecord(
                     id: 'shared-guid',
                     feedUrl: _item('a').feedUrl,
@@ -908,18 +928,23 @@ void main() {
               return release.future;
             },
           );
+          final ref = ArticleRef.of(_item('a'));
           await service.registerArticle(_item('a'), {'bookmark'});
-          final pending = service.prepareArticle('shared-guid');
+          final pending = service.prepareArticle(ref);
           await requested.future;
           if (reset) {
             expect(await records.wipeAll(), isTrue);
           } else {
-            await records.tombstone('shared-guid');
+            await records.tombstone(ref);
           }
-          await service.registerArticle(_item('b'), {'bookmark'});
+          // The same instance's new lifetime, with different content.
+          await service.registerArticle(
+            _item('b').copyWith(feedUrl: _item('a').feedUrl),
+            {'bookmark'},
+          );
           release.complete('<p>STALE BODY</p>');
           await pending;
-          expect((await records.read('shared-guid'))!.body, _item('b').content);
+          expect((await records.read(ref))!.body, _item('b').content);
           service.dispose();
         },
       );
@@ -943,12 +968,16 @@ void main() {
         await service.registerArticle(_item('a').copyWith(imageUrl: image), {
           'bookmark',
         }, fullText: false);
-        final pending = service.prepareArticle('shared-guid');
+        final ref = ArticleRef.of(_item('a'));
+        final pending = service.prepareArticle(ref);
         await requested.future;
-        await records.tombstone('shared-guid');
-        await service.registerArticle(_item('b').copyWith(imageUrl: image), {
-          'bookmark',
-        }, fullText: false);
+        await records.tombstone(ref);
+        // The same instance revived with new content.
+        await service.registerArticle(
+          _item('b').copyWith(feedUrl: _item('a').feedUrl, imageUrl: image),
+          {'bookmark'},
+          fullText: false,
+        );
         release.complete(
           http.Response.bytes(
             [1, 2, 3],
@@ -958,7 +987,7 @@ void main() {
         );
         await pending;
         expect(
-          (await records.read('shared-guid'))!.media[image]!.state,
+          (await records.read(ref))!.media[image]!.state,
           MediaState.pending,
         );
         service.dispose();
@@ -983,8 +1012,9 @@ void main() {
             expect(await records.wipeAll(), isTrue);
             await records.write(
               ArticleRecord(
+                // The same instance's new-era record, with new content.
                 id: fresh.id,
-                feedUrl: fresh.feedUrl,
+                feedUrl: old.feedUrl,
                 link: fresh.link,
                 body: fresh.content,
                 owners: {'bookmark'},
@@ -995,9 +1025,9 @@ void main() {
           if (sweep) {
             await service.preparePending(unmetered: true);
           } else {
-            await service.prepareArticle(old.id);
+            await service.prepareArticle(ArticleRef.of(old));
           }
-          expect((await records.read(fresh.id))!.body, fresh.content);
+          expect((await records.read(ArticleRef.of(old)))!.body, fresh.content);
           service.dispose();
         },
       );

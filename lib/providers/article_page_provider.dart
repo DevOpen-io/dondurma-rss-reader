@@ -121,10 +121,11 @@ class ArticlePageProvider extends ChangeNotifier {
     final generation = ++_savedCopyGeneration;
     final store = records ?? ArticleRecordStore.forBox(Hive.box('feeds'));
     final mediaStore = media ?? ArticleMediaStore();
-    final id = ArticleIdentity.normalizeItemId(item.id) ?? item.id;
     ArticleRecord? record;
     try {
-      record = await store.read(id);
+      // This source instance's own record — never another feed's copy of a
+      // shared GUID.
+      record = await store.read(ArticleRef.of(item));
     } catch (_) {
       // A store-level read error fails closed to "no offline claim".
       record = null;

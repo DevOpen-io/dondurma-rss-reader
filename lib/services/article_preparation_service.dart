@@ -11,6 +11,7 @@ import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
 import '../utils/retry_after.dart';
 import 'article_cleanup_service.dart';
+import 'article_identity.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
 import 'feed_backoff.dart';
@@ -176,12 +177,12 @@ class ArticlePreparationService {
   /// with [registerArticle] — the user's toggle order IS the durable order,
   /// and a queued registration can never re-add an owner already stripped.
   Future<StoreWriteResult> mutateRecord(
-    String id,
+    ArticleRef ref,
     ArticleRecord? Function(ArticleRecord? current) update, {
     int? expectedEpoch,
   }) => _enqueueGuarded(
     (isCurrent) => _records.mutate(
-      id,
+      ref,
       (current) => isCurrent() ? update(current) : current,
       expectedEpoch: expectedEpoch,
     ),
@@ -193,7 +194,9 @@ class ArticlePreparationService {
   /// Deliberately NOT queue-epoch guarded — post-reset hygiene is exactly
   /// what a queued pass should still do. Repeat callers coalesce onto the
   /// in-flight pass plus at most one re-run.
-  Future<CleanupResult> sweepCleanup({bool Function(String id)? isBookmarked}) {
+  Future<CleanupResult> sweepCleanup({
+    bool Function(ArticleRef ref)? isBookmarked,
+  }) {
     final inFlight = _sweepInFlight;
     if (inFlight != null) {
       _sweepAgain = true;
@@ -368,7 +371,9 @@ class ArticlePreparationService {
       media: manifest,
       owners: owners,
     );
-    return _records.mutate(item.id, expectedEpoch: expectedEpoch, (current) {
+    return _records.mutate(ArticleRef.of(item), expectedEpoch: expectedEpoch, (
+      current,
+    ) {
       // The claim must still be live inside the lock — a rescinded claim
       // (un-bookmark, strip) must not be re-added by this delayed write.
       if (claimCheck != null && !claimCheck()) return current;
@@ -445,10 +450,10 @@ class ArticlePreparationService {
   /// regardless of transport cost — this is the "one article, one pass"
   /// mobile-data license an explicit user action grants. Local backoff
   /// waits may be bypassed here; a server `Retry-After` wait never is.
-  Future<int> prepareArticle(String articleId) =>
-      _enqueue(() => _prepareArticle(articleId));
+  Future<int> prepareArticle(ArticleRef ref) =>
+      _enqueue(() => _prepareArticle(ref));
 
-  Future<int> _prepareArticle(String articleId) async {
+  Future<int> _prepareArticle(ArticleRef ref) async {
     final LifecycleTicket? ticket;
     try {
       ticket = await _beginWork();
@@ -460,7 +465,7 @@ class ArticlePreparationService {
     // Fence before reading the snapshot. A reset between read and epoch
     // capture must not license old content to mutate a new-era record.
     final epoch = await _records.currentEpoch();
-    final record = await _records.read(articleId);
+    final record = await _records.read(ref);
     if (record == null || record.tombstoned || record.owners.isEmpty) {
       return 0;
     }
@@ -530,7 +535,7 @@ class ArticlePreparationService {
     LifecycleTicket? ticket, {
     bool manual = false,
   }) async {
-    final id = record.id;
+    final id = ArticleRef(record.feedUrl, record.id);
 
     // 1. Body: full-text upgrade. The RSS body is kept when extraction fails.
     if (record.bodyState != MediaState.ready && record.link.isNotEmpty) {
@@ -631,7 +636,7 @@ class ArticlePreparationService {
   }
 
   Future<void> _preparePiece(
-    String id,
+    ArticleRef id,
     String url,
     int epoch,
     int generation,
@@ -668,7 +673,7 @@ class ArticlePreparationService {
   }
 
   Future<void> _commitPiece(
-    String id,
+    ArticleRef id,
     String url,
     int epoch,
     int generation,

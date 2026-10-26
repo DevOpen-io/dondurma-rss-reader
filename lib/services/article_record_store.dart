@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:hive_ce/hive.dart';
 
+import '../models/feed_item.dart';
 import 'article_identity.dart';
 import 'observed_article_persistence.dart';
 import 'observed_article_persistence_stub.dart'
@@ -260,57 +261,98 @@ class ArticleRecord {
   };
 }
 
-/// Persists [ArticleRecord]s and per-article first-seen timestamps in a
+/// Persists [ArticleRecord]s and per-instance first-seen timestamps in a
 /// lock-file-serialized JSON sidecar next to the `'feeds'` Hive box — the
 /// same proven mechanism [ObservedArticleStore] uses, because a shared Hive
 /// box cannot arbitrate writes between the foreground and Workmanager
 /// isolates (each keeps its own in-memory keystore).
+///
+/// Schema 2 keys every record by its source instance ([ArticleRef]), so two
+/// feeds sharing a GUID never share a record. It lives in its own file; the
+/// schema-1 archive (global ids) is migration input only, read under this
+/// store's lock the first time schema 2 is absent, and never rewritten
+/// except by [wipeAll]. A legacy record is re-keyed only when exactly one
+/// known instance (cached items + bookmark snapshots) carries its id and its
+/// stored feed agrees; everything else is quarantined — bytes and manifest
+/// kept (media stays referenced), never shown as an instance's offline copy.
 class ArticleRecordStore {
-  ArticleRecordStore(this._persistence);
+  ArticleRecordStore(
+    this._persistence, {
+    ObservedArticlePersistence? legacy,
+    Iterable<FeedItem> Function()? knownInstances,
+  }) : _legacy = legacy,
+       _knownInstances = knownInstances;
 
   ArticleRecordStore.forBox(Box box)
     : this(
         persistence_factory.createObservedArticlePersistence(
           box,
+          fileSuffix: '.article-archive.v2.json',
+        ),
+        legacy: persistence_factory.createObservedArticlePersistence(
+          box,
           fileSuffix: '.article-archive.json',
         ),
+        knownInstances: () => _knownInstancesFor(box),
       );
 
-  static const int schemaVersion = 1;
+  static const int schemaVersion = 2;
+  static const int legacySchemaVersion = 1;
 
   final ObservedArticlePersistence _persistence;
+  final ObservedArticlePersistence? _legacy;
+  final Iterable<FeedItem> Function()? _knownInstances;
 
-  static String _norm(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
+  /// Instances the app can currently show: the cache snapshot and the
+  /// bookmark snapshots. Corrupt payloads contribute nothing.
+  static Iterable<FeedItem> _knownInstancesFor(Box feeds) sync* {
+    Iterable<FeedItem> decode(Object? raw) sync* {
+      if (raw is! String || raw.isEmpty) return;
+      try {
+        for (final entry in jsonDecode(raw) as List) {
+          yield FeedItem.fromJson(Map<String, dynamic>.from(entry as Map));
+        }
+      } catch (_) {}
+    }
 
-  static const Map<String, dynamic> _emptyState = {
+    yield* decode(feeds.get('cachedItemsJson'));
+    if (Hive.isBoxOpen('bookmarks')) {
+      yield* decode(Hive.box('bookmarks').get('bookmarkedItemsJson'));
+    }
+  }
+
+  static Map<String, dynamic> _empty(int epoch) => {
+    'schema': schemaVersion,
     'records': <String, dynamic>{},
     'seen': <String, dynamic>{},
-    'epoch': 0,
+    'quarantine': <String, dynamic>{},
+    'epoch': epoch,
   };
 
-  /// Decodes persisted state. Returns null when the file holds non-empty but
-  /// undecodable or foreign-schema content — mutations must refuse to
-  /// overwrite it rather than destroy unknown user data. A `records`/`seen`
-  /// container of the wrong type also fails closed: coercing it to empty
-  /// would let a GC pass "prove" every file unreferenced (#40 fail-closed).
-  Map<String, dynamic>? _tryDecode(String? raw) {
+  /// Decodes persisted state of [schema]. Returns null when the content is
+  /// undecodable or foreign — mutations must refuse to overwrite it rather
+  /// than destroy unknown user data. A container of the wrong type also
+  /// fails closed: coercing it to empty would let a GC pass "prove" every
+  /// file unreferenced (#40 fail-closed).
+  static Map<String, dynamic>? _tryDecode(String? raw, {int? schema}) {
     if (raw == null || raw.isEmpty) return null;
+    final expected = schema ?? schemaVersion;
     try {
       final decoded = jsonDecode(raw);
-      if (decoded is Map && decoded['schema'] == schemaVersion) {
-        for (final key in const ['records', 'seen']) {
+      if (decoded is Map && decoded['schema'] == expected) {
+        for (final key in const ['records', 'seen', 'quarantine']) {
           if (decoded.containsKey(key) && decoded[key] is! Map) {
             return null;
           }
         }
+        Map<String, dynamic> map(String key) => decoded[key] is Map
+            ? Map<String, dynamic>.from(decoded[key] as Map)
+            : <String, dynamic>{};
         return {
-          'schema': schemaVersion,
-          'records': decoded['records'] is Map
-              ? Map<String, dynamic>.from(decoded['records'] as Map)
-              : <String, dynamic>{},
-          'seen': decoded['seen'] is Map
-              ? Map<String, dynamic>.from(decoded['seen'] as Map)
-              : <String, dynamic>{},
+          'schema': expected,
+          'records': map('records'),
+          'seen': map('seen'),
+          'quarantine': map('quarantine'),
           'epoch': decoded['epoch'] is int ? decoded['epoch'] as int : 0,
         };
       }
@@ -321,23 +363,86 @@ class ArticleRecordStore {
   static int _epochOf(Map<String, dynamic> state) =>
       state['epoch'] is int ? state['epoch'] as int : 0;
 
-  /// State for a mutation: empty when the file is absent, null when the file
-  /// exists but cannot be decoded (fail closed — never rewrite blindly).
+  /// Schema-2 state derived from the legacy archive; null when the legacy
+  /// file exists but is undecodable (fail closed, migrate nothing).
+  Future<Map<String, dynamic>?> _migratedState() async {
+    final raw = await _legacy?.read();
+    if (raw == null || raw.isEmpty) return _empty(0);
+    final legacy = _tryDecode(raw, schema: legacySchemaVersion);
+    if (legacy == null) return null;
+    final feedsById = <String, Set<String>>{};
+    for (final item in _knownInstances?.call() ?? const <FeedItem>[]) {
+      final ref = ArticleRef.of(item);
+      (feedsById[ref.id] ??= {}).add(ref.feedUrl);
+    }
+    final state = _empty(_epochOf(legacy));
+    final records = state['records'] as Map<String, dynamic>;
+    final quarantine = state['quarantine'] as Map<String, dynamic>;
+    for (final MapEntry(key: legacyId, :value)
+        in (legacy['records'] as Map<String, dynamic>).entries) {
+      ArticleRecord? record;
+      if (value is Map) {
+        try {
+          record = ArticleRecord.fromJson(Map<String, dynamic>.from(value));
+        } catch (_) {}
+      }
+      // A legacy tombstone fenced writers of the global key; nothing in
+      // schema 2 writes that key, so the fence has no subject left.
+      if (record != null && record.tombstoned) continue;
+      final feeds = feedsById[legacyId] ?? const <String>{};
+      if (record != null &&
+          feeds.length == 1 &&
+          feeds.single == record.feedUrl) {
+        final ref = ArticleRef(record.feedUrl, legacyId);
+        records[ref.key] = record.copyWith(id: ref.id).toJson();
+      } else {
+        quarantine[legacyId] = value;
+      }
+    }
+    // Ambiguous stamps go to every known instance — the conservative side:
+    // nothing already observed reads as new again.
+    final seen = state['seen'] as Map<String, dynamic>;
+    for (final MapEntry(key: legacyId, :value)
+        in (legacy['seen'] as Map<String, dynamic>).entries) {
+      for (final feed in feedsById[legacyId] ?? const <String>{}) {
+        seen[ArticleRef(feed, legacyId).key] = value;
+      }
+    }
+    return state;
+  }
+
+  /// State for a mutation, inside the lock: the schema-2 file, else the
+  /// migrated legacy archive, else empty. Null when stored content cannot
+  /// be decoded (fail closed — never rewrite blindly).
   Future<Map<String, dynamic>?> _stateForMutation() async {
     final raw = await _persistence.read();
-    if (raw == null || raw.isEmpty) {
-      return {
-        'schema': schemaVersion,
-        'records': <String, dynamic>{},
-        'seen': <String, dynamic>{},
-        'epoch': 0,
-      };
-    }
+    if (raw == null || raw.isEmpty) return _migratedState();
     return _tryDecode(raw);
   }
 
-  ArticleRecord? _decodeRecord(Map<String, dynamic> state, String id) {
-    final raw = state['records'][_norm(id)];
+  /// Lock-free read view. When schema 2 is absent but a legacy archive
+  /// exists, the migration is persisted under the lock first, so every
+  /// reader and writer agrees on one mapping. Null when undecodable.
+  Future<Map<String, dynamic>?> _readState() async {
+    final raw = await _persistence.read();
+    if (raw != null && raw.isNotEmpty) return _tryDecode(raw);
+    final legacy = await _legacy?.read();
+    if (legacy == null || legacy.isEmpty) return _empty(0);
+    final result = await _persistence.runExclusive(() async {
+      final current = await _persistence.read();
+      if (current != null && current.isNotEmpty) return _tryDecode(current);
+      final migrated = await _migratedState();
+      if (migrated != null) await _persistence.write(jsonEncode(migrated));
+      return migrated;
+    });
+    return result.acquired ? result.value : null;
+  }
+
+  static ArticleRecord? _decodeRecord(
+    Map<String, dynamic> state,
+    ArticleRef ref,
+  ) {
+    final raw = state['records'][ref.key];
     if (raw is! Map) return null;
     try {
       return ArticleRecord.fromJson(Map<String, dynamic>.from(raw));
@@ -351,10 +456,10 @@ class ArticleRecordStore {
   /// [writeIfGeneration]/[mutate]; this read is not a consistent base.
   /// Fails closed (returns `null`) on storage errors so unawaited callers
   /// never surface an async exception.
-  Future<ArticleRecord?> read(String id) async {
+  Future<ArticleRecord?> read(ArticleRef ref) async {
     try {
-      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
-      return _decodeRecord(state, id);
+      final state = await _readState();
+      return state == null ? null : _decodeRecord(state, ref);
     } catch (_) {
       return null;
     }
@@ -365,55 +470,67 @@ class ArticleRecordStore {
   /// started before a reset can write after it.
   Future<int> currentEpoch() async {
     try {
-      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
-      return _epochOf(state);
+      final state = await _readState();
+      return state == null ? 0 : _epochOf(state);
     } catch (_) {
       return 0;
     }
   }
 
-  /// GC-facing snapshot: the decodable records plus whether the read was
-  /// fully clean. `clean == false` means the state was undecodable or at
-  /// least one record entry was skipped — a cleanup pass must then treat
-  /// "unreferenced" as "unknown" and delete nothing (#40).
-  Future<({List<ArticleRecord> records, bool clean})> listRecordsForGc() async {
-    final Map<String, dynamic> state;
+  /// GC-facing snapshot: live records, quarantined legacy records (their
+  /// media stays referenced) and whether the read was fully clean.
+  /// `clean == false` means the state was undecodable or an entry was
+  /// skipped — a cleanup pass must then treat "unreferenced" as "unknown"
+  /// and delete nothing (#40).
+  Future<
+    ({List<ArticleRecord> records, List<ArticleRecord> quarantine, bool clean})
+  >
+  listRecordsForGc() async {
+    const unclean = (
+      records: <ArticleRecord>[],
+      quarantine: <ArticleRecord>[],
+      clean: false,
+    );
+    final Map<String, dynamic>? state;
     try {
-      final raw = await _persistence.read();
-      final decoded = _tryDecode(raw);
-      if (raw != null && raw.isNotEmpty && decoded == null) {
-        return (records: const <ArticleRecord>[], clean: false);
-      }
-      state = decoded ?? _emptyState;
+      state = await _readState();
     } catch (_) {
-      return (records: const <ArticleRecord>[], clean: false);
+      return unclean;
     }
+    if (state == null) return unclean;
     var clean = true;
-    final records = <ArticleRecord>[];
-    for (final raw in (state['records'] as Map).values) {
-      if (raw is Map) {
-        try {
-          records.add(ArticleRecord.fromJson(Map<String, dynamic>.from(raw)));
-        } catch (_) {
+    List<ArticleRecord> decodeAll(String key) {
+      final result = <ArticleRecord>[];
+      for (final raw in (state![key] as Map).values) {
+        if (raw is Map) {
+          try {
+            result.add(ArticleRecord.fromJson(Map<String, dynamic>.from(raw)));
+          } catch (_) {
+            clean = false;
+          }
+        } else {
           clean = false;
         }
-      } else {
-        clean = false;
       }
+      return result;
     }
-    return (records: records, clean: clean);
+
+    final records = decodeAll('records');
+    final quarantine = decodeAll('quarantine');
+    return (records: records, quarantine: quarantine, clean: clean);
   }
 
-  /// Every decodable record. Corrupt entries are skipped — callers doing
-  /// media GC must treat "absent here" as "unknown", not "safe to delete".
-  /// Fails closed (returns empty) on storage errors.
+  /// Every decodable live record. Corrupt entries are skipped — callers
+  /// doing media GC must treat "absent here" as "unknown", not "safe to
+  /// delete". Fails closed (returns empty) on storage errors.
   Future<List<ArticleRecord>> listRecords() async {
-    final Map<String, dynamic> state;
+    final Map<String, dynamic>? state;
     try {
-      state = _tryDecode(await _persistence.read()) ?? _emptyState;
+      state = await _readState();
     } catch (_) {
       return const [];
     }
+    if (state == null) return const [];
     final records = <ArticleRecord>[];
     for (final raw in (state['records'] as Map).values) {
       if (raw is Map) {
@@ -425,21 +542,21 @@ class ArticleRecordStore {
     return records;
   }
 
-  /// Atomically replaces the record for [id] with [update]'s result inside
+  /// Atomically replaces the record of [ref] with [update]'s result inside
   /// the write lock. Returning `null` deletes the record; returning the
-  /// unchanged [ArticleRecord] instance skips the write. The stored id is
-  /// coerced to the normalized key so map key and payload never diverge.
+  /// unchanged [ArticleRecord] instance skips the write. The stored payload
+  /// is coerced to [ref]'s identity so key and payload never diverge.
   ///
   /// [expectedEpoch] fences a unit of work against [wipeAll]: callers capture
   /// [currentEpoch] before starting, and any mutation landing after a reset
   /// sees a different epoch and is rejected — a reset can never resurrect a
   /// record through a queued write.
   Future<StoreWriteResult> mutate(
-    String id,
+    ArticleRef ref,
     ArticleRecord? Function(ArticleRecord? current) update, {
     int? expectedEpoch,
   }) async {
-    if (_norm(id).isEmpty) return StoreWriteResult.rejected;
+    if (ref.id.isEmpty) return StoreWriteResult.rejected;
     try {
       final result = await _persistence.runExclusive(() async {
         final state = await _stateForMutation();
@@ -447,14 +564,16 @@ class ArticleRecordStore {
         if (expectedEpoch != null && _epochOf(state) != expectedEpoch) {
           return StoreWriteResult.rejected;
         }
-        final current = _decodeRecord(state, id);
+        final current = _decodeRecord(state, ref);
         final next = update(current);
         if (identical(next, current)) return StoreWriteResult.applied;
         final records = state['records'] as Map<String, dynamic>;
         if (next == null) {
-          records.remove(_norm(id));
+          records.remove(ref.key);
         } else {
-          records[_norm(id)] = next.copyWith(id: _norm(id)).toJson();
+          records[ref.key] = next
+              .copyWith(id: ref.id, feedUrl: ref.feedUrl)
+              .toJson();
         }
         await _persistence.write(jsonEncode(state));
         return StoreWriteResult.applied;
@@ -465,11 +584,14 @@ class ArticleRecordStore {
     }
   }
 
+  static ArticleRef _refOf(ArticleRecord record) =>
+      ArticleRef(record.feedUrl, record.id);
+
   /// Writes a live record; refuses to overwrite a tombstone — re-creating a
   /// deleted record is a lifecycle transition and must go through [revive].
   Future<StoreWriteResult> write(ArticleRecord record) async {
     var refused = false;
-    final result = await mutate(record.id, (current) {
+    final result = await mutate(_refOf(record), (current) {
       if (current?.tombstoned == true) {
         refused = true;
         return current;
@@ -484,7 +606,7 @@ class ArticleRecordStore {
   /// Re-creates [record] after a tombstone by continuing the generation
   /// sequence, so stale writes fenced to the old generation still lose.
   Future<StoreWriteResult> revive(ArticleRecord record) => mutate(
-    record.id,
+    _refOf(record),
     (current) => record.copyWith(generation: (current?.generation ?? 0) + 1),
   );
 
@@ -497,22 +619,23 @@ class ArticleRecordStore {
     ArticleRecord record,
     int expectedGeneration,
   ) async {
-    if (_norm(record.id).isEmpty || record.generation != expectedGeneration) {
+    final ref = _refOf(record);
+    if (ref.id.isEmpty || record.generation != expectedGeneration) {
       return StoreWriteResult.rejected;
     }
     try {
       final result = await _persistence.runExclusive(() async {
         final state = await _stateForMutation();
         if (state == null) return StoreWriteResult.failed;
-        final current = _decodeRecord(state, record.id);
+        final current = _decodeRecord(state, ref);
         if (current == null || current.tombstoned) {
           return StoreWriteResult.rejected;
         }
         if (current.generation != expectedGeneration) {
           return StoreWriteResult.rejected;
         }
-        (state['records'] as Map<String, dynamic>)[_norm(record.id)] = record
-            .copyWith(id: _norm(record.id))
+        (state['records'] as Map<String, dynamic>)[ref.key] = record
+            .copyWith(id: ref.id)
             .toJson();
         await _persistence.write(jsonEncode(state));
         return StoreWriteResult.applied;
@@ -523,37 +646,39 @@ class ArticleRecordStore {
     }
   }
 
-  /// Fences [id] off: content is dropped, generation bumped, and later
-  /// generation-checked writes are rejected. Tombstoning a never-existing id
-  /// still records the fence.
-  Future<StoreWriteResult> tombstone(String id, {int? expectedEpoch}) => mutate(
-    id,
-    expectedEpoch: expectedEpoch,
-    (current) => ArticleRecord(
-      id: _norm(id),
-      feedUrl: current?.feedUrl ?? '',
-      generation: (current?.generation ?? 0) + 1,
-      tombstoned: true,
-    ),
-  );
+  /// Fences [ref] off: content is dropped, generation bumped, and later
+  /// generation-checked writes are rejected. Tombstoning a never-existing
+  /// instance still records the fence.
+  Future<StoreWriteResult> tombstone(ArticleRef ref, {int? expectedEpoch}) =>
+      mutate(
+        ref,
+        expectedEpoch: expectedEpoch,
+        (current) => ArticleRecord(
+          id: ref.id,
+          feedUrl: ref.feedUrl,
+          generation: (current?.generation ?? 0) + 1,
+          tombstoned: true,
+        ),
+      );
 
-  Future<bool> isTombstoned(String id) async =>
-      (await read(id))?.tombstoned ?? false;
+  Future<bool> isTombstoned(ArticleRef ref) async =>
+      (await read(ref))?.tombstoned ?? false;
 
   /// Hard-deletes the record only (media GC and firstSeen pruning are
   /// separate lifecycle concerns).
-  Future<StoreWriteResult> deleteRecord(String id) => mutate(id, (_) => null);
+  Future<StoreWriteResult> deleteRecord(ArticleRef ref) =>
+      mutate(ref, (_) => null);
 
-  /// Records the earliest first-observation of [id] inside the write lock;
+  /// Records the earliest first-observation of [ref] inside the write lock;
   /// later observations never overwrite the earliest stored value. Intended
   /// for archived candidates — the `seen` map is not pruned here, so callers
   /// must not stamp every article in every sync.
   Future<StoreWriteResult> recordFirstSeen(
-    String id,
+    ArticleRef ref,
     DateTime observedAt, {
     int? expectedEpoch,
   }) async {
-    if (_norm(id).isEmpty) return StoreWriteResult.rejected;
+    if (ref.id.isEmpty) return StoreWriteResult.rejected;
     final at = observedAt.toUtc();
     try {
       final result = await _persistence.runExclusive(() async {
@@ -563,10 +688,10 @@ class ArticleRecordStore {
           return StoreWriteResult.rejected;
         }
         final seen = state['seen'] as Map<String, dynamic>;
-        final raw = seen[_norm(id)];
+        final raw = seen[ref.key];
         final existing = raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
         if (existing == null || existing.isAfter(at)) {
-          seen[_norm(id)] = at.toIso8601String();
+          seen[ref.key] = at.toIso8601String();
           await _persistence.write(jsonEncode(state));
         }
         return StoreWriteResult.applied;
@@ -577,28 +702,32 @@ class ArticleRecordStore {
     }
   }
 
-  Future<DateTime?> firstSeen(String id) async {
+  Future<DateTime?> firstSeen(ArticleRef ref) async {
     try {
-      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
-      final raw = (state['seen'] as Map)[_norm(id)];
+      final state = await _readState();
+      final raw = (state?['seen'] as Map?)?[ref.key];
       return raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
     } catch (_) {
       return null;
     }
   }
 
-  /// Snapshot of every recorded first-observation time — one storage read
-  /// for callers that sort many candidates at once (temp-cache selection).
-  Future<Map<String, DateTime>> allFirstSeen() async {
+  /// Snapshot of every recorded first-observation time, keyed by
+  /// [ArticleRef] — one storage read for callers that sort many candidates
+  /// at once (temp-cache selection).
+  Future<Map<ArticleRef, DateTime>> allFirstSeen() async {
     try {
-      final state = _tryDecode(await _persistence.read()) ?? _emptyState;
-      final seen = state['seen'] as Map;
-      final result = <String, DateTime>{};
-      for (final entry in seen.entries) {
+      final state = await _readState();
+      if (state == null) return const {};
+      final result = <ArticleRef, DateTime>{};
+      for (final entry in (state['seen'] as Map).entries) {
+        final ref = entry.key is String
+            ? ArticleRef.tryParse(entry.key as String)
+            : null;
         final value = entry.value;
-        if (entry.key is String && value is String) {
+        if (ref != null && value is String) {
           final parsed = DateTime.tryParse(value);
-          if (parsed != null) result[entry.key as String] = parsed.toUtc();
+          if (parsed != null) result[ref] = parsed.toUtc();
         }
       }
       return result;
@@ -608,10 +737,10 @@ class ArticleRecordStore {
   }
 
   Future<StoreWriteResult> deleteFirstSeen(
-    String id, {
+    ArticleRef ref, {
     int? expectedEpoch,
   }) async {
-    if (_norm(id).isEmpty) return StoreWriteResult.rejected;
+    if (ref.id.isEmpty) return StoreWriteResult.rejected;
     try {
       final result = await _persistence.runExclusive(() async {
         final state = await _stateForMutation();
@@ -620,8 +749,8 @@ class ArticleRecordStore {
           return StoreWriteResult.rejected;
         }
         final seen = state['seen'] as Map<String, dynamic>;
-        if (!seen.containsKey(_norm(id))) return StoreWriteResult.applied;
-        seen.remove(_norm(id));
+        if (!seen.containsKey(ref.key)) return StoreWriteResult.applied;
+        seen.remove(ref.key);
         await _persistence.write(jsonEncode(state));
         return StoreWriteResult.applied;
       });
@@ -659,11 +788,11 @@ class ArticleRecordStore {
     return now > previous ? now : previous + 1;
   }
 
-  /// Wipes every record and observation stamp — the factory-reset path.
-  /// Orphaned media files left behind are the S5 sweep's job; the durable
-  /// claims that would resurrect or drive downloads are gone here. The
-  /// lifecycle epoch is bumped so writes carrying a pre-reset fence are
-  /// rejected instead of resurrecting content.
+  /// Wipes every record, quarantined legacy record and observation stamp —
+  /// the factory-reset path — including the legacy archive, which holds
+  /// personal data too. Orphaned media files left behind are the S5 sweep's
+  /// job. The lifecycle epoch is bumped so writes carrying a pre-reset fence
+  /// are rejected instead of resurrecting content.
   ///
   /// Returns `false` when the lock/write could not be completed even after
   /// one retry — the caller must not report a reset it couldn't enforce.
@@ -674,17 +803,28 @@ class ArticleRecordStore {
           // A timestamp, not a counter: the pre-wipe state may be corrupt
           // or absent, and any fence captured from it must still lose —
           // only a monotonically fresh value guarantees that.
-          final previous = _epochOf(
-            _tryDecode(await _persistence.read()) ?? _emptyState,
-          );
-          await _persistence.write(
-            jsonEncode({
-              'schema': schemaVersion,
-              'records': <String, dynamic>{},
-              'seen': <String, dynamic>{},
-              'epoch': _nextEpoch(previous),
-            }),
-          );
+          int epochIn(String? raw, int schema) {
+            final decoded = _tryDecode(raw, schema: schema);
+            return decoded == null ? 0 : _epochOf(decoded);
+          }
+
+          final legacy = _legacy;
+          final legacyRaw = await legacy?.read();
+          final previous = [
+            epochIn(await _persistence.read(), schemaVersion),
+            epochIn(legacyRaw, legacySchemaVersion),
+          ].reduce((a, b) => a > b ? a : b);
+          await _persistence.write(jsonEncode(_empty(_nextEpoch(previous))));
+          if (legacy != null && legacyRaw != null && legacyRaw.isNotEmpty) {
+            await legacy.write(
+              jsonEncode({
+                'schema': legacySchemaVersion,
+                'records': <String, dynamic>{},
+                'seen': <String, dynamic>{},
+                'epoch': 0,
+              }),
+            );
+          }
           return true;
         });
         if (result.acquired) return result.value ?? false;

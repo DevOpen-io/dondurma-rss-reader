@@ -484,11 +484,22 @@ Future<List<FeedItem>?> _persistBgCache(
   // isolate issues, so a reset landing mid-pass rejects them all. Both were
   // captured before the task's HTTP started.
 
-  final Set<String> selectedIds;
+  // Bookmark verdict per instance: saved snapshots, plus legacy ID-only
+  // memberships (no source recorded) for any instance of that id.
+  final bookmarkedRefs = {for (final b in bookmarkedItems) ArticleRef.of(b)};
+  final snapshotIds = {for (final b in bookmarkedItems) b.id};
+  final legacyOnly = {
+    for (final id in bookmarkedIds)
+      if (!snapshotIds.contains(id)) ArticleIdentity.normalizeItemId(id) ?? id,
+  };
+  bool isBookmarked(ArticleRef ref) =>
+      bookmarkedRefs.contains(ref) || legacyOnly.contains(ref.id);
+
+  final Set<ArticleRef> selectedRefs;
   try {
-    selectedIds = await membership.reconcile(
+    selectedRefs = await membership.reconcile(
       items: items,
-      bookmarkedIds: bookmarkedIds,
+      isBookmarked: isBookmarked,
       subscribedFeedUrls: subscriptions.map((s) => s.url),
       globalKeywords: globalKeywords,
       feedKeywordsMap: {
@@ -518,14 +529,11 @@ Future<List<FeedItem>?> _persistBgCache(
 
   // Snapshot candidates = fresh merge plus bookmarked articles the merge
   // dropped (unsubscribed feeds) — bookmarks ride along uncounted (#37).
-  // selectedIds are canonical; item.id is raw — compare on the same side.
   final inMerge = items.map((e) => (e.feedUrl, e.id)).toSet();
   final selected = [
     for (final item in items)
-      if (selectedIds.contains(
-            ArticleIdentity.normalizeItemId(item.id) ?? item.id,
-          ) ||
-          bookmarkedIds.contains(item.id))
+      if (selectedRefs.contains(ArticleRef.of(item)) ||
+          isBookmarked(ArticleRef.of(item)))
         item,
     for (final item in bookmarkedItems)
       if (inMerge.add((item.feedUrl, item.id))) item,

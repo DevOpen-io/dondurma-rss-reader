@@ -179,7 +179,7 @@ class FeedProvider extends ChangeNotifier {
   /// Per-article durable-state summaries (#41): rows and the article
   /// surface derive their offline labels from these — never from prefetch
   /// flags or image-cache guesses. Refreshed after each membership pass.
-  Map<String, ArticleStatus> _articleStatuses = const {};
+  Map<ArticleRef, ArticleStatus> _articleStatuses = const {};
 
   /// True once the first status-map read settled — distinguishes "still
   /// loading" from "verified absent" so a missing entry is not flashed as
@@ -194,8 +194,8 @@ class FeedProvider extends ChangeNotifier {
 
   /// Status summary for [id] (canonicalized), or null when the article has
   /// no durable record — meaning "no offline claim", never "ready".
-  ArticleStatus? articleStatus(String id) =>
-      _articleStatuses[ArticleIdentity.normalizeItemId(id) ?? id];
+  ArticleStatus? articleStatus(FeedItem item) =>
+      _articleStatuses[ArticleRef.of(item)];
 
   /// The effective full-text preference for [item]'s feed — per-feed
   /// tri-state falling back to the global setting, same rule as the
@@ -212,11 +212,11 @@ class FeedProvider extends ChangeNotifier {
   /// Explicit single-article preparation pass (#41): one foreground pass
   /// for that article's missing pieces — allowed on metered transport but
   /// never bypasses a server `Retry-After` wait.
-  Future<int> prepareArticleNow(String id) async {
+  Future<int> prepareArticleNow(FeedItem item) async {
     // Persist missing-file demotions BEFORE preparation reads the manifest.
     // Otherwise the first retry trusts stale `ready` entries and does no work.
     await _refreshArticleStatuses();
-    final attempted = await _preparation.prepareArticle(id);
+    final attempted = await _preparation.prepareArticle(ArticleRef.of(item));
     await _refreshArticleStatuses();
     return attempted;
   }
@@ -235,9 +235,10 @@ class FeedProvider extends ChangeNotifier {
       // extraction for a feed the user set to RSS-only (#41).
       fullText: _effectiveFullText(item),
       claimCheck: () =>
-          bookmarkProvider?.bookmarkedItemIds.contains(item.id) ?? false,
+          bookmarkProvider?.isBookmarked(item.id, feedUrl: item.feedUrl) ??
+          false,
     );
-    await _preparation.prepareArticle(item.id);
+    await _preparation.prepareArticle(ArticleRef.of(item));
     await _refreshArticleStatuses();
   }
 
@@ -1694,12 +1695,11 @@ class FeedProvider extends ChangeNotifier {
     // remaining writes instead of resurrecting wiped members (#40).
     final recordEpoch = await _preparation.currentRecordEpoch();
     final int limit = settings.offlineCacheLimit;
-    final bookmarkedIds = bookmarks.bookmarkedItemIds;
     final items = List<FeedItem>.of(_items);
 
-    final selectedIds = await _membership.reconcile(
+    final selected = await _membership.reconcile(
       items: items,
-      bookmarkedIds: bookmarkedIds,
+      isBookmarked: bookmarks.isBookmarkedRef,
       subscribedFeedUrls: subscriptions.subscriptions.map((s) => s.url),
       globalKeywords: settings.globalExcludedKeywords,
       feedKeywordsMap: {
@@ -1717,24 +1717,18 @@ class FeedProvider extends ChangeNotifier {
       },
       epoch: recordEpoch,
     );
-    String canon(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
     // Lifecycle hygiene rides the same pass: whatever membership just
     // released gets its bytes evaluated for collection (#40). The predicate
     // reads the LIVE bookmark set at commit time — a materialized snapshot
     // could wrongly strip a claim toggled on after enqueue.
-    _preparation
-        .sweepCleanup(
-          isBookmarked: (id) =>
-              bookmarks.bookmarkedItemIds.any((b) => canon(b) == id),
-        )
-        .ignore();
+    _preparation.sweepCleanup(isBookmarked: bookmarks.isBookmarkedRef).ignore();
     if (generation != _cacheGeneration) return;
     // The transient snapshot = selected members plus bookmarked items
     // (bookmarks never consume a temp slot but must stay browsable offline).
     final itemsToCache = [
       for (final item in items)
-        if (selectedIds.contains(canon(item.id)) ||
-            bookmarkedIds.contains(item.id))
+        if (selected.contains(ArticleRef.of(item)) ||
+            bookmarks.isBookmarked(item.id, feedUrl: item.feedUrl))
           item,
     ];
 
@@ -1779,7 +1773,7 @@ class FeedProvider extends ChangeNotifier {
       final stripEpoch = await _preparation.currentRecordEpoch();
       return _membership.reconcile(
         items: const [],
-        bookmarkedIds: const {},
+        isBookmarked: (_) => false,
         subscribedFeedUrls:
             subscriptionProvider?.subscriptions.map((s) => s.url) ??
             const <String>[],
@@ -1790,19 +1784,16 @@ class FeedProvider extends ChangeNotifier {
         epoch: stripEpoch,
       );
     });
-    _saveChain = run.catchError((_) => <String>{});
-    await run.catchError((_) => <String>{});
+    _saveChain = run.catchError((_) => <ArticleRef>{});
+    await run.catchError((_) => <ArticleRef>{});
     // The strip just released every tempCache claim — collect the bytes
     // that are now unreferenced (#40: clearCache frees temp-only media).
     // The predicate reads the LIVE bookmark set at commit time so a claim
     // toggled on after this call is never wrongly stripped.
-    String canon(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
     _preparation
         .sweepCleanup(
-          isBookmarked: (id) =>
-              (bookmarkProvider?.bookmarkedItemIds ?? const <String>{}).any(
-                (b) => canon(b) == id,
-              ),
+          isBookmarked: (ref) =>
+              bookmarkProvider?.isBookmarkedRef(ref) ?? false,
         )
         .ignore();
     unawaited(_refreshArticleStatuses());

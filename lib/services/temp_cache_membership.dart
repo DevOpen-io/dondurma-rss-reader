@@ -36,7 +36,7 @@ class TempCacheMembership {
   final ArticleRecordStore _records;
   final ArticlePreparationService _preparation;
 
-  /// Recomputes temp membership and returns the selected article ids.
+  /// Recomputes temp membership and returns the selected source instances.
   ///
   /// [items] is the raw candidate list (view filters never apply here;
   /// permanent keyword exclusions do). [fullTextFor] resolves each feed's
@@ -45,9 +45,11 @@ class TempCacheMembership {
   /// before this pass began — every mutation carries it, so a factory reset
   /// landing mid-reconcile rejects the rest of the writes instead of
   /// resurrecting members the reset just wiped (#40).
-  Future<Set<String>> reconcile({
+  /// [isBookmarked] is the caller's bookmark verdict per instance —
+  /// bookmarked articles never consume a temp slot.
+  Future<Set<ArticleRef>> reconcile({
     required List<FeedItem> items,
-    required Set<String> bookmarkedIds,
+    required bool Function(ArticleRef ref) isBookmarked,
     required Iterable<String> subscribedFeedUrls,
     required List<String> globalKeywords,
     required Map<String, List<String>> feedKeywordsMap,
@@ -62,21 +64,19 @@ class TempCacheMembership {
       globalKeywords: globalKeywords,
       feedKeywordsMap: feedKeywordsMap,
     );
-    // The record store keys everything on canonical ids — comparisons must
-    // use the same normalization or a non-canonical guid misses every pass.
-    String canon(String id) => ArticleIdentity.normalizeItemId(id) ?? id;
-    final bookmarkedCanon = bookmarkedIds.map(canon).toSet();
+    // The record store keys everything on source instances ([ArticleRef],
+    // canonical ids) — two feeds sharing a GUID are two candidates.
     final firstSeen = await _records.allFirstSeen();
     final records = await _records.listRecords();
 
     // 1. Live candidates: subscribed feeds, keyword-clean, not bookmarked.
-    final candidates = <String, _Candidate>{};
-    final presentIds = <String>{};
+    final candidates = <ArticleRef, _Candidate>{};
+    final presentRefs = <ArticleRef>{};
     for (final item in items) {
-      final id = canon(item.id);
-      presentIds.add(id);
+      final ref = ArticleRef.of(item);
+      presentRefs.add(ref);
       if (!subscribed.contains(item.feedUrl)) continue;
-      if (bookmarkedCanon.contains(id)) continue;
+      if (isBookmarked(ref)) continue;
       if (excluder.excludes(
         title: item.title,
         description: item.description,
@@ -88,15 +88,15 @@ class TempCacheMembership {
       // stamped once and recorded so refetches/restarts never reshuffle.
       var sortTime = item.pubDate?.toUtc();
       if (sortTime == null) {
-        sortTime = firstSeen[id];
+        sortTime = firstSeen[ref];
         if (sortTime == null) {
           sortTime = at;
-          firstSeen[id] = at;
-          await _records.recordFirstSeen(item.id, at, expectedEpoch: epoch);
+          firstSeen[ref] = at;
+          await _records.recordFirstSeen(ref, at, expectedEpoch: epoch);
         }
       }
-      candidates[id] = _Candidate(
-        id: id,
+      candidates[ref] = _Candidate(
+        ref: ref,
         link: item.link,
         feedUrl: item.feedUrl,
         sortTime: sortTime,
@@ -109,13 +109,14 @@ class TempCacheMembership {
     // whose feed was unsubscribed loses the slot immediately — membership
     // is scoped to active subscriptions (#37). A member still present in
     // the live list was already judged by step 1 — never re-admit it here.
-    final ownedIds = <String>{};
+    final ownedRefs = <ArticleRef>{};
     for (final record in records) {
       if (record.tombstoned || !record.owners.contains(owner)) continue;
-      ownedIds.add(record.id);
+      final ref = ArticleRef(record.feedUrl, record.id);
+      ownedRefs.add(ref);
       if (!subscribed.contains(record.feedUrl)) continue;
-      if (presentIds.contains(record.id)) continue;
-      if (bookmarkedCanon.contains(record.id)) continue;
+      if (presentRefs.contains(ref)) continue;
+      if (isBookmarked(ref)) continue;
       if (excluder.excludes(
         title: record.title ?? '',
         description: '',
@@ -123,32 +124,34 @@ class TempCacheMembership {
       )) {
         continue;
       }
-      candidates[record.id] = _Candidate(
-        id: record.id,
+      candidates[ref] = _Candidate(
+        ref: ref,
         link: record.link.isEmpty ? null : record.link,
         feedUrl: record.feedUrl,
         sortTime:
             record.publishedAt?.toUtc() ??
-            firstSeen[record.id] ??
+            firstSeen[ref] ??
             record.savedAt?.toUtc() ??
             at,
       );
     }
 
-    // 3. Global newest-N: effective time desc, id asc — deterministic, so
-    //    normal refreshes never reshuffle equal-ranked membership.
+    // 3. Global newest-N: effective time desc, instance key asc —
+    //    deterministic, so normal refreshes never reshuffle equal-ranked
+    //    membership.
     final ranked = candidates.values.toList()
       ..sort((a, b) {
         final t = b.sortTime.compareTo(a.sortTime);
-        return t != 0 ? t : a.id.compareTo(b.id);
+        return t != 0 ? t : a.ref.key.compareTo(b.ref.key);
       });
-    final selectedIds = <String>{};
+    final selected = <ArticleRef>{};
     final selectedKeys = <String>{};
     for (final c in ranked) {
-      if (selectedIds.length >= limit) break;
-      final key = dedupeKey(link: c.link, id: c.id);
+      if (selected.length >= limit) break;
+      // Without a usable link only the same instance is a duplicate.
+      final key = dedupeKey(link: c.link, id: c.ref.key);
       if (!selectedKeys.add(key)) continue;
-      selectedIds.add(c.id);
+      selected.add(c.ref);
     }
 
     // 4. Durable-first registration for selected live items. A failed
@@ -156,7 +159,7 @@ class TempCacheMembership {
     //    retries it (self-healing), so per-item results aren't inspected.
     for (final c in ranked) {
       final item = c.item;
-      if (item == null || !selectedIds.contains(c.id)) continue;
+      if (item == null || !selected.contains(c.ref)) continue;
       await _preparation.registerArticle(
         item,
         const {owner},
@@ -170,8 +173,8 @@ class TempCacheMembership {
     //    A failed strip likewise self-heals on the next pass. Strips ride
     //    the same register queue as step 4 so queued registrations can
     //    never re-add an owner this step just removed.
-    for (final id in ownedIds.difference(selectedIds)) {
-      await _preparation.mutateRecord(id, expectedEpoch: epoch, (current) {
+    for (final ref in ownedRefs.difference(selected)) {
+      await _preparation.mutateRecord(ref, expectedEpoch: epoch, (current) {
         if (current == null || !current.owners.contains(owner)) {
           return current;
         }
@@ -182,20 +185,20 @@ class TempCacheMembership {
       });
     }
 
-    return selectedIds;
+    return selected;
   }
 }
 
 class _Candidate {
   _Candidate({
-    required this.id,
+    required this.ref,
     required this.link,
     required this.feedUrl,
     required this.sortTime,
     this.item,
   });
 
-  final String id;
+  final ArticleRef ref;
   final String? link;
   final String feedUrl;
   final DateTime sortTime;

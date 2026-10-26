@@ -1,3 +1,4 @@
+import 'article_identity.dart';
 import 'article_media_store.dart';
 import 'article_record_store.dart';
 
@@ -221,15 +222,16 @@ class ArticleStatus {
 /// that vanished or is truncated demotes the entry back to `pending` —
 /// repaired in the record so the engine retries it — and never counts
 /// toward the label (#41 verify-before-ready).
-Future<Map<String, ArticleStatus>> listArticleStatuses(
+Future<Map<ArticleRef, ArticleStatus>> listArticleStatuses(
   ArticleRecordStore store, {
   ArticleMediaStore? media,
 }) async {
   final gc = await store.listRecordsForGc();
   if (!gc.clean) return const {};
-  final map = <String, ArticleStatus>{};
+  final map = <ArticleRef, ArticleStatus>{};
   for (final r in gc.records) {
     if (r.tombstoned) continue;
+    final ref = ArticleRef(r.feedUrl, r.id);
     var record = r;
     if (media != null && r.media.isNotEmpty) {
       final stale = <String>{};
@@ -246,7 +248,7 @@ Future<Map<String, ArticleStatus>> listArticleStatuses(
         // The demote is snapshot-checked — a fresh ready entry committed
         // by a concurrent prepare pass between the snapshot and this lock
         // is not ours to downgrade.
-        await store.mutate(r.id, (current) {
+        await store.mutate(ref, (current) {
           if (current == null || current.tombstoned) return current;
           final m = {...current.media};
           var changed = false;
@@ -273,7 +275,7 @@ Future<Map<String, ArticleStatus>> listArticleStatuses(
         record = record.copyWith(media: m);
       }
     }
-    map[r.id] = ArticleStatus.fromRecord(record);
+    map[ref] = ArticleStatus.fromRecord(record);
   }
   return map;
 }

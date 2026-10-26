@@ -1,3 +1,47 @@
+import 'dart:convert';
+
+import '../models/feed_item.dart';
+
+/// One source instance of an article: the canonical subscription URL plus
+/// the item's normalized id. Two feeds sharing a GUID are two instances —
+/// durable records, read marks and claims are keyed by this, never by the
+/// bare id. [key] is a typed (JSON) encoding, not a delimiter join.
+final class ArticleRef {
+  ArticleRef(this.feedUrl, String id)
+    : id = ArticleIdentity.normalizeItemId(id) ?? id;
+
+  ArticleRef.of(FeedItem item) : this(item.feedUrl, item.id);
+
+  /// Inverse of [key]; null for anything that is not an instance key.
+  static ArticleRef? tryParse(String key) {
+    try {
+      final decoded = jsonDecode(key);
+      if (decoded is List &&
+          decoded.length == 2 &&
+          decoded[0] is String &&
+          decoded[1] is String) {
+        return ArticleRef(decoded[0] as String, decoded[1] as String);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  final String feedUrl;
+  final String id;
+
+  String get key => jsonEncode([feedUrl, id]);
+
+  @override
+  bool operator ==(Object other) =>
+      other is ArticleRef && other.feedUrl == feedUrl && other.id == id;
+
+  @override
+  int get hashCode => Object.hash(feedUrl, id);
+
+  @override
+  String toString() => 'ArticleRef($feedUrl, $id)';
+}
+
 class ArticleIdentity {
   static String? nonEmpty(String? value) {
     final trimmed = value?.trim() ?? '';

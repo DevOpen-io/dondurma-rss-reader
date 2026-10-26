@@ -7,6 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
 
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_cleanup_service.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
@@ -25,7 +26,7 @@ class _HookedStore extends ArticleRecordStore {
 
   @override
   Future<StoreWriteResult> mutate(
-    String id,
+    ArticleRef ref,
     ArticleRecord? Function(ArticleRecord? current) update, {
     int? expectedEpoch,
   }) async {
@@ -34,7 +35,7 @@ class _HookedStore extends ArticleRecordStore {
       onMutate = null;
       await hook();
     }
-    return super.mutate(id, update, expectedEpoch: expectedEpoch);
+    return super.mutate(ref, update, expectedEpoch: expectedEpoch);
   }
 }
 
@@ -71,6 +72,8 @@ void main() {
       tempDir.deleteSync(recursive: true);
     } catch (_) {}
   });
+
+  ArticleRef ref(String id) => ArticleRef('https://f.com/feed', id);
 
   ArticleRecordStore newStore() =>
       ArticleRecordStore(FileObservedArticlePersistence(stateFile: stateFile));
@@ -118,7 +121,7 @@ void main() {
       () async {
         final store = newStore();
         await store.write(record('a', media: {'u1': readyEntry('u1', 3)}));
-        await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+        await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
         await writeMedia('u1', [1, 2, 3]);
         mediaFile('u1').setLastModifiedSync(
           DateTime.now().subtract(const Duration(minutes: 10)),
@@ -128,7 +131,7 @@ void main() {
 
         expect(result.failed, isFalse);
         expect(result.tombstoned, 1);
-        expect((await store.read('a'))!.tombstoned, isTrue);
+        expect((await store.read(ref('a')))!.tombstoned, isTrue);
         expect(mediaFile('u1').existsSync(), isFalse);
         expect(result.deletedFiles, 1);
       },
@@ -138,7 +141,7 @@ void main() {
       final store = newStore();
       await store.write(record('a', media: {'u1': readyEntry('u1', 3)}));
       await store.write(record('b', media: {'u1': readyEntry('u1', 3)}));
-      await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
       await writeMedia('u1', [1, 2, 3]);
 
       // The sweep can't collect instantly — orphans need the grace period.
@@ -155,7 +158,7 @@ void main() {
     test('exclusive file older than the grace period is collected', () async {
       final store = newStore();
       await store.write(record('a', media: {'u1': readyEntry('u1', 3)}));
-      await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
       await writeMedia('u1', [1, 2, 3]);
       mediaFile('u1').setLastModifiedSync(
         DateTime.now().subtract(const Duration(minutes: 10)),
@@ -170,7 +173,7 @@ void main() {
     test('freshly landed orphan survives — it may be mid-commit', () async {
       final store = newStore();
       await store.write(record('a', media: {'u1': readyEntry('u1', 3)}));
-      await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
       await writeMedia('u1', [1, 2, 3]); // mtime = now, inside the grace
 
       await newSweep().sweep();
@@ -190,14 +193,14 @@ void main() {
 
       expect(result.tombstoned, 0);
       expect(result.deletedFiles, 0);
-      expect((await store.read('a'))!.tombstoned, isFalse);
+      expect((await store.read(ref('a')))!.tombstoned, isFalse);
       expect(mediaFile('u1').existsSync(), isTrue);
     });
 
     test('foreign files in the media directory are never touched', () async {
       final store = newStore();
       await store.write(record('a', media: {'u1': readyEntry('u1', 3)}));
-      await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
       final foreign = File('${mediaDir.path}/user_photo.jpg')
         ..writeAsBytesSync([9, 9]);
       foreign.setLastModifiedSync(
@@ -233,7 +236,8 @@ void main() {
       // Valid schema, wrong container type: coercing to {} would let the
       // GC "prove" every managed file unreferenced.
       stateFile.writeAsStringSync(
-        '{"schema": 1, "records": "garbage", "seen": {}, "epoch": 5}',
+        '{"schema": ${ArticleRecordStore.schemaVersion}, "records": "garbage", '
+        '"seen": {}, "epoch": 5}',
       );
       await writeMedia('u1', [1, 2, 3]);
       mediaFile('u1').setLastModifiedSync(
@@ -249,7 +253,7 @@ void main() {
       expect(mediaFile('u1').existsSync(), isTrue);
 
       // Mutations also fail closed — unknown data is never overwritten.
-      final write = await newStore().mutate('a', (current) => record('a'));
+      final write = await newStore().mutate(ref('a'), (current) => record('a'));
       expect(write, StoreWriteResult.failed);
     });
   });
@@ -258,24 +262,24 @@ void main() {
     test('seen entry of a tombstoned record is pruned', () async {
       final store = newStore();
       await store.write(record('a'));
-      await store.recordFirstSeen('a', DateTime.utc(2026, 1, 1));
-      await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await store.recordFirstSeen(ref('a'), DateTime.utc(2026, 1, 1));
+      await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
 
       final result = await newSweep().sweep();
 
       expect(result.prunedSeen, 1);
-      expect(await store.firstSeen('a'), isNull);
+      expect(await store.firstSeen(ref('a')), isNull);
     });
 
     test('seen entry with no record is kept — the subscription may still '
         'carry that dateless candidate', () async {
       final store = newStore();
-      await store.recordFirstSeen('ghost', DateTime.utc(2026, 1, 1));
+      await store.recordFirstSeen(ref('ghost'), DateTime.utc(2026, 1, 1));
 
       final result = await newSweep().sweep();
 
       expect(result.prunedSeen, 0);
-      expect(await store.firstSeen('ghost'), isNotNull);
+      expect(await store.firstSeen(ref('ghost')), isNotNull);
     });
   });
 
@@ -302,7 +306,7 @@ void main() {
         // The register runs first on the FIFO register queue, then the
         // strip — mirroring a fast add→remove toggle.
         final registered = prep.registerArticle(item('a'), const {'bookmark'});
-        final stripped = prep.mutateRecord('a', (current) {
+        final stripped = prep.mutateRecord(ref('a'), (current) {
           if (current == null) return current;
           final owners = {...current.owners}..remove('bookmark');
           return current.copyWith(owners: owners);
@@ -310,7 +314,7 @@ void main() {
         await registered;
         await stripped;
 
-        expect((await store.read('a'))!.owners, isEmpty);
+        expect((await store.read(ref('a')))!.owners, isEmpty);
       },
     );
 
@@ -318,17 +322,17 @@ void main() {
       final store = newStore();
       final prep = newPrep();
       await store.write(record('a', owners: const {'bookmark'}));
-      await prep.mutateRecord('a', (current) {
+      await prep.mutateRecord(ref('a'), (current) {
         final owners = {...current!.owners}..remove('bookmark');
         return current.copyWith(owners: owners);
       });
       await prep.sweepCleanup(); // ownerless → tombstoned
-      expect((await store.read('a'))!.tombstoned, isTrue);
+      expect((await store.read(ref('a')))!.tombstoned, isTrue);
 
       // A re-bookmark is a deliberate new claim — revive is legitimate.
       await prep.registerArticle(item('a'), const {'bookmark'});
 
-      final revived = await store.read('a');
+      final revived = await store.read(ref('a'));
       expect(revived!.tombstoned, isFalse);
       expect(revived.owners, contains('bookmark'));
     });
@@ -343,7 +347,7 @@ void main() {
       prep.resetFence();
 
       expect(await stale, StoreWriteResult.rejected);
-      expect(await store.read('a'), isNull);
+      expect(await store.read(ref('a')), isNull);
     });
   });
 
@@ -361,19 +365,19 @@ void main() {
       await store.wipeAll();
 
       final result = await store.mutate(
-        'a',
+        ref('a'),
         expectedEpoch: epoch,
         (current) => record('a'),
       );
 
       expect(result, StoreWriteResult.rejected);
-      expect(await store.read('a'), isNull);
+      expect(await store.read(ref('a')), isNull);
     });
 
     test('mutation without a fence still applies after the wipe', () async {
       final store = newStore();
       await store.wipeAll();
-      final result = await store.mutate('a', (current) => record('a'));
+      final result = await store.mutate(ref('a'), (current) => record('a'));
       expect(result, StoreWriteResult.applied);
     });
 
@@ -388,13 +392,13 @@ void main() {
 
         // A mutation fenced to the pre-bump epoch is rejected…
         final stale = await store.mutate(
-          'a',
+          ref('a'),
           expectedEpoch: epoch,
           (current) => current!.copyWith(owners: const {}),
         );
         expect(stale, StoreWriteResult.rejected);
         // …while the record itself is untouched — this is a fence, not a wipe.
-        expect((await store.read('a'))!.owners, contains('tempCache'));
+        expect((await store.read(ref('a')))!.owners, contains('tempCache'));
         // Monotonic even against a same-microsecond rewrite.
         expect(await store.currentEpoch(), greaterThan(epoch));
       },
@@ -414,7 +418,7 @@ void main() {
 
         await membership.reconcile(
           items: [item('a')],
-          bookmarkedIds: const {},
+          isBookmarked: (_) => false,
           subscribedFeedUrls: const ['https://f.com/feed'],
           globalKeywords: const [],
           feedKeywordsMap: const {},
@@ -423,7 +427,7 @@ void main() {
           epoch: epoch,
         );
 
-        expect(await store.read('a'), isNull);
+        expect(await store.read(ref('a')), isNull);
       },
     );
   });
@@ -452,7 +456,7 @@ void main() {
       );
       final competing = newStore();
       await hooked.write(record('a'));
-      await hooked.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await hooked.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
 
       final sweep = ArticleCleanupService(
         records: hooked,
@@ -462,13 +466,13 @@ void main() {
       // claim lands just before the lock is taken, exactly the cross-
       // isolate ordering the conditional check exists for.
       hooked.onMutate = () => competing.mutate(
-        'a',
+        ref('a'),
         (c) => c!.copyWith(owners: const {'tempCache'}),
       );
 
       final result = await sweep.sweep();
 
-      final a = await competing.read('a');
+      final a = await competing.read(ref('a'));
       expect(a!.tombstoned, isFalse);
       expect(a.owners, contains('tempCache'));
       expect(result.tombstoned, 0);
@@ -485,7 +489,7 @@ void main() {
         'bookmark',
       }, claimCheck: () => false);
 
-      expect((await store.read('a'))!.owners, isNot(contains('bookmark')));
+      expect((await store.read(ref('a')))!.owners, isNot(contains('bookmark')));
     });
 
     test('rescinded claim creates no record at all', () async {
@@ -496,7 +500,7 @@ void main() {
         'bookmark',
       }, claimCheck: () => false);
 
-      expect(await store.read('b'), isNull);
+      expect(await store.read(ref('b')), isNull);
     });
 
     test('live claim registers normally', () async {
@@ -508,7 +512,7 @@ void main() {
       }, claimCheck: () => true);
 
       expect(result, StoreWriteResult.applied);
-      expect((await store.read('c'))!.owners, contains('bookmark'));
+      expect((await store.read(ref('c')))!.owners, contains('bookmark'));
     });
   });
 
@@ -519,20 +523,20 @@ void main() {
       await store.write(record('a', owners: const {'bookmark'}));
 
       await newSweep().sweep(isBookmarked: (_) => false);
-      expect((await store.read('a'))!.owners, isNot(contains('bookmark')));
+      expect((await store.read(ref('a')))!.owners, isNot(contains('bookmark')));
       // The tombstone pass saw the pre-strip snapshot — the next sweep
       // completes the lifecycle for the now-ownerless record.
       await newSweep().sweep();
-      expect((await store.read('a'))!.tombstoned, isTrue);
+      expect((await store.read(ref('a')))!.tombstoned, isTrue);
     });
 
     test('a bookmark claim the live set confirms is kept', () async {
       final store = newStore();
       await store.write(record('a', owners: const {'bookmark'}));
 
-      await newSweep().sweep(isBookmarked: (id) => id == 'a');
+      await newSweep().sweep(isBookmarked: (r) => r == ref('a'));
 
-      final a = await store.read('a');
+      final a = await store.read(ref('a'));
       expect(a!.tombstoned, isFalse);
       expect(a.owners, contains('bookmark'));
     });
@@ -544,9 +548,9 @@ void main() {
       // record is live but missing its 'bookmark' claim.
       await store.write(record('a', owners: const {'tempCache'}));
 
-      await newSweep().sweep(isBookmarked: (id) => id == 'a');
+      await newSweep().sweep(isBookmarked: (r) => r == ref('a'));
 
-      expect((await store.read('a'))!.owners, contains('bookmark'));
+      expect((await store.read(ref('a')))!.owners, contains('bookmark'));
     });
   });
 
@@ -575,7 +579,7 @@ void main() {
         extractFullText: (_) async => null,
       );
 
-      final running = prep.prepareArticle('a');
+      final running = prep.prepareArticle(ref('a'));
       // The fetch is in flight — the record read and epoch capture of
       // this pass both belong to the pre-wipe era.
       await fetchStarted.future;
@@ -588,7 +592,7 @@ void main() {
       gate.complete(http.Response('img-bytes', 200));
       await running;
 
-      final a = await store.read('a');
+      final a = await store.read(ref('a'));
       expect(a!.media['u']!.state, MediaState.pending);
     });
   });
@@ -597,7 +601,7 @@ void main() {
     test('a refused delete is counted honestly as a failure', () async {
       final store = newStore();
       await store.write(record('a', media: {'u1': readyEntry('u1', 3)}));
-      await store.mutate('a', (c) => c!.copyWith(owners: const {}));
+      await store.mutate(ref('a'), (c) => c!.copyWith(owners: const {}));
       await writeMedia('u1', [1, 2, 3]);
       mediaFile('u1').setLastModifiedSync(
         DateTime.now().subtract(const Duration(minutes: 10)),

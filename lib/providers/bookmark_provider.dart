@@ -15,13 +15,25 @@ class BookmarkProvider extends ChangeNotifier {
   List<FeedItem> _savedBookmarks = [];
   Set<String> _bookmarkedItemIds = {};
   Map<String, Set<String>> _snapshotFeedsById = {};
+  Set<ArticleRef> _snapshotRefs = {};
 
   void _indexSnapshots() {
     _snapshotFeedsById = {};
     for (final item in _savedBookmarks) {
       (_snapshotFeedsById[item.id] ??= {}).add(item.feedUrl);
     }
+    _snapshotRefs = {for (final item in _savedBookmarks) ArticleRef.of(item)};
   }
+
+  /// Live bookmark claim of one durable record instance: a saved snapshot,
+  /// or a legacy ID-only membership (no source known) with the same id.
+  bool isBookmarkedRef(ArticleRef ref) =>
+      _snapshotRefs.contains(ref) ||
+      _bookmarkedItemIds.any(
+        (id) =>
+            !_snapshotFeedsById.containsKey(id) &&
+            (ArticleIdentity.normalizeItemId(id) ?? id) == ref.id,
+      );
 
   /// Bumped each time a durable bookmark-claim mutation lands — strip or
   /// prepare. FeedProvider diffs it in update() so the offline-status map
@@ -130,13 +142,13 @@ class BookmarkProvider extends ChangeNotifier {
   /// is attached the strip rides its register queue — FIFO with delayed
   /// registrations means the toggle order IS the durable order, and a
   /// queued registerArticle can never re-add the owner being stripped.
-  void _stripBookmarkOwner(String id) {
+  void _stripBookmarkOwner(ArticleRef ref) {
     final prep = _preparation;
     unawaited(() async {
       for (var attempt = 0; attempt < 2; attempt++) {
         final result = prep != null
-            ? await prep.mutateRecord(id, _stripBookmarkMutation(id))
-            : await _recordStore.mutate(id, _stripBookmarkMutation(id));
+            ? await prep.mutateRecord(ref, _stripBookmarkMutation(ref))
+            : await _recordStore.mutate(ref, _stripBookmarkMutation(ref));
         // Fenced by a reset: nothing landed, and the new era owns cleanup.
         if (result == StoreWriteResult.rejected) return;
         if (result != StoreWriteResult.failed) {
@@ -145,29 +157,22 @@ class BookmarkProvider extends ChangeNotifier {
           // The record may have just become ownerless — release its bytes.
           // The live bookmark set goes along so stale claims elsewhere
           // self-heal in the same pass.
-          prep
-              ?.sweepCleanup(
-                isBookmarked: (recordId) => _bookmarkedItemIds.any(
-                  (b) => (ArticleIdentity.normalizeItemId(b) ?? b) == recordId,
-                ),
-              )
-              .ignore();
+          prep?.sweepCleanup(isBookmarked: isBookmarkedRef).ignore();
           return;
         }
       }
     }());
   }
 
-  ArticleRecord? Function(ArticleRecord?) _stripBookmarkMutation(String id) =>
-      (current) {
-        if (current == null || _bookmarkedItemIds.contains(id)) {
-          return current;
-        }
-        final owners = {...current.owners}..remove('bookmark');
-        return owners.length == current.owners.length
-            ? current
-            : current.copyWith(owners: owners);
-      };
+  ArticleRecord? Function(ArticleRecord?) _stripBookmarkMutation(
+    ArticleRef ref,
+  ) => (current) {
+    if (current == null || isBookmarkedRef(ref)) return current;
+    final owners = {...current.owners}..remove('bookmark');
+    return owners.length == current.owners.length
+        ? current
+        : current.copyWith(owners: owners);
+  };
 
   void _loadBookmarks() {
     final String? bookmarkedItemsData = _box.get('bookmarkedItemsJson');
@@ -209,7 +214,7 @@ class BookmarkProvider extends ChangeNotifier {
       if (!_savedBookmarks.any((b) => b.id == id)) {
         _bookmarkedItemIds.remove(id);
       }
-      _stripBookmarkOwner(id);
+      _stripBookmarkOwner(ArticleRef.of(originalItem));
     } else {
       _bookmarkedItemIds.add(id);
       final updatedItem = originalItem.copyWith(isBookmarked: true);
@@ -249,7 +254,7 @@ class BookmarkProvider extends ChangeNotifier {
             _claimLanded();
             // Prepare commits land inside this same call; the version bump
             // afterwards lets status readers observe the finished state.
-            await prep.prepareArticle(updatedItem.id);
+            await prep.prepareArticle(ArticleRef.of(updatedItem));
             _claimLanded();
           }
         }());
@@ -286,7 +291,7 @@ class BookmarkProvider extends ChangeNotifier {
     notifyListeners();
     try {
       await persistBookmarks();
-      _stripBookmarkOwner(item.id);
+      _stripBookmarkOwner(ArticleRef.of(item));
       return true;
     } catch (_) {
       // De-dupe in case the item was re-bookmarked while the write was in

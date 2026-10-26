@@ -17,6 +17,7 @@ import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/background_fetch_service.dart';
 import 'package:ice_cream_rss_reader/services/app_lifecycle_gate.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
@@ -386,8 +387,10 @@ void main() {
             jsonDecode(box.get('feedValidators') as String) as Map;
         expect(
           {
-            'oldArchivePresent': await records.read('pre-reset-item') != null,
-            'newArchivePresent': await records.read(current.id) != null,
+            'oldArchivePresent':
+                await records.read(ArticleRef(url, 'pre-reset-item')) != null,
+            'newArchivePresent':
+                await records.read(ArticleRef.of(current)) != null,
             'oldObservationPresent': feeds.keys.any(
               (key) => key.toString().startsWith('$url\u0000'),
             ),
@@ -2006,7 +2009,7 @@ void main() {
     final deadline = DateTime.now().add(const Duration(seconds: 4));
     ArticleRecord? record;
     do {
-      record = await store.read('b1');
+      record = await store.read(ArticleRef.of(item));
       if (record == null || !record.owners.contains('bookmark')) break;
       await Future<void>.delayed(const Duration(milliseconds: 10));
     } while (DateTime.now().isBefore(deadline));
@@ -2060,9 +2063,10 @@ void main() {
         // The register+prepare chain is unawaited inside toggleBookmark —
         // the claimVersion bump is what must carry the fresh label into
         // the feed's status map (#41 ordering).
-        bookmarks.toggleBookmark(_item(server.url('/f.xml'), 'st1'));
-        await _waitUntil(() => feed.articleStatus('st1') != null);
-        expect(feed.articleStatus('st1')!.hasBookmark, isTrue);
+        final saved = _item(server.url('/f.xml'), 'st1');
+        bookmarks.toggleBookmark(saved);
+        await _waitUntil(() => feed.articleStatus(saved) != null);
+        expect(feed.articleStatus(saved)!.hasBookmark, isTrue);
         feed.dispose();
       },
     );
@@ -2095,7 +2099,7 @@ void main() {
 
       final record = await ArticleRecordStore.forBox(
         Hive.box('feeds'),
-      ).read('rs1');
+      ).read(ArticleRef.of(item));
       expect(record, isNotNull);
       expect(
         record!.bodyState,
@@ -2125,13 +2129,14 @@ void main() {
       );
       await _waitUntil(() => feed.articleStatusesLoaded);
 
-      bookmarks.toggleBookmark(_item(server.url('/f.xml'), 'pf1'));
+      final saved = _item(server.url('/f.xml'), 'pf1');
+      bookmarks.toggleBookmark(saved);
       // The claim lands async; the status map appearing proves the record
       // committed (status derives only from durable records).
-      await _waitUntil(() => feed.articleStatus('pf1') != null);
+      await _waitUntil(() => feed.articleStatus(saved) != null);
       final record = await ArticleRecordStore.forBox(
         Hive.box('feeds'),
-      ).read('pf1');
+      ).read(ArticleRef.of(saved));
       expect(record!.bodyState, MediaState.ready);
       feed.dispose();
     });

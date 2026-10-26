@@ -199,7 +199,7 @@ class _FeedListItemState extends State<FeedListItem>
           feedUrl: widget.item.feedUrl,
         ),
         unmetered: feedProvider.unmetered,
-        status: feedProvider.articleStatus(widget.item.id),
+        status: feedProvider.articleStatus(widget.item),
         statusLoaded: feedProvider.articleStatusesLoaded,
       ),
       builder: (context, state, child) {

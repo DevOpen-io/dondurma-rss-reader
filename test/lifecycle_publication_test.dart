@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
@@ -93,7 +94,7 @@ void main() {
     });
     addTearDown(service.dispose);
     await service.registerArticle(_item(), {'bookmark'}, fullText: false);
-    final pending = service.prepareArticle('gated');
+    final pending = service.prepareArticle(ArticleRef.of(_item()));
     await requested.future;
     await reset(media);
     release.complete(
@@ -125,7 +126,7 @@ void main() {
       );
       addTearDown(service.dispose);
       await service.registerArticle(_item(), {'bookmark'}, fullText: false);
-      final pending = service.prepareArticle('gated');
+      final pending = service.prepareArticle(ArticleRef.of(_item()));
       await media.inside.future;
       var resetDone = false;
       final resetting = reset(media).then((_) => resetDone = true);

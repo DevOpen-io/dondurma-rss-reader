@@ -7,6 +7,7 @@ import 'package:http/testing.dart' as http_testing;
 
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/article_page_provider.dart';
+import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
@@ -35,6 +36,8 @@ void main() {
       tempDir.deleteSync(recursive: true);
     } catch (_) {}
   });
+
+  ArticleRef ref(String id) => ArticleRef('https://e.com/feed', id);
 
   ArticleRecordStore newStore() =>
       ArticleRecordStore(FileObservedArticlePersistence(stateFile: stateFile));
@@ -396,11 +399,11 @@ void main() {
       final store = newStore();
       await store.write(rec('live', body: '<p>x</p>'));
       await store.write(rec('dead', body: '<p>x</p>', tombstoned: true));
-      await store.tombstone('dead');
+      await store.tombstone(ref('dead'));
       final map = await listArticleStatuses(store);
-      expect(map.keys, contains('live'));
-      expect(map.keys, isNot(contains('dead')));
-      expect(map['live']!.scope, ArticleScope.savedReady);
+      expect(map.keys, contains(ref('live')));
+      expect(map.keys, isNot(contains(ref('dead'))));
+      expect(map[ref('live')]!.scope, ArticleScope.savedReady);
     });
 
     test('corrupt state fails closed to empty map', () async {
@@ -430,10 +433,10 @@ void main() {
         store,
         media: ArticleMediaStore(root: mediaDir),
       );
-      expect(map['a']!.fullyReady, isFalse);
-      expect(map['a']!.scope, ArticleScope.savedText);
+      expect(map[ref('a')]!.fullyReady, isFalse);
+      expect(map[ref('a')]!.scope, ArticleScope.savedText);
       // The manifest was repaired — the engine can retry the piece.
-      final r = await store.read('a');
+      final r = await store.read(ref('a'));
       expect(r!.media[url]!.state, MediaState.pending);
       expect(r.media[url]!.nextRetryAt, isNull);
     });
@@ -456,8 +459,8 @@ void main() {
         store,
         media: ArticleMediaStore(root: mediaDir),
       );
-      expect(map['a']!.fullyReady, isTrue);
-      expect(map['a']!.scope, ArticleScope.savedReady);
+      expect(map[ref('a')]!.fullyReady, isTrue);
+      expect(map[ref('a')]!.scope, ArticleScope.savedReady);
     });
   });
 
@@ -492,9 +495,9 @@ void main() {
           },
         ),
       );
-      await prep.prepareArticle('a');
+      await prep.prepareArticle(ref('a'));
       expect(fetched, 1);
-      final r = await store.read('a');
+      final r = await store.read(ref('a'));
       expect(r!.media['https://e.com/i.png']!.state, MediaState.ready);
     });
 
@@ -520,7 +523,7 @@ void main() {
           },
         ),
       );
-      await prep.prepareArticle('a');
+      await prep.prepareArticle(ref('a'));
       expect(fetched, 0);
     });
 
@@ -547,9 +550,9 @@ void main() {
           nextRetryAt: DateTime.now().toUtc().add(const Duration(hours: 1)),
         ),
       );
-      await prep.prepareArticle('a');
+      await prep.prepareArticle(ref('a'));
       expect(extracted, 1);
-      final r = await store.read('a');
+      final r = await store.read(ref('a'));
       expect(r!.bodyState, MediaState.ready);
       expect(r.bodySource, 'extracted');
     });
@@ -613,7 +616,7 @@ void main() {
         const {'bookmark'},
         fullText: false,
       );
-      final r = await store.read('a');
+      final r = await store.read(ref('a'));
       expect(r!.bodyState, MediaState.ready);
       expect(
         r.nextRetryAt,
@@ -641,8 +644,8 @@ void main() {
             },
           ),
         );
-        await prep.prepareArticle('a');
-        final r = await store.read('a');
+        await prep.prepareArticle(ref('a'));
+        final r = await store.read(ref('a'));
         expect(
           r!.media['https://e.com/empty.png']!.state,
           MediaState.gone,
@@ -844,7 +847,7 @@ void main() {
       );
       expect(p.rawContent, '<p>saved copy</p>');
 
-      await store.tombstone('a');
+      await store.tombstone(ref('a'));
       await p.refreshSavedCopy(
         records: store,
         media: ArticleMediaStore(root: mediaDir),
@@ -1081,7 +1084,7 @@ void main() {
           },
         ),
       );
-      final r = await newStore().read('a');
+      final r = await newStore().read(ref('a'));
       expect(r!.media['u']!.waitSource, 'server');
     });
   });

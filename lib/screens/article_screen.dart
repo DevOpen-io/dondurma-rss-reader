@@ -1077,7 +1077,7 @@ class _ArticleStatusStrip extends StatelessWidget {
   /// a server Retry-After wait (#41).
   Future<void> _retryMissing(BuildContext context) async {
     final feedProvider = context.read<FeedProvider>();
-    await feedProvider.prepareArticleNow(item.id);
+    await feedProvider.prepareArticleNow(item);
     await provider.refreshSavedCopy();
   }
 
