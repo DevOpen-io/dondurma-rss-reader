@@ -306,3 +306,5 @@ Açık kalanlar (bu review'da değiştirilmedi): Android/diğer platform backend
 
 - Çalışma zamanı doğrulaması (2026-10-26): Android emülatörü (API 36, x86_64) — native mutex yüklendi, `files/lifecycle` journal/marker/lock oluştu, v1→v2 arşiv migration'ı hata vermeden çalıştı; Workmanager job'u zamanı gelmeden zorlanamadığı için background isolate girişi cihazda tetiklenmedi (C testi kapsıyor). Web: headless Chrome'da açılış, Hive ve onboarding yönlendirmesi hatasız. Windows/macOS/iOS bu Linux makinede derlenemez/çalıştırılamaz.
 - Karantina kayıtları için Ayarlar > Eski arşiv ekranı eklendi (EN/TR/ES, "kaynak doğrulanmadı" etiketi). Tam suite 640/640.
+- Android arka plan görevi emülatörde gözlendi: uygulama açılmadan WorkManager işi çalıştı (`Worker result SUCCESS`), v2 arşivine yazdı, v1'e dokunmadı. Web'de fabrika sıfırlaması Chrome içinde test edildi.
+- Kaynaklar arası içerik: link ve başlığı eşleşen başka kaynağın çıkarılmış gövdesi ve hazır medyası yeni instance'ın kendi kaydına kopyalanır (yeniden çıkarma yok); kayıtlar ayrı kalır. Tam suite 642/642.
