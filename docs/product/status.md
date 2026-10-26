@@ -9,6 +9,7 @@ Source comparison: 2026-10-11. Checked items describe implementation in the repo
 - [x] RSS/Atom isolate parsing, browser headers, ETag/Last-Modified, HTTP 304
 - [x] Five providers; three Hive CE boxes; legacy migration
 - [x] Refresh coalescing, five-request concurrency, resume refresh, 50-item pagination
+- [x] Incremental foreground refresh: successful sources appear in 100 ms batches without waiting for slow feeds; mobile/desktop lists retain the visible article position (2026-10-24)
 - [x] Offline cache, read state, durable bookmarks, image caches
 - [x] Folders, Material icons/order, feed management, OPML import/export
 - [x] Search history; global/per-feed keyword filters

@@ -1,6 +1,6 @@
 # Kademeli feed yenileme
 
-Durum: Tasarım onayı bekleniyor; henüz uygulanmadı.
+Durum: Kullanıcı tarafından onaylandı ve uygulandı. [Uygulama planı](../plans/2026-10-24-incremental-feed-refresh.md).
 
 ## Amaç
 

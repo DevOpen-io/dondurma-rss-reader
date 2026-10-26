@@ -1,6 +1,6 @@
 # Mimari ve Çalışma Zamanı
 
-Kaynak koduyla karşılaştırma: 2026-10-11. Çelişkide kaynak kodu esas alınır.
+Kaynak koduyla karşılaştırma: 2026-10-11; kademeli ön plan yenileme bölümü 2026-10-24'te güncellendi. Çelişkide kaynak kodu esas alınır.
 
 [Belge dizini](../README.md) · [Geliştirme ve doğrulama](README.md) · [Çevrimdışı saklama](offline-storage.md)
 
@@ -97,11 +97,16 @@ Hive kutularına ek olarak `ArticleRecordStore` ve `ObservedArticleStore`, foreg
 
 - eşzamanlı çağrıları `_refreshQueued` ile birleştirir;
 - en fazla beş fetch çalıştırır;
-- yeni/304/hatalı sonuçları mevcut cache ile birleştirir;
+- başarılı HTTP 200 gövdelerini diğer kaynakları beklemeden, 100 ms'lik gruplarla görünür listeye yansıtır; son bekleyen grup bitişte uygulanır;
+- ara ve nihai listeyi `FeedCachePolicy.mergeVisibleFeeds` ile, güncel abonelik/yer imi girdileri ve aynı tarih sıralaması üzerinden birleştirir; 304/hata/cooldown kaynaklarının mevcut makalelerini korur;
+- ara yayınlarda kalıcı cache, bildirim veya hazırlık yan etkisi başlatmaz; bunlar yenileme sonu akışında kalır;
+- reset/cache temizleme generation'ları ve dispose, eski ara yayınları geçersiz kılar;
 - global ve feed keyword filtrelerini uygular;
 - ilk yüklemede bildirim göndermez (`_hasLoadedOnce`);
 - cache ve home widget verisini günceller;
 - geçici cache üyeliğini uzlaştırıp kalıcı makale hazırlığını tetikler.
+
+Mobil ve masaüstü listelerindeki `AnchoredFeedList`, aşağı kaydırılmışken hayatta kalan ilk görünür makaleyi aynı dikey konumda tutar. Değişken satır yüksekliği için tahmin yürütmek yerine tek viewport içindeki lazy sliver merkezini yeniden konumlandırır; liste başındayken yeni haberler başta görünür. Satır anahtarları kaynak + GUID + occurrence ile çakışmalardan korunur. Ekran dışında keep-alive kovasında tutulan satırlar bağlı ve boyutlandırılmış olsalar bile dönüşümleri `NaN` üretebilir; anchor seçiminde yalnız sonlu viewport koordinatları kabul edilir. Kaynak değişiklikleri masaüstünde seçili okuyucuyu yeniden oluşturmaz.
 
 Filtre hattı `feed_list_filter.dart`, tarih gruplama `feed_date_groups.dart`, saf kararlar `feed_decisions.dart` içindedir. Keyword regex'leri filtre geçişinde derlenir. Cooldown pacing bekleyişinden sonra yeniden kontrol edilir. Başarılı feed isteği host cooldown'unu silmez. İki persist slot'u birlikte okunur; her isolate kendi slot'una yazar. `Retry-After` en fazla 24 saat olarak değerlendirilir.
 
