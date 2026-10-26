@@ -12,6 +12,8 @@ import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/app_reset_service.dart';
+import '../services/lifecycle_gate.dart';
 import '../services/notification_service.dart';
 import '../services/opml_service.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -908,9 +910,19 @@ class SettingsScreen extends StatelessWidget {
               final settings = context.read<SettingsProvider>();
               final bookmarks = context.read<BookmarkProvider>();
 
+              // One journaled reset: the intent is durable before anything
+              // is deleted, and an interrupted reset finishes at next start.
+              feeds.discardStateForReset();
+              final bool wiped = await AppResetService.run(
+                LifecycleGate.current,
+                AppResetService.appStages(
+                  feedStorage: feeds.wipeStorageForReset,
+                ),
+              );
+              // Storage is empty now; providers reload their memory state.
               await bookmarks.factoryReset();
-              await subs.factoryReset();
-              final bool wiped = await feeds.factoryReset();
+              subs.reloadAfterReset();
+              feeds.finishReset();
               await settings.factoryReset();
               if (!wiped) {
                 // The sidecar wipe failed — durable claims may persist

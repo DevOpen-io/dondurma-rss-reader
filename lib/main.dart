@@ -17,6 +17,7 @@ import 'providers/bookmark_provider.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
+import 'services/app_lifecycle_gate.dart';
 import 'services/article_preparation_service.dart';
 import 'services/article_record_store.dart';
 import 'services/background_fetch_service.dart';
@@ -60,6 +61,8 @@ void main() async {
   await Hive.openBox('settings');
   await Hive.openBox('feeds');
   await Hive.openBox('bookmarks');
+  // Before any box is read: an interrupted factory reset finishes first.
+  await installAppLifecycleGate();
   await _migrateHiveBoxes();
   await NotificationService.instance.init();
 

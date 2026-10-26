@@ -338,9 +338,13 @@ class FeedProvider extends ChangeNotifier {
        _feedBackoff = backoff ?? FeedBackoff() {
     _preparation =
         preparation ??
-        ArticlePreparationService(hostPacer: _hostPacer, backoff: _feedBackoff);
+        ArticlePreparationService(
+          hostPacer: _hostPacer,
+          backoff: _feedBackoff,
+          gate: gate,
+        );
     _observedArticleStore =
-        observedArticleStore ?? ObservedArticleStore.forBox(_box);
+        observedArticleStore ?? ObservedArticleStore.forBox(_box, gate: gate);
     // One pacing schedule and one cooldown policy per isolate: feed
     // fetches, full-text extraction, and media downloads to the same
     // host all serialize through the pacer and respect the same
@@ -999,6 +1003,8 @@ class FeedProvider extends ChangeNotifier {
     // belong to the wiped era (#40).
     final resetGeneration = _resetGeneration;
     try {
+      // Captured before the request: only this era may publish its claims.
+      final ticket = await _gate?.beginWork();
       final prefetched = await _feedService.fetchFeed(url, category);
       if (prefetched.notModified) {
         throw Exception('Authoritative subscription fetch returned 304.');
@@ -1029,7 +1035,7 @@ class FeedProvider extends ChangeNotifier {
       final subscription = subscriptions.subscriptions.firstWhere(
         (item) => item.url == url,
       );
-      await _applyNewSubscriptionResult(subscription, prefetched);
+      await _applyNewSubscriptionResult(subscription, prefetched, ticket);
       return true;
     } catch (e) {
       debugPrint('Failed to add feed $url: $e');
@@ -1044,6 +1050,7 @@ class FeedProvider extends ChangeNotifier {
   Future<void> _applyNewSubscriptionResult(
     FeedSubscription subscription,
     FeedFetchResult result,
+    LifecycleTicket? ticket,
   ) async {
     final merged = _items
         .where((item) => item.feedUrl != subscription.url)
@@ -1076,6 +1083,7 @@ class FeedProvider extends ChangeNotifier {
       observationEpoch: subscription.notificationEpoch,
       items: result.items,
       allowInitialization: true,
+      ticket: ticket,
     );
 
     _isOffline = false;
@@ -1170,6 +1178,9 @@ class FeedProvider extends ChangeNotifier {
     // subscriptions, items, validators, notifications, and the widget all
     // belong to the era being wiped (#40).
     final resetGeneration = _resetGeneration;
+    // Lifecycle ticket before any input snapshot or HTTP: observation
+    // claims of this pass publish only while its era is current.
+    final ticket = await _gate?.beginWork();
 
     // Pick up cooldowns the background isolate wrote since the last
     // pass — a stale in-memory snapshot must never bypass a fresh 429.
@@ -1223,6 +1234,7 @@ class FeedProvider extends ChangeNotifier {
         validators: _loadFeedValidators(),
         bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
         redirects: _loadFeedRedirects(),
+        ticket: ticket,
         // Observation survives cache eviction, but not a factory reset or
         // the removal/replacement of this subscription namespace.
         canObserve: (url, epoch) =>

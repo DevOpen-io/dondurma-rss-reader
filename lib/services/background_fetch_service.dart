@@ -18,7 +18,7 @@ import 'feed_service.dart';
 import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
 import 'full_text_extraction_service.dart';
-import 'lifecycle_gate.dart';
+import 'app_lifecycle_gate.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -33,6 +33,14 @@ const String _bgTaskName = 'rss_bg_fetch';
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     try {
+      await Hive.initFlutter();
+      await Future.wait([
+        Hive.openBox('settings'),
+        Hive.openBox('feeds'),
+        Hive.openBox('bookmarks'),
+      ]);
+      // This isolate's gate; an interrupted reset finishes before any read.
+      await installAppLifecycleGate();
       await runBgFetch();
     } catch (e) {
       debugPrint('[WM] task error: $e');

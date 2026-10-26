@@ -80,7 +80,9 @@ class ArticleMediaStore {
   /// manifest-after-file protocol would let cleanup collect a file whose
   /// manifest commit was still in flight.
   static String fileNameFor(String url) {
-    var hash = 0xcbf29ce484222325;
+    // FNV offset basis 0xcbf29ce484222325, assembled from 32-bit halves so
+    // web compilation accepts it (same 64-bit value on native targets).
+    var hash = (0xcbf29ce4 << 32) | 0x84222325;
     for (final byte in url.codeUnits) {
       hash = (hash ^ byte) * 0x100000001b3;
     }

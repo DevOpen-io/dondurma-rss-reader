@@ -532,10 +532,15 @@ class SubscriptionProvider extends ChangeNotifier {
   /// Clears all subscriptions, custom categories, and category icons,
   /// then reloads the default state (sample feeds).
   Future<void> factoryReset() async {
+    await _box.clear();
+    reloadAfterReset();
+  }
+
+  /// Memory half of a reset whose storage stages already ran.
+  void reloadAfterReset() {
     _subscriptions.clear();
     _customCategories.clear();
     _categoryIcons.clear();
-    await _box.clear();
     // This will load default sample feeds since the box is now empty.
     _loadSubscriptions();
   }

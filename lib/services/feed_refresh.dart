@@ -7,6 +7,7 @@ import '../utils/host_pacer.dart';
 import 'feed_backoff.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
+import 'lifecycle_gate.dart';
 import 'observed_article_store.dart';
 
 /// Result of one full refresh pass over all subscriptions.
@@ -102,6 +103,7 @@ class FeedRefresher {
     FeedProgressCallback? onProgress,
     void Function(String feedUrl, List<FeedItem> items)? onFreshFeed,
     bool Function(String feedUrl, String observationEpoch)? canObserve,
+    LifecycleTicket? ticket,
   }) async {
     // Snapshot current items per feed so a 304 — or a transient error — reuses
     // the feed's existing articles instead of dropping them this cycle.
@@ -289,6 +291,7 @@ class FeedRefresher {
         claimCheck: canObserve == null
             ? null
             : () => canObserve(outcome.url, outcome.observationEpoch),
+        ticket: ticket,
       );
       claimedItems.addAll(claim.claimedItems);
     }

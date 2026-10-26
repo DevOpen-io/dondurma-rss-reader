@@ -41,9 +41,15 @@ abstract final class AppResetService {
       }
     }
     try {
-      final reset = await gate.beginReset(
-        cleanupStages: [for (final (name, _) in stages) name],
-      );
+      final names = [for (final (name, _) in stages) name];
+      LifecycleReset reset;
+      try {
+        reset = await gate.beginReset(cleanupStages: names);
+      } on LifecycleResetPending {
+        // An earlier reset never finished: complete it, then start this one.
+        await recover(gate);
+        reset = await gate.beginReset(cleanupStages: names);
+      }
       for (final (name, action) in stages) {
         await gate.performCleanupStage(reset, name, action);
       }
@@ -53,6 +59,18 @@ abstract final class AppResetService {
       debugPrint('AppResetService: reset left pending: $error');
       return false;
     }
+  }
+
+  /// The settings-screen factory reset: every stage's disk cleanup, with the
+  /// feed provider's own storage stage (its injected stores) for [feeds].
+  static List<(String, Future<void> Function())> appStages({
+    required Future<void> Function() feedStorage,
+  }) {
+    final disk = diskStages();
+    return [
+      for (final name in allStages)
+        (name, name == feeds ? feedStorage : disk[name]!),
+    ];
   }
 
   /// Finishes an interrupted reset with provider-free disk cleanup. Call at

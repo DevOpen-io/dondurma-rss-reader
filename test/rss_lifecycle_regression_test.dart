@@ -413,6 +413,36 @@ void main() {
     },
   );
 
+  test('gated foreground refresh still publishes observation claims', () async {
+    final url = server.url('/gated-claims.xml');
+    server.handlers['/gated-claims.xml'] = (request) =>
+        _respond200(request, _rss('Gated', ['gated-item']));
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Gated', category: 'Test'),
+    ]);
+    LifecycleGate.current = await openAppLifecycleGate();
+    addTearDown(() => LifecycleGate.current = null);
+    final providers = _providers();
+    try {
+      await _waitForRefresh(providers.feed);
+      await providers.feed.refreshAll();
+      final box = Hive.box('feeds');
+      final observation =
+          jsonDecode(
+                await File('${box.path}.observed-articles.json').readAsString(),
+              )
+              as Map;
+      expect(
+        (observation['feeds'] as Map).keys.any(
+          (key) => key.toString().startsWith('$url\u0000'),
+        ),
+        isTrue,
+      );
+    } finally {
+      providers.feed.dispose();
+    }
+  });
+
   test('clearing cache cancels an unpublished source batch', () async {
     final release = Completer<void>();
     final cleared = Completer<void>();
