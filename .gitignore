@@ -52,3 +52,6 @@ fastlane/Preview.html
 *.p12
 *.mobileprovision
 AuthKey*.p8
+
+/brag-output/
+/.agents/

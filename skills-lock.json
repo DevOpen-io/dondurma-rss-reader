@@ -7,6 +7,12 @@
       "skillPath": "skills/engineering/ask-matt/SKILL.md",
       "computedHash": "e59e88ad97b8766d13350afaecabeca3b9af62ad88a4e089a22b47c32e2e4f69"
     },
+    "brag": {
+      "source": "latent-spaces/brag",
+      "sourceType": "github",
+      "skillPath": "skills/brag/SKILL.md",
+      "computedHash": "917eba27222a174bd05088df28a155c8e43a28be611d3694d409790adcc082d0"
+    },
     "caveman": {
       "source": "juliusbrussee/caveman",
       "sourceType": "github",
