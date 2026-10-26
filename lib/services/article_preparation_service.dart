@@ -371,6 +371,28 @@ class ArticlePreparationService {
       media: manifest,
       owners: owners,
     );
+    // A proven copy of the same article from another source donates its
+    // extracted body and ready media — copied into this instance's own
+    // record, so the instances stay independent afterwards.
+    // Only a new instance can take a donation; reconcile re-registers
+    // existing members every pass and must not scan the archive each time.
+    final existing = fullText ? await _records.read(ArticleRef.of(item)) : null;
+    final donor = fullText && (existing == null || existing.tombstoned)
+        ? await _provenDonor(item)
+        : null;
+    final fresh = donor == null
+        ? draft
+        : draft.copyWith(
+            body: () => donor.body,
+            bodyState: MediaState.ready,
+            bodySource: () => 'extracted',
+            imageUrls: {...imageUrls, ...donor.imageUrls}.toList(),
+            media: {
+              ...manifest,
+              for (final e in donor.media.entries)
+                if (e.value.state == MediaState.ready) e.key: e.value,
+            },
+          );
     return _records.mutate(ArticleRef.of(item), expectedEpoch: expectedEpoch, (
       current,
     ) {
@@ -437,13 +459,34 @@ class ArticlePreparationService {
         );
       }
       if (current?.tombstoned == true) {
-        return draft.copyWith(
+        return fresh.copyWith(
           owners: owners,
           generation: current!.generation + 1,
         );
       }
-      return draft.copyWith(generation: 1);
+      return fresh.copyWith(generation: 1);
     });
+  }
+
+  /// Another source's live record proven to be the same article: same
+  /// normalized article link and same non-empty title, with an extracted
+  /// body. A shared GUID or link alone is not proof.
+  Future<ArticleRecord?> _provenDonor(FeedItem item) async {
+    final link = ArticleIdentity.normalizeArticleUrl(item.link);
+    if (link == null || item.title.isEmpty) return null;
+    final self = ArticleRef.of(item);
+    for (final record in await _records.listRecords()) {
+      if (record.tombstoned ||
+          record.bodyState != MediaState.ready ||
+          record.bodySource != 'extracted' ||
+          record.title != item.title ||
+          ArticleIdentity.normalizeArticleUrl(record.link) != link ||
+          ArticleRef(record.feedUrl, record.id) == self) {
+        continue;
+      }
+      return record;
+    }
+    return null;
   }
 
   /// Explicit single-article permit: one preparation pass for [articleId]
