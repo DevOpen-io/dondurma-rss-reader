@@ -53,7 +53,8 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
   void didUpdateWidget(covariant DesktopReaderPane oldWidget) {
     super.didUpdateWidget(oldWidget);
     // Selecting a different article resets the reading position.
-    if (oldWidget.item?.id != widget.item?.id &&
+    if ((oldWidget.item?.feedUrl, oldWidget.item?.id) !=
+            (widget.item?.feedUrl, widget.item?.id) &&
         _scrollController.hasClients) {
       _scrollController.jumpTo(0);
     }
@@ -184,10 +185,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
               ],
             ),
           ),
-          Divider(
-            height: 1,
-            color: cs.outlineVariant.withValues(alpha: 0.35),
-          ),
+          Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.35)),
           // ── Article body ─────────────────────────────────────────────
           Expanded(
             // Keyed by article id so switching items builds a fresh
@@ -196,7 +194,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
             // gives a one-shot fade-in — no crossfade, so only a single
             // article subtree is ever mounted.
             child: TweenAnimationBuilder<double>(
-              key: ValueKey('reader-fade-${current.id}'),
+              key: ValueKey(('reader-fade', current.feedUrl, current.id)),
               tween: Tween(begin: 0, end: 1),
               duration: motionDuration(
                 context,
@@ -209,7 +207,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
                 controller: _scrollController,
                 thumbVisibility: true,
                 child: ChangeNotifierProvider(
-                  key: ValueKey('reader-${current.id}'),
+                  key: ValueKey(('reader', current.feedUrl, current.id)),
                   create: (_) => ArticlePageProvider(item: current),
                   child: ArticlePage(
                     item: current,

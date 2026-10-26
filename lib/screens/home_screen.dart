@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
@@ -8,6 +7,7 @@ import '../models/refresh_progress.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/anchored_feed_list.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/add_feed_dialog.dart';
 import '../widgets/home/home_bottom_nav.dart';
@@ -36,10 +36,12 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
+  final _feedScroll = AnchoredScrollController();
 
   @override
   void dispose() {
     _searchController.dispose();
+    _feedScroll.dispose();
     super.dispose();
   }
 
@@ -199,6 +201,21 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     entries.add(const _WidgetEntry(SizedBox(height: 80)));
+    final articleIds = articleRowIds([
+      ...todayItems,
+      ...yesterdayItems,
+      ...olderItems,
+    ]);
+    var articleIndex = 0;
+    var auxiliaryIndex = 0;
+    final rowIds = <Object>[
+      for (final entry in entries)
+        switch (entry) {
+          _ItemEntry() => articleIds[articleIndex++],
+          _HeaderEntry(:final label) => ('header', label),
+          _WidgetEntry() => ('auxiliary', auxiliaryIndex++),
+        },
+    ];
 
     return RefreshIndicator(
       // The pull gesture stays, but its own spinner is hidden — the
@@ -261,18 +278,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       }
                       return false;
                     },
-                    // ListView.builder: single viewport, true lazy rendering.
-                    // cacheExtent = 200px pre-renders ~2 items outside the
-                    // visible area so fast scrolling never shows blank frames.
-                    // ScrollablePositionedList used dual viewports internally
-                    // (anchor + main) even though we never used position-jump;
-                    // replaced to eliminate that overhead entirely.
-                    child: ListView.builder(
+                    // One lazy viewport, anchored to the visible article when
+                    // incoming source results insert/reorder rows above it.
+                    child: AnchoredFeedList(
+                      controller: _feedScroll,
+                      rowIds: rowIds,
+                      isArticle: (index) => entries[index] is _ItemEntry,
                       physics: const BouncingScrollPhysics(
                         parent: AlwaysScrollableScrollPhysics(),
                       ),
-                      scrollCacheExtent: ScrollCacheExtent.pixels(200),
-                      itemCount: entries.length,
                       itemBuilder: (context, index) {
                         final entry = entries[index];
                         return switch (entry) {
@@ -315,7 +329,12 @@ class _HomeScreenState extends State<HomeScreen> {
       (p) => p.hasActiveSheetFilter,
     );
 
-    return Scaffold(
+    // The feed tab hands the Scaffold its top-aware controller so an iOS
+    // status-bar tap reaches the real head, not the rebased center. It is
+    // not inherited by other scrollables; other tabs keep the route's.
+    final routeScroll = PrimaryScrollController.maybeOf(context);
+    final feedTab = _selectedIndex == 0 || routeScroll == null;
+    final scaffold = Scaffold(
       extendBody: true,
       appBar: AppBar(
         title: AnimatedSwitcher(
@@ -591,6 +610,17 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
       ),
+    );
+    return PrimaryScrollController(
+      controller: feedTab ? _feedScroll : routeScroll,
+      automaticallyInheritForPlatforms: feedTab
+          ? const {}
+          : const {
+              TargetPlatform.android,
+              TargetPlatform.iOS,
+              TargetPlatform.fuchsia,
+            },
+      child: scaffold,
     );
   }
 

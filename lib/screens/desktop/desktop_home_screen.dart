@@ -74,7 +74,7 @@ class DesktopHomeScreen extends StatefulWidget {
 
 class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   DesktopSection _section = DesktopSection.articles;
-  String? _selectedArticleId;
+  (String, String)? _selectedArticleId;
 
   /// User-collapsed feed explorer — session-only, so a resize across the
   /// pin breakpoint can't strand it in the wrong state.
@@ -110,7 +110,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   }
 
   void _selectArticle(FeedItem item) {
-    setState(() => _selectedArticleId = item.id);
+    setState(() => _selectedArticleId = (item.feedUrl, item.id));
     if (!item.isRead) {
       unawaited(context.read<FeedProvider>().markAsRead(item.id));
     }
@@ -121,16 +121,16 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     if (id == null) return null;
     final items = _currentItems(groups);
     for (final item in items) {
-      if (item.id == id) return item;
+      if ((item.feedUrl, item.id) == id) return item;
     }
     // Article fell out of the current filter — keep showing it rather than
     // blanking the reader mid-read.
     final feed = context.read<FeedProvider>();
     for (final item in feed.items) {
-      if (item.id == id) return item;
+      if ((item.feedUrl, item.id) == id) return item;
     }
     for (final item in context.read<BookmarkProvider>().bookmarkedItems) {
-      if (item.id == id) {
+      if ((item.feedUrl, item.id) == id) {
         return item.copyWith(isRead: feed.isRead(item.id));
       }
     }
@@ -162,7 +162,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     if (items.isEmpty) return;
     final idx = _selectedArticleId == null
         ? -1
-        : items.indexWhere((i) => i.id == _selectedArticleId);
+        : items.indexWhere((i) => (i.feedUrl, i.id) == _selectedArticleId);
     final next = (idx + delta).clamp(0, items.length - 1);
     if (idx == next && idx >= 0) return;
     _selectArticle(items[next < 0 ? 0 : next]);
@@ -181,8 +181,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   void _openDiscover() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) =>
-            const _EscapePopScope(child: ExploreFeedsPage()),
+        builder: (_) => const _EscapePopScope(child: ExploreFeedsPage()),
       ),
     );
   }
@@ -224,7 +223,9 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     final selected = _resolveSelected(groups);
     final selectedIndex = selected == null
         ? -1
-        : items.indexWhere((i) => i.id == selected.id);
+        : items.indexWhere(
+            (i) => (i.feedUrl, i.id) == (selected.feedUrl, selected.id),
+          );
 
     final width = MediaQuery.sizeOf(context).width;
     final explorerPinned =
@@ -242,10 +243,13 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
 
     return CallbackShortcuts(
       bindings: {
-        SingleActivator(LogicalKeyboardKey.keyR, control: !meta, meta: meta):
-            () => unawaited(
-              context.read<FeedProvider>().refreshAll(userInitiated: true),
-            ),
+        SingleActivator(
+          LogicalKeyboardKey.keyR,
+          control: !meta,
+          meta: meta,
+        ): () => unawaited(
+          context.read<FeedProvider>().refreshAll(userInitiated: true),
+        ),
         SingleActivator(LogicalKeyboardKey.keyF, control: !meta, meta: meta):
             _searchFocusNode.requestFocus,
         SingleActivator(LogicalKeyboardKey.keyN, control: !meta, meta: meta):
@@ -299,6 +303,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
               child: DesktopArticleListPane(
                 items: items,
                 selectedId: selected?.id,
+                selectedFeedUrl: selected?.feedUrl,
                 onSelect: _selectArticle,
                 searchFocusNode: _searchFocusNode,
                 listFocusNode: _listFocusNode,
@@ -412,8 +417,7 @@ class _AppRail extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 10,
                       height: 1.2,
-                      fontWeight:
-                          selected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
                       color: selected ? cs.onSurface : cs.onSurfaceVariant,
                     ),
                     maxLines: 1,
@@ -482,8 +486,7 @@ class _AppRail extends StatelessWidget {
               }
               onSectionChanged(DesktopSection.articles);
               if (explorerInDrawer) {
-                (explorerToggle ??
-                    () => Scaffold.of(context).openDrawer())();
+                (explorerToggle ?? () => Scaffold.of(context).openDrawer())();
               }
             },
           ),
@@ -494,11 +497,7 @@ class _AppRail extends StatelessWidget {
             onTap: () => onSectionChanged(DesktopSection.bookmarks),
           ),
           const SizedBox(height: 8),
-          railAction(
-            Icons.add_rounded,
-            l10n.semanticAddFeed,
-            onTap: onAddFeed,
-          ),
+          railAction(Icons.add_rounded, l10n.semanticAddFeed, onTap: onAddFeed),
 
           const Spacer(),
 

@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -18,6 +17,7 @@ import '../../utils/motion.dart';
 import '../../utils/share_actions.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/feed_list_item.dart' show confirmBookmarkToggle;
+import '../../widgets/anchored_feed_list.dart';
 import '../../widgets/home/feed_list_skeleton.dart';
 import '../../widgets/home/home_pagination_footer.dart';
 import '../../widgets/home/filter_bottom_sheet.dart';
@@ -34,6 +34,7 @@ class DesktopArticleListPane extends StatefulWidget {
 
   /// Currently selected article id (reader pane mirror).
   final String? selectedId;
+  final String? selectedFeedUrl;
 
   /// Called when the user selects an article (tap or arrow keys).
   final ValueChanged<FeedItem> onSelect;
@@ -48,6 +49,7 @@ class DesktopArticleListPane extends StatefulWidget {
     super.key,
     required this.items,
     required this.selectedId,
+    this.selectedFeedUrl,
     required this.onSelect,
     required this.searchFocusNode,
     required this.listFocusNode,
@@ -59,14 +61,12 @@ class DesktopArticleListPane extends StatefulWidget {
 
 class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
   final TextEditingController _searchController = TextEditingController();
-  final ScrollController _scrollController = ScrollController();
+  final _scrollController = AnchoredScrollController();
 
-  /// Per-row keys used only for Scrollable.ensureVisible. They are keyed by
-  /// *index*, not item id: feed items share `guid ?? link` identities, so two
-  /// different articles can legitimately carry the same id — an id-keyed map
-  /// duplicates GlobalKeys across siblings (the "Multiple widgets used the
-  /// same GlobalKey" spam).
-  final Map<int, GlobalObjectKey> _tileKeys = {};
+  // Source + GUID + occurrence identities remain stable across insertions,
+  // without sharing GlobalObjectKeys with another mounted pane.
+  final Map<Object, GlobalKey> _tileKeys = {};
+  List<Object> _rowIds = const [];
 
   @override
   void initState() {
@@ -81,27 +81,31 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     super.dispose();
   }
 
-  GlobalObjectKey _keyFor(int index) =>
-      _tileKeys.putIfAbsent(index, () => GlobalObjectKey(index));
+  GlobalKey _keyFor(int index) =>
+      _tileKeys.putIfAbsent(_rowIds[index], GlobalKey.new);
 
   void _selectIndex(int index) {
     if (index < 0 || index >= widget.items.length) return;
     final item = widget.items[index];
+    final rowId = _rowIds[index];
     widget.onSelect(item);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final ctx = _tileKeys[index]?.currentContext;
-      if (ctx != null) {
+      if (!mounted) return;
+      final ctx = _tileKeys[rowId]?.currentContext;
+      if (ctx != null && ctx.mounted) {
         Scrollable.ensureVisible(
           ctx,
-          duration: motionDuration(
-            ctx,
-            const Duration(milliseconds: 120),
-          ),
+          duration: motionDuration(ctx, const Duration(milliseconds: 120)),
           alignment: 0.5,
         );
       }
     });
   }
+
+  bool _isSelected(FeedItem item) =>
+      item.id == widget.selectedId &&
+      (widget.selectedFeedUrl == null ||
+          item.feedUrl == widget.selectedFeedUrl);
 
   KeyEventResult _onListKey(FocusNode node, KeyEvent event) {
     if (event is! KeyDownEvent) return KeyEventResult.ignored;
@@ -110,10 +114,12 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
 
     final currentIndex = widget.selectedId == null
         ? -1
-        : items.indexWhere((i) => i.id == widget.selectedId);
+        : items.indexWhere((i) => _isSelected(i));
 
     if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-      _selectIndex(currentIndex < 0 ? 0 : (currentIndex + 1).clamp(0, items.length - 1));
+      _selectIndex(
+        currentIndex < 0 ? 0 : (currentIndex + 1).clamp(0, items.length - 1),
+      );
       return KeyEventResult.handled;
     }
     if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
@@ -135,6 +141,9 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final provider = context.watch<FeedProvider>();
+    _rowIds = articleRowIds(widget.items);
+    final remaining = _rowIds.toSet();
+    _tileKeys.removeWhere((id, _) => !remaining.contains(id));
 
     return Material(
       // Subtly darker than the reader surface so the three panes read as
@@ -266,18 +275,14 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                         color: cs.onSurfaceVariant,
                       ),
                       tooltip: tooltip,
-                      onPressed: () =>
-                          provider.refreshAll(userInitiated: true),
+                      onPressed: () => provider.refreshAll(userInitiated: true),
                     );
                   },
                 ),
               ],
             ),
           ),
-          Divider(
-            height: 1,
-            color: cs.outlineVariant.withValues(alpha: 0.35),
-          ),
+          Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.35)),
 
           // ── Offline banner ───────────────────────────────────────────
           if (provider.isOffline && provider.items.isNotEmpty)
@@ -290,11 +295,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.wifi_off,
-                      size: 15,
-                      color: cs.onErrorContainer,
-                    ),
+                    Icon(Icons.wifi_off, size: 15, color: cs.onErrorContainer),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -334,24 +335,23 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                       child: Scrollbar(
                         controller: _scrollController,
                         thumbVisibility: true,
-                        child: ListView.builder(
-                        controller: _scrollController,
-                        scrollCacheExtent: const ScrollCacheExtent.pixels(400),
-                        itemCount:
-                            widget.items.length +
-                            1, // +1 pagination footer
-                        itemBuilder: (context, index) {
-                          if (index == widget.items.length) {
-                            return HomePaginationFooter(provider: provider);
-                          }
-                          final item = widget.items[index];
-                          return _DesktopArticleTile(
-                            key: _keyFor(index),
-                            item: item,
-                            selected: item.id == widget.selectedId,
-                            onTap: () => widget.onSelect(item),
-                          );
-                        },
+                        child: AnchoredFeedList(
+                          controller: _scrollController,
+                          cacheExtent: 400,
+                          rowIds: [..._rowIds, 'pagination-footer'],
+                          isArticle: (index) => index < widget.items.length,
+                          itemBuilder: (context, index) {
+                            if (index == widget.items.length) {
+                              return HomePaginationFooter(provider: provider);
+                            }
+                            final item = widget.items[index];
+                            return _DesktopArticleTile(
+                              key: _keyFor(index),
+                              item: item,
+                              selected: _isSelected(item),
+                              onTap: () => widget.onSelect(item),
+                            );
+                          },
                         ),
                       ),
                     ),
@@ -434,7 +434,7 @@ class _DesktopArticleTile extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final isRead = item.isRead;
     final isBookmarked = context.select<BookmarkProvider, bool>(
-      (b) => b.bookmarkedItemIds.contains(item.id),
+      (b) => b.isBookmarked(item.id, feedUrl: item.feedUrl),
     );
     final timeFormat = context.select<SettingsProvider, String>(
       (s) => s.timeFormat,
@@ -496,19 +496,13 @@ class _DesktopArticleTile extends StatelessWidget {
                           Text(
                             ' · $dateStr',
                             style: tt.labelSmall?.copyWith(
-                              color: cs.onSurfaceVariant.withValues(
-                                alpha: 0.7,
-                              ),
+                              color: cs.onSurfaceVariant.withValues(alpha: 0.7),
                             ),
                           ),
                         ],
                         if (isBookmarked) ...[
                           const SizedBox(width: 4),
-                          Icon(
-                            Icons.bookmark,
-                            size: 12,
-                            color: cs.primary,
-                          ),
+                          Icon(Icons.bookmark, size: 12, color: cs.primary),
                         ],
                       ],
                     ),
@@ -516,9 +510,7 @@ class _DesktopArticleTile extends StatelessWidget {
                     Text(
                       item.title,
                       style: tt.bodyMedium?.copyWith(
-                        fontWeight: isRead
-                            ? FontWeight.w400
-                            : FontWeight.w600,
+                        fontWeight: isRead ? FontWeight.w400 : FontWeight.w600,
                         color: isRead
                             ? cs.onSurface.withValues(alpha: 0.6)
                             : cs.onSurface,
@@ -571,7 +563,8 @@ class _DesktopArticleTile extends StatelessWidget {
     bool isRead,
     bool isBookmarked,
   ) {
-    final overlay = Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
     final position = RelativeRect.fromRect(
       details.globalPosition & const Size(1, 1),
       Offset.zero & overlay.size,
@@ -615,16 +608,11 @@ class _DesktopArticleTile extends StatelessWidget {
       if (action == null || !context.mounted) return;
       switch (action) {
         case 'read':
-          unawaited(
-            context.read<FeedProvider>().toggleReadStatus(item.id),
-          );
+          unawaited(context.read<FeedProvider>().toggleReadStatus(item.id));
         case 'bookmark':
           unawaited(confirmBookmarkToggle(context, item));
         case 'open':
-          launchUrl(
-            Uri.parse(item.link),
-            mode: LaunchMode.externalApplication,
-          );
+          launchUrl(Uri.parse(item.link), mode: LaunchMode.externalApplication);
         case 'copy':
           shareArticleLink(context, item);
       }
