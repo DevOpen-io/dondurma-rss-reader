@@ -74,7 +74,7 @@ class BookmarksScreen extends StatelessWidget {
           // the same record. A per-row Selector avoids rebuilding the whole
           // list on every FeedProvider notify.
           return Selector<FeedProvider, bool>(
-            selector: (_, feed) => feed.isRead(item.id),
+            selector: (_, feed) => feed.isRead(item),
             builder: (_, isRead, _) => FeedListItem(
               item: item.copyWith(isRead: isRead),
               navigationItems: bookmarkedItems,

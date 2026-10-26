@@ -151,7 +151,7 @@ class _DebugScreenState extends State<DebugScreen> {
                 icon: Icons.visibility_outlined,
                 label: l10n.readArticles,
                 value: feed.items
-                    .where((i) => feed.isRead(i.id))
+                    .where((i) => feed.isRead(i))
                     .length
                     .toString(),
               ),

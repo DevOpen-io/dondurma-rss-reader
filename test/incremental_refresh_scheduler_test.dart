@@ -138,6 +138,8 @@ void main() {
   });
 
   tearDown(() async {
+    // Fire-and-forget archive writes must finish before the directory goes.
+    await feed.idle;
     if (!disposed) feed.dispose();
     subscriptions.dispose();
     settings.dispose();
@@ -302,7 +304,7 @@ void main() {
   }
 
   test(
-    'refresh preserves legacy read state and source-local bookmark decoration',
+    'refresh preserves source-local read state and bookmark decoration',
     () async {
       final a = await next();
       final b = await next();
@@ -310,7 +312,9 @@ void main() {
       a.complete('shared');
       b.complete('shared');
       await first;
-      await feed.markAsRead('shared');
+      for (final item in List.of(feed.items)) {
+        await feed.markAsRead(item);
+      }
       bookmarks.toggleBookmark(
         feed.items.firstWhere((i) => i.feedUrl == a.url),
       );
@@ -335,7 +339,10 @@ void main() {
         feed.filteredItems.every((i) => i.isRead && i.isBookmarked),
         isTrue,
       );
-      expect(Hive.box('feeds').get('readItemIds'), contains('shared'));
+      expect(
+        (Hive.box('feeds').get('readItemRefs') as Map)['refs'],
+        hasLength(2),
+      );
     },
   );
 

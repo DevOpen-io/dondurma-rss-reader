@@ -161,7 +161,7 @@ class _FeedListItemState extends State<FeedListItem>
     final velocity = details.primaryVelocity ?? 0.0;
 
     if (_dragExtent > 0 && (_dragExtent > threshold || velocity > 1500)) {
-      unawaited(context.read<FeedProvider>().toggleReadStatus(widget.item.id));
+      unawaited(context.read<FeedProvider>().toggleReadStatus(widget.item));
     } else if (_dragExtent < 0 &&
         (_dragExtent < -threshold || velocity < -1500)) {
       unawaited(confirmBookmarkToggle(context, widget.item));
@@ -234,7 +234,7 @@ class _FeedListItemState extends State<FeedListItem>
                   ? l10n.semanticMarkAsUnread
                   : l10n.semanticMarkAsRead,
             ): () => unawaited(
-              context.read<FeedProvider>().toggleReadStatus(widget.item.id),
+              context.read<FeedProvider>().toggleReadStatus(widget.item),
             ),
             CustomSemanticsAction(
               label: isBookmarked
@@ -325,7 +325,7 @@ class _ArticleCard extends StatelessWidget {
             extra: {'items': window.items, 'initialIndex': window.initialIndex},
           );
           Future<void>.delayed(const Duration(milliseconds: 400), () {
-            if (context.mounted) unawaited(feedProvider.markAsRead(item.id));
+            if (context.mounted) unawaited(feedProvider.markAsRead(item));
           });
         },
         child: Padding(

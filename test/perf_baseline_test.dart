@@ -86,7 +86,7 @@ void main() {
     final filterMedian = _time(
       () => applyFeedFilters(
         items: items,
-        readItemIds: const {},
+        isRead: (_) => false,
         selectedCategory: null,
         selectedFeedUrl: null,
         searchQuery: '',

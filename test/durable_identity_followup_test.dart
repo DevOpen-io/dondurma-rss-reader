@@ -294,8 +294,26 @@ void main() {
       },
     );
 
+    test('legacy global read ids bind once to the cached instances', () async {
+      await Hive.box('feeds').put('readItemIds', ['shared-guid']);
+      await Hive.box(
+        'feeds',
+      ).put('cachedItemsJson', jsonEncode([_item('a').toJson()]));
+      final first = FeedProvider();
+      await first.refreshAll(); // Waits for startup, no dependencies/no fetch.
+      expect(first.isRead(_item('a')), isTrue);
+      // A source that later brings the same GUID inherits nothing.
+      expect(first.isRead(_item('b')), isFalse);
+      first.dispose();
+      expect(Hive.box('feeds').get('readItemIds'), ['shared-guid']);
+      final restarted = FeedProvider();
+      await restarted.refreshAll();
+      expect(restarted.isRead(_item('a')), isTrue);
+      restarted.dispose();
+    });
+
     test(
-      'global read state affects both new instances and survives legacy restart',
+      'read state is per source instance and survives restart (formerly KNOWN)',
       () async {
         await Hive.box('feeds').put(
           'cachedItemsJson',
@@ -304,18 +322,28 @@ void main() {
         final first = FeedProvider();
         await first
             .refreshAll(); // Waits for startup, no dependencies/no fetch.
-        await first.markAsRead('shared-guid');
-        expect(first.filteredItems.length, 2);
-        expect(
-          first.filteredItems.every((item) => item.isRead),
-          isTrue,
-          reason: 'KNOWN: marking A also marks B; API accepts no source',
+        await first.markAsRead(
+          first.filteredItems.firstWhere(
+            (item) => item.feedUrl == _item('a').feedUrl,
+          ),
         );
+        expect(first.filteredItems.length, 2);
+        Map<String, bool> reads(FeedProvider feed) => {
+          for (final item in feed.filteredItems) item.feedUrl: item.isRead,
+        };
+        expect(reads(first), {
+          _item('a').feedUrl: true,
+          _item('b').feedUrl: false,
+        }, reason: 'Marking A must not mark B');
         first.dispose();
         final restarted = FeedProvider();
         await restarted.refreshAll();
-        expect(restarted.filteredItems.every((item) => item.isRead), isTrue);
-        expect(Hive.box('feeds').get('readItemIds'), ['shared-guid']);
+        expect(reads(restarted), {
+          _item('a').feedUrl: true,
+          _item('b').feedUrl: false,
+        });
+        // The legacy global key is never written by the new schema.
+        expect(Hive.box('feeds').get('readItemIds'), isNull);
         restarted.dispose();
       },
     );

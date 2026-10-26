@@ -324,7 +324,7 @@ void main() {
       actions[actions.keys.firstWhere((a) => a.label == 'Mark as read')]!();
       await tester.pump();
 
-      expect(feed.isRead(item.id), isTrue);
+      expect(feed.isRead(item), isTrue);
       expect(find.byType(AlertDialog), findsNothing);
       handle.dispose();
     });
@@ -432,7 +432,7 @@ void main() {
 
       // markAsRead awaits a Hive write that never completes in the fake-async
       // zone; the in-memory read state is set synchronously first.
-      unawaited(feed.markAsRead(item.id));
+      unawaited(feed.markAsRead(item));
       await tester.pump();
 
       // Earlier tests leave persisted bookmarks, so the target row can sit

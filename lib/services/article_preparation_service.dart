@@ -121,6 +121,19 @@ class ArticlePreparationService {
   /// which awaits every registration it issues.
   Future<dynamic> _registerTail = Future<void>.value();
 
+  /// Completes once both queues are drained, including work enqueued while
+  /// waiting — lets tests and shutdown await fire-and-forget mutations.
+  Future<void> get idle async {
+    while (true) {
+      final tail = _tail;
+      final registerTail = _registerTail;
+      await Future.wait([tail, registerTail]);
+      if (identical(tail, _tail) && identical(registerTail, _registerTail)) {
+        return;
+      }
+    }
+  }
+
   Future<T> _enqueue<T>(Future<T> Function() work) {
     final result = _tail.then((_) => work());
     _tail = result.then((_) => null, onError: (_) => null);

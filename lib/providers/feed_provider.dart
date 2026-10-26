@@ -18,6 +18,7 @@ import '../services/feed_backoff.dart';
 import '../services/app_reset_service.dart';
 import '../services/feed_cache_policy.dart';
 import '../services/lifecycle_gate.dart';
+import '../services/read_state.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_list_filter.dart';
@@ -58,7 +59,12 @@ class FeedProvider extends ChangeNotifier {
   List<FeedItem> _items = [];
   String? _selectedCategory;
   String? _selectedFeedUrl;
-  Set<String> _readItemIds = {};
+
+  /// Read marks per source instance; see [ReadState].
+  ReadState _readState = ReadState.migrate(
+    legacyIds: const [],
+    stored: const {},
+  );
   bool _isLoading = false;
   bool _isOffline = false;
 
@@ -585,10 +591,13 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   Future<void> _loadState() async {
-    final List<dynamic>? readIds = _box.get('readItemIds');
-    if (readIds != null) {
-      _readItemIds = readIds.cast<String>().toSet();
-    }
+    // Legacy global 'readItemIds' is migration input only — never rewritten.
+    final List<dynamic>? legacyReadIds = _box.get('readItemIds');
+    final storedReads = _box.get('readItemRefs');
+    _readState = ReadState.migrate(
+      legacyIds: legacyReadIds?.cast<String>() ?? const [],
+      stored: storedReads is Map ? storedReads : null,
+    );
 
     final feedErrors = _box.get('feedErrors');
     if (feedErrors is Map) {
@@ -612,6 +621,20 @@ class FeedProvider extends ChangeNotifier {
         debugPrint('Error loading cached items: $e');
       }
     }
+    _bindLegacyReads();
+  }
+
+  /// Gives unresolved legacy read ids to the instances now in view (items
+  /// and bookmarks), once; persists when that changed anything.
+  void _bindLegacyReads() {
+    final bound = _readState.bindLegacy([
+      ..._items,
+      ...?bookmarkProvider?.bookmarkedItems,
+    ]);
+    if (bound) {
+      _invalidateFilterCache();
+      unawaited(_saveReadStates());
+    }
   }
 
   /// Hard cap on persisted read ids — pruning only above this keeps normal
@@ -620,18 +643,14 @@ class FeedProvider extends ChangeNotifier {
   static const int _readIdsHardCap = 10000;
 
   Future<void> _saveReadStates() async {
-    if (_readItemIds.length > _readIdsHardCap) {
-      // Bounded-growth path: keep marks only for articles still reachable
-      // (current items or bookmarks). Beyond the cap, forgetting read marks
-      // for evicted articles is cheaper than an ever-growing set.
-      final liveIds = <String>{
-        for (final i in _items) i.id,
-        for (final b in bookmarkProvider?.bookmarkedItems ?? const <FeedItem>[])
-          b.id,
-      };
-      _readItemIds.removeWhere((id) => !liveIds.contains(id));
-    }
-    await _box.put('readItemIds', _readItemIds.toList());
+    // Bounded-growth path: above the cap keep marks only for articles still
+    // reachable (current items or bookmarks). Beyond the cap, forgetting
+    // read marks for evicted articles is cheaper than an ever-growing set.
+    _readState.prune(
+      live: [..._items, ...?bookmarkProvider?.bookmarkedItems],
+      cap: _readIdsHardCap,
+    );
+    await _box.put('readItemRefs', _readState.toStored());
   }
 
   /// Loads persisted per-feed HTTP cache validators (ETag / Last-Modified),
@@ -807,7 +826,7 @@ class FeedProvider extends ChangeNotifier {
 
     final filtered = applyFeedFilters(
       items: _items,
-      readItemIds: _readItemIds,
+      isRead: _readState.isRead,
       // Feed-scoped views track the live parent category (moves/renames);
       // a stale snapshot would AND-filter the feed's items out.
       selectedCategory: _selectedFeedUrl != null
@@ -823,7 +842,7 @@ class FeedProvider extends ChangeNotifier {
 
     // Apply dynamic read/bookmark state
     _filteredItemsCache = filtered.map((item) {
-      final isRead = _readItemIds.contains(item.id);
+      final isRead = _readState.isRead(item);
       final isBookmarked =
           bookmarkProvider?.isBookmarked(item.id, feedUrl: item.feedUrl) ??
           false;
@@ -909,8 +928,8 @@ class FeedProvider extends ChangeNotifier {
   // Read state
   // ---------------------------------------------------------------------------
 
-  /// Whether the article with [id] has been read.
-  bool isRead(String id) => _readItemIds.contains(id);
+  /// Whether this source instance of the article has been read.
+  bool isRead(FeedItem item) => _readState.isRead(item);
 
   /// Number of unread items, optionally scoped to a [category] or [feedUrl].
   /// Used by the drawer to show unread badges next to categories and feeds.
@@ -929,7 +948,7 @@ class FeedProvider extends ChangeNotifier {
     final byFeed = <String, int>{};
     int total = 0;
     for (final item in _items) {
-      if (_readItemIds.contains(item.id)) continue;
+      if (_readState.isRead(item)) continue;
       total++;
       byCategory[item.category] = (byCategory[item.category] ?? 0) + 1;
       byFeed[item.feedUrl] = (byFeed[item.feedUrl] ?? 0) + 1;
@@ -939,10 +958,9 @@ class FeedProvider extends ChangeNotifier {
     _unreadTotal = total;
   }
 
-  /// Marks an article as read (no-op if already read).
-  Future<void> markAsRead(String id) async {
-    if (!_readItemIds.contains(id)) {
-      _readItemIds.add(id);
+  /// Marks this source instance as read (no-op if already read).
+  Future<void> markAsRead(FeedItem item) async {
+    if (_readState.mark(item, read: true)) {
       _invalidateFilterCache();
       notifyListeners();
       await _saveReadStates();
@@ -951,26 +969,20 @@ class FeedProvider extends ChangeNotifier {
 
   /// Marks all articles in [category] as read in one atomic operation.
   Future<void> markAllInCategoryAsRead(String category) async {
-    final ids = _items
-        .where((i) => i.category == category)
-        .map((i) => i.id)
-        .toSet();
-    if (ids.isEmpty) return;
-    final hadUnread = ids.any((id) => !_readItemIds.contains(id));
-    if (!hadUnread) return;
-    _readItemIds.addAll(ids);
+    var changed = false;
+    for (final item in _items) {
+      if (item.category != category) continue;
+      changed = _readState.mark(item, read: true) || changed;
+    }
+    if (!changed) return;
     _invalidateFilterCache();
     notifyListeners();
     await _saveReadStates();
   }
 
-  /// Toggles the read/unread state of an article.
-  Future<void> toggleReadStatus(String id) async {
-    if (_readItemIds.contains(id)) {
-      _readItemIds.remove(id);
-    } else {
-      _readItemIds.add(id);
-    }
+  /// Toggles the read/unread state of this source instance.
+  Future<void> toggleReadStatus(FeedItem item) async {
+    _readState.mark(item, read: !_readState.isRead(item));
     _invalidateFilterCache();
     notifyListeners();
     await _saveReadStates();
@@ -1060,6 +1072,7 @@ class FeedProvider extends ChangeNotifier {
     // they can't pin above legitimately newer items.
     sortByEffectivePubDateDesc(merged, DateTime.now());
     _items = merged;
+    _bindLegacyReads();
 
     final validators = _loadFeedValidators();
     if (result.etag != null || result.lastModified != null) {
@@ -1214,6 +1227,7 @@ class FeedProvider extends ChangeNotifier {
       if (!acceptingPublications || !isCurrent()) return;
       _refreshPublishTimer = null;
       _items = mergeCurrent();
+      _bindLegacyReads();
       _isOffline = false;
       _invalidateFilterCache();
       notifyListeners();
@@ -1315,6 +1329,7 @@ class FeedProvider extends ChangeNotifier {
     // Reconcile against live subscriptions/bookmarks and any articles added
     // during this pass, not the stale inputs captured before HTTP started.
     _items = mergeCurrent();
+    _bindLegacyReads();
     _isOffline = !result.online;
     _isLoading = false;
     refreshProgress.value = refreshProgress.value.copyWith(
@@ -1621,6 +1636,17 @@ class FeedProvider extends ChangeNotifier {
     DateTime.now().toUtc().microsecondsSinceEpoch,
   );
 
+  /// Completes once queued cache saves and preparation mutations drained.
+  @visibleForTesting
+  Future<void> get idle async {
+    while (true) {
+      final chain = _saveChain;
+      await chain;
+      await _preparation.idle;
+      if (identical(chain, _saveChain)) return;
+    }
+  }
+
   Future<void> _saveCachedItems() {
     // The fence is captured at ENQUEUE time, not when the link runs —
     // a clearCache landing while this link is still queued must kill it,
@@ -1803,7 +1829,7 @@ class FeedProvider extends ChangeNotifier {
     _items.clear();
     _selectedCategory = null;
     _selectedFeedUrl = null;
-    _readItemIds.clear();
+    _readState.clear();
     _statusGeneration++;
     _articleStatuses = const {};
     _articleStatusesLoaded = false;

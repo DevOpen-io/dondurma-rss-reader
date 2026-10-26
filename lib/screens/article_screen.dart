@@ -74,7 +74,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
       onPageChanged: (index) {
         setState(() => _currentIndex = index);
         // Mark the new article as read
-        context.read<FeedProvider>().markAsRead(widget.items[index].id);
+        context.read<FeedProvider>().markAsRead(widget.items[index]);
       },
       itemBuilder: (context, index) {
         return ChangeNotifierProvider(

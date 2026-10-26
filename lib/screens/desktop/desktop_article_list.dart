@@ -129,7 +129,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     if (event.logicalKey == LogicalKeyboardKey.enter && currentIndex >= 0) {
       final item = items[currentIndex];
       if (!item.isRead) {
-        unawaited(context.read<FeedProvider>().markAsRead(item.id));
+        unawaited(context.read<FeedProvider>().markAsRead(item));
       }
       return KeyEventResult.handled;
     }
@@ -608,7 +608,7 @@ class _DesktopArticleTile extends StatelessWidget {
       if (action == null || !context.mounted) return;
       switch (action) {
         case 'read':
-          unawaited(context.read<FeedProvider>().toggleReadStatus(item.id));
+          unawaited(context.read<FeedProvider>().toggleReadStatus(item));
         case 'bookmark':
           unawaited(confirmBookmarkToggle(context, item));
         case 'open':

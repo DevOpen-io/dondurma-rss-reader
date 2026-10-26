@@ -102,8 +102,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     if (_section == DesktopSection.bookmarks) {
       final bookmarks = context.read<BookmarkProvider>().bookmarkedItems;
       return [
-        for (final item in bookmarks)
-          item.copyWith(isRead: feed.isRead(item.id)),
+        for (final item in bookmarks) item.copyWith(isRead: feed.isRead(item)),
       ];
     }
     return [...groups.today, ...groups.yesterday, ...groups.older];
@@ -112,7 +111,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   void _selectArticle(FeedItem item) {
     setState(() => _selectedArticleId = (item.feedUrl, item.id));
     if (!item.isRead) {
-      unawaited(context.read<FeedProvider>().markAsRead(item.id));
+      unawaited(context.read<FeedProvider>().markAsRead(item));
     }
   }
 
@@ -131,7 +130,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     }
     for (final item in context.read<BookmarkProvider>().bookmarkedItems) {
       if ((item.feedUrl, item.id) == id) {
-        return item.copyWith(isRead: feed.isRead(item.id));
+        return item.copyWith(isRead: feed.isRead(item));
       }
     }
     return null;

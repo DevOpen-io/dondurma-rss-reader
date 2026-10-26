@@ -8,7 +8,7 @@ import 'feed_decisions.dart';
 /// read/bookmark decoration and caches the result.
 Iterable<FeedItem> applyFeedFilters({
   required Iterable<FeedItem> items,
-  required Set<String> readItemIds,
+  required bool Function(FeedItem item) isRead,
   required String? selectedCategory,
   required String? selectedFeedUrl,
   required String searchQuery,
@@ -24,7 +24,7 @@ Iterable<FeedItem> applyFeedFilters({
   if (readFilter != 'all' || filterCategories.isNotEmpty) {
     filtered = filtered.where(
       (i) => feedPassesRuntimeFilter(
-        isRead: readItemIds.contains(i.id),
+        isRead: isRead(i),
         category: i.category,
         readFilter: readFilter,
         categories: filterCategories,
