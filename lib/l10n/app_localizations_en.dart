@@ -1027,15 +1027,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingSkip => 'Skip for now';
 
   @override
-  String get add => 'Add';
-
-  @override
-  String get existingCategoriesLabel => 'Existing';
-
-  @override
-  String get orCreateNewCategory => 'or create new';
-
-  @override
   String get addCategoryEmptyHint => 'Add a category to organize your feeds.';
 
   @override

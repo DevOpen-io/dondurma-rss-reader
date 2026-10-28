@@ -5,14 +5,10 @@ import '../../l10n/app_localizations.dart';
 import '../../models/feed_subscription.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
-import '../../utils/app_toast.dart';
 import '../../utils/motion.dart';
-import '../../widgets/adaptive_dialog.dart';
 import '../../widgets/category_icon.dart';
-import '../../widgets/folders/category_action_sheet.dart';
-import '../../widgets/folders/feed_action_sheet.dart';
-import '../../widgets/folders/folder_dialogs.dart';
-import '../../widgets/folders/move_feed_sheet.dart';
+import '../../widgets/folders/explorer_tree.dart';
+import '../../widgets/folders/folder_actions.dart';
 
 /// Content-navigation column of the desktop layout: the category+feed
 /// tree with add affordances. App-level destinations (All News, Bookmarks,
@@ -108,6 +104,7 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                     .where((c) => c != 'Uncategorized')
                     .toList();
                 final hasUncategorized = categories.contains('Uncategorized');
+                final byCategory = feedsByCategory(subs.subscriptions);
 
                 final inArticles = widget.section == DesktopSection.articles;
                 final globalSelected =
@@ -144,9 +141,7 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                                 key: ValueKey('cat-$category'),
                                 title: category,
                                 category: category,
-                                feedSources: subs.subscriptions
-                                    .where((s) => s.category == category)
-                                    .toList(),
+                                feedSources: byCategory[category] ?? const [],
                                 feed: feed,
                                 subs: subs,
                                 active: inArticles,
@@ -159,9 +154,8 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                                 key: const ValueKey('cat-uncategorized'),
                                 title: l10n.randomBlogs,
                                 category: 'Uncategorized',
-                                feedSources: subs.subscriptions
-                                    .where((s) => s.category == 'Uncategorized')
-                                    .toList(),
+                                feedSources:
+                                    byCategory['Uncategorized'] ?? const [],
                                 feed: feed,
                                 subs: subs,
                                 active: inArticles,
@@ -360,6 +354,10 @@ class _CategoryNodeState extends State<_CategoryNode> {
     final tt = Theme.of(context).textTheme;
     final isSelected = _isSelected;
     final isAncestor = _isAncestor;
+    final emphasis = CategoryEmphasis(
+      selected: isSelected,
+      ancestor: isAncestor,
+    );
     final count = feed.unreadCount(category: category);
 
     return Padding(
@@ -390,26 +388,14 @@ class _CategoryNodeState extends State<_CategoryNode> {
                 collapsedShape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
-                backgroundColor: isSelected
-                    ? cs.primaryContainer.withValues(alpha: 0.3)
-                    : isAncestor
-                    ? cs.primary.withValues(alpha: 0.05)
-                    : Colors.transparent,
-                collapsedBackgroundColor: isSelected
-                    ? cs.primaryContainer.withValues(alpha: 0.5)
-                    : isAncestor
-                    ? cs.primary.withValues(alpha: 0.05)
-                    : Colors.transparent,
+                backgroundColor: emphasis.fill(cs, selectedAlpha: 0.3),
+                collapsedBackgroundColor: emphasis.fill(cs, selectedAlpha: 0.5),
                 iconColor: cs.onSurfaceVariant,
                 collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
                 leading: CategoryIcon(
                   category: category,
                   size: 17,
-                  color: isSelected
-                      ? cs.primary
-                      : isAncestor
-                      ? cs.primary.withValues(alpha: 0.8)
-                      : cs.onSurfaceVariant,
+                  color: emphasis.tint(cs, selectedColor: cs.primary),
                 ),
                 title: Row(
                   children: [
@@ -423,16 +409,8 @@ class _CategoryNodeState extends State<_CategoryNode> {
                         child: Text(
                           widget.title,
                           style: tt.bodyMedium?.copyWith(
-                            color: isSelected
-                                ? cs.primary
-                                : isAncestor
-                                ? cs.onSurface
-                                : cs.onSurface.withValues(alpha: 0.8),
-                            fontWeight: isSelected
-                                ? FontWeight.w700
-                                : isAncestor
-                                ? FontWeight.w600
-                                : FontWeight.w500,
+                            color: emphasis.labelColor(cs),
+                            fontWeight: emphasis.labelWeight,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -444,11 +422,7 @@ class _CategoryNodeState extends State<_CategoryNode> {
                       Text(
                         '$count',
                         style: tt.labelSmall?.copyWith(
-                          color: isSelected
-                              ? cs.primary
-                              : isAncestor
-                              ? cs.primary.withValues(alpha: 0.8)
-                              : cs.onSurfaceVariant,
+                          color: emphasis.tint(cs, selectedColor: cs.primary),
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -459,7 +433,11 @@ class _CategoryNodeState extends State<_CategoryNode> {
                         button: true,
                         child: InkWell(
                           borderRadius: BorderRadius.circular(16),
-                          onTap: () => _showCategoryActions(context),
+                          onTap: () => showCategoryActions(
+                            context,
+                            widget.category,
+                            widget.feedSources.length,
+                          ),
                           child: SizedBox(
                             width: 32,
                             height: 32,
@@ -475,7 +453,16 @@ class _CategoryNodeState extends State<_CategoryNode> {
                 ),
                 children: [
                   for (final sub in widget.feedSources)
-                    _FeedRow(sub: sub, feed: feed, onSelect: widget.onSelect),
+                    ExplorerFeedTile(
+                      sub: sub,
+                      feed: feed,
+                      dense: true,
+                      onTap: () {
+                        feed.selectFeed(sub.url);
+                        widget.onSelect();
+                      },
+                      onShowActions: () => showFeedActions(context, sub),
+                    ),
                 ],
               ),
               // Ancestor accent: a slim bar at the node's left edge — the
@@ -489,7 +476,7 @@ class _CategoryNodeState extends State<_CategoryNode> {
                     child: Container(
                       width: 3,
                       decoration: BoxDecoration(
-                        color: cs.primary.withValues(alpha: 0.75),
+                        color: CategoryEmphasis.accent(cs),
                         borderRadius: BorderRadius.circular(2),
                       ),
                     ),
@@ -498,254 +485,6 @@ class _CategoryNodeState extends State<_CategoryNode> {
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  void _showCategoryActions(BuildContext context) {
-    final category = widget.category;
-    showAdaptiveSheet<void>(
-      context,
-      CategoryActionSheet(
-        category: category,
-        onMarkAllRead: () {
-          Navigator.pop(context);
-          widget.feed.markAllInCategoryAsRead(category);
-        },
-        onChangeIcon: () {
-          Navigator.pop(context);
-          showDialog<void>(
-            context: context,
-            builder: (_) => EmojiIconDialog(category: category),
-          );
-        },
-        onRename: () {
-          Navigator.pop(context);
-          showDialog<void>(
-            context: context,
-            builder: (_) => EditCategoryDialog(currentCategory: category),
-          );
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          _confirmDeleteCategory(context);
-        },
-      ),
-    );
-  }
-
-  void _confirmDeleteCategory(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteFolder),
-        content: Text(
-          l10n.deleteFolderConfirm(
-            widget.category,
-            widget.feedSources.length,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              context
-                  .read<SubscriptionProvider>()
-                  .removeCategory(widget.category)
-                  .then((_) {
-                    if (context.mounted) {
-                      context.read<FeedProvider>().refreshAll();
-                    }
-                  });
-              Navigator.of(dialogContext).pop();
-            },
-            child: Text(
-              l10n.delete,
-              style: TextStyle(color: Theme.of(context).colorScheme.onError),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FeedRow extends StatelessWidget {
-  final FeedSubscription sub;
-  final FeedProvider feed;
-  final VoidCallback onSelect;
-
-  const _FeedRow({
-    required this.sub,
-    required this.feed,
-    required this.onSelect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    final isSelected = feed.selectedFeedUrl == sub.url;
-    final count = feed.unreadCount(feedUrl: sub.url);
-    final hasError = feed.feedErrorFor(sub.url) != null;
-
-    return Padding(
-      padding: const EdgeInsets.only(left: 22, top: 1, bottom: 1),
-      child: Semantics(
-        selected: isSelected,
-        child: Material(
-        color: isSelected
-            ? cs.primary.withValues(alpha: 0.08)
-            : Colors.transparent,
-        borderRadius: BorderRadius.circular(8),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(8),
-          hoverColor: cs.onSurface.withValues(alpha: 0.05),
-          onTap: () {
-            feed.selectFeed(sub.url);
-            onSelect();
-          },
-          onSecondaryTapDown: (_) => _showFeedActions(context),
-          onLongPress: () => _showFeedActions(context),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 5,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isSelected
-                        ? cs.primary
-                        : cs.onSurfaceVariant.withValues(alpha: 0.35),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    sub.name,
-                    style: tt.bodySmall?.copyWith(
-                      fontSize: 13,
-                      color: isSelected
-                          ? cs.primary
-                          : cs.onSurface.withValues(alpha: 0.7),
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                if (hasError) ...[
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.error_outline_rounded,
-                    size: 14,
-                    color: cs.error,
-                  ),
-                ],
-                if (count > 0) ...[
-                  const SizedBox(width: 8),
-                  Text(
-                    '$count',
-                    style: tt.labelSmall?.copyWith(
-                      color: isSelected
-                          ? cs.primary
-                          : cs.onSurfaceVariant.withValues(alpha: 0.7),
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        ),
-      ),
-    );
-  }
-
-  void _showFeedActions(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    showAdaptiveSheet<void>(
-      context,
-      FeedActionSheet(
-        subUrl: sub.url,
-        onMove: () {
-          Navigator.pop(context);
-          MoveToCategorySheet.show(
-            context,
-            sub,
-            onMoved: (movedSub, category) {
-              if (context.mounted) {
-                context.read<FeedProvider>().refreshAll();
-                showAppToast(
-                  l10n.feedMovedToFolder(movedSub.name, category),
-                  type: AppToastType.success,
-                );
-              }
-            },
-          );
-        },
-        onEdit: () {
-          Navigator.pop(context);
-          showAdaptiveSheet<void>(
-            context,
-            EditSubscriptionDialog(sub: sub),
-          );
-        },
-        onDelete: () {
-          Navigator.pop(context);
-          _confirmDeleteFeed(context);
-        },
-      ),
-    );
-  }
-
-  void _confirmDeleteFeed(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.deleteFeed),
-        content: Text(l10n.deleteFeedConfirm(sub.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              context.read<SubscriptionProvider>().removeFeed(sub.url).then((
-                _,
-              ) {
-                if (context.mounted) {
-                  context.read<FeedProvider>().refreshAll();
-                }
-              });
-              Navigator.of(dialogContext).pop();
-            },
-            child: Text(
-              l10n.delete,
-              style: TextStyle(color: Theme.of(context).colorScheme.onError),
-            ),
-          ),
-        ],
       ),
     );
   }

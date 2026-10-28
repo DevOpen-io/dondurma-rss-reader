@@ -1948,24 +1948,6 @@ abstract class AppLocalizations {
   /// **'Skip for now'**
   String get onboardingSkip;
 
-  /// No description provided for @add.
-  ///
-  /// In en, this message translates to:
-  /// **'Add'**
-  String get add;
-
-  /// No description provided for @existingCategoriesLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Existing'**
-  String get existingCategoriesLabel;
-
-  /// No description provided for @orCreateNewCategory.
-  ///
-  /// In en, this message translates to:
-  /// **'or create new'**
-  String get orCreateNewCategory;
-
   /// No description provided for @addCategoryEmptyHint.
   ///
   /// In en, this message translates to:

@@ -9,6 +9,7 @@ import '../providers/subscription_provider.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'adaptive_dialog.dart';
+import 'folders/category_picker_sheet.dart';
 
 class AddFeedDialog extends StatefulWidget {
   const AddFeedDialog({super.key});
@@ -68,8 +69,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   }
 
   void _openCategorySheet(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final colorScheme = Theme.of(context).colorScheme;
     // orderedCategories covers standalone custom categories too — deriving
     // from subscriptions alone hides empty categories added on the
     // Categories page.
@@ -82,15 +81,15 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     showAdaptiveSheet<void>(
       context,
       Builder(
-        builder: (ctx) => _CategorySheet(
-        categories: categories,
-        currentCategory: _categoryController.text.trim(),
-        onSelect: (cat) {
-          setState(() => _categoryController.text = cat);
-          Navigator.of(ctx).pop();
-        },
-        colorScheme: colorScheme,
-        l10n: l10n,
+        builder: (ctx) => CategoryPickerSheet(
+          title: AppLocalizations.of(context).categoryOptional,
+          categories: categories,
+          selected: _categoryController.text.trim(),
+          persistNewCategory: false,
+          onPicked: (cat) {
+            setState(() => _categoryController.text = cat);
+            Navigator.of(ctx).pop();
+          },
         ),
       ),
     );
@@ -142,18 +141,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Drag handle
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 4),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             // Title
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
@@ -559,282 +546,6 @@ class _SuggestionRow extends StatelessWidget {
             Icon(Icons.north_east_rounded, size: 12, color: cs.primary),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _CategorySheet extends StatefulWidget {
-  final List<String> categories;
-  final String currentCategory;
-  final void Function(String) onSelect;
-  final ColorScheme colorScheme;
-  final AppLocalizations l10n;
-
-  const _CategorySheet({
-    required this.categories,
-    required this.currentCategory,
-    required this.onSelect,
-    required this.colorScheme,
-    required this.l10n,
-  });
-
-  @override
-  State<_CategorySheet> createState() => _CategorySheetState();
-}
-
-class _CategorySheetState extends State<_CategorySheet> {
-  final _newCatController = TextEditingController();
-  bool _newFieldFocused = false;
-
-  @override
-  void dispose() {
-    _newCatController.dispose();
-    super.dispose();
-  }
-
-  void _submit() {
-    final trimmed = _newCatController.text.trim();
-    if (trimmed.isNotEmpty) widget.onSelect(trimmed);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final cs = widget.colorScheme;
-    final l10n = widget.l10n;
-    final theme = Theme.of(context);
-
-    return Padding(
-      // max(keyboard, nav bar): the keyboard sits above the nav bar, so when
-      // it is open its inset already clears both; when closed the edge-to-edge
-      // nav bar inset must be kept.
-      padding: EdgeInsets.fromLTRB(
-        20,
-        12,
-        20,
-        math.max(
-              MediaQuery.viewInsetsOf(context).bottom,
-              MediaQuery.viewPaddingOf(context).bottom,
-            ) +
-            28,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Drag handle
-          Center(
-            child: Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          // Title row
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(7),
-                decoration: BoxDecoration(
-                  color: cs.primaryContainer,
-                  borderRadius: BorderRadius.circular(9),
-                ),
-                child: Icon(
-                  Icons.folder_rounded,
-                  color: cs.onPrimaryContainer,
-                  size: 16,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Text(
-                l10n.categoryOptional,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-
-          if (widget.categories.isNotEmpty) ...[
-            const SizedBox(height: 20),
-            // Section label
-            Text(
-              l10n.existingCategoriesLabel,
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: cs.onSurfaceVariant,
-                fontWeight: FontWeight.w600,
-                letterSpacing: 0.3,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: widget.categories.map((cat) {
-                final selected = cat == widget.currentCategory;
-                return GestureDetector(
-                  onTap: () => widget.onSelect(cat),
-                  child: AnimatedContainer(
-                    duration: motionDuration(
-                      context,
-                      const Duration(milliseconds: 160),
-                    ),
-                    curve: Curves.easeOutCubic,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 9,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected ? cs.primary : cs.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (selected) ...[
-                          Icon(
-                            Icons.check_rounded,
-                            size: 13,
-                            color: cs.onPrimary,
-                          ),
-                          const SizedBox(width: 5),
-                        ],
-                        Text(
-                          cat,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: selected ? cs.onPrimary : cs.onSurface,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 22),
-            Row(
-              children: [
-                Expanded(
-                  child: Divider(
-                    color: cs.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(
-                    l10n.orCreateNewCategory,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: cs.onSurfaceVariant.withValues(alpha: 0.6),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Divider(
-                    color: cs.outlineVariant.withValues(alpha: 0.5),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-          ] else ...[
-            const SizedBox(height: 20),
-          ],
-
-          // New category input + add button
-          AnimatedContainer(
-            duration: motionDuration(
-              context,
-              const Duration(milliseconds: 200),
-            ),
-            curve: Curves.easeOutCubic,
-            decoration: BoxDecoration(
-              color: cs.surfaceContainerHigh,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: _newFieldFocused
-                    ? cs.primary
-                    : cs.outlineVariant.withValues(alpha: 0.4),
-                width: _newFieldFocused ? 2 : 1,
-              ),
-            ),
-            child: Row(
-              children: [
-                const SizedBox(width: 14),
-                Icon(
-                  Icons.drive_file_rename_outline_rounded,
-                  size: 18,
-                  color: _newFieldFocused ? cs.primary : cs.onSurfaceVariant,
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Focus(
-                    onFocusChange: (f) => setState(() => _newFieldFocused = f),
-                    child: TextField(
-                      controller: _newCatController,
-                      autofocus: widget.categories.isEmpty,
-                      textInputAction: TextInputAction.done,
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration.collapsed(
-                        hintText: l10n.categoryHint,
-                        hintStyle: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.normal,
-                          color: cs.onSurfaceVariant.withValues(alpha: 0.55),
-                        ),
-                      ),
-                      onSubmitted: (_) => _submit(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Padding(
-                  padding: const EdgeInsets.all(6),
-                  child: ValueListenableBuilder<TextEditingValue>(
-                    valueListenable: _newCatController,
-                    builder: (_, val, _) {
-                      final hasText = val.text.trim().isNotEmpty;
-                      return AnimatedOpacity(
-                        duration: motionDuration(
-                          context,
-                          const Duration(milliseconds: 160),
-                        ),
-                        opacity: hasText ? 1.0 : 0.35,
-                        child: FilledButton(
-                          onPressed: hasText ? _submit : null,
-                          style: FilledButton.styleFrom(
-                            minimumSize: Size.zero,
-                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            textStyle: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          child: Text(l10n.add),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }

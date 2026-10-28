@@ -7,11 +7,14 @@ import '../utils/platform_caps.dart';
 ///
 /// Full-width bottom sheets look broken on a large desktop window; dialogs
 /// get a comfortable reading width and bounded height instead.
+///
+/// The sheet draws the platform drag handle itself, so [child] never paints
+/// one — a hand-drawn grabber would also show up inside the desktop dialog.
 Future<T?> showAdaptiveSheet<T>(
   BuildContext context,
   Widget child, {
   double maxWidth = 560,
-  bool showDragHandle = false,
+  bool showDragHandle = true,
 }) {
   if (PlatformCaps.isDesktop) {
     return showDialog<T>(

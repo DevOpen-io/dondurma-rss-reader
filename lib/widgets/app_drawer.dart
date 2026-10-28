@@ -9,13 +9,10 @@ import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../screens/what_is_rss_page.dart';
-import '../utils/app_toast.dart';
 import '../screens/explore_feeds_page.dart';
 import 'category_icon.dart';
-import 'folders/category_action_sheet.dart';
-import 'folders/feed_action_sheet.dart';
-import 'folders/folder_dialogs.dart';
-import 'folders/move_feed_sheet.dart';
+import 'folders/explorer_tree.dart';
+import 'folders/folder_actions.dart';
 
 /// Navigation drawer showing category-based feed filtering.
 ///
@@ -82,6 +79,9 @@ class AppDrawer extends StatelessWidget {
                       .where((c) => c != 'Uncategorized')
                       .toList();
                   final hasUncategorized = ordered.contains('Uncategorized');
+                  final byCategory = feedsByCategory(
+                    subscriptionProvider.subscriptions,
+                  );
 
                   return ListView(
                     padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
@@ -139,13 +139,9 @@ class AppDrawer extends StatelessWidget {
                                 index: i,
                                 child: _buildExpandableCategoryItem(
                                   title: nonUncategorized[i],
-                                  feedSources: subscriptionProvider
-                                      .subscriptions
-                                      .where(
-                                        (sub) =>
-                                            sub.category == nonUncategorized[i],
-                                      )
-                                      .toList(),
+                                  feedSources:
+                                      byCategory[nonUncategorized[i]] ??
+                                      const [],
                                   provider: provider,
                                   subscriptionProvider: subscriptionProvider,
                                   context: context,
@@ -159,9 +155,7 @@ class AppDrawer extends StatelessWidget {
                         _buildSectionHeader(context, l10n.uncategorized),
                         _buildExpandableCategoryItem(
                           title: l10n.randomBlogs,
-                          feedSources: subscriptionProvider.subscriptions
-                              .where((sub) => sub.category == 'Uncategorized')
-                              .toList(),
+                          feedSources: byCategory['Uncategorized'] ?? const [],
                           provider: provider,
                           subscriptionProvider: subscriptionProvider,
                           context: context,
@@ -299,6 +293,10 @@ class AppDrawer extends StatelessWidget {
         provider.selectedFeedUrl == null;
     final bool isAncestorCategory =
         provider.selectedFeedParentCategory == targetCategory;
+    final emphasis = CategoryEmphasis(
+      selected: isCategorySelected,
+      ancestor: isAncestorCategory,
+    );
 
     final count = provider.unreadCount(category: targetCategory);
 
@@ -315,196 +313,121 @@ class AppDrawer extends StatelessWidget {
                   borderRadius: BorderRadius.circular(14),
                   border: Border(
                     left: BorderSide(
-                      color: cs.primary.withValues(alpha: 0.75),
+                      color: CategoryEmphasis.accent(cs),
                       width: 3,
                     ),
                   ),
                 )
               : null,
-          child: ExpansionTile(
-        initiallyExpanded: provider.selectedCategory == targetCategory,
-        tilePadding: const EdgeInsets.only(left: 10, right: 10),
-        childrenPadding: const EdgeInsets.only(left: 12, right: 8, bottom: 8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        collapsedShape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
-        backgroundColor: isCategorySelected
-            ? cs.primaryContainer.withValues(alpha: 0.22)
-            : isAncestorCategory
-                ? cs.primary.withValues(alpha: 0.05)
-                : Colors.transparent,
-        collapsedBackgroundColor: isCategorySelected
-            ? cs.primaryContainer.withValues(alpha: 0.35)
-            : isAncestorCategory
-                ? cs.primary.withValues(alpha: 0.05)
-                : Colors.transparent,
-        iconColor: cs.onSurfaceVariant,
-        collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
-        leading: _buildIconChip(
-          context,
-          icon: CategoryIcon(
-            category: targetCategory,
-            size: 17,
-            color: isCategorySelected
-                ? cs.onPrimaryContainer
-                : isAncestorCategory
-                    ? cs.primary.withValues(alpha: 0.8)
-                    : cs.onSurfaceVariant,
-          ),
-          isSelected: isCategorySelected,
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: () {
-                  provider.selectCategory(targetCategory);
-                  onFeedSelected?.call();
-                  context.pop();
-                },
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: tt.bodyMedium?.copyWith(
-                          color: isCategorySelected
-                              ? cs.primary
-                              : isAncestorCategory
-                                  ? cs.onSurface
-                                  : cs.onSurface.withValues(alpha: 0.8),
-                          fontWeight: isCategorySelected
-                              ? FontWeight.w700
-                              : isAncestorCategory
-                                  ? FontWeight.w600
-                                  : FontWeight.w500,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    if (count > 0) ...[
-                      const SizedBox(width: 8),
-                      _buildCountPill(context, count, isCategorySelected),
-                    ],
-                  ],
-                ),
+          // The 48dp options target plus M3's 8dp minimum vertical padding
+          // would grow the 56dp header; 4dp keeps it at 56.
+          child: ListTileTheme.merge(
+            minVerticalPadding: 4,
+            child: ExpansionTile(
+              initiallyExpanded: provider.selectedCategory == targetCategory,
+              tilePadding: const EdgeInsets.only(left: 10, right: 10),
+              childrenPadding: const EdgeInsets.only(
+                left: 12,
+                right: 8,
+                bottom: 8,
               ),
-            ),
-            if (!isUncategorizedNode) ...[
-              const SizedBox(width: 4),
-              Semantics(
-                label: AppLocalizations.of(context).semanticCategoryOptions,
-                button: true,
-                child: GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => _showCategoryActionSheet(
-                    context,
-                    targetCategory,
-                    feedSources.length,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              collapsedShape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              backgroundColor: emphasis.fill(cs, selectedAlpha: 0.22),
+              collapsedBackgroundColor: emphasis.fill(cs, selectedAlpha: 0.35),
+              iconColor: cs.onSurfaceVariant,
+              collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
+              leading: _buildIconChip(
+                context,
+                icon: CategoryIcon(
+                  category: targetCategory,
+                  size: 17,
+                  color: emphasis.tint(
+                    cs,
+                    selectedColor: cs.onPrimaryContainer,
                   ),
-                  // 40x40 hit target (visual icon unchanged at 18px).
-                  child: SizedBox(
-                    width: 40,
-                    height: 40,
-                    child: Center(
-                      child: Icon(
-                        Icons.more_vert,
-                        size: 18,
-                        color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                ),
+                isSelected: isCategorySelected,
+              ),
+              title: Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: () {
+                        provider.selectCategory(targetCategory);
+                        onFeedSelected?.call();
+                        context.pop();
+                      },
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: tt.bodyMedium?.copyWith(
+                                color: emphasis.labelColor(cs),
+                                fontWeight: emphasis.labelWeight,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (count > 0) ...[
+                            const SizedBox(width: 8),
+                            _buildCountPill(context, count, isCategorySelected),
+                          ],
+                        ],
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
-          ],
-        ),
-        children: feedSources.map((sub) {
-          final bool isFeedSelected = provider.selectedFeedUrl == sub.url;
-          final feedCount = provider.unreadCount(feedUrl: sub.url);
-
-          return Padding(
-            padding: const EdgeInsets.only(left: 22.0, top: 2.0),
-            child: Semantics(
-              selected: isFeedSelected,
-              child: Material(
-              color: isFeedSelected
-                  ? cs.primary.withValues(alpha: 0.08)
-                  : Colors.transparent,
-              borderRadius: BorderRadius.circular(10),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(10),
-                onTap: () {
-                  provider.selectFeed(sub.url);
-                  onFeedSelected?.call();
-                  context.pop();
-                },
-                onLongPress: () => _showFeedActionSheet(context, sub),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 5,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: isFeedSelected
-                              ? cs.primary
-                              : cs.onSurfaceVariant.withValues(alpha: 0.35),
+                  if (!isUncategorizedNode)
+                    Semantics(
+                      label: AppLocalizations.of(
+                        context,
+                      ).semanticCategoryOptions,
+                      button: true,
+                      child: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => showCategoryActions(
+                          context,
+                          targetCategory,
+                          feedSources.length,
                         ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          sub.name,
-                          style: tt.bodySmall?.copyWith(
-                            fontSize: 13,
-                            color: isFeedSelected
-                                ? cs.primary
-                                : cs.onSurface.withValues(alpha: 0.65),
-                            fontWeight: isFeedSelected
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (provider.feedErrorFor(sub.url) != null) ...[
-                        const SizedBox(width: 6),
-                        Icon(
-                          Icons.error_outline_rounded,
-                          size: 14,
-                          color: cs.error,
-                        ),
-                      ],
-                      if (feedCount > 0) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          '$feedCount',
-                          style: tt.labelSmall?.copyWith(
-                            color: isFeedSelected
-                                ? cs.primary
-                                : cs.onSurfaceVariant.withValues(alpha: 0.7),
-                            fontWeight: FontWeight.w600,
+                        // 48dp hit target (visual icon unchanged at 18px); it
+                        // absorbs the 4px gap that used to precede it.
+                        child: SizedBox(
+                          width: 48,
+                          height: 48,
+                          child: Center(
+                            child: Icon(
+                              Icons.more_vert,
+                              size: 18,
+                              color: cs.onSurfaceVariant.withValues(alpha: 0.5),
+                            ),
                           ),
                         ),
-                      ],
-                    ],
-                  ),
-                ),
+                      ),
+                    ),
+                ],
               ),
+              children: [
+                for (final sub in feedSources)
+                  ExplorerFeedTile(
+                    sub: sub,
+                    feed: provider,
+                    onTap: () {
+                      provider.selectFeed(sub.url);
+                      onFeedSelected?.call();
+                      context.pop();
+                    },
+                    onShowActions: () => showFeedActions(context, sub),
+                  ),
+              ],
             ),
-            ),
-          );
-        }).toList(),
           ),
         ),
       ),
@@ -565,173 +488,6 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
-  }
-
-  void _showCategoryActionSheet(
-    BuildContext context,
-    String category,
-    int feedCount,
-  ) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => CategoryActionSheet(
-        category: category,
-        onMarkAllRead: () {
-          Navigator.of(ctx).pop();
-          context.read<FeedProvider>().markAllInCategoryAsRead(category);
-        },
-        onChangeIcon: () {
-          Navigator.of(ctx).pop();
-          showDialog<void>(
-            context: context,
-            builder: (_) => EmojiIconDialog(category: category),
-          );
-        },
-        onRename: () {
-          Navigator.of(ctx).pop();
-          showDialog<void>(
-            context: context,
-            builder: (_) => EditCategoryDialog(currentCategory: category),
-          );
-        },
-        onDelete: () {
-          Navigator.of(ctx).pop();
-          _showDeleteCategoryConfirmation(context, category, feedCount);
-        },
-      ),
-    );
-  }
-
-  void _showDeleteCategoryConfirmation(
-    BuildContext context,
-    String category,
-    int feedCount,
-  ) {
-    final l10n = AppLocalizations.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteFolder),
-        content: Text(l10n.deleteFolderConfirm(category, feedCount)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              context
-                  .read<SubscriptionProvider>()
-                  .removeCategory(category)
-                  .then((_) {
-                    if (context.mounted) {
-                      context.read<FeedProvider>().refreshAll();
-                    }
-                  });
-              Navigator.of(ctx).pop();
-            },
-            child: Text(
-              l10n.delete,
-              style: TextStyle(color: Theme.of(context).colorScheme.onError),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showFeedActionSheet(BuildContext context, FeedSubscription sub) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => FeedActionSheet(
-        subUrl: sub.url,
-        onMove: () {
-          Navigator.of(ctx).pop();
-          _showMoveFeedDialog(context, sub);
-        },
-        onEdit: () {
-          Navigator.of(ctx).pop();
-          _showEditSubscriptionDialog(context, sub);
-        },
-        onDelete: () {
-          Navigator.of(ctx).pop();
-          _showDeleteConfirmation(context, sub);
-        },
-      ),
-    );
-  }
-
-  void _showMoveFeedDialog(BuildContext context, FeedSubscription sub) {
-    final l10n = AppLocalizations.of(context);
-    MoveToCategorySheet.show(
-      context,
-      sub,
-      onMoved: (sub, category) {
-        if (context.mounted) {
-          context.read<FeedProvider>().refreshAll();
-          showAppToast(
-            l10n.feedMovedToFolder(sub.name, category),
-            type: AppToastType.success,
-          );
-        }
-      },
-    );
-  }
-
-  void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
-    showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => EditSubscriptionDialog(sub: sub),
-    );
-  }
-
-  void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
-    final l10n = AppLocalizations.of(context);
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.deleteFeed),
-        content: Text(l10n.deleteFeedConfirm(sub.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-            onPressed: () {
-              context.read<SubscriptionProvider>().removeFeed(sub.url).then((
-                _,
-              ) {
-                if (context.mounted) context.read<FeedProvider>().refreshAll();
-              });
-              Navigator.of(ctx).pop();
-            },
-            child: Text(
-              l10n.delete,
-              style: TextStyle(color: Theme.of(context).colorScheme.onError),
-            ),
-          ),
-        ],
       ),
     );
   }

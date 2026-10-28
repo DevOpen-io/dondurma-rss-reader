@@ -6,7 +6,11 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/subscription_provider.dart';
 
 class AddCategoryDialog extends StatefulWidget {
-  const AddCategoryDialog({super.key});
+  const AddCategoryDialog({super.key, this.persist = true});
+
+  /// False pops the validated name without creating the category — the
+  /// caller creates it later (add-feed saves it together with the feed).
+  final bool persist;
 
   @override
   State<AddCategoryDialog> createState() => _AddCategoryDialogState();
@@ -26,11 +30,15 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    final name = _nameController.text.trim();
+    if (!widget.persist) {
+      Navigator.of(context).pop(name);
+      return;
+    }
     setState(() {
       _isLoading = true;
       _serverError = null;
     });
-    final name = _nameController.text.trim();
     final success = await context.read<SubscriptionProvider>().addCategory(
       name,
     );
@@ -66,17 +74,6 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Center(
-              child: Container(
-                margin: const EdgeInsets.only(top: 12, bottom: 4),
-                width: 36,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: Row(

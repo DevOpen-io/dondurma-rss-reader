@@ -1,18 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
 import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
-import '../utils/app_toast.dart';
 import '../utils/platform_caps.dart';
-import '../widgets/adaptive_dialog.dart';
-import '../widgets/folders/feed_action_sheet.dart';
 import '../widgets/category_icon.dart';
-import '../widgets/folders/folder_dialogs.dart';
-import '../widgets/folders/move_feed_sheet.dart';
+import '../widgets/folders/folder_actions.dart';
 import '../widgets/constrained_width.dart';
 
 /// Screen for managing feed categories (folders) and their subscriptions.
@@ -25,146 +20,6 @@ class CategoriesScreen extends StatelessWidget {
   /// Called when a feed's navigate affordance is tapped — HomeScreen switches
   /// to the Feeds tab so the feed-filtered list becomes visible.
   final VoidCallback? onFeedSelected;
-
-  void _showEditCategoryDialog(BuildContext context, String currentCategory) {
-    showDialog<void>(
-      context: context,
-      builder: (context) =>
-          EditCategoryDialog(currentCategory: currentCategory),
-    );
-  }
-
-  void _showIconPicker(BuildContext context, String categoryName) {
-    showDialog<void>(
-      context: context,
-      builder: (_) => EmojiIconDialog(category: categoryName),
-    );
-  }
-
-  void _showEditSubscriptionDialog(BuildContext context, FeedSubscription sub) {
-    showAdaptiveSheet<void>(context, EditSubscriptionDialog(sub: sub));
-  }
-
-  void _showDeleteConfirmation(BuildContext context, FeedSubscription sub) {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.deleteFeed),
-          content: Text(l10n.deleteFeedConfirm(sub.name)),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-              onPressed: () {
-                context.read<SubscriptionProvider>().removeFeed(sub.url).then((
-                  _,
-                ) {
-                  if (context.mounted) {
-                    context.read<FeedProvider>().refreshAll();
-                  }
-                });
-                context.pop();
-              },
-              child: Text(
-                l10n.delete,
-                style: TextStyle(color: Theme.of(context).colorScheme.onError),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteCategoryConfirmation(
-    BuildContext context,
-    String categoryName,
-    int feedCount,
-  ) {
-    final l10n = AppLocalizations.of(context);
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(l10n.deleteFolder),
-          content: Text(l10n.deleteFolderConfirm(categoryName, feedCount)),
-          actions: [
-            TextButton(
-              onPressed: () => context.pop(),
-              child: Text(l10n.cancel),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.error,
-              ),
-              onPressed: () {
-                context
-                    .read<SubscriptionProvider>()
-                    .removeCategory(categoryName)
-                    .then((_) {
-                      if (context.mounted) {
-                        context.read<FeedProvider>().refreshAll();
-                      }
-                    });
-                context.pop();
-              },
-              child: Text(
-                l10n.deleteAll,
-                style: TextStyle(color: Theme.of(context).colorScheme.onError),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showMoveFeedDialog(BuildContext context, FeedSubscription sub) {
-    final l10n = AppLocalizations.of(context);
-    MoveToCategorySheet.show(
-      context,
-      sub,
-      onMoved: (sub, category) {
-        if (context.mounted) {
-          context.read<FeedProvider>().refreshAll();
-          showAppToast(
-            l10n.feedMovedToFolder(sub.name, category),
-            type: AppToastType.success,
-          );
-        }
-      },
-    );
-  }
-
-  void _showFeedActionSheet(BuildContext context, FeedSubscription sub) {
-    showAdaptiveSheet<void>(
-      context,
-      Builder(
-        builder: (ctx) => FeedActionSheet(
-        subUrl: sub.url,
-        onMove: () {
-          Navigator.of(ctx).pop();
-          _showMoveFeedDialog(context, sub);
-        },
-        onEdit: () {
-          Navigator.of(ctx).pop();
-          _showEditSubscriptionDialog(context, sub);
-        },
-        onDelete: () {
-          Navigator.of(ctx).pop();
-          _showDeleteConfirmation(context, sub);
-        },
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -232,14 +87,11 @@ class CategoriesScreen extends StatelessWidget {
           return _CategorySection(
             categoryName: categoryName,
             subs: subs,
-            onIconTap: () => _showIconPicker(context, categoryName),
-            onRename: () => _showEditCategoryDialog(context, categoryName),
-            onDelete: () => _showDeleteCategoryConfirmation(
-              context,
-              categoryName,
-              subs.length,
-            ),
-            onFeedTap: (sub) => _showFeedActionSheet(context, sub),
+            onIconTap: () => showCategoryIconDialog(context, categoryName),
+            onRename: () => showRenameCategoryDialog(context, categoryName),
+            onDelete: () =>
+                confirmDeleteCategory(context, categoryName, subs.length),
+            onFeedTap: (sub) => showFeedActions(context, sub),
             onFeedNavigate: (sub) {
               context.read<FeedProvider>().selectFeed(sub.url);
               onFeedSelected?.call();

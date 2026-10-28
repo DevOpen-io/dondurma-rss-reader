@@ -1030,15 +1030,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onboardingSkip => 'Şimdilik atla';
 
   @override
-  String get add => 'Ekle';
-
-  @override
-  String get existingCategoriesLabel => 'Mevcut';
-
-  @override
-  String get orCreateNewCategory => 'veya yeni oluştur';
-
-  @override
   String get addCategoryEmptyHint =>
       'Kaynaklarınızı düzenlemek için bir kategori ekleyin.';
 
