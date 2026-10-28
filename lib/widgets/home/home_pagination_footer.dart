@@ -30,23 +30,19 @@ class HomePaginationFooter extends StatelessWidget {
       );
     }
 
-    if (provider.items.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24.0),
-        child: Center(
-          child: Text(
-            l10n.allCaughtUp,
-            style: TextStyle(
-              color: Theme.of(
-                context,
-              ).colorScheme.onSurface.withValues(alpha: 0.4),
-              fontSize: 13,
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24.0),
+      child: Center(
+        child: Text(
+          l10n.allCaughtUp,
+          style: TextStyle(
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.4),
+            fontSize: 13,
           ),
         ),
-      );
-    }
-
-    return const SizedBox.shrink();
+      ),
+    );
   }
 }

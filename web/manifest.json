@@ -1,11 +1,11 @@
 {
-    "name": "ice_cream_rss_reader",
-    "short_name": "ice_cream_rss_reader",
+    "name": "Dondurma RSS Reader",
+    "short_name": "Dondurma",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#ffffff",
     "theme_color": "#ffffff",
-    "description": "A new Flutter project.",
+    "description": "A calm, local-first RSS and Atom reader.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

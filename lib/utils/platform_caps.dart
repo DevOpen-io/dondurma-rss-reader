@@ -44,10 +44,6 @@ abstract final class PlatformCaps {
   /// link instead.
   static bool get supportsShareSheet => isMobile;
 
-  /// `flutter_local_notifications` 21 covers Android, iOS, macOS, Linux and
-  /// Windows — every targeted platform can at least attempt init.
-  static bool get supportsNotifications => !kIsWeb;
-
   /// Runtime permission prompts exist on Android 13+ and iOS/macOS. Linux
   /// and Windows notifications do not use a runtime prompt — asking there
   /// would be a no-op anyway, so only mobile + macOS request.

@@ -144,7 +144,7 @@ Depoda Android/iOS widget kaynaklarının bulunması platformun cihazda doğrula
 - `/onboarding`: `hasSeenOnboarding` öncesi hedef; oturum bypass desteği.
 - `/`: Feeds, Folders, Bookmarks, Settings sekmeleri.
 - `/article`: `{items, initialIndex}` extra ile PageView.
-- `/debug`: sürüm numarasına uzun basarak ulaşılan araçlar.
+- `/debug`: Ayarlar > Hakkında'daki sürüm satırına uzun basarak açılan destek ekranı. Release build'lerde de bilerek açık kalır: kullanıcı sorun bildirirken Hive kutu boyutlarını, önbellek/yer imi sayılarını ve son senkron metriklerini buradan paylaşabilir ve arka plan senkronunu elle tetikleyebilir. Arka plan bölümünün etiketleri yalnız İngilizcedir; kullanıcı akışının parçası değildir.
 
 `MyApp`, tema/dil alanlarında `context.select` kullanır. `AppToastHost`, GoRouter child'ını sarar; yeni toast eskisini kuyruksuz değiştirir, modal varken konumunu ayarlar, azaltılmış hareketi izler.
 

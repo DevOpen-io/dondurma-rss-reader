@@ -132,15 +132,6 @@ class NotificationService {
     return true;
   }
 
-  /// Shows a notification for newly discovered articles.
-  ///
-  /// [newItems] — articles not previously seen.
-  /// [notificationsEnabled] — global master toggle.
-  /// [digestMode] — `'instant'`, `'daily'`, or `'weekly'`.
-  /// [quietHoursStart] / [quietHoursEnd] — hour (0-23).
-  ///
-  /// No-op when notifications are disabled, the list is empty, the current
-  /// time falls within quiet hours, or digest mode is not `'instant'`.
   /// Handles the user tapping on a notification.
   void _onNotificationTapped(NotificationResponse response) {
     final payload = response.payload;
@@ -149,26 +140,14 @@ class NotificationService {
     }
   }
 
+  /// Shows a notification for newly discovered articles ([newItems],
+  /// newest first). Callers gate delivery first through
+  /// `NotificationDeliveryPolicy` (master toggle, quiet hours, mutes).
   Future<void> showNewArticlesNotification({
     required List<FeedItem> newItems,
-    required bool notificationsEnabled,
-    required String digestMode,
-    required int quietHoursStart,
-    required int quietHoursEnd,
-    bool quietHoursEnabled = true,
     String? latestItemJson,
   }) async {
-    if (!notificationsEnabled) return;
     if (newItems.isEmpty) return;
-
-    // Quiet hours check
-    if (quietHoursEnabled) {
-      final now = DateTime.now().hour;
-      if (_isInQuietHours(now, quietHoursStart, quietHoursEnd)) return;
-    }
-
-    // In digest mode, we don't fire instant notifications
-    if (digestMode != 'instant') return;
 
     final count = newItems.length;
     final latest = newItems.first;
@@ -216,10 +195,7 @@ class NotificationService {
     }
   }
 
-  static bool isInQuietHours(int currentHour, int start, int end) =>
-      _isInQuietHours(currentHour, start, end);
-
-  static bool _isInQuietHours(int currentHour, int start, int end) {
+  static bool isInQuietHours(int currentHour, int start, int end) {
     if (start == end) return false; // no quiet hours
     if (start < end) {
       // e.g. 8–17
@@ -228,10 +204,5 @@ class NotificationService {
       // wraps midnight, e.g. 22–7
       return currentHour >= start || currentHour < end;
     }
-  }
-
-  /// Releases the stream controller. Called during app teardown.
-  void dispose() {
-    _tapController.close();
   }
 }

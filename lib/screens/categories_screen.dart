@@ -232,7 +232,6 @@ class CategoriesScreen extends StatelessWidget {
           return _CategorySection(
             categoryName: categoryName,
             subs: subs,
-            subscriptionProvider: subscriptionProvider,
             onIconTap: () => _showIconPicker(context, categoryName),
             onRename: () => _showEditCategoryDialog(context, categoryName),
             onDelete: () => _showDeleteCategoryConfirmation(
@@ -258,7 +257,6 @@ class _CategorySection extends StatelessWidget {
   const _CategorySection({
     required this.categoryName,
     required this.subs,
-    required this.subscriptionProvider,
     required this.onIconTap,
     required this.onRename,
     required this.onDelete,
@@ -268,7 +266,6 @@ class _CategorySection extends StatelessWidget {
 
   final String categoryName;
   final List<FeedSubscription> subs;
-  final SubscriptionProvider subscriptionProvider;
   final VoidCallback onIconTap;
   final VoidCallback onRename;
   final VoidCallback onDelete;

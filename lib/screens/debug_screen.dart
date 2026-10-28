@@ -10,8 +10,9 @@ import '../providers/settings_provider.dart';
 import '../services/background_fetch_service.dart' show runBgFetch;
 import '../utils/app_toast.dart';
 
-/// Hidden debug screen accessible by long-pressing the app version tile in
-/// Settings. Displays Hive box sizes, background sync status, and data metrics.
+/// Support screen, kept in release builds, opened by long-pressing the app
+/// version tile in Settings. Displays Hive box sizes, background sync status,
+/// and data metrics.
 class DebugScreen extends StatefulWidget {
   const DebugScreen({super.key});
 

@@ -44,8 +44,7 @@ class RefreshProgress {
   /// Requests currently in flight.
   final int inFlight;
 
-  /// When the pass started / when the last pass settled.
-  final DateTime? startedAt;
+  /// When the last pass settled.
   final DateTime? completedAt;
 
   /// True when a user action (refresh button, pull-to-refresh) requested or
@@ -60,7 +59,6 @@ class RefreshProgress {
     this.failed = 0,
     this.skipped = 0,
     this.inFlight = 0,
-    this.startedAt,
     this.completedAt,
     this.userInitiated = false,
   });
@@ -75,7 +73,6 @@ class RefreshProgress {
     int? failed,
     int? skipped,
     int? inFlight,
-    DateTime? startedAt,
     DateTime? completedAt,
     bool? userInitiated,
   }) {
@@ -87,7 +84,6 @@ class RefreshProgress {
       failed: failed ?? this.failed,
       skipped: skipped ?? this.skipped,
       inFlight: inFlight ?? this.inFlight,
-      startedAt: startedAt ?? this.startedAt,
       completedAt: completedAt ?? this.completedAt,
       userInitiated: userInitiated ?? this.userInitiated,
     );

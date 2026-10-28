@@ -383,11 +383,6 @@ Future<void> runBgFetch() async {
       final latestJson = jsonEncode(newItems.first.toJson());
       await NotificationService.instance.showNewArticlesNotification(
         newItems: newItems,
-        notificationsEnabled: true,
-        digestMode: 'instant',
-        quietHoursEnabled: false, // already checked above
-        quietHoursStart: 0,
-        quietHoursEnd: 0,
         latestItemJson: latestJson,
       );
     }

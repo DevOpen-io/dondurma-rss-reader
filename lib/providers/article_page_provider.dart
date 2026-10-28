@@ -69,11 +69,9 @@ class ArticlePageProvider extends ChangeNotifier {
 
   /// Cached result of [preprocessHtml] for the current content source.
   String? _cachedDisplayContent;
-  String? get cachedDisplayContent => _cachedDisplayContent;
 
   /// Cached reading-time estimate for the current content source.
   int? _cachedReadingMinutes;
-  int? get cachedReadingMinutes => _cachedReadingMinutes;
 
   /// Reading progress (0.0 to 1.0). Uses [ValueNotifier] to avoid full
   /// rebuilds on every scroll tick.

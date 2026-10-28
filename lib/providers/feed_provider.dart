@@ -1237,7 +1237,6 @@ class FeedProvider extends ChangeNotifier {
     refreshProgress.value = RefreshProgress(
       phase: RefreshPhase.refreshing,
       total: subscriptions.length,
-      startedAt: DateTime.now(),
       completedAt: refreshProgress.value.completedAt,
       userInitiated: _refreshIsUserInitiated,
     );
@@ -1597,11 +1596,6 @@ class FeedProvider extends ChangeNotifier {
 
     await NotificationService.instance.showNewArticlesNotification(
       newItems: newItems,
-      notificationsEnabled: true,
-      digestMode: 'instant',
-      quietHoursEnabled: false,
-      quietHoursStart: 0,
-      quietHoursEnd: 0,
       latestItemJson: latestJson,
     );
   }

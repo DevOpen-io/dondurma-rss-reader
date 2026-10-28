@@ -551,7 +551,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSectionHeader(String title, {String? trailingText}) {
+  Widget _buildSectionHeader(String title) {
     final colorScheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 8),
@@ -575,24 +575,6 @@ class _HomeScreenState extends State<HomeScreen> {
               letterSpacing: 1.2,
             ),
           ),
-          if (trailingText != null) ...[
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: colorScheme.onSurface.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                trailingText,
-                style: TextStyle(
-                  color: colorScheme.onSurface.withValues(alpha: 0.55),
-                  fontSize: 11.0,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-          ],
         ],
       ),
     );

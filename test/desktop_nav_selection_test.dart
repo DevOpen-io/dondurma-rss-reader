@@ -293,7 +293,6 @@ void main() {
       phase: RefreshPhase.refreshing,
       total: 10,
       completed: 3,
-      startedAt: DateTime.now(),
     );
     await tester.pump();
 

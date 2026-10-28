@@ -55,3 +55,6 @@ AuthKey*.p8
 
 /brag-output/
 /.agents/
+
+# Local analyzer/pub logs
+analysis_output.txt
