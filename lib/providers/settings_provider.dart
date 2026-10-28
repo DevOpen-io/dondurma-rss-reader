@@ -205,33 +205,34 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
-  // Setters — each persists to Hive then notifies listeners
+  // Setters — each notifies listeners, then persists to Hive
   // ---------------------------------------------------------------------------
 
-  Future<void> setFlexScheme(FlexScheme scheme) async {
-    _flexScheme = scheme;
+  Future<void> _store(String key, Object value) {
     notifyListeners();
-    await _box.put('flexScheme', scheme.name);
+    return _box.put(key, value);
   }
 
-  Future<void> setThemeMode(ThemeMode mode) async {
+  Future<void> setFlexScheme(FlexScheme scheme) {
+    _flexScheme = scheme;
+    return _store('flexScheme', scheme.name);
+  }
+
+  Future<void> setThemeMode(ThemeMode mode) {
     _themeMode = mode;
-    notifyListeners();
-    await _box.put('themeMode', mode.name);
+    return _store('themeMode', mode.name);
   }
 
   /// Sets the maximum number of articles cached for offline reading.
-  Future<void> setOfflineCacheLimit(int limit) async {
+  Future<void> setOfflineCacheLimit(int limit) {
     _offlineCacheLimit = limit;
-    notifyListeners();
-    await _box.put('offlineCacheLimit', limit);
+    return _store('offlineCacheLimit', limit);
   }
 
   /// Sets the background auto-refresh interval in seconds.
-  Future<void> setCacheIntervalSeconds(int interval) async {
+  Future<void> setCacheIntervalSeconds(int interval) {
     _cacheIntervalSeconds = interval;
-    notifyListeners();
-    await _box.put('cacheIntervalSeconds', interval);
+    return _store('cacheIntervalSeconds', interval);
   }
 
   /// Enables or disables background auto-refresh.
@@ -249,114 +250,98 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   /// Updates the app locale and persists the language code.
-  Future<void> setLocale(Locale newLocale) async {
+  Future<void> setLocale(Locale newLocale) {
     _locale = newLocale;
-    notifyListeners();
-    await _box.put('locale', newLocale.languageCode);
+    return _store('locale', newLocale.languageCode);
   }
 
   /// Enables or disables the global notification master toggle.
-  Future<void> setNotificationsEnabled(bool value) async {
+  Future<void> setNotificationsEnabled(bool value) {
     _notificationsEnabled = value;
-    notifyListeners();
-    await _box.put('notificationsEnabled', value);
+    return _store('notificationsEnabled', value);
   }
 
-  Future<void> setQuietHoursEnabled(bool value) async {
+  Future<void> setQuietHoursEnabled(bool value) {
     _quietHoursEnabled = value;
-    notifyListeners();
-    await _box.put('quietHoursEnabled', value);
+    return _store('quietHoursEnabled', value);
   }
 
   /// Sets the notification digest mode: `'instant'`, `'daily'`, or `'weekly'`.
-  Future<void> setDigestMode(String mode) async {
+  Future<void> setDigestMode(String mode) {
     _digestMode = mode;
-    notifyListeners();
-    await _box.put('digestMode', mode);
+    return _store('digestMode', mode);
   }
 
   /// Sets the hour (0-23) when the quiet period begins.
-  Future<void> setQuietHoursStart(int hour) async {
+  Future<void> setQuietHoursStart(int hour) {
     _quietHoursStart = hour;
-    notifyListeners();
-    await _box.put('quietHoursStart', hour);
+    return _store('quietHoursStart', hour);
   }
 
   /// Sets the hour (0-23) when the quiet period ends.
-  Future<void> setQuietHoursEnd(int hour) async {
+  Future<void> setQuietHoursEnd(int hour) {
     _quietHoursEnd = hour;
-    notifyListeners();
-    await _box.put('quietHoursEnd', hour);
+    return _store('quietHoursEnd', hour);
   }
 
   /// Sets the bundled typeface for the whole interface.
-  Future<void> setAppFont(AppFont font) async {
+  Future<void> setAppFont(AppFont font) {
     _appFont = font;
-    notifyListeners();
-    await _box.put('appFont', font.key);
+    return _store('appFont', font.key);
   }
 
   /// Sets the article body font size: `'small'`, `'medium'`, `'large'`, `'xl'`.
-  Future<void> setFontSize(String size) async {
+  Future<void> setFontSize(String size) {
     _fontSize = size;
-    notifyListeners();
-    await _box.put('fontSize', size);
+    return _store('fontSize', size);
   }
 
   /// Sets the article typeface, one of [articleTypefaces].
-  Future<void> setTypeface(String face) async {
+  Future<void> setTypeface(String face) {
     _typeface = face;
-    notifyListeners();
-    await _box.put('typeface', face);
+    return _store('typeface', face);
   }
 
   /// Sets the article line spacing multiplier (e.g. 1.2, 1.5, 1.8).
-  Future<void> setLineSpacing(double spacing) async {
+  Future<void> setLineSpacing(double spacing) {
     _lineSpacing = spacing;
-    notifyListeners();
-    await _box.put('lineSpacing', spacing);
+    return _store('lineSpacing', spacing);
   }
 
   /// Replaces the global excluded keywords list.
-  Future<void> setGlobalExcludedKeywords(List<String> keywords) async {
+  Future<void> setGlobalExcludedKeywords(List<String> keywords) {
     _globalExcludedKeywords = keywords;
-    notifyListeners();
-    await _box.put('globalExcludedKeywords', keywords);
+    return _store('globalExcludedKeywords', keywords);
   }
 
   /// Enables or disables the built-in ad blocker for the in-app browser.
-  Future<void> setAdBlockEnabled(bool value) async {
+  Future<void> setAdBlockEnabled(bool value) {
     _adBlockEnabled = value;
-    notifyListeners();
-    await _box.put('adBlockEnabled', value);
+    return _store('adBlockEnabled', value);
   }
 
   /// Enables or disables dark mode for the in-app browser.
-  Future<void> setWebviewDarkModeEnabled(bool value) async {
+  Future<void> setWebviewDarkModeEnabled(bool value) {
     _webviewDarkModeEnabled = value;
-    notifyListeners();
-    await _box.put('webviewDarkModeEnabled', value);
+    return _store('webviewDarkModeEnabled', value);
   }
 
   /// Sets the browser mode: `'builtin'`, `'external'`, or `'system'`.
-  Future<void> setBrowserMode(String mode) async {
+  Future<void> setBrowserMode(String mode) {
     _browserMode = mode;
-    notifyListeners();
-    await _box.put('browserMode', mode);
+    return _store('browserMode', mode);
   }
 
   /// Enables or disables automatic full-text extraction for all feeds.
-  Future<void> setAutoFullText(bool value) async {
+  Future<void> setAutoFullText(bool value) {
     _autoFullText = value;
-    notifyListeners();
-    await _box.put('autoFullText', value);
+    return _store('autoFullText', value);
   }
 
   /// Sets the clock display format: `'system'`, `'12h'`, or `'24h'`.
-  Future<void> setTimeFormat(String format) async {
+  Future<void> setTimeFormat(String format) {
     _timeFormat = format;
-    notifyListeners();
-    await _box.put('timeFormat', format);
+    return _store('timeFormat', format);
   }
 
   /// Sets the desktop reading column mode: `'comfortable'`, `'expanded'`,
@@ -364,8 +349,7 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setDesktopReadingWidth(String mode) async {
     if (mode != 'comfortable' && mode != 'expanded' && mode != 'full') return;
     _desktopReadingWidth = mode;
-    notifyListeners();
-    await _box.put('desktopReadingWidth', mode);
+    await _store('desktopReadingWidth', mode);
   }
 
   /// Adds a search query to the history.

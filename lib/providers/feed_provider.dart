@@ -197,11 +197,11 @@ class FeedProvider extends ChangeNotifier {
   /// membership pass's `fullTextFor`.
   bool _effectiveFullText(FeedItem item) {
     final auto = settingsProvider?.autoFullText ?? false;
-    for (final sub
-        in subscriptionProvider?.subscriptions ?? const <FeedSubscription>[]) {
-      if (sub.url == item.feedUrl) return sub.fullTextEnabled ?? auto;
-    }
-    return auto;
+    return subscriptionProvider?.effectiveFullText(
+          item.feedUrl,
+          autoFullText: auto,
+        ) ??
+        auto;
   }
 
   /// Explicit single-article preparation pass (#41): one foreground pass
@@ -242,18 +242,48 @@ class FeedProvider extends ChangeNotifier {
   /// must never overwrite the post-change truth (#41 freshness).
   int _statusGeneration = 0;
 
-  Future<void> _refreshArticleStatuses() async {
-    final gen = ++_statusGeneration;
-    final map = await listArticleStatuses(
-      ArticleRecordStore.forBox(_box),
-      // Files that vanished or are truncated must not back a "ready"
-      // label — verify() demotes them for repair (#41).
-      media: ArticleMediaStore(),
-    );
-    if (_disposed || gen != _statusGeneration) return;
-    _articleStatuses = map;
-    _articleStatusesLoaded = true;
-    notifyListeners();
+  /// The status read loop in flight; requests arriving meanwhile join it.
+  Future<void>? _statusRefresh;
+  bool _statusRefreshQueued = false;
+
+  /// One media store for status reads: it resolves its directory once.
+  final ArticleMediaStore _statusMedia = ArticleMediaStore();
+
+  /// Re-reads the offline status map. Each read decodes the archive and
+  /// checks every ready file, so overlapping requests share one loop: a
+  /// read in flight may predate the change that prompted the request, so
+  /// it is voided and the loop reads once more (#41 freshness).
+  Future<void> _refreshArticleStatuses() {
+    if (_statusRefresh != null) {
+      _statusGeneration++;
+      _statusRefreshQueued = true;
+      return _statusRefresh!;
+    }
+    return _statusRefresh = _runStatusRefreshes();
+  }
+
+  Future<void> _runStatusRefreshes() async {
+    try {
+      do {
+        _statusRefreshQueued = false;
+        final gen = ++_statusGeneration;
+        final map = await listArticleStatuses(
+          ArticleRecordStore.forBox(_box),
+          // Files that vanished or are truncated must not back a "ready"
+          // label — verify() demotes them for repair (#41).
+          media: _statusMedia,
+        );
+        if (_disposed) return;
+        if (gen != _statusGeneration) continue;
+        final changed =
+            !_articleStatusesLoaded || !mapEquals(map, _articleStatuses);
+        _articleStatuses = map;
+        _articleStatusesLoaded = true;
+        if (changed) notifyListeners();
+      } while (_statusRefreshQueued);
+    } finally {
+      _statusRefresh = null;
+    }
   }
 
   /// Per-feed rate-limit cooldowns. Loaded from Hive at startup so the
@@ -882,26 +912,13 @@ class FeedProvider extends ChangeNotifier {
   // Date-based section getters (single-pass grouping)
   // ---------------------------------------------------------------------------
 
-  /// Cached date-group result to avoid re-computing on every getter call.
+  /// Cached date-group result; cleared with the filter cache and when the
+  /// render window grows.
   FeedDateGroups? _dateGroupsCache;
-  int _dateGroupsCacheHash = -1;
 
   /// Returns the single-pass date-grouped result for the current visible items.
-  FeedDateGroups get _dateGroups {
-    final visible = _visibleItems;
-    final hash = Object.hash(
-      visible.length,
-      _filteredItemsCache?.length,
-      _itemRenderLimit,
-    );
-    if (_dateGroupsCache != null && _dateGroupsCacheHash == hash) {
-      return _dateGroupsCache!;
-    }
-
-    _dateGroupsCache = groupFeedItemsByDate(visible, DateTime.now());
-    _dateGroupsCacheHash = hash;
-    return _dateGroupsCache!;
-  }
+  FeedDateGroups get _dateGroups =>
+      _dateGroupsCache ??= groupFeedItemsByDate(_visibleItems, DateTime.now());
 
   /// The date-grouped view of the visible render window. The returned
   /// instance is memoized and replaced whenever data changes — suitable for
@@ -929,8 +946,9 @@ class FeedProvider extends ChangeNotifier {
     if (_isLoadingMore) return;
     if (!hasMoreItems) return;
 
+    // The window is unchanged until the next frame — keep the same groups
+    // so date-group selectors don't rebuild for the spinner alone.
     _isLoadingMore = true;
-    _dateGroupsCache = null;
     notifyListeners();
 
     // Single-frame delay so the spinner is visible without blocking scroll.
@@ -1531,11 +1549,24 @@ class FeedProvider extends ChangeNotifier {
     // a clearCache landing while this link is still queued must kill it,
     // and the execution-time read would let it slip through post-clear.
     final generation = _cacheGeneration;
-    final run = _saveChain.then((_) => _writeCachedItems(generation));
+    // A queued link that has not started reads items, settings and the
+    // bookmark set when it runs, so a request in the same era joins it
+    // instead of repeating the whole reconcile + encode + write.
+    final queued = _queuedSave;
+    if (queued != null && queued.generation == generation) return queued.run;
+    late final Future<void> run;
+    run = _saveChain.then((_) {
+      if (identical(_queuedSave?.run, run)) _queuedSave = null;
+      return _writeCachedItems(generation);
+    });
+    _queuedSave = (run: run, generation: generation);
     // Keep the chain usable after a failed write instead of poisoning it.
     _saveChain = run.catchError((_) {});
     return run;
   }
+
+  /// The save link waiting behind [_saveChain]; see [_saveCachedItems].
+  ({Future<void> run, int generation})? _queuedSave;
 
   /// Lazily-built temp membership reconciler — shares this provider's
   /// preparation service so registration rides the same op queue.
@@ -1585,14 +1616,10 @@ class FeedProvider extends ChangeNotifier {
           if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
       },
       limit: limit,
-      fullTextFor: (feedUrl) {
-        for (final sub in subscriptions.subscriptions) {
-          if (sub.url == feedUrl) {
-            return sub.fullTextEnabled ?? settings.autoFullText;
-          }
-        }
-        return settings.autoFullText;
-      },
+      fullTextFor: (feedUrl) => subscriptions.effectiveFullText(
+        feedUrl,
+        autoFullText: settings.autoFullText,
+      ),
       epoch: recordEpoch,
     );
     // Lifecycle hygiene rides the same pass: whatever membership just
@@ -1696,6 +1723,7 @@ class FeedProvider extends ChangeNotifier {
   /// in-flight apply phase and fences queued writes.
   void discardStateForReset() {
     _items.clear();
+    _invalidateFilterCache();
     _selectedCategory = null;
     _selectedFeedUrl = null;
     _readState.clear();

@@ -17,23 +17,28 @@ class BookmarkProvider extends ChangeNotifier {
   Map<String, Set<String>> _snapshotFeedsById = {};
   Set<ArticleRef> _snapshotRefs = {};
 
+  /// Normalized ids of legacy ID-only bookmarks (no snapshot proves their
+  /// source); rebuilt with the other indexes.
+  Set<String> _legacyOnlyIds = {};
+
   void _indexSnapshots() {
     _snapshotFeedsById = {};
     for (final item in _savedBookmarks) {
       (_snapshotFeedsById[item.id] ??= {}).add(item.feedUrl);
     }
     _snapshotRefs = {for (final item in _savedBookmarks) ArticleRef.of(item)};
+    _legacyOnlyIds = {
+      for (final id in _bookmarkedItemIds)
+        if (!_snapshotFeedsById.containsKey(id))
+          ArticleIdentity.normalizeItemId(id) ?? id,
+    };
   }
 
   /// Live bookmark claim of one durable record instance: a saved snapshot,
   /// or a legacy ID-only membership (no source known) with the same id.
+  /// Called per item and per record, so both checks are set lookups.
   bool isBookmarkedRef(ArticleRef ref) =>
-      _snapshotRefs.contains(ref) ||
-      _bookmarkedItemIds.any(
-        (id) =>
-            !_snapshotFeedsById.containsKey(id) &&
-            (ArticleIdentity.normalizeItemId(id) ?? id) == ref.id,
-      );
+      _snapshotRefs.contains(ref) || _legacyOnlyIds.contains(ref.id);
 
   /// Bumped each time a durable bookmark-claim mutation lands — strip or
   /// prepare. FeedProvider diffs it in update() so the offline-status map

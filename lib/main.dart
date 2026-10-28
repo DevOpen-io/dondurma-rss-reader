@@ -127,13 +127,12 @@ void main() async {
             preparation: ctx.read<ArticlePreparationService>(),
             // Evaluated at save time — the same per-feed tri-state +
             // global fallback the membership pass uses (#41 consistency).
-            fullTextFor: (feedUrl) {
-              final auto = ctx.read<SettingsProvider>().autoFullText;
-              for (final s in ctx.read<SubscriptionProvider>().subscriptions) {
-                if (s.url == feedUrl) return s.fullTextEnabled ?? auto;
-              }
-              return auto;
-            },
+            fullTextFor: (feedUrl) => ctx
+                .read<SubscriptionProvider>()
+                .effectiveFullText(
+                  feedUrl,
+                  autoFullText: ctx.read<SettingsProvider>().autoFullText,
+                ),
           ),
         ),
         ChangeNotifierProxyProvider3<
@@ -147,14 +146,9 @@ void main() async {
             hostPacer: ctx.read<HostPacer>(),
             backoff: ctx.read<FeedBackoff>(),
           ),
+          // `create` runs first, so update always receives the instance.
           update: (ctx, subscription, settings, bookmark, feed) =>
-              (feed ??
-                    FeedProvider(
-                      preparation: ctx.read<ArticlePreparationService>(),
-                      hostPacer: ctx.read<HostPacer>(),
-                      backoff: ctx.read<FeedBackoff>(),
-                    ))
-                ..update(subscription, settings, bookmark),
+              feed!..update(subscription, settings, bookmark),
         ),
       ],
       child: const MyApp(),

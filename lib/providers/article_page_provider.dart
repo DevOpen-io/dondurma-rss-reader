@@ -1,9 +1,9 @@
+import 'package:flutter/foundation.dart' show mapEquals;
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:html/parser.dart' as html_parser;
 import 'package:html/dom.dart' as html_dom;
 import '../models/feed_item.dart';
-import '../models/feed_subscription.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/article_identity.dart';
@@ -142,6 +142,8 @@ class ArticlePageProvider extends ChangeNotifier {
       record = null;
     }
     if (_disposed || generation != _savedCopyGeneration) return;
+    final previousBody = _savedBody;
+    final previousImages = _localImages;
     _savedBody = null;
     _savedBodyExtracted = false;
     _recordStatus = null;
@@ -195,8 +197,13 @@ class ArticlePageProvider extends ChangeNotifier {
           _savedBody != null;
     }
     _savedCopySettled = true;
-    _cachedDisplayContent = null;
-    _cachedReadingMinutes = null;
+    // Re-render only when the shown body or its local files changed — a
+    // refresh on every page re-activation would otherwise re-parse it.
+    if (_savedBody != previousBody ||
+        !mapEquals(_localImages, previousImages)) {
+      _cachedDisplayContent = null;
+      _cachedReadingMinutes = null;
+    }
     notifyListeners();
   }
 
@@ -232,17 +239,10 @@ class ArticlePageProvider extends ChangeNotifier {
     SettingsProvider settingsProvider,
   ) {
     if (_fullTextActive) return;
-    FeedSubscription? sub;
-    for (final s in subProvider.subscriptions) {
-      if (s.url == item.feedUrl) {
-        sub = s;
-        break;
-      }
-    }
-    // Per-feed tri-state: null → follow global, otherwise the explicit value.
-    final bool effective =
-        sub?.fullTextEnabled ?? settingsProvider.autoFullText;
-    if (effective) {
+    if (subProvider.effectiveFullText(
+      item.feedUrl,
+      autoFullText: settingsProvider.autoFullText,
+    )) {
       activateFullText(automatic: true);
     }
   }
@@ -352,35 +352,37 @@ class ArticlePageProvider extends ChangeNotifier {
   }
 
   String get displayContent {
-    _cachedDisplayContent ??= _preprocessHtml(rawContent);
+    if (_cachedDisplayContent == null) _prepareContent();
     return _cachedDisplayContent!;
   }
 
-  /// Returns the estimated reading minutes, computing & caching on first
-  /// access or after cache invalidation.
+  /// Estimated reading minutes of [rawContent], from the same parse.
   int get readingMinutes {
-    _cachedReadingMinutes ??= _estimateReadingMinutes(rawContent);
+    if (_cachedReadingMinutes == null) _prepareContent();
     return _cachedReadingMinutes!;
   }
 
-  /// Strips HTML tags and counts words to estimate reading time.
-  int _estimateReadingMinutes(String htmlContent) {
-    final doc = html_parser.parse(htmlContent);
-    final text = doc.body?.text ?? '';
-    final words = text.split(RegExp(r'\s+')).where((w) => w.isNotEmpty).length;
+  static final _whitespace = RegExp(r'\s+');
+
+  /// Parses [rawContent] once: reading time from its text as published,
+  /// then the cleaned display HTML.
+  void _prepareContent() {
+    final raw = rawContent;
+    final body = html_parser.parse(raw).body;
+    final words = (body?.text ?? '')
+        .split(_whitespace)
+        .where((w) => w.isNotEmpty)
+        .length;
     // Average reading speed: ~200 words/minute
-    return (words / 200).ceil();
+    _cachedReadingMinutes = (words / 200).ceil();
+    _cachedDisplayContent = body == null ? raw : _preprocessHtml(body);
   }
 
   // ---------------------------------------------------------------------------
   // HTML pre-processing
   // ---------------------------------------------------------------------------
 
-  String _preprocessHtml(String htmlContent) {
-    final doc = html_parser.parse(htmlContent);
-    final body = doc.body;
-    if (body == null) return htmlContent;
-
+  String _preprocessHtml(html_dom.Element body) {
     _stripInlineStyles(body);
     _removeAdContent(body);
     _removeEmptyElements(body);
@@ -442,6 +444,17 @@ class ArticlePageProvider extends ChangeNotifier {
     caseSensitive: false,
   );
 
+  static const _adTextTags = {
+    'div',
+    'section',
+    'aside',
+    'p',
+    'span',
+    'h2',
+    'h3',
+    'h4',
+  };
+
   void _removeAdContent(html_dom.Element parent) {
     for (final el in parent.querySelectorAll('*').toList()) {
       final cls = el.attributes['class'] ?? '';
@@ -451,17 +464,7 @@ class ArticlePageProvider extends ChangeNotifier {
         continue;
       }
 
-      final tag = el.localName ?? '';
-      if ({
-        'div',
-        'section',
-        'aside',
-        'p',
-        'span',
-        'h2',
-        'h3',
-        'h4',
-      }.contains(tag)) {
+      if (_adTextTags.contains(el.localName)) {
         final text = el.text.trim();
         if (text.length < 200 && _adTextPattern.hasMatch(text)) {
           el.remove();
@@ -525,17 +528,20 @@ class ArticlePageProvider extends ChangeNotifier {
     }
   }
 
+  static final _scheme = RegExp(r'^https?://');
+  static final _sizeSuffix = RegExp(r'-\d+x\d+(?=\.\w+$)');
+
   String _normalizeImageUrl(String url) {
     var u = url.split('?').first;
-    u = u.replaceFirst(RegExp(r'^https?://'), '');
-    u = u.replaceAll(RegExp(r'-\d+x\d+(?=\.\w+$)'), '');
+    u = u.replaceFirst(_scheme, '');
+    u = u.replaceAll(_sizeSuffix, '');
     return u.toLowerCase();
   }
 
   void _removeImageAndWrapper(html_dom.Element img) {
     final parent = img.parent;
     if (parent != null &&
-        {'figure', 'picture', 'a'}.contains(parent.localName) &&
+        const {'figure', 'picture', 'a'}.contains(parent.localName) &&
         parent.getElementsByTagName('img').length <= 1) {
       parent.remove();
     } else {
@@ -589,7 +595,7 @@ class ArticlePageProvider extends ChangeNotifier {
   bool _isImageNode(html_dom.Node node) {
     if (node is! html_dom.Element) return false;
     if (node.localName == 'img') return true;
-    if ({'figure', 'picture', 'a', 'div'}.contains(node.localName)) {
+    if (const {'figure', 'picture', 'a', 'div'}.contains(node.localName)) {
       final imgs = node.getElementsByTagName('img');
       if (imgs.isNotEmpty) {
         final nonImgText = node.text.trim();

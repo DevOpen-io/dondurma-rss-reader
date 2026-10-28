@@ -60,6 +60,16 @@ class SubscriptionProvider extends ChangeNotifier {
   /// All current feed subscriptions.
   List<FeedSubscription> get subscriptions => _subscriptions;
 
+  /// Whether [feedUrl] reads full text: the feed's tri-state
+  /// `fullTextEnabled`, where null (and an unknown feed) follows
+  /// [autoFullText]. The single source of this rule.
+  bool effectiveFullText(String feedUrl, {required bool autoFullText}) {
+    for (final s in _subscriptions) {
+      if (s.url == feedUrl) return s.fullTextEnabled ?? autoFullText;
+    }
+    return autoFullText;
+  }
+
   /// The union of categories derived from subscriptions and standalone
   /// custom (possibly empty) categories.
   Set<String> get categories {
@@ -236,14 +246,9 @@ class SubscriptionProvider extends ChangeNotifier {
       // a default here would write the box on every such build.
       return _defaultCategoryIcon;
     }
-
-    final resolvedIcon = _resolveCategoryIcon(storedIcon);
-    final normalizedStoredValue = _storedValueForIcon(resolvedIcon);
-    if (storedIcon != normalizedStoredValue) {
-      _categoryIcons[category] = normalizedStoredValue;
-      _saveCategoryIcons();
-    }
-    return resolvedIcon;
+    // Numeric values were normalized on load; an unknown codePoint (e.g. a
+    // digit typed as an emoji) renders the default without a write here.
+    return _resolveCategoryIcon(storedIcon);
   }
 
   /// Stores the first grapheme cluster of [emoji] as the category icon.
@@ -369,6 +374,12 @@ class SubscriptionProvider extends ChangeNotifier {
     );
   }
 
+  /// Canonical URLs of current subscriptions, built once per batch instead
+  /// of re-normalizing every subscription for every imported feed.
+  Set<String> _canonicalFeedUrls() => {
+    for (final s in _subscriptions) ArticleIdentity.normalizeFeedUrl(s.url),
+  };
+
   /// URLs of subscriptions whose canonical form collides with another
   /// subscription — i.e. legacy duplicates added before normalization.
   Set<String> get duplicateFeedUrls {
@@ -407,8 +418,9 @@ class SubscriptionProvider extends ChangeNotifier {
     List<({String url, String name, String category})> feeds,
   ) async {
     bool changed = false;
+    final known = _canonicalFeedUrls();
     for (final f in feeds) {
-      if (hasFeedUrl(f.url)) continue;
+      if (!known.add(ArticleIdentity.normalizeFeedUrl(f.url))) continue;
       _subscriptions.add(
         FeedSubscription(url: f.url, name: f.name, category: f.category),
       );
@@ -507,8 +519,9 @@ class SubscriptionProvider extends ChangeNotifier {
   Future<int> importFeeds(List<FeedSubscription> feeds) async {
     int added = 0;
     bool newIcons = false;
+    final known = _canonicalFeedUrls();
     for (final feed in feeds) {
-      if (!hasFeedUrl(feed.url)) {
+      if (known.add(ArticleIdentity.normalizeFeedUrl(feed.url))) {
         _subscriptions.add(feed);
         added++;
         if (!_categoryIcons.containsKey(feed.category)) {

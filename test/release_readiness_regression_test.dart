@@ -323,6 +323,41 @@ void main() {
     expect(requests, [item.link]);
   });
 
+  test('legacy id-only bookmarks claim every source with that id', () async {
+    await Hive.box('bookmarks').put('bookmarkedItemIds', [
+      'legacy-guid',
+      _article().id,
+    ]);
+    await seedBookmark();
+    final bookmarks = BookmarkProvider(preparation: preparation);
+    addTearDown(bookmarks.dispose);
+    await bookmarks.restoration;
+
+    // No snapshot proves a source, so any instance of the id is claimed.
+    expect(bookmarks.isBookmarkedRef(ArticleRef('a', 'legacy-guid')), isTrue);
+    expect(bookmarks.isBookmarkedRef(ArticleRef('b', 'legacy-guid')), isTrue);
+    // A snapshot-backed id claims only its own source.
+    expect(bookmarks.isBookmarkedRef(ArticleRef.of(_article())), isTrue);
+    expect(
+      bookmarks.isBookmarkedRef(ArticleRef('other-feed', _article().id)),
+      isFalse,
+    );
+    expect(bookmarks.isBookmarkedRef(ArticleRef('a', 'unknown')), isFalse);
+  });
+
+  test('refreshing an unchanged saved copy keeps the prepared body', () async {
+    await seedMedia(_article().id, ready: true);
+    final page = ArticlePageProvider(item: _article());
+    addTearDown(page.dispose);
+    await page.loadSavedCopy(records: records, media: media);
+    final first = page.displayContent;
+    expect(page.readingMinutes, 1);
+
+    await page.refreshSavedCopy(records: records, media: media);
+    // Same record, same local files: no re-parse of the article body.
+    expect(identical(page.displayContent, first), isTrue);
+  });
+
   test('factory reset drops the bookmark claim on durable records', () async {
     await seedBookmark();
     final bookmarks = BookmarkProvider(preparation: preparation);
