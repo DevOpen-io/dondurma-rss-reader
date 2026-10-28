@@ -119,9 +119,11 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     }
   }
 
+  /// The active tab's feeds after category and search filters, most
+  /// popular first. Always a new list — sorting never reorders the source.
   List<SuggestedFeed> get _displayedFeeds {
     var feeds = _activeCategory == null
-        ? _activeFeeds
+        ? List.of(_activeFeeds)
         : _activeFeeds.where((f) => f.category == _activeCategory).toList();
     if (_searchQuery.isNotEmpty) {
       feeds = feeds
@@ -391,6 +393,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
     final hasContent = !_activeIsLoading && _activeFeeds.isNotEmpty;
+    final displayed = _displayedFeeds;
 
     return Scaffold(
       appBar: AppBar(
@@ -424,7 +427,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
           if (hasContent)
             ExploreFilterBar(
               selectedCategory: _activeCategory,
-              totalCount: _displayedFeeds.length,
+              totalCount: displayed.length,
               onTap: _openCategorySheet,
               colorScheme: colorScheme,
               l10n: l10n,
@@ -436,7 +439,7 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
                 ? const ExploreErrorState()
                 : Builder(
                     builder: (context) {
-                      final feeds = _displayedFeeds;
+                      final feeds = displayed;
                       if (feeds.isEmpty) {
                         return Center(
                           child: Text(

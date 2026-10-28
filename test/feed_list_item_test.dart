@@ -91,6 +91,26 @@ void main() {
     expect(find.textContaining('…', findRichText: true), findsWidgets);
   });
 
+  testWidgets('drag frames move the card without rebuilding it', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrap(buildItem()));
+    await tester.pumpAndSettle();
+    final card = find.byWidgetPredicate(
+      (w) => w.runtimeType.toString() == '_ArticleCard',
+    );
+    final before = tester.widget(card);
+
+    final gesture = await tester.startGesture(tester.getCenter(card));
+    await gesture.moveBy(const Offset(20, 0));
+    await gesture.moveBy(const Offset(20, 0));
+    await tester.pump();
+    expect(identical(tester.widget(card), before), isTrue);
+
+    await gesture.up();
+    await tester.pumpAndSettle();
+  });
+
   testWidgets('Uncategorized items show no category segment', (tester) async {
     await tester.pumpWidget(wrap(buildItem(category: 'Uncategorized')));
     await tester.pumpAndSettle();

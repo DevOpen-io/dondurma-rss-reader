@@ -255,7 +255,10 @@ class SuggestedFeedTile extends StatelessWidget {
     final category = feed.category;
     final domain = feed.domain;
 
-    final isSubscribed = context.watch<SubscriptionProvider>().hasFeedUrl(url);
+    // Rebuild only when this feed's subscription state flips.
+    final isSubscribed = context.select<SubscriptionProvider, bool>(
+      (s) => s.hasFeedUrl(url),
+    );
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),

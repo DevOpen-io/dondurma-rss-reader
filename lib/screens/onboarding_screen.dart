@@ -257,11 +257,13 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     return Scaffold(
       body: Stack(
         children: [
-          AnimatedBuilder(
-            animation: _bgController,
-            builder: (context, child) => CustomPaint(
+          // The painter repaints from the controller directly, inside its
+          // own layer: the onboarding content above is neither rebuilt nor
+          // repainted on each animation frame.
+          RepaintBoundary(
+            child: CustomPaint(
               painter: _BlobPainter(
-                t: _bgController.value,
+                animation: _bgController,
                 color: colorScheme.primary,
                 subtle: isDesktop,
               ),
@@ -638,21 +640,22 @@ class _CategoryChip extends StatelessWidget {
 }
 
 class _BlobPainter extends CustomPainter {
-  final double t;
+  final Animation<double> animation;
   final Color color;
 
   /// Desktop: much smaller, fainter glows — the giant animated circles that
   /// suit a phone overwhelm a large window.
   final bool subtle;
 
-  const _BlobPainter({
-    required this.t,
+  _BlobPainter({
+    required this.animation,
     required this.color,
     this.subtle = false,
-  });
+  }) : super(repaint: animation);
 
   @override
   void paint(Canvas canvas, Size size) {
+    final t = animation.value;
     final alpha = subtle ? 0.035 : 0.07;
     final paint = Paint()..color = color.withValues(alpha: alpha);
     final s = subtle ? 0.5 : 1.0;
@@ -674,5 +677,7 @@ class _BlobPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant _BlobPainter old) =>
-      old.t != t || old.subtle != subtle;
+      old.animation != animation ||
+      old.color != color ||
+      old.subtle != subtle;
 }

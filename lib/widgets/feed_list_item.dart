@@ -110,7 +110,10 @@ class _FeedListItemState extends State<FeedListItem>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   Animation<double>? _snapBackAnimation;
-  double _dragExtent = 0.0;
+
+  /// Horizontal swipe offset. Drag frames update only the translation and
+  /// the swipe background — the card itself is built once per state change.
+  final _drag = ValueNotifier<double>(0);
   bool _actionTriggered = false;
 
   @override
@@ -122,9 +125,7 @@ class _FeedListItemState extends State<FeedListItem>
           duration: const Duration(milliseconds: 250),
         )..addListener(() {
           if (_snapBackAnimation != null) {
-            setState(() {
-              _dragExtent = _snapBackAnimation!.value;
-            });
+            _drag.value = _snapBackAnimation!.value;
           }
         });
   }
@@ -132,6 +133,7 @@ class _FeedListItemState extends State<FeedListItem>
   @override
   void dispose() {
     _controller.dispose();
+    _drag.dispose();
     super.dispose();
   }
 
@@ -140,18 +142,15 @@ class _FeedListItemState extends State<FeedListItem>
     final prev = _actionTriggered;
     final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
     final threshold = width * 0.25;
-    setState(() {
-      _dragExtent += details.primaryDelta!;
-    });
-    if (!prev && _dragExtent.abs() > threshold) {
+    final extent = _drag.value + details.primaryDelta!;
+    if (!prev && extent.abs() > threshold) {
       _actionTriggered = true;
       HapticFeedback.mediumImpact();
-      setState(() {});
-    } else if (prev && _dragExtent.abs() <= threshold) {
+    } else if (prev && extent.abs() <= threshold) {
       _actionTriggered = false;
       HapticFeedback.selectionClick();
-      setState(() {});
     }
+    _drag.value = extent;
   }
 
   void _onHorizontalDragEnd(DragEndDetails details) {
@@ -159,21 +158,21 @@ class _FeedListItemState extends State<FeedListItem>
     final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
     final threshold = width * 0.25;
     final velocity = details.primaryVelocity ?? 0.0;
+    final extent = _drag.value;
 
-    if (_dragExtent > 0 && (_dragExtent > threshold || velocity > 1500)) {
+    if (extent > 0 && (extent > threshold || velocity > 1500)) {
       unawaited(context.read<FeedProvider>().toggleReadStatus(widget.item));
-    } else if (_dragExtent < 0 &&
-        (_dragExtent < -threshold || velocity < -1500)) {
+    } else if (extent < 0 && (extent < -threshold || velocity < -1500)) {
       unawaited(confirmBookmarkToggle(context, widget.item));
     }
 
     _actionTriggered = false;
     if (MediaQuery.disableAnimationsOf(context)) {
-      setState(() => _dragExtent = 0);
+      _drag.value = 0;
       return;
     }
     _snapBackAnimation = Tween<double>(
-      begin: _dragExtent,
+      begin: extent,
       end: 0.0,
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
     _controller.forward(from: 0.0);
@@ -181,8 +180,6 @@ class _FeedListItemState extends State<FeedListItem>
 
   @override
   Widget build(BuildContext context) {
-    final isSwipingRight = _dragExtent > 0;
-
     return Selector2<
       FeedProvider,
       BookmarkProvider,
@@ -245,32 +242,36 @@ class _FeedListItemState extends State<FeedListItem>
           },
           child: Container(
             margin: const EdgeInsets.only(bottom: 10.0),
-            child: Stack(
-              children: [
-                if (_dragExtent != 0)
-                  _SwipeBackground(
-                    isSwipingRight: isSwipingRight,
-                    isRead: isRead,
-                    isBookmarked: isBookmarked,
-                    actionTriggered: _actionTriggered,
-                  ),
-                GestureDetector(
-                  onHorizontalDragUpdate: _onHorizontalDragUpdate,
-                  onHorizontalDragEnd: _onHorizontalDragEnd,
-                  child: Transform.translate(
-                    offset: Offset(_dragExtent, 0),
-                    child: _ArticleCard(
-                      item: widget.item,
+            child: ValueListenableBuilder<double>(
+              valueListenable: _drag,
+              child: _ArticleCard(
+                item: widget.item,
+                isRead: isRead,
+                isBookmarked: isBookmarked,
+                status: status,
+                scopeLabel: scopeLabel,
+                waitLabel: waitLabel,
+                navigationItems: widget.navigationItems,
+              ),
+              builder: (context, extent, card) => Stack(
+                children: [
+                  if (extent != 0)
+                    _SwipeBackground(
+                      isSwipingRight: extent > 0,
                       isRead: isRead,
                       isBookmarked: isBookmarked,
-                      status: status,
-                      scopeLabel: scopeLabel,
-                      waitLabel: waitLabel,
-                      navigationItems: widget.navigationItems,
+                      actionTriggered: _actionTriggered,
+                    ),
+                  GestureDetector(
+                    onHorizontalDragUpdate: _onHorizontalDragUpdate,
+                    onHorizontalDragEnd: _onHorizontalDragEnd,
+                    child: Transform.translate(
+                      offset: Offset(extent, 0),
+                      child: card,
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         );
