@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
@@ -76,5 +78,17 @@ void main() {
     state.prune(live: [live], cap: 3);
     expect(state.isRead(live), isTrue);
     expect(state.toStored()['refs'], hasLength(1));
+  });
+
+  test('the stored format is the JSON-encoded instance key', () {
+    final key = jsonEncode(['https://a.test/rss', 'x']);
+    final state = ReadState.migrate(
+      legacyIds: const [],
+      stored: {
+        'refs': [key, 'not-a-key'],
+      },
+    );
+    expect(state.isRead(_item('a', 'x')), isTrue);
+    expect(state.toStored()['refs'], [key]);
   });
 }

@@ -169,6 +169,33 @@ void main() {
     feed.refreshProgress.removeListener(listener);
   }
 
+  test('read marks are written in one batch, not on every tap', () async {
+    FeedItem article(String id) => FeedItem(
+      id: id,
+      siteName: 'Test',
+      title: id,
+      description: '',
+      timeAgo: '',
+      siteIcon: Icons.rss_feed,
+      iconColor: Colors.blue,
+      iconBackgroundColor: Colors.white,
+      feedUrl: 'https://fast.test/rss',
+    );
+    final box = Hive.box('feeds');
+    await feed.markAsRead(article('r1'));
+    await feed.markAsRead(article('r2'));
+    expect(feed.isRead(article('r1')), isTrue);
+    expect(box.get('readItemRefs'), isNull);
+
+    await feed.flushReadStates();
+    expect((box.get('readItemRefs') as Map)['refs'], hasLength(2));
+
+    // Without an explicit flush the batch lands after a short quiet period.
+    await feed.toggleReadStatus(article('r2'));
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    expect((box.get('readItemRefs') as Map)['refs'], hasLength(1));
+  });
+
   test(
     'fast result publishes once while slow source remains blocked',
     () async {
@@ -339,6 +366,7 @@ void main() {
         feed.filteredItems.every((i) => i.isRead && i.isBookmarked),
         isTrue,
       );
+      await feed.flushReadStates();
       expect(
         (Hive.box('feeds').get('readItemRefs') as Map)['refs'],
         hasLength(2),

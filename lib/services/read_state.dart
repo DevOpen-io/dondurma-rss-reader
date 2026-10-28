@@ -17,7 +17,10 @@ class ReadState {
   }) {
     if (stored == null) return ReadState._({}, legacyIds.toSet());
     return ReadState._(
-      {for (final ref in stored['refs'] as List? ?? const []) ref.toString()},
+      {
+        for (final ref in stored['refs'] as List? ?? const [])
+          ?_decode(ref.toString()),
+      },
       {
         for (final id in stored['pendingLegacy'] as List? ?? const [])
           id.toString(),
@@ -25,12 +28,27 @@ class ReadState {
     );
   }
 
-  final Set<String> _refs;
+  /// Marks held as records in memory — checked per item on every filter
+  /// pass — and JSON-encoded only on disk.
+  final Set<(String, String)> _refs;
   final Set<String> _pending;
 
-  /// Typed, collision-free instance key.
+  /// Typed, collision-free instance key as stored on disk.
   static String keyOf(String feedUrl, String id) => jsonEncode([feedUrl, id]);
-  static String _key(FeedItem item) => keyOf(item.feedUrl, item.id);
+  static (String, String) _key(FeedItem item) => (item.feedUrl, item.id);
+
+  static (String, String)? _decode(String stored) {
+    try {
+      final parts = jsonDecode(stored);
+      if (parts is List && parts.length == 2) {
+        final [feedUrl, id] = parts;
+        if (feedUrl is String && id is String) return (feedUrl, id);
+      }
+    } on FormatException {
+      // Not an instance key — dropped.
+    }
+    return null;
+  }
 
   Set<String> get pendingLegacy => Set.unmodifiable(_pending);
 
@@ -69,7 +87,7 @@ class ReadState {
 
   Map<String, Object> toStored() => {
     'version': 1,
-    'refs': _refs.toList(),
+    'refs': [for (final (feedUrl, id) in _refs) keyOf(feedUrl, id)],
     'pendingLegacy': _pending.toList(),
   };
 }

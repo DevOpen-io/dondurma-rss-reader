@@ -149,11 +149,18 @@ class FeedItem {
   @override
   int get hashCode => ArticleRef.of(this).hashCode;
 
-  /// Decodes HTML entities (e.g. `&#8216;`) in [text].
+  static final _entity = RegExp(
+    r'&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]*);',
+  );
+
+  /// Decodes HTML entities (e.g. `&#8216;`) left in older caches. Stored
+  /// text is normally decoded already, so the HTML parse runs only when an
+  /// entity remains, and `<` is escaped first so literal angle brackets
+  /// stay text instead of being dropped as tags.
   static String _decodeHtml(String text) {
-    if (text.isEmpty) return text;
+    if (!_entity.hasMatch(text)) return text;
     try {
-      return parse(text).documentElement?.text ?? text;
+      return parse(text.replaceAll('<', '&lt;')).documentElement?.text ?? text;
     } catch (_) {
       return text;
     }

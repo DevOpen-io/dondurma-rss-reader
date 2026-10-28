@@ -638,6 +638,28 @@ class FeedProvider extends ChangeNotifier {
   /// keep its read mark (unlike a hard-pruned set, which forgets it).
   static const int _readIdsHardCap = 10000;
 
+  /// Pending batched write of read marks; see [_scheduleReadStateSave].
+  Timer? _readSaveTimer;
+
+  /// Read marks change on every opened article and each write serializes
+  /// the whole set, so user marks are batched into one write after a quiet
+  /// second. [flushReadStates] writes early (app paused, dispose).
+  void _scheduleReadStateSave() {
+    _readSaveTimer?.cancel();
+    _readSaveTimer = Timer(const Duration(seconds: 1), () {
+      _readSaveTimer = null;
+      unawaited(_saveReadStates());
+    });
+  }
+
+  /// Writes a pending batch of read marks now.
+  Future<void> flushReadStates() async {
+    if (_readSaveTimer == null) return;
+    _readSaveTimer!.cancel();
+    _readSaveTimer = null;
+    await _saveReadStates();
+  }
+
   Future<void> _saveReadStates() async {
     // Bounded-growth path: above the cap keep marks only for articles still
     // reachable (current items or bookmarks). Beyond the cap, forgetting
@@ -959,7 +981,7 @@ class FeedProvider extends ChangeNotifier {
     if (_readState.mark(item, read: true)) {
       _invalidateFilterCache();
       notifyListeners();
-      await _saveReadStates();
+      _scheduleReadStateSave();
     }
   }
 
@@ -973,7 +995,7 @@ class FeedProvider extends ChangeNotifier {
     if (!changed) return;
     _invalidateFilterCache();
     notifyListeners();
-    await _saveReadStates();
+    _scheduleReadStateSave();
   }
 
   /// Toggles the read/unread state of this source instance.
@@ -981,7 +1003,7 @@ class FeedProvider extends ChangeNotifier {
     _readState.mark(item, read: !_readState.isRead(item));
     _invalidateFilterCache();
     notifyListeners();
-    await _saveReadStates();
+    _scheduleReadStateSave();
   }
 
   // ---------------------------------------------------------------------------
@@ -1677,6 +1699,8 @@ class FeedProvider extends ChangeNotifier {
     _selectedCategory = null;
     _selectedFeedUrl = null;
     _readState.clear();
+    _readSaveTimer?.cancel();
+    _readSaveTimer = null;
     _statusGeneration++;
     _articleStatuses = const {};
     _articleStatusesLoaded = false;
@@ -1721,6 +1745,7 @@ class FeedProvider extends ChangeNotifier {
 
   @override
   void dispose() {
+    unawaited(flushReadStates());
     _disposed = true;
     _cacheGeneration++;
     _refreshGeneration++;

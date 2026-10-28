@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flex_color_scheme/flex_color_scheme.dart' show FlexScheme;
@@ -311,10 +312,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       // instead of the stale cache. The refresh is throttled in the provider.
       feed.resumeAutoRefresh();
       feed.maybeRefreshOnResume();
-    } else if (state == AppLifecycleState.paused) {
-      // Backgrounded: stop the foreground polling loop so it doesn't drain
-      // battery/data while away — WorkManager handles background fetching.
-      feed.pauseAutoRefresh();
+    } else {
+      // Leaving the foreground: write batched read marks before the OS may
+      // end the process.
+      unawaited(feed.flushReadStates());
+      if (state == AppLifecycleState.paused) {
+        // Stop the foreground polling loop so it doesn't drain battery/data
+        // while away — WorkManager handles background fetching.
+        feed.pauseAutoRefresh();
+      }
     }
   }
 

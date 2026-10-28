@@ -326,6 +326,9 @@ void main() {
 
       expect(feed.isRead(item), isTrue);
       expect(find.byType(AlertDialog), findsNothing);
+      // Read marks are written in a batch; start it before the test ends
+      // (file I/O cannot complete inside the fake-async zone).
+      unawaited(feed.flushReadStates());
       handle.dispose();
     });
   });
@@ -443,6 +446,9 @@ void main() {
       await tester.scrollUntilVisible(target, 200);
       final rendered = tester.widget<FeedListItem>(target);
       expect(rendered.item.isRead, isTrue);
+      // Read marks are written in a batch; start it before the test ends
+      // (file I/O cannot complete inside the fake-async zone).
+      unawaited(feed.flushReadStates());
     });
   });
 
