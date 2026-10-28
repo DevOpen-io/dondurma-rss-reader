@@ -401,6 +401,12 @@ void main() {
       final size = tester.getSize(target.first);
       expect(size.width, greaterThanOrEqualTo(48));
       expect(size.height, greaterThanOrEqualTo(48));
+      // The larger target must not grow the 56dp category header.
+      final header = find.ancestor(
+        of: find.text('Tech'),
+        matching: find.byType(ListTile),
+      );
+      expect(tester.getSize(header).height, 56);
     });
   });
 
