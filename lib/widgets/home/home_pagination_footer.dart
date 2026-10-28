@@ -1,28 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/feed_provider.dart';
 import 'feed_list_skeleton.dart';
 
+/// "Load more" / "all caught up" row under the article list. Selects its
+/// own inputs, so the list around it does not rebuild for paging state.
 class HomePaginationFooter extends StatelessWidget {
-  const HomePaginationFooter({super.key, required this.provider});
-
-  final FeedProvider provider;
+  const HomePaginationFooter({super.key});
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    if (provider.items.isEmpty) return const SizedBox.shrink();
+    final (hasItems, isLoadingMore, hasMoreItems) = context
+        .select<FeedProvider, (bool, bool, bool)>(
+          (p) => (p.items.isNotEmpty, p.isLoadingMore, p.hasMoreItems),
+        );
+    if (!hasItems) return const SizedBox.shrink();
 
-    if (provider.isLoadingMore) {
+    if (isLoadingMore) {
       return const FeedListSkeleton(itemCount: 2, showHeader: false);
     }
 
-    if (provider.hasMoreItems) {
+    if (hasMoreItems) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0),
         child: Center(
           child: TextButton.icon(
-            onPressed: provider.loadMoreItems,
+            onPressed: context.read<FeedProvider>().loadMoreItems,
             icon: const Icon(Icons.expand_more),
             label: Text(l10n.loadMore),
           ),

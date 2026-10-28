@@ -6,6 +6,7 @@ import '../models/feed_item.dart';
 import '../models/refresh_progress.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
+import '../services/feed_date_groups.dart';
 import '../widgets/app_drawer.dart';
 import '../widgets/anchored_feed_list.dart';
 import '../widgets/feed_list_item.dart';
@@ -112,7 +113,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
 
-    entries.add(_WidgetEntry(HomePaginationFooter(provider: provider)));
+    entries.add(const _WidgetEntry(HomePaginationFooter()));
 
     if (!hasAnyItems && !provider.isLoading) {
       entries.add(
@@ -361,11 +362,24 @@ class _HomeScreenState extends State<HomeScreen> {
         },
       ),
       body: _selectedIndex == 0
-          ? Consumer<FeedProvider>(
-              builder: (context, provider, _) {
-                final todayItems = provider.todayItems;
-                final yesterdayItems = provider.yesterdayItems;
-                final olderItems = provider.olderItems;
+          ? Selector<FeedProvider, _FeedTabInputs>(
+              selector: (_, p) => (
+                groups: p.dateGroups,
+                isLoading: p.isLoading,
+                isOffline: p.isOffline,
+                hasItems: p.items.isNotEmpty,
+                emptyState: (
+                  p.selectedCategory,
+                  p.hasActiveSheetFilter,
+                  p.searchQuery,
+                  p.showUnreadOnly,
+                ),
+              ),
+              builder: (context, inputs, _) {
+                final provider = context.read<FeedProvider>();
+                final todayItems = inputs.groups.today;
+                final yesterdayItems = inputs.groups.yesterday;
+                final olderItems = inputs.groups.older;
                 return Column(
                   children: [
                     // ── Search history suggestions ────────────────────────────
@@ -585,6 +599,17 @@ class _HomeScreenState extends State<HomeScreen> {
 // Virtual list descriptors — lightweight data objects used to build the feed
 // list. Widgets are constructed by itemBuilder only when rows scroll into view.
 // ---------------------------------------------------------------------------
+
+/// Everything the feed tab's list renders from [FeedProvider]. Rows select
+/// their own read/bookmark/offline state, so a notification that changes
+/// none of these (sync stamps, status reloads) leaves the list alone.
+typedef _FeedTabInputs = ({
+  FeedDateGroups groups,
+  bool isLoading,
+  bool isOffline,
+  bool hasItems,
+  (String?, bool, String, bool) emptyState,
+});
 
 sealed class _FeedListEntry {
   const _FeedListEntry();

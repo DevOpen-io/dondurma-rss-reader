@@ -115,10 +115,11 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     }
   }
 
-  FeedItem? _resolveSelected(FeedDateGroups groups) {
+  /// The selected article among [items] (the current list), else from the
+  /// whole cache or the bookmarks.
+  FeedItem? _resolveSelected(List<FeedItem> items) {
     final id = _selectedArticleId;
     if (id == null) return null;
-    final items = _currentItems(groups);
     for (final item in items) {
       if ((item.feedUrl, item.id) == id) return item;
     }
@@ -152,7 +153,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
 
   void _toggleFocusMode() {
     final groups = context.read<FeedProvider>().dateGroups;
-    if (!_focusMode && _resolveSelected(groups) == null) return;
+    if (!_focusMode && _resolveSelected(_currentItems(groups)) == null) return;
     setState(() => _focusMode = !_focusMode);
   }
 
@@ -219,7 +220,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
     context.watch<BookmarkProvider>();
 
     final items = _currentItems(groups);
-    final selected = _resolveSelected(groups);
+    final selected = _resolveSelected(items);
     final selectedIndex = selected == null
         ? -1
         : items.indexWhere(

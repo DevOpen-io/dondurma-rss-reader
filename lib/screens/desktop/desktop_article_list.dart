@@ -145,7 +145,21 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
-    final provider = context.watch<FeedProvider>();
+    final provider = context.read<FeedProvider>();
+    // Rebuild for what the toolbar, banner and empty state show; rows
+    // select their own read/bookmark/offline state, so status-only
+    // notifications leave the pane alone.
+    context.select<FeedProvider, Object>(
+      (p) => (
+        p.searchQuery,
+        p.hasActiveSheetFilter,
+        p.selectedCategory,
+        p.showUnreadOnly,
+        p.isOffline,
+        p.isLoading,
+        p.items.isNotEmpty,
+      ),
+    );
     _rowIds = articleRowIds(widget.items);
     final remaining = _rowIds.toSet();
     _tileKeys.removeWhere((id, _) => !remaining.contains(id));
@@ -355,7 +369,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                           isArticle: (index) => index < widget.items.length,
                           itemBuilder: (context, index) {
                             if (index == widget.items.length) {
-                              return HomePaginationFooter(provider: provider);
+                              return const HomePaginationFooter();
                             }
                             final item = widget.items[index];
                             return _DesktopArticleTile(

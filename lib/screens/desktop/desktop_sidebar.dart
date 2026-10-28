@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_subscription.dart';
-import '../../providers/bookmark_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
 import '../../utils/app_toast.dart';
@@ -102,12 +101,8 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
           // All Articles is pinned above the scrollable category/feed list
           // so it stays reachable no matter how deep the tree scrolls.
           Expanded(
-            child: Consumer3<
-              FeedProvider,
-              SubscriptionProvider,
-              BookmarkProvider
-            >(
-              builder: (context, feed, subs, bookmarks, _) {
+            child: Consumer2<FeedProvider, SubscriptionProvider>(
+              builder: (context, feed, subs, _) {
                 final categories = subs.categoriesOrdered;
                 final nonUncategorized = categories
                     .where((c) => c != 'Uncategorized')

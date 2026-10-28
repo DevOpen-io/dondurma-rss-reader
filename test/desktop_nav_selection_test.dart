@@ -14,11 +14,13 @@ import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
+import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
 import 'package:ice_cream_rss_reader/models/refresh_progress.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_home_screen.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
 import 'package:ice_cream_rss_reader/screens/home_screen.dart';
 import 'package:ice_cream_rss_reader/utils/platform_caps.dart';
+import 'package:ice_cream_rss_reader/widgets/feed_list_item.dart';
 
 /// Navigation hierarchy regressions:
 /// - a selected feed's parent category gets the ancestor-active indicator
@@ -33,6 +35,13 @@ void main() {
 
   setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('nav_selection');
+    for (final channel in const [
+      MethodChannel('dev.fluttercommunity.plus/connectivity'),
+      MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+    ]) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (_) async => null);
+    }
     Hive.init(tempDir.path);
     await Hive.openBox('settings');
     await Hive.openBox('feeds');
@@ -258,6 +267,85 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('status-only notifications do not rebuild the mobile list', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    // The refresh on first update keeps cached items of subscribed feeds
+    // only; Hive's in-memory view updates synchronously.
+    final box = Hive.box('feeds');
+    box.put(
+      'subscriptions',
+      jsonEncode([
+        FeedSubscription(
+          url: 'https://x/feed',
+          name: 'Feed',
+          category: 'News',
+        ).toJson(),
+      ]),
+    );
+    box.put(
+      'cachedItemsJson',
+      jsonEncode([
+        FeedItem(
+          id: 'row-1',
+          siteName: 'Feed',
+          title: 'Stable row',
+          description: 'body',
+          timeAgo: '',
+          siteIcon: Icons.article,
+          iconColor: Colors.blue,
+          iconBackgroundColor: Colors.white,
+          link: 'https://x/row-1',
+          feedUrl: 'https://x/feed',
+          pubDate: DateTime.now().toUtc(),
+        ).toJson(),
+      ]),
+    );
+    addTearDown(() {
+      // Not awaited: file I/O cannot complete inside the fake-async zone.
+      box.deleteAll(['cachedItemsJson', 'subscriptions']);
+    });
+
+    // The cache decodes via compute(), which completes only when the
+    // provider is created outside the fake-async zone.
+    await tester.runAsync(
+      () => tester.pumpWidget(
+        MultiProvider(
+          providers: providers(),
+          child: MaterialApp(
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const HomeScreen(),
+          ),
+        ),
+      ),
+    );
+    for (
+      var i = 0;
+      i < 100 && find.byType(FeedListItem).evaluate().isEmpty;
+      i++
+    ) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+    final row = find.byType(FeedListItem);
+    expect(row, findsOneWidget);
+    final before = tester.widget(row);
+
+    // Sync stamps and offline-status reloads notify without touching any
+    // list input; the rows must not be rebuilt from scratch for them.
+    // ignore: invalid_use_of_protected_member
+    tester.element(row).read<FeedProvider>().notifyListeners();
+    await tester.pump();
+
+    expect(identical(tester.widget(row), before), isTrue);
+  });
+
   testWidgets('mobile home exposes a single global refresh indicator', (
     tester,
   ) async {
@@ -271,8 +359,7 @@ void main() {
       MultiProvider(
         providers: providers(),
         child: MaterialApp(
-          localizationsDelegates:
-              AppLocalizations.localizationsDelegates,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const HomeScreen(),
         ),
