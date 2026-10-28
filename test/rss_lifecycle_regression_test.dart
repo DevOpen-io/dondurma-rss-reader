@@ -216,8 +216,12 @@ void main() {
         );
     TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
         .setMockMethodCallHandler(const MethodChannel('home_widget'), null);
-    if (await tempDirectory.exists()) {
+    // A late background write can refill the directory mid-delete; leftover
+    // temp files must not fail the suite.
+    try {
       await tempDirectory.delete(recursive: true);
+    } on FileSystemException {
+      // Best-effort cleanup.
     }
   });
 

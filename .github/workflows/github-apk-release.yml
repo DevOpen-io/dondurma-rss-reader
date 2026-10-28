@@ -193,8 +193,9 @@ jobs:
           cp assets/Logo.png AppDir/io.devopen.dondurma.png
           cp assets/Logo.png AppDir/.DirIcon
           # Extracted appimagetool needs no FUSE on the runner.
+          # AppImageKit's releases are gone; appimagetool now ships only as continuous.
           curl -fsSL -o "$RUNNER_TEMP/appimagetool" \
-            https://github.com/AppImage/AppImageKit/releases/download/13/appimagetool-x86_64.AppImage
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
           chmod +x "$RUNNER_TEMP/appimagetool"
           (cd "$RUNNER_TEMP" && ./appimagetool --appimage-extract >/dev/null)
           ARCH=x86_64 "$RUNNER_TEMP/squashfs-root/AppRun" AppDir "dist/$BASENAME-x86_64.AppImage"
