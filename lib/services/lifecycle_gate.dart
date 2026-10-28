@@ -89,6 +89,30 @@ abstract interface class LifecycleGate {
   });
 }
 
+/// Runs [action] as a publication of [ticket]'s era. False when the era is
+/// over, a reset is pending or the lock timed out — the caller's work is
+/// void. Without a [gate] (unit tests) the action simply runs.
+Future<bool> publishInEra(
+  LifecycleGate? gate,
+  LifecycleTicket? ticket,
+  Future<void> Function() action,
+) async {
+  if (gate == null) {
+    await action();
+    return true;
+  }
+  try {
+    await gate.withPublication(ticket!, action);
+    return true;
+  } on StaleLifecycleTicket {
+    return false;
+  } on LifecycleResetPending {
+    return false;
+  } on TimeoutException {
+    return false;
+  }
+}
+
 /// Single-isolate gate for web, where no other isolate or process shares
 /// storage. Same ticket/reset semantics as the native coordinator.
 final class MemoryLifecycleGate implements LifecycleGate {

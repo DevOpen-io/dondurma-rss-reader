@@ -448,6 +448,32 @@ void main() {
     });
   });
 
+  group('stale staging sweep', () {
+    test('lists the pool once per store, not on every access', () async {
+      final store = ArticleMediaStore(root: mediaDir);
+      final stale = DateTime.now().subtract(const Duration(days: 2));
+      const entry = MediaEntry(
+        file: 'm_0000000000000000',
+        byteSize: 1,
+        state: MediaState.ready,
+      );
+      File staleTemp(String name) =>
+          File('${mediaDir.path}/$name.tmp.1_0_0')
+            ..writeAsBytesSync([1])
+            ..setLastModifiedSync(stale);
+
+      final first = staleTemp('m_a');
+      await store.verify(entry);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(first.existsSync(), isFalse);
+
+      final second = staleTemp('m_b');
+      await store.verify(entry);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      expect(second.existsSync(), isTrue);
+    });
+  });
+
   group('sweep — conditional tombstone', () {
     test('an owner claimed between the snapshot and the locked tombstone '
         'mutation survives — the recheck must win', () async {

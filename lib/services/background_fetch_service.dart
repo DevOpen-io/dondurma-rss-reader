@@ -80,22 +80,8 @@ Future<void> runBgFetch() async {
       debugPrint('[BG] reset pending — skipping this pass');
       return;
     }
-    Future<bool> publish(Future<void> Function() action) async {
-      if (gate == null) {
-        await action();
-        return true;
-      }
-      try {
-        await gate.withPublication(ticket!, action);
-        return true;
-      } on StaleLifecycleTicket {
-        return false;
-      } on LifecycleResetPending {
-        return false;
-      } on TimeoutException {
-        return false;
-      }
-    }
+    Future<bool> publish(Future<void> Function() action) =>
+        publishInEra(gate, ticket, action);
 
     await Hive.initFlutter();
     await Future.wait([
@@ -110,9 +96,8 @@ Future<void> runBgFetch() async {
     // Write fences captured with the inputs, not after HTTP: an epoch read
     // late would license old responses into a newer era.
     final cacheEpoch = feedsBox.get(tempCacheEpochKey);
-    final recordEpoch = await ArticleRecordStore.forBox(
-      feedsBox,
-    ).currentEpoch();
+    final records = ArticleRecordStore.forBox(feedsBox);
+    final recordEpoch = await records.currentEpoch();
     // Read-only in this isolate — bookmark ids exclude articles from temp
     // slots so a saved article never consumes a transient one (#37).
     final bookmarksBox = Hive.box('bookmarks');
@@ -186,23 +171,7 @@ Future<void> runBgFetch() async {
     // Shared cooldown policy — deadlines written by the foreground refresher
     // are honored here, and limits hit here are persisted back so the next
     // foreground pass does not re-hammer a rate-limited feed either.
-    final backoff = FeedBackoff();
-    try {
-      // Both writer slots merge — the foreground owns 'feedBackoffUntil',
-      // this isolate owns 'feedBackoffUntil.bg'. Owning separate slots
-      // removes the read-modify-write race on a shared key: no isolate's
-      // snapshot can overwrite the other's.
-      for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-        try {
-          final rawBackoff = feedsBox.get(key);
-          if (rawBackoff is String && rawBackoff.isNotEmpty) {
-            backoff.load(jsonDecode(rawBackoff) as Map<String, dynamic>);
-          }
-        } catch (_) {
-          // One malformed slot must not forfeit the other.
-        }
-      }
-    } catch (_) {}
+    final backoff = FeedBackoff()..loadSlots(feedsBox);
     final validators = <String, dynamic>{};
     try {
       final rawValidators = feedsBox.get('feedValidators');
@@ -299,17 +268,11 @@ Future<void> runBgFetch() async {
       // Merge both slots before writing this isolate's own — the
       // foreground may have recorded a fresher cooldown (or a clear)
       // while this isolate was fetching; merging first keeps the union.
-      for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-        try {
-          final latest = feedsBox.get(key);
-          if (latest is String && latest.isNotEmpty) {
-            backoff.load(jsonDecode(latest) as Map<String, dynamic>);
-          }
-        } catch (_) {
-          // One malformed slot must not forfeit the other — or the write.
-        }
-      }
-      await feedsBox.put('feedBackoffUntil.bg', jsonEncode(backoff.snapshot()));
+      backoff.loadSlots(feedsBox);
+      await feedsBox.put(
+        FeedBackoff.backgroundSlot,
+        jsonEncode(backoff.snapshot()),
+      );
     }).catchError((_) => false);
 
     final allItems = results.expand((result) => result.items).toList();
@@ -344,6 +307,7 @@ Future<void> runBgFetch() async {
       );
       final persisted = await _persistBgCache(
         feedsBox,
+        records,
         settingsBox,
         merged,
         subscriptions,
@@ -402,7 +366,7 @@ Future<void> runBgFetch() async {
       FullTextExtractionService.instance.pacer = pacer;
       FullTextExtractionService.instance.backoff = backoff;
       final preparation = ArticlePreparationService(
-        recordStore: ArticleRecordStore.forBox(feedsBox),
+        recordStore: records,
         hostPacer: pacer,
         backoff: backoff,
       );
@@ -415,19 +379,11 @@ Future<void> runBgFetch() async {
         // task ends, merging both slots first so a concurrent
         // foreground write isn't dropped.
         await publish(() async {
-          for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-            try {
-              final latest = feedsBox.get(key);
-              if (latest is String && latest.isNotEmpty) {
-                backoff.load(jsonDecode(latest) as Map<String, dynamic>);
-              }
-            } catch (_) {
-              // A malformed foreground slot must not suppress this
-              // write — the prep-learned cooldown would be lost.
-            }
-          }
+          // A malformed foreground slot is skipped, never suppressing this
+          // write — the prep-learned cooldown would be lost.
+          backoff.loadSlots(feedsBox);
           await feedsBox.put(
-            'feedBackoffUntil.bg',
+            FeedBackoff.backgroundSlot,
             jsonEncode(backoff.snapshot()),
           );
         }).catchError((_) => false);
@@ -445,6 +401,7 @@ Future<void> runBgFetch() async {
 /// era ended before the snapshot could publish.
 Future<List<FeedItem>?> _persistBgCache(
   Box feedsBox,
+  ArticleRecordStore store,
   Box settingsBox,
   List<FeedItem> items,
   List<FeedSubscription> subscriptions,
@@ -463,7 +420,6 @@ Future<List<FeedItem>?> _persistBgCache(
           ?.cast<String>() ??
       const <String>[];
 
-  final store = ArticleRecordStore.forBox(feedsBox);
   final preparation = ArticlePreparationService(
     recordStore: store,
     hostPacer: pacer,
@@ -502,14 +458,11 @@ Future<List<FeedItem>?> _persistBgCache(
           if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
       },
       limit: limit,
-      fullTextFor: (feedUrl) {
-        for (final sub in subscriptions) {
-          if (sub.url == feedUrl) {
-            return sub.fullTextEnabled ?? autoFullText;
-          }
-        }
-        return autoFullText;
-      },
+      fullTextFor: (feedUrl) => effectiveFullTextFor(
+        subscriptions,
+        feedUrl,
+        autoFullText: autoFullText,
+      ),
       epoch: recordEpoch,
     );
     // Same lifecycle hygiene as the foreground pass — dropped members'

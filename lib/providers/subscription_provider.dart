@@ -60,15 +60,13 @@ class SubscriptionProvider extends ChangeNotifier {
   /// All current feed subscriptions.
   List<FeedSubscription> get subscriptions => _subscriptions;
 
-  /// Whether [feedUrl] reads full text: the feed's tri-state
-  /// `fullTextEnabled`, where null (and an unknown feed) follows
-  /// [autoFullText]. The single source of this rule.
-  bool effectiveFullText(String feedUrl, {required bool autoFullText}) {
-    for (final s in _subscriptions) {
-      if (s.url == feedUrl) return s.fullTextEnabled ?? autoFullText;
-    }
-    return autoFullText;
-  }
+  /// Whether [feedUrl] reads full text; see [effectiveFullTextFor].
+  bool effectiveFullText(String feedUrl, {required bool autoFullText}) =>
+      effectiveFullTextFor(
+        _subscriptions,
+        feedUrl,
+        autoFullText: autoFullText,
+      );
 
   /// The union of categories derived from subscriptions and standalone
   /// custom (possibly empty) categories.

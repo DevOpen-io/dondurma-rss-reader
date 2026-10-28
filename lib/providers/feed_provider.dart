@@ -727,16 +727,7 @@ class FeedProvider extends ChangeNotifier {
   /// concurrent isolates can't lose each other's cooldowns. Loading
   /// merges: later expiries win, newer clears suppress superseded
   /// records.
-  void _loadFeedBackoff() {
-    for (final key in const ['feedBackoffUntil', 'feedBackoffUntil.bg']) {
-      final raw = _box.get(key);
-      if (raw is String && raw.isNotEmpty) {
-        try {
-          _feedBackoff.load(jsonDecode(raw) as Map<String, dynamic>);
-        } catch (_) {}
-      }
-    }
-  }
+  void _loadFeedBackoff() => _feedBackoff.loadSlots(_box);
 
   /// Merge-then-write into this isolate's own slot: a background sync may
   /// have recorded a fresher 429 while this isolate was fetching — folding
@@ -744,7 +735,10 @@ class FeedProvider extends ChangeNotifier {
   /// deadline. The background slot is never written from here.
   void _saveFeedBackoff() {
     _loadFeedBackoff();
-    _box.put('feedBackoffUntil', jsonEncode(_feedBackoff.snapshot()));
+    _box.put(
+      FeedBackoff.foregroundSlot,
+      jsonEncode(_feedBackoff.snapshot()),
+    );
   }
 
   /// Learned per-feed redirect map (`{ canonicalUrl: resolvedUrl }`). A 301'd

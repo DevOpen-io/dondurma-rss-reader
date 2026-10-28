@@ -120,3 +120,17 @@ class FeedSubscription {
     return '${DateTime.now().microsecondsSinceEpoch}-${_epochCounter++}-$random';
   }
 }
+
+/// Whether [feedUrl] reads full text among [subscriptions]: the feed's
+/// tri-state `fullTextEnabled`, where null (and an unknown feed) follows
+/// [autoFullText]. The single source of this rule for every isolate.
+bool effectiveFullTextFor(
+  Iterable<FeedSubscription> subscriptions,
+  String feedUrl, {
+  required bool autoFullText,
+}) {
+  for (final s in subscriptions) {
+    if (s.url == feedUrl) return s.fullTextEnabled ?? autoFullText;
+  }
+  return autoFullText;
+}

@@ -22,14 +22,18 @@ class ArticleMediaStore {
   Directory? _resolved;
 
   Future<Directory> _dir() async {
+    final known = _resolved;
     final resolved =
-        _resolved ??
+        known ??
         (_root ??
             Directory(
               '${(await getApplicationDocumentsDirectory()).path}/offline_media',
             ));
+    // A reset may delete the pool directory, so existence is checked each
+    // time; the temp-file sweep lists the whole pool and runs once per
+    // store — status reads call this for every ready file.
     if (!await resolved.exists()) await resolved.create(recursive: true);
-    unawaited(_sweepTempFiles(resolved));
+    if (known == null) unawaited(_sweepTempFiles(resolved));
     return _resolved = resolved;
   }
 

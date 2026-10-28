@@ -244,35 +244,14 @@ class ArticlePreparationService {
   Future<bool> _publish(
     LifecycleTicket? ticket,
     Future<void> Function() action,
-  ) async {
-    final gate = _gate;
-    if (gate == null) {
-      await action();
-      return true;
-    }
-    try {
-      await gate.withPublication(ticket!, action);
-      return true;
-    } on StaleLifecycleTicket {
-      return false;
-    } on LifecycleResetPending {
-      return false;
-    } on TimeoutException {
-      return false;
-    }
-  }
+  ) => publishInEra(_gate, ticket, action);
 
   /// The store's persisted lifecycle epoch — capture before a unit of work
   /// and pass to mutations as `expectedEpoch` to fence out resets.
   Future<int> currentRecordEpoch() => _records.currentEpoch();
 
-  /// 1→2→4→8… minute doubling, capped at 60 — the earliest next attempt, not
-  /// a guaranteed run time.
-  static Duration backoffFor(int attempts) {
-    if (attempts < 1) return Duration.zero;
-    final minutes = 1 << (attempts - 1).clamp(0, 6);
-    return Duration(minutes: minutes > 60 ? 60 : minutes);
-  }
+  /// Retry spacing for preparation pieces; see [retryBackoff].
+  static Duration backoffFor(int attempts) => retryBackoff(attempts);
 
   /// Automatic preparation is licensed only when an unmetered transport
   /// (wifi/ethernet) is present AND no metered one is reported. `vpn` is

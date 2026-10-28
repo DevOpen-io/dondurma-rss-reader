@@ -40,3 +40,11 @@ DateTime? parseRetryAfter(String? header, DateTime now) {
     return null;
   }
 }
+
+/// 1→2→4→8… minute doubling, capped at 60 — the earliest next attempt, not
+/// a guaranteed run time.
+Duration retryBackoff(int attempts) {
+  if (attempts < 1) return Duration.zero;
+  final minutes = 1 << (attempts - 1).clamp(0, 6);
+  return Duration(minutes: minutes > 60 ? 60 : minutes);
+}

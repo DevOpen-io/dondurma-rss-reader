@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:math' show Random;
 
+import 'package:hive_ce/hive.dart';
+
 import '../utils/host_key.dart';
-import 'article_preparation_service.dart';
+import '../utils/retry_after.dart';
 import 'feed_service.dart';
 
 /// One cooldown record.
@@ -112,7 +115,7 @@ class FeedBackoff {
         : now.add(
             Duration(
               milliseconds:
-                  (ArticlePreparationService.backoffFor(next).inMilliseconds *
+                  (retryBackoff(next).inMilliseconds *
                           (0.5 + _jitter.nextDouble()))
                       .round(),
             ),
@@ -200,6 +203,27 @@ class FeedBackoff {
         for (final e in _cleared.entries) e.key: e.value.millisecondsSinceEpoch,
       },
     };
+  }
+
+  /// Persisted slots: the foreground isolate writes [foregroundSlot], the
+  /// background isolate [backgroundSlot]. Owning separate slots removes the
+  /// read-modify-write race on a shared key; every reader merges both.
+  static const foregroundSlot = 'feedBackoffUntil';
+  static const backgroundSlot = 'feedBackoffUntil.bg';
+
+  /// Merges both persisted slots of [box] via [load]. A malformed slot is
+  /// skipped without forfeiting the other.
+  void loadSlots(Box box) {
+    for (final key in const [foregroundSlot, backgroundSlot]) {
+      try {
+        final raw = box.get(key);
+        if (raw is String && raw.isNotEmpty) {
+          load(jsonDecode(raw) as Map<String, dynamic>);
+        }
+      } catch (_) {
+        // One malformed slot must not forfeit the other.
+      }
+    }
   }
 
   /// Merges a persisted snapshot — another isolate's slot or a restart's

@@ -1,4 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hive_ce/hive.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 
@@ -369,5 +373,22 @@ void main() {
       expect(snap['feeds'], isEmpty);
       expect(snap['hosts'], isEmpty);
     });
+  });
+
+  test('loadSlots merges both isolates and skips a malformed slot', () async {
+    final dir = Directory.systemTemp.createTempSync('backoff_slots');
+    Hive.init(dir.path);
+    final box = await Hive.openBox('feeds');
+    addTearDown(() async {
+      await Hive.close();
+      dir.deleteSync(recursive: true);
+    });
+    final writer = FeedBackoff()
+      ..recordFailure('https://a.test/rss', rateLimit(), now);
+    await box.put(FeedBackoff.foregroundSlot, jsonEncode(writer.snapshot()));
+    await box.put(FeedBackoff.backgroundSlot, '{not json');
+
+    final reader = FeedBackoff()..loadSlots(box);
+    expect(reader.isBackedOff('https://a.test/rss', now), isTrue);
   });
 }

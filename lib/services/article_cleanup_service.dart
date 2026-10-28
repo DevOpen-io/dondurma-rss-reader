@@ -202,20 +202,8 @@ class ArticleCleanupService {
           }
         }
 
-        if (orphans.isNotEmpty) {
-          if (gate == null) {
-            await collect();
-          } else {
-            try {
-              await gate.withPublication(ticket!, collect);
-            } on StaleLifecycleTicket {
-              failed = true;
-            } on LifecycleResetPending {
-              failed = true;
-            } on TimeoutException {
-              failed = true;
-            }
-          }
+        if (orphans.isNotEmpty && !await publishInEra(gate, ticket, collect)) {
+          failed = true;
         }
         // 3. Forget observation stamps whose article ended its lifecycle
         //    (tombstoned). Stamps with no record at all stay — they belong
