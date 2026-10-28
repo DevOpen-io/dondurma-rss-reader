@@ -211,6 +211,14 @@ class FeedBackoff {
   static const foregroundSlot = 'feedBackoffUntil';
   static const backgroundSlot = 'feedBackoffUntil.bg';
 
+  /// Writes this isolate's [slot] after merging both persisted slots: the
+  /// other isolate may have recorded a fresher deadline (or a clear) since
+  /// this one loaded, and merging first keeps the union.
+  Future<void> saveSlot(Box box, String slot) {
+    loadSlots(box);
+    return box.put(slot, jsonEncode(snapshot()));
+  }
+
   /// Merges both persisted slots of [box] via [load]. A malformed slot is
   /// skipped without forfeiting the other.
   void loadSlots(Box box) {

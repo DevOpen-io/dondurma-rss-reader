@@ -23,7 +23,7 @@ Read the relevant guide before changing that area. Historical plans and audits r
 - Keep `FeedSubscription.fullTextEnabled` tri-state: `null` follows global `autoFullText`.
 - Use `lib/utils/app_toast.dart` for transient feedback; respect reduced motion and modal placement.
 - Edit EN/TR/ES ARB sources and regenerate localization Dart; generated `app_localizations*.dart` files are not edited manually.
-- Keep `assets/Logo.png` as launcher-icon input only. Runtime assets are `assets/logo.ico` and `assets/js/`.
+- Keep `assets/Logo.png` as launcher-icon input only. Runtime assets are `assets/logo.ico`, `assets/js/` and the bundled OFL fonts in `assets/fonts/` (each family with its `OFL.txt`, registered on the license page). Fonts are never fetched at runtime.
 - Extend tests for changed behavior; verify narrow/wide layouts for UI changes and the relevant platform for native integration changes.
 - Preserve the local-first product promise: no tracking, accounts, advertising or algorithmic timeline.
 

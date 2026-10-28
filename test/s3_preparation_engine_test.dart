@@ -11,6 +11,7 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_preparation_service.dart';
+import 'package:ice_cream_rss_reader/utils/retry_after.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
@@ -936,27 +937,27 @@ void main() {
   group('backoff + Retry-After', () {
     test('backoff doubles per attempt, capped at 60 minutes', () {
       expect(
-        ArticlePreparationService.backoffFor(1),
+        retryBackoff(1),
         const Duration(minutes: 1),
       );
       expect(
-        ArticlePreparationService.backoffFor(2),
+        retryBackoff(2),
         const Duration(minutes: 2),
       );
       expect(
-        ArticlePreparationService.backoffFor(3),
+        retryBackoff(3),
         const Duration(minutes: 4),
       );
       expect(
-        ArticlePreparationService.backoffFor(6),
+        retryBackoff(6),
         const Duration(minutes: 32),
       );
       expect(
-        ArticlePreparationService.backoffFor(7),
+        retryBackoff(7),
         const Duration(minutes: 60),
       );
       expect(
-        ArticlePreparationService.backoffFor(20),
+        retryBackoff(20),
         const Duration(minutes: 60),
       );
     });

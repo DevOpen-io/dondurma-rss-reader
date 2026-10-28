@@ -253,6 +253,9 @@ class FeedProvider extends ChangeNotifier {
   /// checks every ready file, so overlapping requests share one loop: a
   /// read in flight may predate the change that prompted the request, so
   /// it is voided and the loop reads once more (#41 freshness).
+  @visibleForTesting
+  Future<void> refreshArticleStatuses() => _refreshArticleStatuses();
+
   Future<void> _refreshArticleStatuses() {
     if (_statusRefresh != null) {
       _statusGeneration++;
@@ -733,13 +736,8 @@ class FeedProvider extends ChangeNotifier {
   /// have recorded a fresher 429 while this isolate was fetching — folding
   /// its slot in before the snapshot means the write can't drop a newer
   /// deadline. The background slot is never written from here.
-  void _saveFeedBackoff() {
-    _loadFeedBackoff();
-    _box.put(
-      FeedBackoff.foregroundSlot,
-      jsonEncode(_feedBackoff.snapshot()),
-    );
-  }
+  void _saveFeedBackoff() =>
+      _feedBackoff.saveSlot(_box, FeedBackoff.foregroundSlot);
 
   /// Learned per-feed redirect map (`{ canonicalUrl: resolvedUrl }`). A 301'd
   /// feed keeps answering at its new location; fetching it directly skips a
@@ -1500,9 +1498,10 @@ class FeedProvider extends ChangeNotifier {
   // Cache persistence
   // ---------------------------------------------------------------------------
 
-  /// Serializes [cachedItemsJson] writes. Bookmark, read-state and sweep
-  /// saves are fire-and-forget and can overlap a refresh save — unsynchronized, an older snapshot could
-  /// `put` last and regress the durable cache. Chaining keeps writes ordered.
+  /// Serializes [cachedItemsJson] writes. Membership-change and sweep saves
+  /// are fire-and-forget and can overlap a refresh save — unsynchronized,
+  /// an older snapshot could `put` last and regress the durable cache.
+  /// Chaining keeps writes ordered.
   Future<void> _saveChain = Future<void>.value();
 
   StreamSubscription<List<ConnectivityResult>>? _connectivitySub;
@@ -1537,6 +1536,9 @@ class FeedProvider extends ChangeNotifier {
       if (identical(chain, _saveChain)) return;
     }
   }
+
+  @visibleForTesting
+  Future<void> saveCachedItems() => _saveCachedItems();
 
   Future<void> _saveCachedItems() {
     // The fence is captured at ENQUEUE time, not when the link runs —

@@ -23,38 +23,47 @@ Map<String, List<FeedSubscription>> feedsByCategory(
 /// Category node emphasis. `selected`: the category itself is the active
 /// scope (full primary treatment). `ancestor`: a feed inside it is selected
 /// (accent + brighter label, no selection fill).
-class CategoryEmphasis {
-  const CategoryEmphasis({required this.selected, required this.ancestor});
+enum CategoryEmphasis {
+  selected,
+  ancestor,
+  none;
 
-  final bool selected;
-  final bool ancestor;
+  /// The category's own selection wins over containing the selected feed.
+  static CategoryEmphasis of({
+    required bool selected,
+    required bool ancestor,
+  }) => selected
+      ? CategoryEmphasis.selected
+      : ancestor
+      ? CategoryEmphasis.ancestor
+      : CategoryEmphasis.none;
 
   /// Node fill; the selected strength differs per surface and per
   /// expanded/collapsed state.
-  Color fill(ColorScheme cs, {required double selectedAlpha}) => selected
-      ? cs.primaryContainer.withValues(alpha: selectedAlpha)
-      : ancestor
-      ? cs.primary.withValues(alpha: 0.05)
-      : Colors.transparent;
+  Color fill(ColorScheme cs, {required double selectedAlpha}) => switch (this) {
+    selected => cs.primaryContainer.withValues(alpha: selectedAlpha),
+    ancestor => cs.primary.withValues(alpha: 0.05),
+    none => Colors.transparent,
+  };
 
   /// Icon/count tint; only the selected color differs per surface.
-  Color tint(ColorScheme cs, {required Color selectedColor}) => selected
-      ? selectedColor
-      : ancestor
-      ? cs.primary.withValues(alpha: 0.8)
-      : cs.onSurfaceVariant;
+  Color tint(ColorScheme cs, {required Color selectedColor}) => switch (this) {
+    selected => selectedColor,
+    ancestor => cs.primary.withValues(alpha: 0.8),
+    none => cs.onSurfaceVariant,
+  };
 
-  Color labelColor(ColorScheme cs) => selected
-      ? cs.primary
-      : ancestor
-      ? cs.onSurface
-      : cs.onSurface.withValues(alpha: 0.8);
+  Color labelColor(ColorScheme cs) => switch (this) {
+    selected => cs.primary,
+    ancestor => cs.onSurface,
+    none => cs.onSurface.withValues(alpha: 0.8),
+  };
 
-  FontWeight get labelWeight => selected
-      ? FontWeight.w700
-      : ancestor
-      ? FontWeight.w600
-      : FontWeight.w500;
+  FontWeight get labelWeight => switch (this) {
+    selected => FontWeight.w700,
+    ancestor => FontWeight.w600,
+    none => FontWeight.w500,
+  };
 
   /// The slim "contains the selected feed" accent at the node's left edge.
   static Color accent(ColorScheme cs) => cs.primary.withValues(alpha: 0.75);

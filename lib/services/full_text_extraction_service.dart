@@ -247,28 +247,28 @@ class FullTextExtractionService {
         return null;
       }
       _deferredUrls.remove(url);
-      // One deadline for headers and body; the body streams with a cap so
-      // a runaway page is dropped instead of buffered whole.
-      final (response, bodyBytes) = await () async {
-        final client = http.Client();
-        try {
-          final request = http.Request('GET', Uri.parse(url))
+      // The body streams with a cap, so a runaway page is dropped instead
+      // of buffered whole.
+      final client = http.Client();
+      final (http.StreamedResponse, Uint8List?) fetched;
+      try {
+        fetched = await sendBounded(
+          client,
+          http.Request('GET', Uri.parse(url))
             ..headers.addAll({
               'User-Agent': _userAgent,
               'Accept':
                   'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.9',
-            });
-          final response = await client.send(request);
-          if (response.statusCode != 200) {
-            await response.stream.listen(null).cancel();
-            return (response, null);
-          }
-          return (response, await readAtMost(response.stream, maxPageBytes));
-        } finally {
-          client.close();
-        }
-      }().timeout(const Duration(seconds: 15));
+            }),
+          maxBytes: maxPageBytes,
+          accept: (response) => response.statusCode == 200,
+          timeout: const Duration(seconds: 15),
+        );
+      } finally {
+        client.close();
+      }
+      final (response, bodyBytes) = fetched;
 
       if (response.statusCode != 200) {
         final now = DateTime.now();
@@ -311,7 +311,7 @@ class FullTextExtractionService {
       }
 
       if (bodyBytes == null) {
-        // Over the size limit — the same page would be again.
+        // Over the size limit — a retry would fetch the same page.
         _recordFailure(url, _permanentDeadline);
         return null;
       }

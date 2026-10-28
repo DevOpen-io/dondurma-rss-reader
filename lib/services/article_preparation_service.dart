@@ -240,19 +240,9 @@ class ArticlePreparationService {
   /// read. Null when ungated; throws while a reset is pending.
   Future<LifecycleTicket?> _beginWork() async => _gate?.beginWork();
 
-  /// Runs a multi-resource publication (managed file + manifest) under the
-  /// lifecycle gate. Returns false when the ticket's era is over.
-  Future<bool> _publish(
-    LifecycleTicket? ticket,
-    Future<void> Function() action,
-  ) => publishInEra(_gate, ticket, action);
-
   /// The store's persisted lifecycle epoch — capture before a unit of work
   /// and pass to mutations as `expectedEpoch` to fence out resets.
   Future<int> currentRecordEpoch() => _records.currentEpoch();
-
-  /// Retry spacing for preparation pieces; see [retryBackoff].
-  static Duration backoffFor(int attempts) => retryBackoff(attempts);
 
   /// Automatic preparation is licensed only when an unmetered transport
   /// (wifi/ethernet) is present AND no metered one is reported. `vpn` is
@@ -639,7 +629,7 @@ class ArticlePreparationService {
           return current.copyWith(
             bodyState: MediaState.failed,
             attempts: attempts,
-            nextRetryAt: () => now.add(backoffFor(attempts)),
+            nextRetryAt: () => now.add(retryBackoff(attempts)),
           );
         });
       }
@@ -690,7 +680,9 @@ class ArticlePreparationService {
     await _semaphore.acquire();
     try {
       final outcome = await _fetchAndStore(url, manual: manual);
-      await _publish(ticket, () async {
+      // A multi-resource publication (managed file + manifest): void once
+      // the ticket's era is over.
+      await publishInEra(_gate, ticket, () async {
         MediaEntry? ready;
         final bytes = outcome.bytes;
         if (bytes != null) {
@@ -757,7 +749,7 @@ class ArticlePreparationService {
       // The later of doubling backoff and server Retry-After wins —
       // a manual retry must not bypass a 429 wait either. A stored
       // (possibly longer, e.g. Retry-After) wait is never shortened.
-      var retryAt = _now().add(backoffFor(attempts));
+      var retryAt = _now().add(retryBackoff(attempts));
       var waitSource = 'backoff';
       final server = outcome.retryAfter;
       if (server != null && server.isAfter(retryAt)) {
@@ -801,24 +793,22 @@ class ArticlePreparationService {
       if (_hostCooled(url, _now(), manual: manual)) {
         return (bytes: null, retryAfter: null, gone: false, deferred: true);
       }
-      // One deadline for headers and body. The body streams with a cap so
-      // an oversize or non-image payload is dropped without buffering it.
-      final (response, bytes) = await () async {
-        final request = http.Request('GET', Uri.parse(url))
-          ..headers['User-Agent'] = 'Mozilla/5.0 (compatible; Dondurma RSS)';
-        final response = await _client.send(request);
-        final type = response.headers['content-type'] ?? '';
-        final declared = response.contentLength;
-        final wanted =
-            response.statusCode == 200 &&
-            (type.isEmpty || type.startsWith('image/')) &&
-            (declared == null || declared <= maxMediaBytes);
-        if (!wanted) {
-          await response.stream.listen(null).cancel();
-          return (response, null);
-        }
-        return (response, await readAtMost(response.stream, maxMediaBytes));
-      }().timeout(_requestTimeout);
+      // The body streams with a cap, so an oversize or non-image payload is
+      // dropped without buffering it.
+      final (response, bytes) = await sendBounded(
+        _client,
+        http.Request('GET', Uri.parse(url))
+          ..headers['User-Agent'] = 'Mozilla/5.0 (compatible; Dondurma RSS)',
+        maxBytes: maxMediaBytes,
+        accept: (response) {
+          final type = response.headers['content-type'] ?? '';
+          final declared = response.contentLength;
+          return response.statusCode == 200 &&
+              (type.isEmpty || type.startsWith('image/')) &&
+              (declared == null || declared <= maxMediaBytes);
+        },
+        timeout: _requestTimeout,
+      );
       if (response.statusCode == 200) {
         if (bytes == null || bytes.isEmpty) {
           // Soft-404 HTML / captive portal / oversize / empty payload —

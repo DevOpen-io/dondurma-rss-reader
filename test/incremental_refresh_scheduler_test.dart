@@ -11,6 +11,7 @@ import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/services/article_record_store.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
 import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
@@ -163,6 +164,70 @@ void main() {
     await settled.future;
     feed.refreshProgress.removeListener(listener);
   }
+
+  test('a reset cancels a pending read-mark batch', () async {
+    await feed.markAsRead(
+      FeedItem(
+        id: 'r1',
+        siteName: 'Test',
+        title: 'r1',
+        description: '',
+        feedUrl: 'https://fast.test/rss',
+      ),
+    );
+    feed.discardStateForReset();
+    await Future<void>.delayed(const Duration(milliseconds: 1200));
+    expect(Hive.box('feeds').get('readItemRefs'), isNull);
+  });
+
+  test(
+    'cache save requests made before the queued save starts join it',
+    () async {
+      final writes = <Object?>[];
+      final sub = Hive.box(
+        'feeds',
+      ).watch(key: 'cachedItemsJson').listen((e) => writes.add(e.value));
+      addTearDown(sub.cancel);
+      final first = feed.saveCachedItems();
+      final second = feed.saveCachedItems();
+      final third = feed.saveCachedItems();
+      expect(identical(first, second) && identical(second, third), isTrue);
+      await third;
+      await feed.idle;
+      await Future<void>.delayed(Duration.zero);
+      expect(writes, hasLength(1));
+    },
+  );
+
+  test(
+    'a status read never leaves a view older than the last request',
+    () async {
+      final store = ArticleRecordStore.forBox(Hive.box('feeds'));
+      ArticleRecord record(String id) => ArticleRecord(
+        id: id,
+        feedUrl: 'https://fast.test/rss',
+        body: '<p>$id</p>',
+        bodyState: MediaState.ready,
+        owners: const {'tempCache'},
+        generation: 1,
+      );
+      FeedItem item(String id) => FeedItem(
+        id: id,
+        siteName: 'Test',
+        title: id,
+        description: '',
+        feedUrl: 'https://fast.test/rss',
+      );
+      await store.write(record('s1'));
+      final first = feed.refreshArticleStatuses();
+      // A change lands while the first read may still be running.
+      await store.write(record('s2'));
+      await feed.refreshArticleStatuses();
+      await first;
+      expect(feed.articleStatus(item('s1')), isNotNull);
+      expect(feed.articleStatus(item('s2')), isNotNull);
+    },
+  );
 
   test('read marks are written in one batch, not on every tap', () async {
     FeedItem article(String id) => FeedItem(

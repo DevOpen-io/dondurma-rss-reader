@@ -409,19 +409,21 @@ class FeedService {
       );
     }
 
+    List<FeedItem> parseAtom(String body) => capItems(
+      _mapAtomItems(
+        AtomFeed.parse(body),
+        request.category,
+        request.url,
+        xhtmlContents: _xhtmlContents(body),
+      ),
+    );
+
     // An Atom document fails the RSS parser only after a full XML parse;
     // when the root is <feed>, try Atom first and keep the chain below as
     // the fallback.
     if (bodyString.contains('<feed') && !bodyString.contains('<rss')) {
       try {
-        return capItems(
-          _mapAtomItems(
-            AtomFeed.parse(bodyString),
-            request.category,
-            request.url,
-            xhtmlContents: _xhtmlContents(bodyString),
-          ),
-        );
+        return parseAtom(bodyString);
       } catch (_) {
         // Not plain Atom after all (e.g. a prefixed root) — fall through.
       }
@@ -459,15 +461,7 @@ class FeedService {
       }
       // Try parsing as Atom if RSS parsing fails
       try {
-        final atomFeed = AtomFeed.parse(bodyString);
-        return capItems(
-          _mapAtomItems(
-            atomFeed,
-            request.category,
-            request.url,
-            xhtmlContents: _xhtmlContents(bodyString),
-          ),
-        );
+        return parseAtom(bodyString);
       } catch (e2) {
         // Namespace-prefixed Atom — the prefix is arbitrary (atom:, ns6:,
         // z:…); only the namespace URI identifies Atom. Strip the prefix
@@ -484,17 +478,10 @@ class FeedService {
           ).hasMatch(bodyString);
           if (bindsAtom) {
             try {
-              final stripped = bodyString
-                  .replaceAll('<$prefix:', '<')
-                  .replaceAll('</$prefix:', '</');
-              final atomFeed = AtomFeed.parse(stripped);
-              return capItems(
-                _mapAtomItems(
-                  atomFeed,
-                  request.category,
-                  request.url,
-                  xhtmlContents: _xhtmlContents(stripped),
-                ),
+              return parseAtom(
+                bodyString
+                    .replaceAll('<$prefix:', '<')
+                    .replaceAll('</$prefix:', '</'),
               );
             } catch (_) {
               // Fall through to the parse error below.

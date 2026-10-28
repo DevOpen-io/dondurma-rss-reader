@@ -265,14 +265,7 @@ Future<void> runBgFetch() async {
     feedService.dispose();
     await publish(() async {
       await feedsBox.put('feedValidators', jsonEncode(validators));
-      // Merge both slots before writing this isolate's own — the
-      // foreground may have recorded a fresher cooldown (or a clear)
-      // while this isolate was fetching; merging first keeps the union.
-      backoff.loadSlots(feedsBox);
-      await feedsBox.put(
-        FeedBackoff.backgroundSlot,
-        jsonEncode(backoff.snapshot()),
-      );
+      await backoff.saveSlot(feedsBox, FeedBackoff.backgroundSlot);
     }).catchError((_) => false);
 
     final allItems = results.expand((result) => result.items).toList();
@@ -381,11 +374,7 @@ Future<void> runBgFetch() async {
         await publish(() async {
           // A malformed foreground slot is skipped, never suppressing this
           // write — the prep-learned cooldown would be lost.
-          backoff.loadSlots(feedsBox);
-          await feedsBox.put(
-            FeedBackoff.backgroundSlot,
-            jsonEncode(backoff.snapshot()),
-          );
+          await backoff.saveSlot(feedsBox, FeedBackoff.backgroundSlot);
         }).catchError((_) => false);
       }
     }

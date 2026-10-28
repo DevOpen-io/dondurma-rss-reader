@@ -300,11 +300,11 @@ class _HomeScreenState extends State<HomeScreen> {
                 isLoading: p.isLoading,
                 isOffline: p.isOffline,
                 hasItems: p.items.isNotEmpty,
-                emptyState: (
-                  p.selectedCategory,
-                  p.hasActiveSheetFilter,
-                  p.searchQuery,
-                  p.showUnreadOnly,
+                filters: (
+                  category: p.selectedCategory,
+                  sheetFilter: p.hasActiveSheetFilter,
+                  search: p.searchQuery,
+                  unreadOnly: p.showUnreadOnly,
                 ),
               ),
               builder: (context, inputs, _) {
@@ -540,7 +540,9 @@ typedef _FeedTabInputs = ({
   bool isLoading,
   bool isOffline,
   bool hasItems,
-  (String?, bool, String, bool) emptyState,
+  // Read by the empty state to explain an empty filtered list.
+  ({String? category, bool sheetFilter, String search, bool unreadOnly})
+  filters,
 });
 
 sealed class _FeedListEntry {

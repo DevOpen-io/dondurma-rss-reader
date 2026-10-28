@@ -293,7 +293,7 @@ class AppDrawer extends StatelessWidget {
         provider.selectedFeedUrl == null;
     final bool isAncestorCategory =
         provider.selectedFeedParentCategory == targetCategory;
-    final emphasis = CategoryEmphasis(
+    final emphasis = CategoryEmphasis.of(
       selected: isCategorySelected,
       ancestor: isAncestorCategory,
     );

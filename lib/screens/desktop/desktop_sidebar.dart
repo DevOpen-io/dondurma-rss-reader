@@ -354,7 +354,7 @@ class _CategoryNodeState extends State<_CategoryNode> {
     final tt = Theme.of(context).textTheme;
     final isSelected = _isSelected;
     final isAncestor = _isAncestor;
-    final emphasis = CategoryEmphasis(
+    final emphasis = CategoryEmphasis.of(
       selected: isSelected,
       ancestor: isAncestor,
     );

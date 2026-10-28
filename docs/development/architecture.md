@@ -177,5 +177,5 @@ Platform entegrasyonu değişirse ilgili Android/iOS build veya cihaz smoke test
 - Yeni `feeds`/`bookmarks` anahtarında legacy migration ihtiyacı kontrol edilir.
 - `refreshAll()` concurrency ve ilk-yükleme bildirim korumaları bozulmaz.
 - `NotificationService.requestPermission()` ve ad-block initialize çağrıları `runApp` öncesinde başlatılır, await edilmez.
-- `assets/Logo.png` launcher kaynağıdır; runtime asset değildir. Runtime listesi `assets/logo.ico`, `assets/js/`.
+- `assets/Logo.png` launcher kaynağıdır; runtime asset değildir. Runtime listesi `assets/logo.ico`, `assets/js/` ve `assets/fonts/` (her aile `OFL.txt` lisansıyla; fontlar çalışma anında indirilmez).
 - Toast için `lib/utils/app_toast.dart` kullanılır; eski snackbar helper yoktur.

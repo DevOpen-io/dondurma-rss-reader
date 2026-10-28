@@ -143,24 +143,6 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
     return feeds;
   }
 
-  Map<String, int> get _categoryCounts {
-    final counts = <String, int>{};
-    for (final f in _activeFeeds) {
-      counts[f.category] = (counts[f.category] ?? 0) + 1;
-    }
-    return counts;
-  }
-
-  Map<String, int> get _categoryPopularity {
-    final maxPop = <String, int>{};
-    for (final f in _activeFeeds) {
-      if (f.popularity > (maxPop[f.category] ?? 0)) {
-        maxPop[f.category] = f.popularity;
-      }
-    }
-    return maxPop;
-  }
-
   Future<void> _subscribeToFeed(
     BuildContext context,
     String name,
@@ -306,8 +288,8 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
   void _openCategorySheet() {
     final l10n = AppLocalizations.of(context);
     final colorScheme = Theme.of(context).colorScheme;
-    final counts = _categoryCounts;
-    final popMap = _categoryPopularity;
+    final counts = SuggestedFeed.categoryCounts(_activeFeeds);
+    final popMap = SuggestedFeed.categoryPopularity(_activeFeeds);
     final categories = counts.keys.toList()
       ..sort((a, b) => (popMap[b] ?? 0).compareTo(popMap[a] ?? 0));
 
