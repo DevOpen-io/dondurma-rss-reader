@@ -1,6 +1,6 @@
 # Gizlilik Politikası
 
-Son güncelleme: 2026-08-24
+Son güncelleme: 2026-10-28
 
 Bu Gizlilik Politikası, Dondurma RSS Reader kullandığınızda bilgileri nasıl işlediğimizi açıklar.
 
@@ -44,7 +44,8 @@ Uygulama, yalnızca kullandığınız özellikleri sağlamak için ağ isteği y
 - Eklediğiniz RSS veya Atom akış kaynakları
 - Tam metin çıkarma açıksa orijinal makale sayfaları
 - Keşif veya başlangıç akışında seçtiğiniz önerilen akış URL'leri
-- Yazı tipi dosyaları için Google Fonts hizmeti
+
+Yazı tipleri uygulamanın içinde gelir; metin göstermek ağ isteği yapmaz.
 
 Uygulama akışları veya makale sayfalarını çekerken kaynak web sitesi IP adresinizi, kullanıcı aracınızı ve istek zamanını alabilir. Bu hizmetler kendi politikalarına göre istekleri kaydedebilir.
 

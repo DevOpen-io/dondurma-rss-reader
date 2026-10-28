@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-08-24
+Last updated: 2026-10-28
 
 This Privacy Policy explains how Dondurma RSS Reader processes information when you use the app.
 
@@ -44,7 +44,8 @@ The app makes network requests only to provide app features you use. These may i
 - RSS or Atom feed sources you add
 - Original article pages, if full-text extraction is enabled
 - Suggested feed URLs selected during discovery or onboarding
-- Google Fonts service for font assets
+
+Fonts ship inside the app; displaying text makes no network request.
 
 When the app fetches feeds or article pages, the source website may receive your IP address, user agent, and request time. Those services may log requests according to their own policies.
 

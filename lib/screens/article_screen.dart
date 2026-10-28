@@ -25,6 +25,7 @@ import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import '../utils/share_actions.dart';
 import '../utils/time_format.dart';
+import '../theme/app_fonts.dart';
 
 
 const _articleTransitionSettleDelay = Duration(milliseconds: 380);
@@ -221,22 +222,7 @@ class _ArticlePageState extends State<ArticlePage> {
         break;
     }
 
-    String? fontFamily;
-    switch (settings.typeface) {
-      case 'serif':
-        fontFamily = 'serif, Georgia, Times New Roman';
-        break;
-      case 'sans-serif':
-        fontFamily = 'sans-serif, Arial, Helvetica';
-        break;
-      case 'mono':
-        fontFamily = 'monospace, Courier';
-        break;
-      case 'system':
-      default:
-        fontFamily = null;
-        break;
-    }
+    final fontFamily = articleFontFamily(settings.typeface, settings.appFont);
 
     final hasHero =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
@@ -676,6 +662,9 @@ class _ArticlePageState extends State<ArticlePage> {
                               "body": Style(
                                 fontSize: FontSize(baseFontSize),
                                 fontFamily: fontFamily,
+                                fontFamilyFallback: fontFamily == 'monospace'
+                                    ? monospaceFallback
+                                    : null,
                                 color: colorScheme.onSurface,
                                 lineHeight: LineHeight(settings.lineSpacing),
                                 margin: Margins.zero,

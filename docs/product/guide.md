@@ -26,7 +26,7 @@ Calm, capable, personal. Ice-cream identity adds warmth; functionality stays ser
 
 ## Design language
 
-- Material 3, FlexColorScheme, Outfit typography.
+- Material 3, FlexColorScheme, Outfit typography by default. Fonts are bundled (OFL) — never fetched at runtime; users can switch the app font to Atkinson Hyperlegible, Lexend, Literata or the system font, and pick the article typeface separately.
 - Rounded surfaces, restrained elevation, consistent spacing, clear primary action.
 - Content leads. Decoration supports brand without competing.
 - Toasts handle transient feedback; dialogs/sheets handle decisions and input.

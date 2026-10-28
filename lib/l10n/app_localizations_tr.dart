@@ -375,19 +375,19 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fontSizeXl => 'Çok Büyük';
 
   @override
-  String get typeface => 'Yazı Tipi Ailesi';
+  String get typeface => 'Makale yazı tipi';
 
   @override
-  String get typefaceDefault => 'Sistem Varsayılanı';
-
-  @override
-  String get typefaceSerif => 'Serif';
-
-  @override
-  String get typefaceSansSerif => 'Sans-Serif';
+  String get typefaceDefault => 'Uygulama yazı tipiyle aynı';
 
   @override
   String get typefaceMono => 'Aralıklı (Monospace)';
+
+  @override
+  String get appFont => 'Uygulama yazı tipi';
+
+  @override
+  String get appFontSystem => 'Sistem yazı tipi';
 
   @override
   String get lineSpacing => 'Satır Aralığı';

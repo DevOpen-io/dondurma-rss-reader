@@ -14,6 +14,7 @@ import 'providers/feed_provider.dart';
 import 'providers/settings_provider.dart';
 import 'providers/subscription_provider.dart';
 import 'providers/bookmark_provider.dart';
+import 'theme/app_fonts.dart';
 import 'theme/app_theme.dart';
 import 'package:flutter/gestures.dart';
 import 'router/app_router.dart';
@@ -51,6 +52,7 @@ class PremiumScrollBehavior extends MaterialScrollBehavior {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  registerFontLicenses();
   if (PlatformCaps.isDesktop) {
     await windowManager.ensureInitialized();
   }
@@ -318,7 +320,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // Watch only the three settings MaterialApp actually uses, so unrelated
+    // Watch only the settings MaterialApp actually uses, so unrelated
     // settings changes (search history, quiet hours…) don't rebuild the app
     // root and re-run theme construction.
     final flexScheme = context.select<SettingsProvider, FlexScheme>(
@@ -328,12 +330,15 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
       (s) => s.themeMode,
     );
     final locale = context.select<SettingsProvider, Locale>((s) => s.locale);
+    final appFont = context.select<SettingsProvider, AppFont>(
+      (s) => s.appFont,
+    );
 
     return MaterialApp.router(
       onGenerateTitle: (ctx) => AppLocalizations.of(ctx).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppThemeBuilder.light(flexScheme),
-      darkTheme: AppThemeBuilder.dark(flexScheme),
+      theme: AppThemeBuilder.light(flexScheme, appFont),
+      darkTheme: AppThemeBuilder.dark(flexScheme, appFont),
       themeMode: themeMode,
       scrollBehavior: const PremiumScrollBehavior(),
       locale: locale,

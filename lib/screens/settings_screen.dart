@@ -25,6 +25,7 @@ import '../widgets/adaptive_dialog.dart';
 import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
 import '../widgets/constrained_width.dart';
+import '../theme/app_fonts.dart';
 import 'legacy_archive_screen.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
@@ -291,6 +292,23 @@ class SettingsScreen extends StatelessWidget {
           ),
           SettingsCard(
             children: [
+              SettingsSelectionTile<AppFont>(
+                icon: Icons.text_format_rounded,
+                title: l10n.appFont,
+                value: settings.appFont,
+                items: [
+                  for (final font in AppFont.values)
+                    DropdownMenuItem(
+                      value: font,
+                      child: font == AppFont.system
+                          ? Text(l10n.appFontSystem)
+                          : _FontName(font),
+                    ),
+                ],
+                onChanged: (v) =>
+                    context.read<SettingsProvider>().setAppFont(v!),
+              ),
+              const SettingsTileDivider(),
               SettingsSelectionTile<String>(
                 icon: Icons.format_size_rounded,
                 title: l10n.fontSize,
@@ -319,22 +337,21 @@ class SettingsScreen extends StatelessWidget {
                 title: l10n.typeface,
                 value: settings.typeface,
                 items: [
-                  DropdownMenuItem(
-                    value: 'system',
-                    child: Text(l10n.typefaceDefault),
-                  ),
-                  DropdownMenuItem(
-                    value: 'serif',
-                    child: Text(l10n.typefaceSerif),
-                  ),
-                  DropdownMenuItem(
-                    value: 'sans-serif',
-                    child: Text(l10n.typefaceSansSerif),
-                  ),
-                  DropdownMenuItem(
-                    value: 'mono',
-                    child: Text(l10n.typefaceMono),
-                  ),
+                  for (final face in articleTypefaces)
+                    DropdownMenuItem(
+                      value: face,
+                      child: switch (face) {
+                        'system' => Text(l10n.typefaceDefault),
+                        'mono' => Text(
+                          l10n.typefaceMono,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontFamilyFallback: monospaceFallback,
+                          ),
+                        ),
+                        _ => _FontName(articleTypefaceFont(face)!),
+                      },
+                    ),
                 ],
                 onChanged: (v) =>
                     context.read<SettingsProvider>().setTypeface(v!),
@@ -974,4 +991,14 @@ class SettingsScreen extends StatelessWidget {
       ),
     );
   }
+}
+
+/// A bundled font's name, set in that font so the picker previews it.
+class _FontName extends StatelessWidget {
+  final AppFont font;
+  const _FontName(this.font);
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(font.displayName!, style: TextStyle(fontFamily: font.family));
 }

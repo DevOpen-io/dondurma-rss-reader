@@ -115,7 +115,6 @@ class PrivacyPolicyPage extends StatelessWidget {
           title: 'Third-Party Services',
           content:
               'The App uses the following third-party services:\n\n'
-              '• Google Fonts — for typography (Outfit font family)\n'
               '• WebView — for displaying web content within the app\n'
               '• Ad Blocker (adblocker_webview) — optional ad filtering in the built-in browser\n\n'
               'These services may have their own privacy policies. We recommend reviewing them.',
@@ -197,7 +196,6 @@ class PrivacyPolicyPage extends StatelessWidget {
           title: 'Servicios de terceros',
           content:
               'La Aplicación utiliza los siguientes servicios de terceros:\n\n'
-              '• Google Fonts — para la tipografía (familia tipográfica Outfit)\n'
               '• WebView — para mostrar contenido web dentro de la aplicación\n'
               '• Bloqueador de anuncios (adblocker_webview) — filtrado opcional de anuncios en el navegador integrado\n\n'
               'Estos servicios pueden tener sus propias políticas de privacidad. '
@@ -281,7 +279,6 @@ class PrivacyPolicyPage extends StatelessWidget {
           title: 'Üçüncü Taraf Hizmetler',
           content:
               'Uygulama aşağıdaki üçüncü taraf hizmetleri kullanır:\n\n'
-              '• Google Fonts — tipografi için (Outfit yazı tipi ailesi)\n'
               '• WebView — uygulama içinde web içeriği görüntülemek için\n'
               '• Reklam Engelleyici (adblocker_webview) — dahili tarayıcıda isteğe bağlı reklam filtreleme\n\n'
               'Bu hizmetlerin kendi gizlilik politikaları olabilir. Bunları incelemenizi öneririz.',

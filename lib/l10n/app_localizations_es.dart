@@ -383,19 +383,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fontSizeXl => 'Extra grande';
 
   @override
-  String get typeface => 'Tipografía';
+  String get typeface => 'Tipografía del artículo';
 
   @override
-  String get typefaceDefault => 'Predeterminada del sistema';
-
-  @override
-  String get typefaceSerif => 'Serif';
-
-  @override
-  String get typefaceSansSerif => 'Sans-serif';
+  String get typefaceDefault => 'Igual que la app';
 
   @override
   String get typefaceMono => 'Monoespaciada';
+
+  @override
+  String get appFont => 'Fuente de la app';
+
+  @override
+  String get appFontSystem => 'Fuente del sistema';
 
   @override
   String get lineSpacing => 'Interlineado';

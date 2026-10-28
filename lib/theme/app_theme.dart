@@ -1,94 +1,110 @@
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
+
+import 'app_fonts.dart';
 
 class AppThemeBuilder {
-  static final String _font = GoogleFonts.outfit().fontFamily!;
-
-  static TextTheme _textTheme(Color color) => GoogleFonts.outfitTextTheme()
-      .apply(bodyColor: color, displayColor: color)
+  static TextTheme _textTheme(String? font, Color color) => ThemeData.light()
+      .textTheme
+      .apply(fontFamily: font, bodyColor: color, displayColor: color)
       .copyWith(
-        displayLarge: GoogleFonts.outfit(
+        displayLarge: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w800,
           color: color,
         ),
-        displayMedium: GoogleFonts.outfit(
+        displayMedium: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w800,
           color: color,
         ),
-        displaySmall: GoogleFonts.outfit(
+        displaySmall: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w700,
           color: color,
         ),
-        headlineLarge: GoogleFonts.outfit(
+        headlineLarge: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w700,
           color: color,
         ),
-        headlineMedium: GoogleFonts.outfit(
+        headlineMedium: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w700,
           color: color,
         ),
-        headlineSmall: GoogleFonts.outfit(
+        headlineSmall: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w600,
           color: color,
         ),
-        titleLarge: GoogleFonts.outfit(
+        titleLarge: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w700,
           fontSize: 20,
           color: color,
         ),
-        titleMedium: GoogleFonts.outfit(
+        titleMedium: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w600,
           fontSize: 16,
           color: color,
         ),
-        titleSmall: GoogleFonts.outfit(
+        titleSmall: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w600,
           fontSize: 14,
           color: color,
         ),
-        bodyLarge: GoogleFonts.outfit(
+        bodyLarge: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w400,
           fontSize: 16,
           color: color,
         ),
-        bodyMedium: GoogleFonts.outfit(
+        bodyMedium: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w400,
           fontSize: 14,
           color: color,
         ),
-        bodySmall: GoogleFonts.outfit(
+        bodySmall: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w400,
           fontSize: 12,
           color: color,
         ),
-        labelLarge: GoogleFonts.outfit(
+        labelLarge: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w600,
           fontSize: 14,
           color: color,
         ),
-        labelMedium: GoogleFonts.outfit(
+        labelMedium: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w600,
           fontSize: 12,
           color: color,
         ),
-        labelSmall: GoogleFonts.outfit(
+        labelSmall: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w500,
           fontSize: 11,
           color: color,
         ),
       );
 
-  static ThemeData _applyOverrides(ThemeData base) {
+  static ThemeData _applyOverrides(ThemeData base, String? font) {
     return base.copyWith(
-      textTheme: _textTheme(base.colorScheme.onSurface),
+      textTheme: _textTheme(font, base.colorScheme.onSurface),
       appBarTheme: AppBarTheme(
         centerTitle: false,
         scrolledUnderElevation: 0,
         elevation: 0,
         backgroundColor: base.colorScheme.surface,
         surfaceTintColor: Colors.transparent,
-        titleTextStyle: GoogleFonts.outfit(
+        titleTextStyle: TextStyle(
+          fontFamily: font,
           fontWeight: FontWeight.w700,
           fontSize: 20,
           color: base.colorScheme.onSurface,
@@ -116,11 +132,13 @@ class AppThemeBuilder {
     );
   }
 
-  static ThemeData light(FlexScheme scheme) => _applyOverrides(
-    FlexColorScheme.light(scheme: scheme, fontFamily: _font).toTheme,
+  static ThemeData light(FlexScheme scheme, AppFont font) => _applyOverrides(
+    FlexColorScheme.light(scheme: scheme, fontFamily: font.family).toTheme,
+    font.family,
   );
 
-  static ThemeData dark(FlexScheme scheme) => _applyOverrides(
-    FlexColorScheme.dark(scheme: scheme, fontFamily: _font).toTheme,
+  static ThemeData dark(FlexScheme scheme, AppFont font) => _applyOverrides(
+    FlexColorScheme.dark(scheme: scheme, fontFamily: font.family).toTheme,
+    font.family,
   );
 }

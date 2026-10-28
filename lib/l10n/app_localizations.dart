@@ -775,32 +775,32 @@ abstract class AppLocalizations {
   /// No description provided for @typeface.
   ///
   /// In en, this message translates to:
-  /// **'Typeface'**
+  /// **'Article typeface'**
   String get typeface;
 
   /// No description provided for @typefaceDefault.
   ///
   /// In en, this message translates to:
-  /// **'System Default'**
+  /// **'Same as app font'**
   String get typefaceDefault;
-
-  /// No description provided for @typefaceSerif.
-  ///
-  /// In en, this message translates to:
-  /// **'Serif'**
-  String get typefaceSerif;
-
-  /// No description provided for @typefaceSansSerif.
-  ///
-  /// In en, this message translates to:
-  /// **'Sans-Serif'**
-  String get typefaceSansSerif;
 
   /// No description provided for @typefaceMono.
   ///
   /// In en, this message translates to:
   /// **'Monospace'**
   String get typefaceMono;
+
+  /// No description provided for @appFont.
+  ///
+  /// In en, this message translates to:
+  /// **'App font'**
+  String get appFont;
+
+  /// No description provided for @appFontSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System font'**
+  String get appFontSystem;
 
   /// No description provided for @lineSpacing.
   ///

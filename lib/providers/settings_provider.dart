@@ -4,6 +4,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../services/background_fetch_service.dart';
+import '../theme/app_fonts.dart';
 
 /// Manages global application settings with Hive persistence.
 ///
@@ -26,8 +27,9 @@ class SettingsProvider extends ChangeNotifier {
   int _quietHoursEnd = 7;
 
   // Display & Readability settings
+  AppFont _appFont = AppFont.outfit;
   String _fontSize = 'medium'; // 'small', 'medium', 'large', 'xl'
-  String _typeface = 'system'; // 'system', 'serif', 'sans-serif', 'mono'
+  String _typeface = 'system'; // one of articleTypefaces
   double _lineSpacing = 1.5; // 1.2 (tight), 1.5 (normal), 1.8 (relaxed)
 
   // Content Filtering
@@ -73,6 +75,7 @@ class SettingsProvider extends ChangeNotifier {
   int get quietHoursStart => _quietHoursStart;
   int get quietHoursEnd => _quietHoursEnd;
 
+  AppFont get appFont => _appFont;
   String get fontSize => _fontSize;
   String get typeface => _typeface;
   double get lineSpacing => _lineSpacing;
@@ -155,6 +158,7 @@ class SettingsProvider extends ChangeNotifier {
     _quietHoursEnd = _box.get('quietHoursEnd', defaultValue: 7);
 
     // Display settings
+    _appFont = AppFont.fromKey(_box.get('appFont') as String?);
     _fontSize = _box.get('fontSize', defaultValue: 'medium');
     _typeface = _box.get('typeface', defaultValue: 'system');
     _lineSpacing = _box.get('lineSpacing', defaultValue: 1.5);
@@ -285,6 +289,13 @@ class SettingsProvider extends ChangeNotifier {
     await _box.put('quietHoursEnd', hour);
   }
 
+  /// Sets the bundled typeface for the whole interface.
+  Future<void> setAppFont(AppFont font) async {
+    _appFont = font;
+    notifyListeners();
+    await _box.put('appFont', font.key);
+  }
+
   /// Sets the article body font size: `'small'`, `'medium'`, `'large'`, `'xl'`.
   Future<void> setFontSize(String size) async {
     _fontSize = size;
@@ -292,7 +303,7 @@ class SettingsProvider extends ChangeNotifier {
     await _box.put('fontSize', size);
   }
 
-  /// Sets the article typeface: `'system'`, `'serif'`, `'sans-serif'`, `'mono'`.
+  /// Sets the article typeface, one of [articleTypefaces].
   Future<void> setTypeface(String face) async {
     _typeface = face;
     notifyListeners();
