@@ -1,14 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:cached_network_image_ce/cached_network_image.dart'
-    show DefaultCacheManager;
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart'
     show compute, debugPrint, mapEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
-import 'package:html/parser.dart' show parse;
 
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
@@ -31,12 +28,10 @@ import '../services/temp_cache_membership.dart';
 import '../services/feed_service.dart';
 import '../services/full_text_extraction_service.dart';
 import '../utils/host_pacer.dart';
-import '../services/image_cache_service.dart';
 import '../services/notification_delivery_policy.dart';
 import '../services/notification_service.dart';
 import '../services/observed_article_store.dart';
 import '../services/widget_update_service.dart';
-import '../utils/async_semaphore.dart';
 import 'bookmark_provider.dart';
 import 'settings_provider.dart';
 import 'subscription_provider.dart';
@@ -1389,10 +1384,10 @@ class FeedProvider extends ChangeNotifier {
     // changed — otherwise the "5m" strings written last cycle freeze in place.
     WidgetUpdateService.updateFeedWidgets(_items).ignore();
 
-    // Offline-first: fetch article bodies for full-text feeds so they read
-    // without a network. Runs after the refresh settles — never blocks it.
+    // Offline-first: durable preparation fetches article bodies and media
+    // so they read without a network. Runs after the refresh settles —
+    // never blocks it.
     if (result.online) {
-      _prefetchFullText().ignore();
       // Sweep durable preparation work on the CURRENT transport's terms —
       // metered/unknown waits for the next unmetered opportunity. The
       // verdict is queried fresh here: the cached stream value can be
@@ -1420,142 +1415,9 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
-  /// Whether a full-text prefetch pass is already in flight.
-  bool _isPrefetching = false;
-
-  /// Set when a refresh asks for prefetch while one is draining — rerun once
-  /// the in-flight pass settles so newer articles aren't skipped a whole
-  /// sync cycle (mirrors [_refreshQueued]).
-  bool _prefetchQueued = false;
-
-  /// Set once [dispose] runs so async prefetch continuations skip
+  /// Set once [dispose] runs so async continuations skip
   /// [notifyListeners], which throws on a disposed [ChangeNotifier].
   bool _disposed = false;
-
-  /// Articles per feed prefetch attempts in one pass.
-  static const _fullTextPrefetchPerFeed = 5;
-
-  /// Max parallel article-page fetches during prefetch.
-  static const _fullTextPrefetchConcurrency = 3;
-
-  /// Downloads article bodies for offline reading (decision on issue #14):
-  /// only subscriptions with `fullTextEnabled == true`, the newest
-  /// [_fullTextPrefetchPerFeed] items lacking content, foreground-sync only.
-  /// Extraction failures stay silent — the article keeps its RSS excerpt.
-  Future<void> _prefetchFullText() async {
-    if (_isPrefetching) {
-      _prefetchQueued = true;
-      return;
-    }
-    final subs = subscriptionProvider?.subscriptions
-        .where((s) => s.fullTextEnabled == true)
-        .toList();
-    if (subs == null || subs.isEmpty) return;
-
-    _isPrefetching = true;
-    final gen = _resetGeneration;
-    try {
-      final extraction = FullTextExtractionService.instance;
-      // _items is date-sorted newest-first, so take() picks the latest.
-      // Skipping session-failed URLs keeps them from stalling backfill.
-      final candidates = <FeedItem>[];
-      for (final sub in subs) {
-        candidates.addAll(
-          _items
-              .where(
-                (i) =>
-                    i.feedUrl == sub.url &&
-                    i.prefetchedFullText == null &&
-                    i.link.isNotEmpty &&
-                    !extraction.hasFailedAttempt(i.link),
-              )
-              .take(_fullTextPrefetchPerFeed),
-        );
-      }
-
-      var changed = false;
-      final semaphore = AsyncSemaphore(_fullTextPrefetchConcurrency);
-      await Future.wait(
-        candidates.map((item) async {
-          await semaphore.acquire();
-          try {
-            final html = await extraction.extractFullText(item.link);
-            if (html == null) return;
-            final index = _items.indexWhere(
-              (e) => e.id == item.id && e.feedUrl == item.feedUrl,
-            );
-            if (index == -1) return; // item trimmed meanwhile
-            _items[index] = _items[index].copyWith(prefetchedFullText: html);
-            changed = true;
-            // Decision #15: warm the image caches too — the thumbnail and
-            // the body's inline images — inside the same concurrency slot.
-            await _prefetchImages(item, html);
-          } catch (_) {
-            // Extraction threw — the RSS excerpt remains; the session failure
-            // cache stops this URL from re-attempting until app restart.
-          } finally {
-            semaphore.release();
-          }
-        }),
-      );
-
-      if (changed) {
-        if (!_disposed) {
-          _invalidateFilterCache();
-          notifyListeners();
-        }
-        await _saveCachedItems();
-      }
-    } finally {
-      // Page 429s recorded shared host cooldowns — persist before the
-      // pass settles so a killed app doesn't lose them. Fenced: a reset
-      // landing mid-pass wiped both the box and the in-memory state.
-      if (gen == _resetGeneration) _saveFeedBackoff();
-      _isPrefetching = false;
-      if (_prefetchQueued) {
-        _prefetchQueued = false;
-        _prefetchFullText().ignore();
-      }
-    }
-  }
-
-  /// Max inline `<img>` downloads per prefetched article — bounds a runaway
-  /// gallery page to a sane per-article image budget.
-  static const _prefetchImagesPerArticle = 8;
-
-  /// Warms the thumbnail and article-image caches for [item] using [html]
-  /// (its prefetched body). Best-effort: every failure is silent — a missing
-  /// image just renders broken offline, same as today. Each download is
-  /// isolated so one bad image can't forfeit the rest of the budget.
-  Future<void> _prefetchImages(FeedItem item, String html) async {
-    final thumbnail = item.imageUrl;
-    if (thumbnail != null && thumbnail.isNotEmpty) {
-      // The feed list reads ThumbnailCacheManager; the article hero reads
-      // ArticleCacheManager for the same URL — warm both.
-      await _warmImage(ThumbnailCacheManager.instance, thumbnail);
-      await _warmImage(ArticleCacheManager.instance, thumbnail);
-    }
-    final srcs = parse(html)
-        .getElementsByTagName('img')
-        .map((e) => e.attributes['src'])
-        .whereType<String>()
-        .where((s) => s.startsWith('http'))
-        .take(_prefetchImagesPerArticle);
-    for (final src in srcs) {
-      await _warmImage(ArticleCacheManager.instance, src);
-    }
-  }
-
-  Future<void> _warmImage(DefaultCacheManager manager, String url) async {
-    try {
-      await manager
-          .getFileStream(url)
-          .timeout(const Duration(seconds: 15))
-          .drain<void>();
-    } catch (_) {
-      // Dead image, dead cache init, timeout — all silent by policy.
-    }
-  }
 
   // ---------------------------------------------------------------------------
   // Notification diffing
@@ -1604,8 +1466,8 @@ class FeedProvider extends ChangeNotifier {
   // Cache persistence
   // ---------------------------------------------------------------------------
 
-  /// Serializes [cachedItemsJson] writes. Prefetch saves are fire-and-forget
-  /// and can overlap a refresh save — unsynchronized, an older snapshot could
+  /// Serializes [cachedItemsJson] writes. Bookmark, read-state and sweep
+  /// saves are fire-and-forget and can overlap a refresh save — unsynchronized, an older snapshot could
   /// `put` last and regress the durable cache. Chaining keeps writes ordered.
   Future<void> _saveChain = Future<void>.value();
 
@@ -1834,7 +1696,7 @@ class FeedProvider extends ChangeNotifier {
     _refreshPublishTimer?.cancel();
     _refreshPublishTimer = null;
     // Rate-limit state belongs to the wiped era too — otherwise an async
-    // save (prep sweep, prefetch) could resurrect it into the new box.
+    // save (prep sweep) could resurrect it into the new box.
     _feedBackoff.reset();
     _needsInitialReconcile = true; // the next era bootstraps owners again
     _knownSubscriptionUrls = const {};

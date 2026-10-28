@@ -24,12 +24,6 @@ class FeedItem {
   final String link;
   final String? imageUrl;
   final String? content;
-
-  /// Full article body fetched ahead of time for offline reading — distinct
-  /// from [content], which is the feed-supplied body (excerpt or
-  /// content:encoded). Populated by the foreground prefetch pass for feeds
-  /// with `fullTextEnabled == true`; serialized inside `cachedItemsJson`.
-  final String? prefetchedFullText;
   final DateTime? pubDate;
   final String category;
   final String feedUrl;
@@ -48,7 +42,6 @@ class FeedItem {
     this.link = '',
     this.imageUrl,
     this.content,
-    this.prefetchedFullText,
     this.pubDate,
     this.category = 'Uncategorized',
     this.feedUrl = '',
@@ -68,7 +61,6 @@ class FeedItem {
     String? link,
     String? imageUrl,
     String? content,
-    String? prefetchedFullText,
     DateTime? pubDate,
     String? category,
     String? feedUrl,
@@ -87,7 +79,6 @@ class FeedItem {
       link: link ?? this.link,
       imageUrl: imageUrl ?? this.imageUrl,
       content: content ?? this.content,
-      prefetchedFullText: prefetchedFullText ?? this.prefetchedFullText,
       pubDate: pubDate ?? this.pubDate,
       category: category ?? this.category,
       feedUrl: feedUrl ?? this.feedUrl,
@@ -112,7 +103,6 @@ class FeedItem {
       'link': link,
       'imageUrl': imageUrl,
       'content': content,
-      if (prefetchedFullText != null) 'prefetchedFullText': prefetchedFullText,
       'pubDate': pubDate?.toIso8601String(),
       'category': category,
       'feedUrl': feedUrl,
@@ -142,7 +132,6 @@ class FeedItem {
       link: json['link'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
       content: json['content'] as String?,
-      prefetchedFullText: json['prefetchedFullText'] as String?,
       pubDate: json['pubDate'] != null
           ? DateTime.tryParse(json['pubDate'] as String)
           : null,

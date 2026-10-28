@@ -80,6 +80,10 @@ class ArticlePageProvider extends ChangeNotifier {
   /// The durable record's saved body, when one is ready on disk (#41).
   String? _savedBody;
 
+  /// Whether [_savedBody] is extracted full text rather than the feed's
+  /// own body — preparation's offline copy for full-text reading.
+  bool _savedBodyExtracted = false;
+
   /// Durable-state summary for the status strip — null until [loadSavedCopy]
   /// resolves (or when no record exists).
   ArticleStatus? _recordStatus;
@@ -139,6 +143,7 @@ class ArticlePageProvider extends ChangeNotifier {
     }
     if (_disposed || generation != _savedCopyGeneration) return;
     _savedBody = null;
+    _savedBodyExtracted = false;
     _recordStatus = null;
     _localImages = const {};
     _archivedFallback = false;
@@ -147,6 +152,7 @@ class ArticlePageProvider extends ChangeNotifier {
       // body survives a failed full-text attempt (#41 readability rule).
       if (record.body?.isNotEmpty ?? false) {
         _savedBody = record.body;
+        _savedBodyExtracted = record.bodySource == 'extracted';
       }
       final local = <String, String>{};
       var checked = record;
@@ -252,9 +258,9 @@ class ArticlePageProvider extends ChangeNotifier {
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
 
-    // Offline path: a prefetched body renders instantly, no fetch needed.
-    if (item.prefetchedFullText != null) {
-      _fullTextContent = item.prefetchedFullText;
+    // Offline path: a prepared full-text copy renders instantly.
+    if (_savedBodyExtracted) {
+      _fullTextContent = _savedBody;
       _isLoadingFullText = false;
       notifyListeners();
       return;

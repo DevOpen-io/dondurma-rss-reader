@@ -185,9 +185,9 @@ class FullTextExtractionService {
   // Public API
   // ---------------------------------------------------------------------------
 
-  /// Whether [url] is currently inside a failure cooldown. Prefetch uses it
-  /// to keep failing articles from consuming candidate slots; transient
-  /// entries expire after [_transientFailureTtl].
+  /// Whether [url] is currently inside a failure cooldown, so a failing
+  /// article is not re-fetched on every attempt; transient entries expire
+  /// after [_transientFailureTtl].
   bool hasFailedAttempt(String url) {
     final entry = _failedUntil[url];
     return entry != null && entry.until.isAfter(DateTime.now());

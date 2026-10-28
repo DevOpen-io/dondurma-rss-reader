@@ -145,7 +145,7 @@ class _ArticlePageState extends State<ArticlePage> {
       Future<void>.delayed(_articleTransitionSettleDelay, () {
         if (!mounted) return;
         _articlePageProvider?.setContentReady();
-        _maybeCheckAutoFullText();
+        unawaited(_maybeCheckAutoFullText());
       });
     });
   }
@@ -154,17 +154,19 @@ class _ArticlePageState extends State<ArticlePage> {
   void didUpdateWidget(covariant ArticlePage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (!oldWidget.isActive && widget.isActive) {
-      _maybeCheckAutoFullText();
+      unawaited(_maybeCheckAutoFullText());
     }
   }
 
-  void _maybeCheckAutoFullText() {
+  Future<void> _maybeCheckAutoFullText() async {
     if (!mounted || !widget.isActive) return;
     final provider =
         _articlePageProvider ?? context.read<ArticlePageProvider>();
     // Refresh (not just first load) so a strip reflects preparation that
-    // committed while the page sat inactive (#41 freshness).
-    unawaited(provider.refreshSavedCopy());
+    // committed while the page sat inactive (#41 freshness). Auto full
+    // text waits for it: a prepared copy opens without the network.
+    await provider.refreshSavedCopy();
+    if (!mounted || !widget.isActive) return;
     provider.checkAutoFullText(
       context.read<SubscriptionProvider>(),
       context.read<SettingsProvider>(),

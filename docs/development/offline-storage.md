@@ -34,7 +34,7 @@ Görünüm filtreleri ve arama bu üyelik seçimini daraltmaz. `offlineCacheLimi
 
 ## Hazırlık hattı
 
-[ArticlePreparationService](../../lib/services/article_preparation_service.dart) önce kalıcı kayıt ve pending manifest oluşturur, ardından metin/görselleri hazırlar. Feed'in `fullTextEnabled ?? autoFullText` tercihi kullanılır; çıkarım başarısız olsa bile mevcut RSS gövdesi korunur.
+[ArticlePreparationService](../../lib/services/article_preparation_service.dart) önce kalıcı kayıt ve pending manifest oluşturur, ardından metin/görselleri hazırlar. Feed'in `fullTextEnabled ?? autoFullText` tercihi kullanılır; çıkarım başarısız olsa bile mevcut RSS gövdesi korunur. Tam metin için tek offline kaynak budur: makale sayfası tam metni açarken önce kaydın `bodySource == 'extracted'` gövdesini ağsız kullanır, yoksa çıkarımı dener. Eski ön plan ön yüklemesi (`prefetchedFullText`, ölçülü bağlantıda da indirip gövdeyi `cachedItemsJson` içine gömen yol) kaldırıldı; eski cache'lerdeki alan okunmaz ve sonraki kayıtta düşer.
 
 Otomatik `preparePending` yalnız servisin unmetered kabul ettiği bağlantıda çalışır. Açık kullanıcı eylemiyle `prepareArticle` tek makale için bağlantı türünden bağımsız bir geçişe izin verir. Her parça bir geçişte en fazla bir kez denenir; hazır parçalar tekrar indirilmez. Paralel transfer sınırı servis instance'ı başınadır, isolate'ler arasında global bir indirme kotası değildir.
 

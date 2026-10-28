@@ -258,6 +258,71 @@ void main() {
     expect(requests, isEmpty);
   });
 
+  test('full text opens the prepared copy without the network', () async {
+    expect(
+      await records.write(
+        ArticleRecord(
+          id: _article().id,
+          feedUrl: _article().feedUrl,
+          link: _article().link,
+          body: '<p>Prepared full text</p>',
+          bodyState: MediaState.ready,
+          bodySource: 'extracted',
+          owners: const {'tempCache'},
+          generation: 1,
+        ),
+      ),
+      StoreWriteResult.applied,
+    );
+    final item = _article().copyWith(isBookmarked: false);
+    final page = ArticlePageProvider(item: item);
+    addTearDown(page.dispose);
+    await page.loadSavedCopy(records: records, media: media);
+
+    await http.runWithClient(
+      () => page.activateFullText(automatic: true),
+      () => client,
+    );
+
+    expect(page.fullTextActive, isTrue);
+    expect(page.rawContent, contains('Prepared full text'));
+    expect(requests, isEmpty);
+  });
+
+  test('an RSS-only saved copy still fetches the full text', () async {
+    // A link of its own: the extraction service is a process singleton
+    // that remembers failed URLs across tests.
+    final item = _article().copyWith(
+      link: 'https://example.test/rss-only',
+      isBookmarked: false,
+    );
+    expect(
+      await records.write(
+        ArticleRecord(
+          id: item.id,
+          feedUrl: item.feedUrl,
+          link: item.link,
+          body: '<p>Feed excerpt</p>',
+          bodyState: MediaState.pending,
+          bodySource: 'rss',
+          owners: const {'tempCache'},
+          generation: 1,
+        ),
+      ),
+      StoreWriteResult.applied,
+    );
+    final page = ArticlePageProvider(item: item);
+    addTearDown(page.dispose);
+    await page.loadSavedCopy(records: records, media: media);
+
+    await http.runWithClient(
+      () => page.activateFullText(automatic: true),
+      () => client,
+    );
+
+    expect(requests, [item.link]);
+  });
+
   test('factory reset drops the bookmark claim on durable records', () async {
     await seedBookmark();
     final bookmarks = BookmarkProvider(preparation: preparation);

@@ -26,7 +26,6 @@ class FeedCachePolicy {
     for (final saved in bookmarkedItems) {
       if (seen.add((saved.feedUrl, saved.id))) items.add(saved);
     }
-    carryOverPrefetchedText(existingItems: bookmarkedItems, freshItems: items);
     sortByEffectivePubDateDesc(items, now);
     return items;
   }
@@ -47,10 +46,7 @@ class FeedCachePolicy {
     }
     for (final entry in freshItemsByFeed.entries) {
       if (groups.containsKey(entry.key)) {
-        groups[entry.key] = carryOverPrefetchedText(
-          existingItems: groups[entry.key] ?? const <FeedItem>[],
-          freshItems: List<FeedItem>.of(entry.value),
-        );
+        groups[entry.key] = List<FeedItem>.of(entry.value);
       }
     }
     final seen = <(String, String)>{};
@@ -59,29 +55,5 @@ class FeedCachePolicy {
         for (final item in groups[url] ?? const <FeedItem>[])
           if (seen.add((item.feedUrl, item.id))) item,
     ];
-  }
-
-  /// Re-attaches prefetched full-text bodies onto freshly parsed items,
-  /// matched by (feedUrl, id). Fresh parses always carry null, so without
-  /// this every 200 merge erases offline content — both the foreground
-  /// refresher and the Workmanager merge must call it.
-  static List<FeedItem> carryOverPrefetchedText({
-    required Iterable<FeedItem> existingItems,
-    required List<FeedItem> freshItems,
-  }) {
-    final prefetched = <(String, String), String>{
-      for (final i in existingItems)
-        if (i.prefetchedFullText != null)
-          (i.feedUrl, i.id): i.prefetchedFullText!,
-    };
-    if (prefetched.isEmpty) return freshItems;
-    for (var i = 0; i < freshItems.length; i++) {
-      final item = freshItems[i];
-      final body = prefetched[(item.feedUrl, item.id)];
-      if (item.prefetchedFullText == null && body != null) {
-        freshItems[i] = item.copyWith(prefetchedFullText: body);
-      }
-    }
-    return freshItems;
   }
 }
