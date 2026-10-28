@@ -56,6 +56,29 @@ void main() {
     );
   });
 
+  test('a page over the size limit is rejected, not extracted', () async {
+    handlers['/huge'] = (request) {
+      request.response.headers.contentType = ContentType.html;
+      request.response.write('<html><body><article><p>');
+      final words = 'readable article text ' * 4096;
+      for (
+        var written = 0;
+        written <= FullTextExtractionService.maxPageBytes;
+        written += words.length
+      ) {
+        request.response.write(words);
+      }
+      request.response.write('</p></article></body></html>');
+    };
+    final target = url('/huge');
+    expect(
+      await FullTextExtractionService.instance.extractFullText(target),
+      isNull,
+    );
+    // Size is permanent for the session — no retry of the same page.
+    expect(FullTextExtractionService.instance.hasFailedAttempt(target), isTrue);
+  });
+
   test('404 marks the URL permanently failed — no second request', () async {
     final target = url('/gone');
     expect(

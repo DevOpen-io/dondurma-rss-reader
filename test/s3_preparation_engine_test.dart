@@ -736,6 +736,45 @@ void main() {
       },
     );
 
+    test('an oversize stream is abandoned at the limit, not buffered', () async {
+      var sent = 0;
+      var cancelled = false;
+      final client = http_testing.MockClient.streaming((_, _) async {
+        late final StreamController<List<int>> body;
+        body = StreamController<List<int>>(
+          onListen: () async {
+            final chunk = List.filled(1024 * 1024, 1);
+            while (!cancelled && sent < 64 * 1024 * 1024) {
+              body.add(chunk);
+              sent += chunk.length;
+              await Future<void>.delayed(Duration.zero);
+            }
+            await body.close();
+          },
+          onCancel: () => cancelled = true,
+        );
+        return http.StreamedResponse(
+          body.stream,
+          200,
+          headers: {'content-type': 'image/png'},
+        );
+      });
+      final svc = service(client: client, extract: (_) async => 'ok');
+      await svc.registerArticle(
+        item(imageUrl: 'https://e.com/endless.png'),
+        const {'bookmark'},
+      );
+      await svc.prepareArticle(ref('art-1'));
+      expect(
+        (await newStore().read(
+          ref('art-1'),
+        ))!.media['https://e.com/endless.png']!.state,
+        MediaState.gone,
+      );
+      expect(cancelled, isTrue);
+      expect(sent, lessThan(ArticlePreparationService.maxMediaBytes * 2));
+    });
+
     test('a racing transient failure cannot re-arm a gone piece', () async {
       // Two instances on the same store file emulate the foreground /
       // background-isolate race: A's fetch is still in flight when B

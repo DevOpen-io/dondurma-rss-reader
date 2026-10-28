@@ -409,6 +409,24 @@ class FeedService {
       );
     }
 
+    // An Atom document fails the RSS parser only after a full XML parse;
+    // when the root is <feed>, try Atom first and keep the chain below as
+    // the fallback.
+    if (bodyString.contains('<feed') && !bodyString.contains('<rss')) {
+      try {
+        return capItems(
+          _mapAtomItems(
+            AtomFeed.parse(bodyString),
+            request.category,
+            request.url,
+            xhtmlContents: _xhtmlContents(bodyString),
+          ),
+        );
+      } catch (_) {
+        // Not plain Atom after all (e.g. a prefixed root) — fall through.
+      }
+    }
+
     // RSS 1.0/RDF parses as an "empty" RSS 2.0 feed — detect the root element
     // and route it to the dedicated parser instead of returning zero items.
     final isRdf = bodyString.contains('<rdf:RDF');

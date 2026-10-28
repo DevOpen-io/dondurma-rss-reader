@@ -8,6 +8,7 @@ import 'package:http/http.dart' as http;
 
 import '../models/feed_item.dart';
 import '../utils/async_semaphore.dart';
+import '../utils/bounded_body.dart';
 import '../utils/host_pacer.dart';
 import '../utils/retry_after.dart';
 import 'article_cleanup_service.dart';
@@ -266,6 +267,22 @@ class ArticlePreparationService {
     );
   }
 
+  /// Image lists of recently registered RSS bodies, least recent first.
+  /// Reconcile re-registers every cache member on each pass; re-parsing
+  /// each unchanged body was the bulk of that pass's main-isolate work.
+  final _rssBodyImages = <String, List<String>>{};
+
+  List<String> _rssBodyImageUrls(String? html) {
+    if (html == null || html.isEmpty) return const [];
+    final known = _rssBodyImages.remove(html);
+    final urls = known ?? _bodyImageUrls(html);
+    _rssBodyImages[html] = urls;
+    if (_rssBodyImages.length > 256) {
+      _rssBodyImages.remove(_rssBodyImages.keys.first);
+    }
+    return urls;
+  }
+
   static List<String> _bodyImageUrls(String? html) {
     if (html == null || html.isEmpty) return const [];
     return parse(html)
@@ -328,7 +345,7 @@ class ArticlePreparationService {
   ) async {
     final imageUrls = <String>{
       if (item.imageUrl != null && item.imageUrl!.isNotEmpty) item.imageUrl!,
-      ..._bodyImageUrls(item.content),
+      ..._rssBodyImageUrls(item.content),
     }.toList();
     final manifest = {
       for (final url in imageUrls) url: ArticleMediaStore.pendingEntry(url),
@@ -577,6 +594,11 @@ class ArticlePreparationService {
           // shared HostPacer — pacing here too would double the gap.
           html = await _extract(record.link);
         } catch (_) {}
+        // Parsed before the record lock: the lock is shared with the
+        // background isolate, which waits at most a few seconds for it.
+        final extractedImages = html == null || html.isEmpty
+            ? const <String>[]
+            : _bodyImageUrls(html);
         await _records.mutate(id, expectedEpoch: epoch, (current) {
           if (current == null ||
               current.tombstoned ||
@@ -588,9 +610,9 @@ class ArticlePreparationService {
           // downgraded by this one's failure.
           if (current.bodyState == MediaState.ready) return current;
           if (html != null && html.isNotEmpty) {
-            final newImages = _bodyImageUrls(
-              html,
-            ).where((u) => !current.media.containsKey(u)).toList();
+            final newImages = extractedImages
+                .where((u) => !current.media.containsKey(u))
+                .toList();
             final mergedMedia = {...current.media};
             for (final url in newImages) {
               mergedMedia[url] = ArticleMediaStore.pendingEntry(url);
@@ -779,28 +801,32 @@ class ArticlePreparationService {
       if (_hostCooled(url, _now(), manual: manual)) {
         return (bytes: null, retryAfter: null, gone: false, deferred: true);
       }
-      final response = await _client
-          .get(
-            Uri.parse(url),
-            headers: {'User-Agent': 'Mozilla/5.0 (compatible; Dondurma RSS)'},
-          )
-          .timeout(_requestTimeout);
-      if (response.statusCode == 200) {
+      // One deadline for headers and body. The body streams with a cap so
+      // an oversize or non-image payload is dropped without buffering it.
+      final (response, bytes) = await () async {
+        final request = http.Request('GET', Uri.parse(url))
+          ..headers['User-Agent'] = 'Mozilla/5.0 (compatible; Dondurma RSS)';
+        final response = await _client.send(request);
         final type = response.headers['content-type'] ?? '';
-        if ((type.isNotEmpty && !type.startsWith('image/')) ||
-            response.bodyBytes.length > maxMediaBytes ||
-            response.bodyBytes.isEmpty) {
+        final declared = response.contentLength;
+        final wanted =
+            response.statusCode == 200 &&
+            (type.isEmpty || type.startsWith('image/')) &&
+            (declared == null || declared <= maxMediaBytes);
+        if (!wanted) {
+          await response.stream.listen(null).cancel();
+          return (response, null);
+        }
+        return (response, await readAtMost(response.stream, maxMediaBytes));
+      }().timeout(_requestTimeout);
+      if (response.statusCode == 200) {
+        if (bytes == null || bytes.isEmpty) {
           // Soft-404 HTML / captive portal / oversize / empty payload —
           // structural, not transient: retrying would fetch the same
           // non-image forever (an empty put throws, looping the wait).
           return (bytes: null, retryAfter: null, gone: true, deferred: false);
         }
-        return (
-          bytes: response.bodyBytes,
-          retryAfter: null,
-          gone: false,
-          deferred: false,
-        );
+        return (bytes: bytes, retryAfter: null, gone: false, deferred: false);
       }
       final retryAfter = parseRetryAfter(
         response.headers['retry-after'],

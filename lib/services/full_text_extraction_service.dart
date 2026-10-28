@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart' show compute;
 
 import '../utils/host_pacer.dart';
 import '../utils/retry_after.dart';
+import '../utils/bounded_body.dart';
 import 'feed_backoff.dart';
 import 'feed_service.dart';
 import 'package:flutter/material.dart' hide Element;
@@ -29,6 +30,9 @@ class FullTextExtractionService {
   // ---------------------------------------------------------------------------
   // HTTP header constants (match FeedService for consistency)
   // ---------------------------------------------------------------------------
+
+  /// Largest article page read; bigger responses are abandoned mid-stream.
+  static const int maxPageBytes = 8 * 1024 * 1024;
 
   static const _userAgent =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) '
@@ -243,17 +247,28 @@ class FullTextExtractionService {
         return null;
       }
       _deferredUrls.remove(url);
-      final response = await http
-          .get(
-            Uri.parse(url),
-            headers: {
+      // One deadline for headers and body; the body streams with a cap so
+      // a runaway page is dropped instead of buffered whole.
+      final (response, bodyBytes) = await () async {
+        final client = http.Client();
+        try {
+          final request = http.Request('GET', Uri.parse(url))
+            ..headers.addAll({
               'User-Agent': _userAgent,
               'Accept':
                   'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
               'Accept-Language': 'en-US,en;q=0.9',
-            },
-          )
-          .timeout(const Duration(seconds: 15));
+            });
+          final response = await client.send(request);
+          if (response.statusCode != 200) {
+            await response.stream.listen(null).cancel();
+            return (response, null);
+          }
+          return (response, await readAtMost(response.stream, maxPageBytes));
+        } finally {
+          client.close();
+        }
+      }().timeout(const Duration(seconds: 15));
 
       if (response.statusCode != 200) {
         final now = DateTime.now();
@@ -295,9 +310,15 @@ class FullTextExtractionService {
         return null;
       }
 
+      if (bodyBytes == null) {
+        // Over the size limit — the same page would be again.
+        _recordFailure(url, _permanentDeadline);
+        return null;
+      }
+
       // Full-page HTML parse + heuristic scoring is CPU-heavy (pages can be
       // megabytes) — run it in a background isolate to keep the UI smooth.
-      final result = await compute(extractArticleHtml, response.bodyBytes);
+      final result = await compute(extractArticleHtml, bodyBytes);
 
       if (result != null && result.isNotEmpty) {
         _cachePut(url, result);
