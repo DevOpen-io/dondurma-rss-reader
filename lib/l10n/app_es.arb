@@ -281,6 +281,7 @@
   "semanticArticleRead": "Artículo leído",
   "semanticArticleUnread": "Artículo no leído",
   "semanticOpenArticle": "Abrir artículo: {title}",
+  "semanticSettingInfo": "Acerca de {setting}",
   "semanticFilterUnread": "Filtrar artículos no leídos",
   "semanticShowAll": "Mostrar todos los artículos",
   "semanticOpenSearch": "Abrir búsqueda",

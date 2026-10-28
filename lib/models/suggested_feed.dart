@@ -21,6 +21,27 @@ class SuggestedFeed {
     );
   }
 
+  /// Number of suggestions per category.
+  static Map<String, int> categoryCounts(Iterable<SuggestedFeed> feeds) {
+    final counts = <String, int>{};
+    for (final f in feeds) {
+      counts[f.category] = (counts[f.category] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  /// Highest feed popularity per category. A category whose feeds all
+  /// have popularity 0 has no entry.
+  static Map<String, int> categoryPopularity(Iterable<SuggestedFeed> feeds) {
+    final maxPop = <String, int>{};
+    for (final f in feeds) {
+      if (f.popularity > (maxPop[f.category] ?? 0)) {
+        maxPop[f.category] = f.popularity;
+      }
+    }
+    return maxPop;
+  }
+
   /// Bare host for favicon lookups — unwraps `google.com/search?q=` links
   /// and strips a leading `www.`.
   String get domain {

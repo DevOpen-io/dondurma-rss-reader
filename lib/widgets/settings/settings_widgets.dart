@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../l10n/app_localizations.dart';
 import '../../utils/time_format.dart';
 import '../adaptive_dialog.dart';
 
@@ -98,16 +99,15 @@ class _SettingsTileLabel extends StatelessWidget {
       children: [
         Flexible(child: Text(title, style: const TextStyle(fontSize: 15))),
         if (info != null)
-          GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => _showInfoDialog(context),
-            child: Padding(
-              padding: const EdgeInsets.all(6),
-              child: Icon(
-                Icons.info_outline_rounded,
-                size: 15,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
+          // The tooltip doubles as the semantics label; default constraints
+          // keep a 48dp target on touch platforms.
+          IconButton(
+            onPressed: () => _showInfoDialog(context),
+            tooltip: AppLocalizations.of(context).semanticSettingInfo(title),
+            iconSize: 15,
+            icon: Icon(
+              Icons.info_outline_rounded,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
             ),
           ),
       ],

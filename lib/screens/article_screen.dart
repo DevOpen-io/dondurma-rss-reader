@@ -23,6 +23,7 @@ import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
+import '../utils/offline_status_labels.dart';
 import '../utils/share_actions.dart';
 import '../utils/time_format.dart';
 import '../theme/app_fonts.dart';
@@ -804,7 +805,11 @@ class _ArticleStatusStrip extends StatelessWidget {
       );
     }
 
-    final scope = _stripScopeLabel(status);
+    final scope = offlineScopeLabel(
+      l10n,
+      status,
+      noneLabel: l10n.articleStatusReadableSession,
+    )!;
     final wait = status.waitFor(
       unmeteredNow: unmetered,
       now: DateTime.now().toUtc(),
@@ -812,7 +817,7 @@ class _ArticleStatusStrip extends StatelessWidget {
     final details = <String>[
       if (status.totalMedia > 0)
         l10n.articleImagesCount(status.readyMedia, status.totalMedia),
-      ?_stripWaitLabel(status, wait),
+      ?offlineWaitLabel(l10n, status, wait),
     ];
 
     // A manual pass may bypass a local backoff but never a server or
@@ -895,57 +900,6 @@ class _ArticleStatusStrip extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _stripScopeLabel(ArticleStatus status) {
-    final rss = status.bodySource == 'rss';
-    switch (status.scope) {
-      case ArticleScope.savedReady:
-        return l10n.articleStatusSavedCopyReady;
-      case ArticleScope.savedText:
-        return rss ? l10n.articleStatusRssSaved : l10n.articleStatusTextSaved;
-      case ArticleScope.saveRequested:
-        return l10n.articleStatusSaveRequested;
-      case ArticleScope.cachedReady:
-        return l10n.articleStatusReadyInCache;
-      case ArticleScope.cachedText:
-        return rss ? l10n.articleStatusRssCached : l10n.articleStatusTextCached;
-      case ArticleScope.none:
-        return l10n.articleStatusReadableSession;
-    }
-  }
-
-  String? _stripWaitLabel(ArticleStatus status, ArticleWait wait) {
-    // The server-wait timestamp comes from the SERVER-stamped earliest;
-    // mixing in a local backoff would misstate how long the source asked
-    // us to wait (#41).
-    final serverText = status.earliestServerRetryAt == null
-        ? null
-        : l10n.articleWaitRetryEarliest(
-            DateFormat.Hm().format(status.earliestServerRetryAt!.toLocal()),
-          );
-    final earliestText = status.earliestRetryAt == null
-        ? null
-        : l10n.articleWaitRetryEarliest(
-            DateFormat.Hm().format(status.earliestRetryAt!.toLocal()),
-          );
-    switch (wait) {
-      case ArticleWait.unavailable:
-        return l10n.articleWaitUnavailable;
-      case ArticleWait.serverWait:
-        return serverText == null
-            ? l10n.articleWaitServer
-            : '${l10n.articleWaitServer} · $serverText';
-      case ArticleWait.retry:
-        // waitFor only returns retry when a future wait exists.
-        return earliestText;
-      case ArticleWait.unmetered:
-        return l10n.articleWaitUnmetered;
-      case ArticleWait.preparing:
-        return l10n.articleWaitPreparing;
-      case ArticleWait.none:
-        return null;
-    }
   }
 
   /// One article, one pass — may use metered transport but never bypasses

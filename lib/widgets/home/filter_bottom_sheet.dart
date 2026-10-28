@@ -152,3 +152,39 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 }
+
+/// Toolbar button that opens [FilterBottomSheet]; a dot badge and primary
+/// tint mark an active sheet filter. The desktop list pane uses a smaller
+/// rounded glyph.
+class FilterSheetButton extends StatelessWidget {
+  final bool active;
+  final bool desktop;
+
+  const FilterSheetButton({
+    super.key,
+    required this.active,
+    this.desktop = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return IconButton(
+      icon: Badge(
+        isLabelVisible: active,
+        smallSize: 8,
+        child: Icon(
+          desktop ? Icons.filter_list_rounded : Icons.filter_list,
+          size: desktop ? 20 : null,
+          color: active
+              ? cs.primary
+              : desktop
+              ? cs.onSurfaceVariant
+              : cs.onSurface.withValues(alpha: 0.5),
+        ),
+      ),
+      tooltip: AppLocalizations.of(context).filterSheetTitle,
+      onPressed: () => FilterBottomSheet.show(context),
+    );
+  }
+}

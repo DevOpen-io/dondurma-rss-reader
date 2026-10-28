@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../providers/feed_provider.dart';
+import '../empty_state.dart';
 
 /// Empty article list shared by the mobile feed tab and the desktop list
 /// pane: a first-run prompt when nothing is cached yet, otherwise why the
@@ -30,32 +31,13 @@ class FeedEmptyState extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
 
     if (provider.items.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 48),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.rss_feed,
-              size: 56,
-              color: cs.onSurface.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.noFeedsFound,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: cs.onSurface.withValues(alpha: 0.55),
-                fontSize: 15,
-              ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onAddFeed,
-              icon: const Icon(Icons.add, size: 18),
-              label: Text(l10n.semanticAddFeed),
-            ),
-          ],
+      return EmptyState(
+        icon: Icons.rss_feed,
+        title: l10n.noFeedsFound,
+        action: FilledButton.icon(
+          onPressed: onAddFeed,
+          icon: const Icon(Icons.add, size: 18),
+          label: Text(l10n.semanticAddFeed),
         ),
       );
     }

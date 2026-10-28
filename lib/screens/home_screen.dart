@@ -18,6 +18,8 @@ import '../widgets/home/feed_empty_state.dart';
 import '../widgets/home/feed_list_skeleton.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
+import '../widgets/home/offline_banner.dart';
+import '../widgets/home/refresh_progress_count.dart';
 import '../widgets/constrained_width.dart';
 import '../utils/motion.dart';
 import 'categories_screen.dart';
@@ -82,7 +84,6 @@ class _HomeScreenState extends State<HomeScreen> {
     List<FeedItem> olderItems,
   ) {
     final l10n = AppLocalizations.of(context);
-    final cs = Theme.of(context).colorScheme;
     final bool hasAnyItems =
         todayItems.isNotEmpty ||
         yesterdayItems.isNotEmpty ||
@@ -161,51 +162,13 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // ── Offline banner ─────────────────────────────────────────
                 if (provider.isOffline && provider.items.isNotEmpty)
-                  Material(
-                    color: cs.errorContainer,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.wifi_off,
-                            size: 16,
-                            color: cs.onErrorContainer,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              l10n.offlineBanner,
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: cs.onErrorContainer,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  const OfflineBanner(),
 
                 // ── Feed list — virtualized ────────────────────────────────
                 // itemBuilder is called only for visible rows. FeedListItem
                 // widgets for off-screen items are never constructed.
                 Expanded(
-                  child: NotificationListener<ScrollNotification>(
-                    onNotification: (ScrollNotification scrollInfo) {
-                      if (!provider.isLoadingMore &&
-                          provider.hasMoreItems &&
-                          scrollInfo.metrics.pixels >=
-                              scrollInfo.metrics.maxScrollExtent - 300) {
-                        WidgetsBinding.instance.addPostFrameCallback((_) {
-                          provider.loadMoreItems();
-                        });
-                      }
-                      return false;
-                    },
+                  child: FeedLoadMoreListener(
                     // One lazy viewport, anchored to the visible article when
                     // incoming source results insert/reorder rows above it.
                     child: AnchoredFeedList(
@@ -291,11 +254,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   onChanged: (value) {
                     context.read<FeedProvider>().setSearchQuery(value);
                   },
-                  onSubmitted: (value) {
-                    if (value.trim().isNotEmpty) {
-                      context.read<SettingsProvider>().addSearchQuery(value);
-                    }
-                  },
+                  // addSearchQuery trims and ignores empty queries.
+                  onSubmitted: (value) =>
+                      context.read<SettingsProvider>().addSearchQuery(value),
                 )
               : Text(
                   appBarTitle,
@@ -307,32 +268,15 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         actions: [
           if (_selectedIndex == 0) ...[
-            if (!_isSearching)
-              IconButton(
-                icon: Badge(
-                  isLabelVisible: hasActiveFilter,
-                  smallSize: 8,
-                  child: Icon(
-                    Icons.filter_list,
-                    color: hasActiveFilter
-                        ? Theme.of(context).colorScheme.primary
-                        : Theme.of(
-                            context,
-                          ).colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                tooltip: l10n.filterSheetTitle,
-                onPressed: () => FilterBottomSheet.show(context),
-              ),
+            if (!_isSearching) FilterSheetButton(active: hasActiveFilter),
             if (_isSearching)
               IconButton(
                 icon: const Icon(Icons.close),
                 tooltip: l10n.semanticCloseSearch,
                 onPressed: () {
-                  final query = _searchController.text.trim();
-                  if (query.isNotEmpty) {
-                    context.read<SettingsProvider>().addSearchQuery(query);
-                  }
+                  context.read<SettingsProvider>().addSearchQuery(
+                    _searchController.text,
+                  );
                   setState(() {
                     _isSearching = false;
                     _searchController.clear();
@@ -648,7 +592,6 @@ class _RefreshProgressPill extends StatelessWidget {
         if (value.phase != RefreshPhase.refreshing || value.total == 0) {
           return const SizedBox.shrink();
         }
-        final cs = Theme.of(context).colorScheme;
         return Center(
           child: Semantics(
             liveRegion: true,
@@ -656,7 +599,7 @@ class _RefreshProgressPill extends StatelessWidget {
               context,
             ).refreshingFeeds(value.completed, value.total),
             child: Material(
-              color: cs.surfaceContainerHigh,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               elevation: 3,
               borderRadius: BorderRadius.circular(20),
               child: Padding(
@@ -664,29 +607,7 @@ class _RefreshProgressPill extends StatelessWidget {
                   horizontal: 12,
                   vertical: 6,
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      width: 13,
-                      height: 13,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: cs.primary,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${value.completed} / ${value.total}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: cs.onSurfaceVariant,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
-                  ],
-                ),
+                child: RefreshProgressCount(progress: value),
               ),
             ),
           ),

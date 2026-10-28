@@ -1576,6 +1576,12 @@ abstract class AppLocalizations {
   /// **'Open article: {title}'**
   String semanticOpenArticle(String title);
 
+  /// No description provided for @semanticSettingInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'About {setting}'**
+  String semanticSettingInfo(String setting);
+
   /// No description provided for @semanticFilterUnread.
   ///
   /// In en, this message translates to:

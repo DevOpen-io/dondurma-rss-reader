@@ -281,6 +281,7 @@
   "semanticArticleRead": "Okunmuş makale",
   "semanticArticleUnread": "Okunmamış makale",
   "semanticOpenArticle": "Makaleyi aç: {title}",
+  "semanticSettingInfo": "{setting} hakkında",
   "semanticFilterUnread": "Okunmamış makaleleri filtrele",
   "semanticShowAll": "Tüm makaleleri göster",
   "semanticOpenSearch": "Aramayı aç",

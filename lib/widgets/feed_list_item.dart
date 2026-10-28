@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show CustomSemanticsAction;
 import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
@@ -16,6 +15,7 @@ import '../services/article_status.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
+import '../utils/offline_status_labels.dart';
 import '../utils/time_format.dart';
 import 'category_icon.dart';
 
@@ -556,8 +556,7 @@ class _FeedItemThumbnail extends StatelessWidget {
 // Status labels (#41)
 // =============================================================================
 
-/// Short scope label for a row — distinguishes temporary cache from
-/// permanent bookmark claims. A bookmarked item whose status map has
+/// Short scope label for a row. A bookmarked item whose status map has
 /// settled with no durable record reads "could not save", never "ready";
 /// while the map is still loading the row shows nothing rather than
 /// flashing a false failure (#41 honesty).
@@ -570,21 +569,7 @@ String? _statusLabel(
   if (status == null) {
     return isBookmarked && statusLoaded ? l10n.articleStatusCouldNotSave : null;
   }
-  final rss = status.bodySource == 'rss';
-  switch (status.scope) {
-    case ArticleScope.savedReady:
-      return l10n.articleStatusSavedCopyReady;
-    case ArticleScope.savedText:
-      return rss ? l10n.articleStatusRssSaved : l10n.articleStatusTextSaved;
-    case ArticleScope.saveRequested:
-      return l10n.articleStatusSaveRequested;
-    case ArticleScope.cachedReady:
-      return l10n.articleStatusReadyInCache;
-    case ArticleScope.cachedText:
-      return rss ? l10n.articleStatusRssCached : l10n.articleStatusTextCached;
-    case ArticleScope.none:
-      return null;
-  }
+  return offlineScopeLabel(l10n, status, noneLabel: null);
 }
 
 /// Optional second reason line — why preparation is still incomplete.
@@ -598,34 +583,7 @@ String? _waitLabel(
     unmeteredNow: unmetered,
     now: DateTime.now().toUtc(),
   );
-  final serverEarliest = status.earliestServerRetryAt;
-  final serverText = serverEarliest == null
-      ? null
-      : l10n.articleWaitRetryEarliest(
-          DateFormat.Hm().format(serverEarliest.toLocal()),
-        );
-  final earliest = status.earliestRetryAt;
-  final earliestText = earliest == null
-      ? null
-      : l10n.articleWaitRetryEarliest(
-          DateFormat.Hm().format(earliest.toLocal()),
-        );
-  switch (wait) {
-    case ArticleWait.unavailable:
-      return l10n.articleWaitUnavailable;
-    case ArticleWait.serverWait:
-      return serverText == null
-          ? l10n.articleWaitServer
-          : '${l10n.articleWaitServer} · $serverText';
-    case ArticleWait.retry:
-      return earliestText;
-    case ArticleWait.unmetered:
-      return l10n.articleWaitUnmetered;
-    case ArticleWait.preparing:
-      return l10n.articleWaitPreparing;
-    case ArticleWait.none:
-      return null;
-  }
+  return offlineWaitLabel(l10n, status, wait);
 }
 
 // =============================================================================

@@ -838,6 +838,11 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String semanticSettingInfo(String setting) {
+    return 'Acerca de $setting';
+  }
+
+  @override
   String get semanticFilterUnread => 'Filtrar artículos no leídos';
 
   @override

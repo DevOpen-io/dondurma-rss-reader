@@ -827,6 +827,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String semanticSettingInfo(String setting) {
+    return 'About $setting';
+  }
+
+  @override
   String get semanticFilterUnread => 'Filter unread articles';
 
   @override

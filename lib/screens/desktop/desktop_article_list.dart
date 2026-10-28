@@ -21,6 +21,8 @@ import '../../widgets/home/feed_empty_state.dart';
 import '../../widgets/home/feed_list_skeleton.dart';
 import '../../widgets/home/home_pagination_footer.dart';
 import '../../widgets/home/filter_bottom_sheet.dart';
+import '../../widgets/home/offline_banner.dart';
+import '../../widgets/home/refresh_progress_count.dart';
 import '../../widgets/in_app_browser.dart' show openArticleLink;
 import 'package:intl/intl.dart';
 
@@ -206,28 +208,15 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                     ),
                     style: const TextStyle(fontSize: 13.5),
                     onChanged: provider.setSearchQuery,
-                    onSubmitted: (v) {
-                      if (v.trim().isNotEmpty) {
-                        context.read<SettingsProvider>().addSearchQuery(v);
-                      }
-                    },
+                    // addSearchQuery trims and ignores empty queries.
+                    onSubmitted: (v) =>
+                        context.read<SettingsProvider>().addSearchQuery(v),
                   ),
                 ),
                 const SizedBox(width: 4),
-                IconButton(
-                  icon: Badge(
-                    isLabelVisible: provider.hasActiveSheetFilter,
-                    smallSize: 8,
-                    child: Icon(
-                      Icons.filter_list_rounded,
-                      size: 20,
-                      color: provider.hasActiveSheetFilter
-                          ? cs.primary
-                          : cs.onSurfaceVariant,
-                    ),
-                  ),
-                  tooltip: l10n.filterSheetTitle,
-                  onPressed: () => FilterBottomSheet.show(context),
+                FilterSheetButton(
+                  active: provider.hasActiveSheetFilter,
+                  desktop: true,
                 ),
                 // Progress lives in a dedicated ValueNotifier so per-feed
                 // updates repaint this chip only — never the whole list.
@@ -245,30 +234,9 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                             horizontal: 8,
                             vertical: 6,
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              SizedBox(
-                                width: 14,
-                                height: 14,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: cs.primary,
-                                ),
-                              ),
-                              const SizedBox(width: 7),
-                              Text(
-                                '${progress.completed} / ${progress.total}',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: cs.onSurfaceVariant,
-                                  fontFeatures: const [
-                                    FontFeature.tabularFigures(),
-                                  ],
-                                ),
-                              ),
-                            ],
+                          child: RefreshProgressCount(
+                            progress: progress,
+                            desktop: true,
                           ),
                         ),
                       );
@@ -305,30 +273,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
 
           // ── Offline banner ───────────────────────────────────────────
           if (provider.isOffline && provider.items.isNotEmpty)
-            Material(
-              color: cs.errorContainer,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 7,
-                ),
-                child: Row(
-                  children: [
-                    Icon(Icons.wifi_off, size: 15, color: cs.onErrorContainer),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        l10n.offlineBanner,
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          color: cs.onErrorContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+            const OfflineBanner(desktop: true),
 
           // ── List ─────────────────────────────────────────────────────
           Expanded(
@@ -347,18 +292,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                 : Focus(
                     focusNode: widget.listFocusNode,
                     onKeyEvent: _onListKey,
-                    child: NotificationListener<ScrollNotification>(
-                      onNotification: (scrollInfo) {
-                        if (!provider.isLoadingMore &&
-                            provider.hasMoreItems &&
-                            scrollInfo.metrics.pixels >=
-                                scrollInfo.metrics.maxScrollExtent - 300) {
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            provider.loadMoreItems();
-                          });
-                        }
-                        return false;
-                      },
+                    child: FeedLoadMoreListener(
                       child: Scrollbar(
                         controller: _scrollController,
                         thumbVisibility: true,

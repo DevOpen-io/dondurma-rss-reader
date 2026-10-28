@@ -51,3 +51,30 @@ class HomePaginationFooter extends StatelessWidget {
     );
   }
 }
+
+/// Pages the next slice in once the wrapped list scrolls within 300px of
+/// its end.
+class FeedLoadMoreListener extends StatelessWidget {
+  final Widget child;
+
+  const FeedLoadMoreListener({super.key, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.read<FeedProvider>();
+    return NotificationListener<ScrollNotification>(
+      onNotification: (scrollInfo) {
+        if (!provider.isLoadingMore &&
+            provider.hasMoreItems &&
+            scrollInfo.metrics.pixels >=
+                scrollInfo.metrics.maxScrollExtent - 300) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            provider.loadMoreItems();
+          });
+        }
+        return false;
+      },
+      child: child,
+    );
+  }
+}

@@ -1,22 +1,17 @@
-import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
-import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
+import '../models/suggested_feed.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../router/onboarding_state.dart';
+import '../services/suggested_feeds_service.dart';
 import '../utils/motion.dart';
 import '../utils/platform_caps.dart';
 import '../widgets/constrained_width.dart';
-
-const _globalFeedsUrl =
-    'https://raw.githubusercontent.com/DevOpen-io/dondurma-rss-reader/refs/heads/main/remote_data/suggested_feeds.json';
-const _trFeedsUrl =
-    'https://raw.githubusercontent.com/DevOpen-io/dondurma-rss-reader/refs/heads/main/remote_data/suggested_feed_tr.json';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -35,8 +30,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   late final Animation<Offset> _headerSlide;
   late final Animation<double> _contentFade;
 
-  List<Map<String, String>> _globalFeeds = [];
-  List<Map<String, String>> _trFeeds = [];
+  final _service = SuggestedFeedsService();
+  List<SuggestedFeed> _globalFeeds = [];
+  List<SuggestedFeed> _trFeeds = [];
   bool _loadingGlobal = true;
   bool _loadingTr = true;
   bool _errorGlobal = false;
@@ -109,29 +105,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Future<void> _loadGlobalFeeds() async {
     try {
-      final res = await http.get(Uri.parse(_globalFeedsUrl));
+      final feeds = await _service.fetchGlobal();
       if (!mounted) return;
-      if (res.statusCode == 200) {
-        final data = json.decode(res.body) as List<dynamic>;
-        setState(() {
-          _globalFeeds = data
-              .map(
-                (item) => {
-                  'name': item['name'].toString(),
-                  'url': item['url'].toString(),
-                  'category': item['category'].toString(),
-                  'popularity': (item['popularity'] ?? 0).toString(),
-                },
-              )
-              .toList();
-          _loadingGlobal = false;
-        });
-      } else {
-        setState(() {
-          _loadingGlobal = false;
-          _errorGlobal = true;
-        });
-      }
+      setState(() {
+        _globalFeeds = feeds;
+        _loadingGlobal = false;
+      });
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -144,29 +123,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   Future<void> _loadTrFeeds() async {
     try {
-      final res = await http.get(Uri.parse(_trFeedsUrl));
+      final feeds = await _service.fetchTurkish();
       if (!mounted) return;
-      if (res.statusCode == 200) {
-        final data = json.decode(res.body) as List<dynamic>;
-        setState(() {
-          _trFeeds = data
-              .map(
-                (item) => {
-                  'name': item['name'].toString(),
-                  'url': item['url'].toString(),
-                  'category': item['category'].toString(),
-                  'popularity': (item['popularity'] ?? 0).toString(),
-                },
-              )
-              .toList();
-          _loadingTr = false;
-        });
-      } else {
-        setState(() {
-          _loadingTr = false;
-          _errorTr = true;
-        });
-      }
+      setState(() {
+        _trFeeds = feeds;
+        _loadingTr = false;
+      });
     } catch (_) {
       if (mounted) {
         setState(() {
@@ -177,31 +139,17 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     }
   }
 
-  List<String> _categoriesFor(List<Map<String, String>> feeds) {
-    final maxPop = <String, int>{};
-    for (final f in feeds) {
-      final cat = f['category']!;
-      final pop = int.tryParse(f['popularity'] ?? '0') ?? 0;
-      if (pop > (maxPop[cat] ?? 0)) maxPop[cat] = pop;
-    }
+  /// Most popular first; categories without any popular feed are not
+  /// offered.
+  List<String> _categoriesFor(List<SuggestedFeed> feeds) {
+    final maxPop = SuggestedFeed.categoryPopularity(feeds);
     return maxPop.keys.toList()
       ..sort((a, b) => (maxPop[b] ?? 0).compareTo(maxPop[a] ?? 0));
   }
 
-  Map<String, int> _countsFor(List<Map<String, String>> feeds) {
-    final counts = <String, int>{};
-    for (final f in feeds) {
-      counts[f['category']!] = (counts[f['category']!] ?? 0) + 1;
-    }
-    return counts;
-  }
-
-  List<Map<String, String>> _topFeedsFor(
-    List<Map<String, String>> feeds,
-    String cat,
-  ) {
-    return (feeds.where((f) => f['category'] == cat).toList()
-          ..sort((a, b) => a['name']!.compareTo(b['name']!)))
+  List<SuggestedFeed> _topFeedsFor(List<SuggestedFeed> feeds, String cat) {
+    return (feeds.where((f) => f.category == cat).toList()
+          ..sort((a, b) => a.name.compareTo(b.name)))
         .take(5)
         .toList();
   }
@@ -218,20 +166,12 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final toAdd = <({String url, String name, String category})>[];
     for (final cat in _selectedGlobal) {
       for (final feed in _topFeedsFor(_globalFeeds, cat)) {
-        toAdd.add((
-          url: feed['url']!,
-          name: feed['name']!,
-          category: feed['category']!,
-        ));
+        toAdd.add((url: feed.url, name: feed.name, category: feed.category));
       }
     }
     for (final cat in _selectedTr) {
       for (final feed in _topFeedsFor(_trFeeds, cat)) {
-        toAdd.add((
-          url: feed['url']!,
-          name: feed['name']!,
-          category: feed['category']!,
-        ));
+        toAdd.add((url: feed.url, name: feed.name, category: feed.category));
       }
     }
 
@@ -414,7 +354,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   }
 
   Widget _buildContent({
-    required List<Map<String, String>> feeds,
+    required List<SuggestedFeed> feeds,
     required bool loading,
     required bool error,
     required Set<String> selected,
@@ -454,7 +394,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       );
     }
     final categories = _categoriesFor(feeds);
-    final counts = _countsFor(feeds);
+    final counts = SuggestedFeed.categoryCounts(feeds);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Wrap(

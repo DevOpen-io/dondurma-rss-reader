@@ -394,6 +394,14 @@
       }
     }
   },
+  "semanticSettingInfo": "About {setting}",
+  "@semanticSettingInfo": {
+    "placeholders": {
+      "setting": {
+        "type": "String"
+      }
+    }
+  },
   "semanticFilterUnread": "Filter unread articles",
   "semanticShowAll": "Show all articles",
   "semanticOpenSearch": "Open search",
