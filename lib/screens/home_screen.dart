@@ -21,6 +21,7 @@ import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/offline_banner.dart';
 import '../widgets/home/refresh_progress_count.dart';
 import '../widgets/constrained_width.dart';
+import '../widgets/adaptive_dialog.dart';
 import '../utils/motion.dart';
 import 'categories_screen.dart';
 import 'bookmarks_screen.dart';
@@ -56,24 +57,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddFeedDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      builder: (context) => const AddFeedDialog(),
-    );
+    showAdaptiveSheet<void>(context, const AddFeedDialog());
   }
 
   void _showAddFolderDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => const AddCategoryDialog(),
-    );
+    showAdaptiveSheet<void>(context, const AddCategoryDialog());
   }
 
   Widget _buildHomeBody(
