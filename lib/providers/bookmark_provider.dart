@@ -325,7 +325,7 @@ class BookmarkProvider extends ChangeNotifier {
     _restoreGeneration++;
     _savedBookmarks.clear();
     _bookmarkedItemIds.clear();
-    _snapshotFeedsById.clear();
+    _indexSnapshots();
     await _box.clear();
     notifyListeners();
   }

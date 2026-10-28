@@ -1172,4 +1172,22 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get legacyArchiveUnverified =>
       'Source unverified — shown as it was saved, never matched to a feed article.';
+
+  @override
+  String get timeNow => 'now';
+
+  @override
+  String timeMinutesShort(int count) {
+    return '${count}m';
+  }
+
+  @override
+  String timeHoursShort(int count) {
+    return '${count}h';
+  }
+
+  @override
+  String timeDaysShort(int count) {
+    return '${count}d';
+  }
 }

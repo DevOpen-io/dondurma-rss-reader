@@ -6,6 +6,7 @@ import 'package:adblocker_webview/adblocker_webview.dart';
 import 'package:provider/provider.dart';
 import '../providers/settings_provider.dart';
 import '../l10n/app_localizations.dart';
+import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import '../utils/platform_caps.dart';
 
@@ -423,6 +424,41 @@ class _InAppBrowserState extends State<InAppBrowser> {
       debugPrint('Error applying dark mode: $e');
     }
   }
+}
+
+/// Opens an article or in-body link: adds a missing scheme and reports an
+/// unparsable link instead of throwing. Uses the user's browser settings
+/// unless [external] forces the system browser.
+void openArticleLink(
+  BuildContext context,
+  String url, {
+  String? title,
+  bool external = false,
+}) {
+  var cleanUrl = url.trim();
+  if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
+    cleanUrl = 'https://$cleanUrl';
+  }
+  final uri = Uri.tryParse(cleanUrl);
+  if (uri == null) {
+    showAppToast(
+      AppLocalizations.of(context).invalidUrlFormat,
+      type: AppToastType.error,
+    );
+    return;
+  }
+  if (external) {
+    launchUrl(uri, mode: LaunchMode.externalApplication);
+    return;
+  }
+  final settings = context.read<SettingsProvider>();
+  openInAppBrowser(
+    context,
+    cleanUrl,
+    title: title,
+    adBlockEnabled: settings.adBlockEnabled,
+    browserMode: settings.browserMode,
+  );
 }
 
 /// Convenience function to open a URL based on the user's chosen browser mode.

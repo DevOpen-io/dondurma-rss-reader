@@ -390,5 +390,9 @@
   "legacyArchive": "Eski arşiv",
   "legacyArchiveDesc": "Kaynak bazlı güncellemeden önce kaydedilmiş, kaynağı kanıtlanamayan kopyalar",
   "legacyArchiveEmpty": "Eski kopya yok.",
-  "legacyArchiveUnverified": "Kaynak doğrulanmadı — kaydedildiği gibi gösterilir, hiçbir akış makalesine eşlenmez."
+  "legacyArchiveUnverified": "Kaynak doğrulanmadı — kaydedildiği gibi gösterilir, hiçbir akış makalesine eşlenmez.",
+  "timeNow": "şimdi",
+  "timeMinutesShort": "{count} dk",
+  "timeHoursShort": "{count} sa",
+  "timeDaysShort": "{count} g"
 }

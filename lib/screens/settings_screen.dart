@@ -915,6 +915,8 @@ class SettingsScreen extends StatelessWidget {
           ),
           FilledButton.tonal(
             onPressed: () async {
+              // This context is the dialog's and is gone after the awaits.
+              final router = GoRouter.of(context);
               Navigator.of(context).pop();
 
               final feeds = context.read<FeedProvider>();
@@ -960,9 +962,7 @@ class SettingsScreen extends StatelessWidget {
                 unawaited(WebViewCookieManager().clearCookies());
               }
 
-              if (context.mounted) {
-                context.go('/onboarding');
-              }
+              router.go('/onboarding');
             },
             style: FilledButton.styleFrom(
               backgroundColor: theme.colorScheme.errorContainer,

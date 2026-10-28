@@ -209,6 +209,18 @@ void main() {
 
   // Formerly KNOWN characterizations of the shared-GUID defect. Setups are
   // unchanged; the assertions now require independent source identity.
+  test('FeedItem equality is per source, like ArticleRef', () {
+    final a = _item('a');
+    final b = _item('b');
+    expect(a.id, b.id);
+    expect(a == b, isFalse);
+    expect({a, b}, hasLength(2));
+    // Same source, same normalized id: the same article instance.
+    final again = a.copyWith(id: ' shared-guid ', title: 'Edited');
+    expect(again, a);
+    expect(again.hashCode, a.hashCode);
+  });
+
   group('source-local durable identity (formerly KNOWN limitations)', () {
     test(
       'independent bookmark snapshots restore into separate offline records',

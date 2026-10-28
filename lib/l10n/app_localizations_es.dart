@@ -1188,4 +1188,22 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get legacyArchiveUnverified =>
       'Origen no verificado: se muestra tal como se guardó y nunca se asocia a un artículo del feed.';
+
+  @override
+  String get timeNow => 'ahora';
+
+  @override
+  String timeMinutesShort(int count) {
+    return '$count min';
+  }
+
+  @override
+  String timeHoursShort(int count) {
+    return '$count h';
+  }
+
+  @override
+  String timeDaysShort(int count) {
+    return '$count d';
+  }
 }

@@ -1176,4 +1176,22 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get legacyArchiveUnverified =>
       'Kaynak doğrulanmadı — kaydedildiği gibi gösterilir, hiçbir akış makalesine eşlenmez.';
+
+  @override
+  String get timeNow => 'şimdi';
+
+  @override
+  String timeMinutesShort(int count) {
+    return '$count dk';
+  }
+
+  @override
+  String timeHoursShort(int count) {
+    return '$count sa';
+  }
+
+  @override
+  String timeDaysShort(int count) {
+    return '$count g';
+  }
 }

@@ -13,10 +13,10 @@ import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../services/article_status.dart';
-import '../services/feed_date_groups.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
+import '../utils/time_format.dart';
 import 'category_icon.dart';
 
 const int _articleNavigationWindowRadius = 25;
@@ -709,7 +709,7 @@ class _FeedItemContent extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Text(
-              _formatDate(item),
+              relativeTimeLabel(item.pubDate, AppLocalizations.of(context)),
               style: TextStyle(
                 color: colorScheme.onSurfaceVariant,
                 fontSize: 11,
@@ -780,25 +780,6 @@ class _FeedItemContent extends StatelessWidget {
           ),
       ],
     );
-  }
-
-  String _formatDate(FeedItem item) {
-    if (item.pubDate == null) return item.timeAgo;
-    final now = DateTime.now();
-    final d = item.pubDate!;
-    final diff = now.difference(d);
-    if (diff.isNegative) {
-      // Small clock skew reads as "now"; beyond the allowance show the real
-      // (future) date instead of silently disguising it.
-      if (diff.abs() <= kFuturePubDateAllowance) return 'now';
-      final local = d.toLocal();
-      return '${local.month}/${local.day}';
-    }
-    if (diff.inMinutes < 1) return 'now';
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m';
-    if (diff.inHours < 24) return '${diff.inHours}h';
-    if (diff.inDays < 7) return '${diff.inDays}d';
-    return '${d.month}/${d.day}';
   }
 }
 

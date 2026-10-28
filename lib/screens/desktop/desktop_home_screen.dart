@@ -304,6 +304,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                 selectedId: selected?.id,
                 selectedFeedUrl: selected?.feedUrl,
                 onSelect: _selectArticle,
+                onAddFeed: _showAddFeed,
                 searchFocusNode: _searchFocusNode,
                 listFocusNode: _listFocusNode,
               ),

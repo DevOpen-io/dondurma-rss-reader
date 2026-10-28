@@ -180,39 +180,10 @@ class _ArticlePageState extends State<ArticlePage> {
     final provider = context.read<ArticlePageProvider>();
     // Only show an error toast for manual full-text attempts.
     // Auto-attempt failures are shown as a subtle inline notice.
-    if (provider.fullTextFailed && mounted) {
+    if (mounted && provider.consumeFullTextFailure()) {
       final l10n = AppLocalizations.of(context);
       showAppToast(l10n.fullTextFailed, type: AppToastType.error);
     }
-  }
-
-  // ---------------------------------------------------------------------------
-  // URL opening
-  // ---------------------------------------------------------------------------
-
-  void _openUrl(BuildContext context, String url, {String? title}) {
-    String cleanUrl = url.trim();
-    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) {
-      cleanUrl = 'https://$cleanUrl';
-    }
-
-    final uri = Uri.tryParse(cleanUrl);
-    if (uri == null) {
-      final l10n = AppLocalizations.of(context);
-      showAppToast(l10n.invalidUrlFormat, type: AppToastType.error);
-      return;
-    }
-
-    final settings = context.read<SettingsProvider>();
-    final adBlock = settings.adBlockEnabled;
-    final browserMode = settings.browserMode;
-    openInAppBrowser(
-      context,
-      cleanUrl,
-      title: title,
-      adBlockEnabled: adBlock,
-      browserMode: browserMode,
-    );
   }
 
   // ---------------------------------------------------------------------------
@@ -345,7 +316,7 @@ class _ArticlePageState extends State<ArticlePage> {
                     CircleActionButton(
                       icon: Icons.launch_rounded,
                       onPressed: widget.item.link.isNotEmpty
-                          ? () => _openUrl(
+                          ? () => openArticleLink(
                               context,
                               widget.item.link,
                               title: widget.item.title,
@@ -736,7 +707,7 @@ class _ArticlePageState extends State<ArticlePage> {
                             },
                             onLinkTap: (url, attributes, element) {
                               if (url != null && url.isNotEmpty) {
-                                _openUrl(context, url);
+                                openArticleLink(context, url);
                               }
                             },
                               );
@@ -777,7 +748,7 @@ class _ArticlePageState extends State<ArticlePage> {
                                 SizedBox(
                                   width: double.infinity,
                                   child: FilledButton.icon(
-                                    onPressed: () => _openUrl(
+                                    onPressed: () => openArticleLink(
                                       context,
                                       widget.item.link,
                                       title: widget.item.title,

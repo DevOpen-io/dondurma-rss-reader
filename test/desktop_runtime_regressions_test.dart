@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
@@ -11,6 +13,7 @@ import 'package:provider/single_child_widget.dart';
 
 import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
+import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
 import 'package:ice_cream_rss_reader/providers/article_page_provider.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
@@ -35,6 +38,13 @@ void main() {
 
   setUpAll(() async {
     tempDir = Directory.systemTemp.createTempSync('runtime_regressions');
+    for (final channel in const [
+      MethodChannel('dev.fluttercommunity.plus/connectivity'),
+      MethodChannel('dev.fluttercommunity.plus/connectivity_status'),
+    ]) {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(channel, (_) async => null);
+    }
     Hive.init(tempDir.path);
     await Hive.openBox('settings');
     await Hive.openBox('feeds');
@@ -105,11 +115,13 @@ void main() {
     List<FeedItem> items, {
     String? selectedId,
     ValueChanged<FeedItem>? onSelect,
+    VoidCallback? onAddFeed,
   }) => app(
     DesktopArticleListPane(
       items: items,
       selectedId: selectedId,
       onSelect: onSelect ?? (_) {},
+      onAddFeed: onAddFeed ?? () {},
       searchFocusNode: FocusNode(),
       listFocusNode: FocusNode(),
     ),
@@ -138,6 +150,7 @@ void main() {
               selectedId: selected.id,
               selectedFeedUrl: selected.feedUrl,
               onSelect: (item) => update(() => selected = item),
+              onAddFeed: () {},
               searchFocusNode: searchFocus,
               listFocusNode: listFocus,
             );
@@ -270,6 +283,7 @@ void main() {
                   items: items,
                   selectedId: null,
                   onSelect: (_) {},
+                  onAddFeed: () {},
                   searchFocusNode: searchFocus,
                   listFocusNode: listFocus,
                 );
@@ -395,6 +409,7 @@ void main() {
             items: items,
             selectedId: null,
             onSelect: (_) {},
+            onAddFeed: () {},
             searchFocusNode: FocusNode(),
             listFocusNode: FocusNode(),
           ),
@@ -475,5 +490,75 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     });
+  });
+
+  desktopTest('clear filters also empties the search field', (tester) async {
+    surface(tester, const Size(1000, 800));
+    const feedUrl = 'https://example.com/feed';
+    // Earlier tests leave Hive file writes queued in their fake-async
+    // zones, so awaiting one here never returns. The box's in-memory view
+    // updates synchronously, which is all the provider reads. The refresh
+    // on first update keeps cached items of subscribed feeds only.
+    final box = Hive.box('feeds');
+    unawaited(
+      box.put(
+        'subscriptions',
+        jsonEncode([
+          FeedSubscription(
+            url: feedUrl,
+            name: 'Example',
+            category: 'News',
+          ).toJson(),
+        ]),
+      ),
+    );
+    unawaited(
+      box.put(
+        'cachedItemsJson',
+        jsonEncode([
+          makeItem('a1', 'Article One').copyWith(feedUrl: feedUrl).toJson(),
+        ]),
+      ),
+    );
+    addTearDown(
+      () => unawaited(box.deleteAll(['cachedItemsJson', 'subscriptions'])),
+    );
+    // The cache decodes via compute(), which only completes when the
+    // provider is created outside the fake-async zone.
+    await tester.runAsync(() => tester.pumpWidget(listPane(const [])));
+    final pane = tester.element(find.byType(DesktopArticleListPane));
+    final l10n = AppLocalizations.of(pane);
+    final feed = pane.read<FeedProvider>();
+    for (var i = 0; i < 100 && feed.items.isEmpty; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 50)),
+      );
+      await tester.pump();
+    }
+    expect(feed.items, isNotEmpty);
+
+    await tester.enterText(find.byType(TextField), 'no-such-article');
+    await tester.pump();
+    await tester.tap(find.text(l10n.clearFilters));
+    await tester.pump();
+
+    final field = tester.widget<TextField>(find.byType(TextField));
+    expect(field.controller!.text, isEmpty);
+  });
+
+  desktopTest('empty pane without any articles offers to add a feed', (
+    tester,
+  ) async {
+    surface(tester, const Size(1000, 800));
+    var addTaps = 0;
+    await tester.pumpWidget(listPane(const [], onAddFeed: () => addTaps++));
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(DesktopArticleListPane)),
+    );
+
+    expect(find.text(l10n.noFeedsFound), findsOneWidget);
+    await tester.tap(find.text(l10n.semanticAddFeed));
+    expect(addTaps, 1);
   });
 }

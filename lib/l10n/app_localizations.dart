@@ -2235,6 +2235,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Source unverified — shown as it was saved, never matched to a feed article.'**
   String get legacyArchiveUnverified;
+
+  /// No description provided for @timeNow.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get timeNow;
+
+  /// No description provided for @timeMinutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m'**
+  String timeMinutesShort(int count);
+
+  /// No description provided for @timeHoursShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h'**
+  String timeHoursShort(int count);
+
+  /// No description provided for @timeDaysShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String timeDaysShort(int count);
 }
 
 class _AppLocalizationsDelegate

@@ -86,12 +86,14 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
   Future<void> _loadGlobalFeeds() async {
     try {
       final feeds = await _service.fetchGlobal();
+      if (!mounted) return;
       setState(() {
         _globalFeeds = feeds;
         _isLoadingGlobal = false;
       });
     } catch (e) {
       debugPrint('Error loading global feeds: $e');
+      if (!mounted) return;
       setState(() {
         _isLoadingGlobal = false;
         _hasErrorGlobal = true;
@@ -102,12 +104,14 @@ class _ExploreFeedsPageState extends State<ExploreFeedsPage>
   Future<void> _loadTrFeeds() async {
     try {
       final feeds = await _service.fetchTurkish();
+      if (!mounted) return;
       setState(() {
         _trFeeds = feeds;
         _isLoadingTr = false;
       });
     } catch (e) {
       debugPrint('Error loading TR feeds: $e');
+      if (!mounted) return;
       setState(() {
         _isLoadingTr = false;
         _hasErrorTr = true;

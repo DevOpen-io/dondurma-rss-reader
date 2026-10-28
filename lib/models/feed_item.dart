@@ -151,12 +151,14 @@ class FeedItem {
     );
   }
 
+  /// One article instance per source: equal exactly when [ArticleRef]s are.
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is FeedItem && other.id == id;
+      identical(this, other) ||
+      other is FeedItem && ArticleRef.of(other) == ArticleRef.of(this);
 
   @override
-  int get hashCode => id.hashCode;
+  int get hashCode => ArticleRef.of(this).hashCode;
 
   /// Decodes HTML entities (e.g. `&#8216;`) in [text].
   static String _decodeHtml(String text) {

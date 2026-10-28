@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
 import '../../providers/article_page_provider.dart';
-import '../../providers/settings_provider.dart';
 import '../../utils/motion.dart';
 import '../../utils/share_actions.dart';
 import '../../widgets/in_app_browser.dart';
@@ -64,21 +63,6 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
   void dispose() {
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _openLink(BuildContext context, FeedItem item) {
-    var url = item.link.trim();
-    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-      url = 'https://$url';
-    }
-    final settings = context.read<SettingsProvider>();
-    openInAppBrowser(
-      context,
-      url,
-      title: item.title,
-      adBlockEnabled: settings.adBlockEnabled,
-      browserMode: settings.browserMode,
-    );
   }
 
   @override
@@ -171,7 +155,11 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
                   icon: const Icon(Icons.launch_rounded, size: 20),
                   tooltip: l10n.openInBrowser,
                   onPressed: current.link.isNotEmpty
-                      ? () => _openLink(context, current)
+                      ? () => openArticleLink(
+                          context,
+                          current.link,
+                          title: current.title,
+                        )
                       : null,
                 ),
                 IconButton(

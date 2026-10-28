@@ -4,7 +4,6 @@ import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
@@ -18,9 +17,11 @@ import '../../utils/share_actions.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/feed_list_item.dart' show confirmBookmarkToggle;
 import '../../widgets/anchored_feed_list.dart';
+import '../../widgets/home/feed_empty_state.dart';
 import '../../widgets/home/feed_list_skeleton.dart';
 import '../../widgets/home/home_pagination_footer.dart';
 import '../../widgets/home/filter_bottom_sheet.dart';
+import '../../widgets/in_app_browser.dart' show openArticleLink;
 import 'package:intl/intl.dart';
 
 /// Middle column of the desktop layout: search/filter/refresh toolbar plus
@@ -39,6 +40,9 @@ class DesktopArticleListPane extends StatefulWidget {
   /// Called when the user selects an article (tap or arrow keys).
   final ValueChanged<FeedItem> onSelect;
 
+  /// Opens the add-feed flow from the first-run empty state.
+  final VoidCallback onAddFeed;
+
   /// Search field focus node — owned by the shell so Ctrl/Cmd+F can target it.
   final FocusNode searchFocusNode;
 
@@ -51,6 +55,7 @@ class DesktopArticleListPane extends StatefulWidget {
     required this.selectedId,
     this.selectedFeedUrl,
     required this.onSelect,
+    required this.onAddFeed,
     required this.searchFocusNode,
     required this.listFocusNode,
   });
@@ -316,7 +321,15 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
             child: provider.isLoading && widget.items.isEmpty
                 ? const FeedListSkeleton()
                 : widget.items.isEmpty
-                ? _EmptyListState(provider: provider)
+                ? Center(
+                    child: SingleChildScrollView(
+                      child: FeedEmptyState(
+                        provider: provider,
+                        onAddFeed: widget.onAddFeed,
+                        searchController: _searchController,
+                      ),
+                    ),
+                  )
                 : Focus(
                     focusNode: widget.listFocusNode,
                     onKeyEvent: _onListKey,
@@ -358,56 +371,6 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                   ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _EmptyListState extends StatelessWidget {
-  final FeedProvider provider;
-  const _EmptyListState({required this.provider});
-
-  @override
-  Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
-    final cs = Theme.of(context).colorScheme;
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(28),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.article_outlined,
-              size: 44,
-              color: cs.onSurface.withValues(alpha: 0.2),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              provider.selectedCategory != null
-                  ? l10n.noFeedsInCategory(provider.selectedCategory!)
-                  : l10n.noFeedsMatchFilter,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: cs.onSurface.withValues(alpha: 0.55),
-                fontSize: 13.5,
-              ),
-            ),
-            if (provider.hasActiveSheetFilter ||
-                provider.searchQuery.isNotEmpty) ...[
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  provider.setSearchQuery('');
-                  if (provider.hasActiveSheetFilter) {
-                    provider.clearSheetFilter();
-                  }
-                },
-                child: Text(l10n.clearFilters),
-              ),
-            ],
-          ],
-        ),
       ),
     );
   }
@@ -612,7 +575,7 @@ class _DesktopArticleTile extends StatelessWidget {
         case 'bookmark':
           unawaited(confirmBookmarkToggle(context, item));
         case 'open':
-          launchUrl(Uri.parse(item.link), mode: LaunchMode.externalApplication);
+          openArticleLink(context, item.link, external: true);
         case 'copy':
           shareArticleLink(context, item);
       }

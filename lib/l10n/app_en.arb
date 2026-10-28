@@ -520,5 +520,30 @@
   "legacyArchive": "Legacy archive",
   "legacyArchiveDesc": "Copies saved before the per-source update whose source could not be proven",
   "legacyArchiveEmpty": "No legacy copies.",
-  "legacyArchiveUnverified": "Source unverified — shown as it was saved, never matched to a feed article."
+  "legacyArchiveUnverified": "Source unverified — shown as it was saved, never matched to a feed article.",
+  "timeNow": "now",
+  "timeMinutesShort": "{count}m",
+  "@timeMinutesShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeHoursShort": "{count}h",
+  "@timeHoursShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "timeDaysShort": "{count}d",
+  "@timeDaysShort": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
 }

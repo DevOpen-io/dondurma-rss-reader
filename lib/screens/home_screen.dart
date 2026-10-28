@@ -13,6 +13,7 @@ import '../widgets/add_feed_dialog.dart';
 import '../widgets/home/home_bottom_nav.dart';
 import '../widgets/home/home_search_history_panel.dart';
 import '../widgets/home/home_pagination_footer.dart';
+import '../widgets/home/feed_empty_state.dart';
 import '../widgets/home/feed_list_skeleton.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
@@ -113,88 +114,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     entries.add(_WidgetEntry(HomePaginationFooter(provider: provider)));
 
-    if (provider.items.isEmpty && !provider.isLoading) {
+    if (!hasAnyItems && !provider.isLoading) {
       entries.add(
         _WidgetEntry(
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 32.0,
-              vertical: 48.0,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.rss_feed,
-                  size: 56,
-                  color: cs.onSurface.withValues(alpha: 0.2),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  l10n.noFeedsFound,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: cs.onSurface.withValues(alpha: 0.55),
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  onPressed: _showAddFeedDialog,
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(l10n.semanticAddFeed),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    } else if (!hasAnyItems && !provider.isLoading) {
-      entries.add(
-        _WidgetEntry(
-          Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  provider.selectedCategory != null
-                      ? l10n.noFeedsInCategory(provider.selectedCategory!)
-                      : l10n.noFeedsMatchFilter,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: cs.onSurface.withValues(alpha: 0.5),
-                    fontSize: 14,
-                  ),
-                ),
-                if (provider.hasActiveSheetFilter ||
-                    provider.searchQuery.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  TextButton(
-                    onPressed: () {
-                      _searchController.clear();
-                      provider.setSearchQuery('');
-                      if (provider.hasActiveSheetFilter) {
-                        provider.clearSheetFilter();
-                      }
-                    },
-                    child: Text(l10n.clearFilters),
-                  ),
-                ],
-                if (provider.showUnreadOnly) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    l10n.readSwipeHint,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                      fontSize: 13,
-                      height: 1.5,
-                    ),
-                  ),
-                ],
-              ],
-            ),
+          FeedEmptyState(
+            provider: provider,
+            onAddFeed: _showAddFeedDialog,
+            searchController: _searchController,
+            showSwipeHint: true,
           ),
         ),
       );

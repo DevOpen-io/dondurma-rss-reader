@@ -258,6 +258,17 @@ void main() {
     expect(requests, isEmpty);
   });
 
+  test('factory reset drops the bookmark claim on durable records', () async {
+    await seedBookmark();
+    final bookmarks = BookmarkProvider(preparation: preparation);
+    addTearDown(bookmarks.dispose);
+    await bookmarks.restoration;
+    final ref = ArticleRef.of(_article());
+    expect(bookmarks.isBookmarkedRef(ref), isTrue);
+    await bookmarks.factoryReset();
+    expect(bookmarks.isBookmarkedRef(ref), isFalse);
+  });
+
   test(
     'real prepareArticleNow repairs missing-ready media on first tap',
     () async {
