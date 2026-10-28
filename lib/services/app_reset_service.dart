@@ -98,7 +98,7 @@ abstract final class AppResetService {
     await bumpCacheEpoch(); // fence bg writers before the wipe…
     await box.clear();
     await bumpCacheEpoch(); // …and after — clear() erased the first bump.
-    final archived = await ArticleRecordStore.forBox(box).wipeAll();
+    final archived = await ArticleRecordStore.of(box).wipeAll();
     final history = await (observed ?? ObservedArticleStore.forBox(box))
         .wipeAll();
     // Web has no file system, so no managed media pool exists there.

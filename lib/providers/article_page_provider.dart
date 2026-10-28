@@ -130,7 +130,7 @@ class ArticlePageProvider extends ChangeNotifier {
   }) async {
     if (_savedCopySettled) return;
     final generation = ++_savedCopyGeneration;
-    final store = records ?? ArticleRecordStore.forBox(Hive.box('feeds'));
+    final store = records ?? ArticleRecordStore.of(Hive.box('feeds'));
     final mediaStore = media ?? ArticleMediaStore();
     ArticleRecord? record;
     try {

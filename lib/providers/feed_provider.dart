@@ -271,7 +271,7 @@ class FeedProvider extends ChangeNotifier {
         _statusRefreshQueued = false;
         final gen = ++_statusGeneration;
         final map = await listArticleStatuses(
-          ArticleRecordStore.forBox(_box),
+          ArticleRecordStore.of(_box),
           // Files that vanished or are truncated must not back a "ready"
           // label — verify() demotes them for repair (#41).
           media: _statusMedia,
@@ -1570,7 +1570,7 @@ class FeedProvider extends ChangeNotifier {
 
   TempCacheMembership get _membership =>
       _tempMembership ??= TempCacheMembership(
-        records: ArticleRecordStore.forBox(_box),
+        records: ArticleRecordStore.of(_box),
         preparation: _preparation,
       );
 
@@ -1665,7 +1665,7 @@ class FeedProvider extends ChangeNotifier {
     // Cross-isolate fence on the RECORD side too: a background task's
     // fenced mutations captured before this bump are now rejected, so an
     // in-flight bg reconcile can't re-add owners the strip removes (#40).
-    await ArticleRecordStore.forBox(_box).bumpEpoch();
+    await ArticleRecordStore.of(_box).bumpEpoch();
     // The strip rides the save chain: an in-flight write's step-4
     // registrations must finish BEFORE owners are removed, or a queued
     // registerArticle would resurrect the owner the strip just dropped.

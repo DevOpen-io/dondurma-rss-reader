@@ -96,7 +96,7 @@ Future<void> runBgFetch() async {
     // Write fences captured with the inputs, not after HTTP: an epoch read
     // late would license old responses into a newer era.
     final cacheEpoch = feedsBox.get(tempCacheEpochKey);
-    final records = ArticleRecordStore.forBox(feedsBox);
+    final records = ArticleRecordStore.of(feedsBox);
     final recordEpoch = await records.currentEpoch();
     // Read-only in this isolate — bookmark ids exclude articles from temp
     // slots so a saved article never consumes a transient one (#37).

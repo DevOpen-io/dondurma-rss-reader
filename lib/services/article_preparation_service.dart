@@ -48,7 +48,7 @@ class ArticlePreparationService {
     LifecycleGate? gate,
   }) : _backoff = backoff,
        _gate = gate ?? LifecycleGate.current,
-       _records = recordStore ?? ArticleRecordStore.forBox(Hive.box('feeds')),
+       _records = recordStore ?? ArticleRecordStore.of(Hive.box('feeds')),
        _media = mediaStore ?? ArticleMediaStore(),
        _client = client ?? http.Client(),
        _ownsClient = client == null,

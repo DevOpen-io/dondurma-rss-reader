@@ -139,7 +139,7 @@ class BookmarkProvider extends ChangeNotifier {
   /// feed/background reconcilers share, so owner writes serialize globally.
   ArticleRecordStore? _records;
   ArticleRecordStore get _recordStore =>
-      _records ??= ArticleRecordStore.forBox(Hive.box('feeds'));
+      _records ??= ArticleRecordStore.of(Hive.box('feeds'));
 
   /// Drops the durable 'bookmark' claim after an un-bookmark. The bookmark
   /// set is re-checked inside the store's locked mutation so a re-bookmark

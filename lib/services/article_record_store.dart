@@ -296,6 +296,13 @@ class ArticleRecordStore {
         knownInstances: () => _knownInstancesFor(box),
       );
 
+  static final _shared = Expando<ArticleRecordStore>();
+
+  /// The isolate's store for [box]. Callers share it so a decoded archive
+  /// is reused across them instead of each decoding the file anew.
+  static ArticleRecordStore of(Box box) =>
+      _shared[box] ??= ArticleRecordStore.forBox(box);
+
   static const int schemaVersion = 2;
   static const int legacySchemaVersion = 1;
 

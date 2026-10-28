@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show AppExitResponse;
 
 import 'package:flex_color_scheme/flex_color_scheme.dart' show FlexScheme;
 import 'package:flutter/material.dart';
@@ -116,7 +117,7 @@ void main() async {
         Provider<FeedBackoff>(create: (_) => FeedBackoff()),
         Provider<ArticlePreparationService>(
           create: (ctx) => ArticlePreparationService(
-            recordStore: ArticleRecordStore.forBox(Hive.box('feeds')),
+            recordStore: ArticleRecordStore.of(Hive.box('feeds')),
             hostPacer: ctx.read<HostPacer>(),
             backoff: ctx.read<FeedBackoff>(),
           ),
@@ -295,6 +296,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  /// Desktop window close: write batched read marks before the process
+  /// ends — a close may not pass through a paused lifecycle state.
+  @override
+  Future<AppExitResponse> didRequestAppExit() async {
+    await context.read<FeedProvider>().flushReadStates();
+    return AppExitResponse.exit;
   }
 
   @override

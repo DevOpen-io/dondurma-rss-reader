@@ -21,7 +21,7 @@ class LegacyArchiveScreen extends StatefulWidget {
 class _LegacyArchiveScreenState extends State<LegacyArchiveScreen> {
   late final Future<List<ArticleRecord>> _records =
       (widget.load ??
-              () async => (await ArticleRecordStore.forBox(
+              () async => (await ArticleRecordStore.of(
                 Hive.box('feeds'),
               ).listRecordsForGc()).quarantine)
           .call();
