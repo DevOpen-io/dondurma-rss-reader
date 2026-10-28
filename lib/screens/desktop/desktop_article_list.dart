@@ -24,6 +24,7 @@ import '../../widgets/home/filter_bottom_sheet.dart';
 import '../../widgets/home/offline_banner.dart';
 import '../../widgets/home/refresh_progress_count.dart';
 import '../../widgets/in_app_browser.dart' show openArticleLink;
+import '../../widgets/empty_state.dart';
 import 'package:intl/intl.dart';
 
 /// Middle column of the desktop layout: search/filter/refresh toolbar plus
@@ -45,6 +46,10 @@ class DesktopArticleListPane extends StatefulWidget {
   /// Opens the add-feed flow from the first-run empty state.
   final VoidCallback onAddFeed;
 
+  /// The pane lists bookmarks: the feed's paging and its filter-based
+  /// empty explanations don't apply.
+  final bool bookmarks;
+
   /// Search field focus node — owned by the shell so Ctrl/Cmd+F can target it.
   final FocusNode searchFocusNode;
 
@@ -58,6 +63,7 @@ class DesktopArticleListPane extends StatefulWidget {
     this.selectedFeedUrl,
     required this.onSelect,
     required this.onAddFeed,
+    this.bookmarks = false,
     required this.searchFocusNode,
     required this.listFocusNode,
   });
@@ -277,7 +283,14 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
 
           // ── List ─────────────────────────────────────────────────────
           Expanded(
-            child: provider.isLoading && widget.items.isEmpty
+            child: widget.bookmarks && widget.items.isEmpty
+                ? Center(
+                    child: EmptyState(
+                      icon: Icons.bookmark_border_rounded,
+                      title: l10n.noBookmarks,
+                    ),
+                  )
+                : provider.isLoading && widget.items.isEmpty
                 ? const FeedListSkeleton()
                 : widget.items.isEmpty
                 ? Center(
@@ -293,13 +306,17 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                     focusNode: widget.listFocusNode,
                     onKeyEvent: _onListKey,
                     child: FeedLoadMoreListener(
+                      enabled: !widget.bookmarks,
                       child: Scrollbar(
                         controller: _scrollController,
                         thumbVisibility: true,
                         child: AnchoredFeedList(
                           controller: _scrollController,
                           cacheExtent: 400,
-                          rowIds: [..._rowIds, 'pagination-footer'],
+                          rowIds: [
+                            ..._rowIds,
+                            if (!widget.bookmarks) 'pagination-footer',
+                          ],
                           isArticle: (index) => index < widget.items.length,
                           itemBuilder: (context, index) {
                             if (index == widget.items.length) {

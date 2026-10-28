@@ -23,6 +23,7 @@ import 'package:ice_cream_rss_reader/screens/desktop/desktop_article_list.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_reader_pane.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
 import 'package:ice_cream_rss_reader/utils/platform_caps.dart';
+import 'package:ice_cream_rss_reader/widgets/home/home_pagination_footer.dart';
 
 /// Runtime regressions for the two debug-console failures:
 ///
@@ -112,12 +113,14 @@ void main() {
     String? selectedId,
     ValueChanged<FeedItem>? onSelect,
     VoidCallback? onAddFeed,
+    bool bookmarks = false,
   }) => app(
     DesktopArticleListPane(
       items: items,
       selectedId: selectedId,
       onSelect: onSelect ?? (_) {},
       onAddFeed: onAddFeed ?? () {},
+      bookmarks: bookmarks,
       searchFocusNode: FocusNode(),
       listFocusNode: FocusNode(),
     ),
@@ -552,5 +555,25 @@ void main() {
     expect(find.text(l10n.noFeedsFound), findsOneWidget);
     await tester.tap(find.text(l10n.semanticAddFeed));
     expect(addTaps, 1);
+  });
+
+  desktopTest('the bookmarks list has no feed paging and its own empty text', (
+    tester,
+  ) async {
+    surface(tester, const Size(1000, 800));
+    await tester.pumpWidget(
+      listPane([makeItem('saved', 'Saved')], bookmarks: true),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Saved'), findsOneWidget);
+    expect(find.byType(HomePaginationFooter), findsNothing);
+
+    await tester.pumpWidget(listPane(const [], bookmarks: true));
+    await tester.pumpAndSettle();
+    final l10n = AppLocalizations.of(
+      tester.element(find.byType(DesktopArticleListPane)),
+    );
+    expect(find.text(l10n.noBookmarks), findsOneWidget);
+    expect(find.text(l10n.noFeedsMatchFilter), findsNothing);
   });
 }

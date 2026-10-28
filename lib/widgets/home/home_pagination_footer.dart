@@ -57,10 +57,18 @@ class HomePaginationFooter extends StatelessWidget {
 class FeedLoadMoreListener extends StatelessWidget {
   final Widget child;
 
-  const FeedLoadMoreListener({super.key, required this.child});
+  /// Off for lists that are not the paged feed (e.g. bookmarks).
+  final bool enabled;
+
+  const FeedLoadMoreListener({
+    super.key,
+    required this.child,
+    this.enabled = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    if (!enabled) return child;
     final provider = context.read<FeedProvider>();
     return NotificationListener<ScrollNotification>(
       onNotification: (scrollInfo) {
