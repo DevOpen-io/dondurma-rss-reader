@@ -32,6 +32,7 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Per-source article identity: read state and saved copies keyed by feed + article ID; schema-1 archive migrated lazily, unproven copies quarantined in Settings > Legacy archive (2026-10-26)
 - [x] Proven same article from another source reuses already-extracted content as its own copy (2026-10-26)
 - [x] GitHub releases with signed APK, Windows installer, macOS DMG and Linux AppImage on every CI-green main push (2026-10-26)
+- [x] Bundled OFL fonts (no runtime Google Fonts fetch) with app-font and article-typeface choices; one durable offline pipeline (legacy full-text prefetch removed) (2026-10-29)
 
 ## Backlog
 

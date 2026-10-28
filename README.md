@@ -24,7 +24,7 @@ Fast, private RSS/Atom reader built with Flutter and Material 3. No accounts, al
 - Per-source read state and saved copies; legacy archive for pre-migration copies
 - Local notifications, per-feed controls, quiet hours, digest selection
 - Latest-news and category home-screen widgets
-- 10 FlexColorScheme palettes; system/light/dark; reading typography controls
+- 10 FlexColorScheme palettes; system/light/dark; bundled reading fonts (Outfit, Atkinson Hyperlegible, Lexend, Literata) for the app and article text
 - Responsive widths, semantic controls, EN/TR/ES localization
 - Modal-aware global toast feedback respecting reduced-motion settings
 - Windows, Linux, and macOS desktop builds with an adaptive three-pane layout,
@@ -105,7 +105,7 @@ Details: [developer guide](docs/development/README.md) · [product guide](docs/p
 - Kaynak bazlı okundu durumu ve kayıtlı kopyalar; eski sürüm kopyaları için eski arşiv
 - Yerel bildirimler, akış kontrolleri, sessiz saatler, özet seçimi
 - Son haberler ve kategori ana ekran widget'ları
-- 10 renk şeması; sistem/açık/koyu; okuma tipografisi ayarları
+- 10 renk şeması; sistem/açık/koyu; uygulama ve makale metni için paketli okuma fontları (Outfit, Atkinson Hyperlegible, Lexend, Literata)
 - Duyarlı genişlik, semantik kontroller, EN/TR/ES
 - Azaltılmış hareket ayarına uyan, modal farkındalıklı global toast
 - Windows, Linux ve macOS masaüstü derlemeleri; uyarlanır üç panelli arayüz,
