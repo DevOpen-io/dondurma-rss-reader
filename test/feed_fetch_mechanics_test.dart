@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/feed_decisions.dart';
@@ -11,10 +10,6 @@ FeedItem _item(String id, {DateTime? pubDate}) => FeedItem(
   siteName: 'Site',
   title: id,
   description: '',
-  timeAgo: '',
-  siteIcon: Icons.rss_feed,
-  iconColor: const Color(0xFF000000),
-  iconBackgroundColor: const Color(0x00000000),
   pubDate: pubDate,
 );
 

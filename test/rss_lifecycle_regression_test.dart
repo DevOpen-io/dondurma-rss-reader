@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
@@ -58,10 +57,6 @@ FeedItem _item(String feedUrl, String id, {DateTime? date}) => FeedItem(
   siteName: 'Test Feed',
   title: id,
   description: '',
-  timeAgo: '',
-  siteIcon: Icons.rss_feed,
-  iconColor: Colors.blue,
-  iconBackgroundColor: Colors.blueGrey,
   feedUrl: feedUrl,
   category: 'Test',
   pubDate: date ?? DateTime.utc(2026, 8, 26, 10),

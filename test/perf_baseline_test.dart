@@ -4,7 +4,6 @@
 // fail on a slow CI machine.
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/feed_date_groups.dart';
@@ -18,10 +17,6 @@ FeedItem _item(int i) {
     siteName: 'Feed ${i % 50}',
     title: 'Article $i — a reasonably long headline for layout work',
     description: 'Description $i ' * 8,
-    timeAgo: 'now',
-    siteIcon: Icons.article,
-    iconColor: Colors.blue,
-    iconBackgroundColor: Colors.white,
     link: 'https://example.com/a/$i',
     feedUrl: 'https://example.com/feed/${i % 50}',
     pubDate: DateTime.utc(2026, 1, 1).add(Duration(minutes: i)),

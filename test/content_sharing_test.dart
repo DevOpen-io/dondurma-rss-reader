@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -16,10 +15,6 @@ FeedItem _item(String feed, {String title = 'Same story'}) => FeedItem(
   siteName: feed,
   title: title,
   description: '',
-  timeAgo: '',
-  siteIcon: Icons.rss_feed,
-  iconColor: Colors.blue,
-  iconBackgroundColor: Colors.white,
   feedUrl: 'https://$feed.test/rss',
   link: 'https://news.test/story',
   content: '<p>Excerpt from $feed</p>',

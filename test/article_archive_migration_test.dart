@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
@@ -18,10 +17,6 @@ FeedItem _item(String feed, String id) => FeedItem(
   siteName: feed,
   title: id,
   description: '',
-  timeAgo: '',
-  siteIcon: Icons.rss_feed,
-  iconColor: Colors.blue,
-  iconBackgroundColor: Colors.white,
   feedUrl: feed,
 );
 

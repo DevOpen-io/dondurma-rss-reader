@@ -1,24 +1,19 @@
-import 'package:flutter/material.dart';
 import 'package:html/parser.dart' show parse;
 
 import '../services/article_identity.dart';
 
 /// Represents a single article/entry from an RSS or Atom feed.
 ///
-/// Immutable value object that carries both display metadata (icon, colors,
-/// read/bookmark state) and content fields (link, HTML body, publication date).
-/// Serializable to/from JSON for Hive caching.
+/// Immutable value object that carries display state (read/bookmark) and
+/// content fields (link, HTML body, publication date). Serializable to/from
+/// JSON for Hive caching; keys of removed fields in older caches are ignored.
 class FeedItem {
   final String id;
   final String siteName;
   final String title;
   final String description;
-  final String timeAgo;
   final bool isBookmarked;
   final bool isRead;
-  final IconData siteIcon;
-  final Color iconColor;
-  final Color iconBackgroundColor;
 
   // Feed content fields
   final String link;
@@ -33,12 +28,8 @@ class FeedItem {
     required this.siteName,
     required this.title,
     required this.description,
-    required this.timeAgo,
     this.isBookmarked = false,
     this.isRead = false,
-    required this.siteIcon,
-    required this.iconColor,
-    required this.iconBackgroundColor,
     this.link = '',
     this.imageUrl,
     this.content,
@@ -52,12 +43,8 @@ class FeedItem {
     String? siteName,
     String? title,
     String? description,
-    String? timeAgo,
     bool? isBookmarked,
     bool? isRead,
-    IconData? siteIcon,
-    Color? iconColor,
-    Color? iconBackgroundColor,
     String? link,
     String? imageUrl,
     String? content,
@@ -70,12 +57,8 @@ class FeedItem {
       siteName: siteName ?? this.siteName,
       title: title ?? this.title,
       description: description ?? this.description,
-      timeAgo: timeAgo ?? this.timeAgo,
       isBookmarked: isBookmarked ?? this.isBookmarked,
       isRead: isRead ?? this.isRead,
-      siteIcon: siteIcon ?? this.siteIcon,
-      iconColor: iconColor ?? this.iconColor,
-      iconBackgroundColor: iconBackgroundColor ?? this.iconBackgroundColor,
       link: link ?? this.link,
       imageUrl: imageUrl ?? this.imageUrl,
       content: content ?? this.content,
@@ -92,14 +75,8 @@ class FeedItem {
       'siteName': siteName,
       'title': title,
       'description': description,
-      'timeAgo': timeAgo,
       'isBookmarked': isBookmarked,
       'isRead': isRead,
-      'siteIconCodePoint': siteIcon.codePoint,
-      'siteIconFontFamily': siteIcon.fontFamily,
-      'siteIconFontPackage': siteIcon.fontPackage,
-      'iconColor': iconColor.toARGB32(),
-      'iconBackgroundColor': iconBackgroundColor.toARGB32(),
       'link': link,
       'imageUrl': imageUrl,
       'content': content,
@@ -121,14 +98,8 @@ class FeedItem {
       ),
       title: _decodeHtml(json['title'] as String? ?? 'No Title'),
       description: json['description'] as String? ?? '',
-      timeAgo: json['timeAgo'] as String? ?? '',
       isBookmarked: json['isBookmarked'] as bool? ?? false,
       isRead: json['isRead'] as bool? ?? false,
-      siteIcon: _decodeIconData(json['siteIconCodePoint'] as int?),
-      iconColor: Color(json['iconColor'] as int? ?? 0xFF12A8FF),
-      iconBackgroundColor: Color(
-        json['iconBackgroundColor'] as int? ?? 0xFF12A8FF,
-      ),
       link: json['link'] as String? ?? '',
       imageUrl: json['imageUrl'] as String?,
       content: json['content'] as String?,
@@ -165,9 +136,4 @@ class FeedItem {
       return text;
     }
   }
-
-  /// Maps a saved codepoint back to a `const IconData`.
-  /// Currently always returns `Icons.rss_feed`. Extend this mapping
-  /// when additional icon types are persisted.
-  static IconData _decodeIconData(int? codePoint) => Icons.rss_feed;
 }

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -20,10 +19,6 @@ FeedItem _item() => FeedItem(
   siteName: 'a',
   title: 'Gated',
   description: '',
-  timeAgo: '',
-  siteIcon: Icons.rss_feed,
-  iconColor: Colors.blue,
-  iconBackgroundColor: Colors.white,
   feedUrl: 'https://a.test/feed',
   link: 'https://a.test/article',
   content: '<p>Body</p>',

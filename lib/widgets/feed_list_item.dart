@@ -434,8 +434,7 @@ class _FeedItemIcon extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Theme-derived tile colors; item.iconColor/iconBackgroundColor are
-    // hardcoded feed-service blues that clash with non-blue color schemes.
+    // Theme-derived tile colors, so the tile follows every color scheme.
     return Container(
       width: 40,
       height: 40,

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
@@ -28,10 +27,6 @@ FeedItem _item(String source) => FeedItem(
   siteName: source,
   title: 'Title $source',
   description: '',
-  timeAgo: '',
-  siteIcon: Icons.rss_feed,
-  iconColor: Colors.blue,
-  iconBackgroundColor: Colors.white,
   feedUrl: 'https://$source.test/feed',
   link: 'https://$source.test/article',
   content: '<p>Body $source</p>',

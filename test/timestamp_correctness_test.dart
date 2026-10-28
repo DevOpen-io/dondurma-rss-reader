@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
@@ -15,10 +14,6 @@ void main() {
     siteName: 'Feed',
     title: id,
     description: '',
-    timeAgo: '',
-    siteIcon: Icons.web,
-    iconColor: Colors.blue,
-    iconBackgroundColor: Colors.grey,
     link: 'https://example.com/$id',
     pubDate: pubDate,
     feedUrl: 'https://example.com/rss',

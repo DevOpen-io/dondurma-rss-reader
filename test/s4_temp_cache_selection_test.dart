@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:flutter/material.dart' show Color, Icons;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
@@ -64,10 +63,6 @@ void main() {
     siteName: 'F',
     title: title,
     description: description ?? 'd $id',
-    timeAgo: '1h',
-    siteIcon: Icons.rss_feed,
-    iconColor: const Color(0xFF000000),
-    iconBackgroundColor: const Color(0xFFFFFFFF),
     link: link ?? 'https://example.com/$id',
     pubDate: pubDate,
     isRead: isRead,

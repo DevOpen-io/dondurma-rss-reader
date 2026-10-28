@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -13,10 +12,6 @@ void main() {
         siteName: 'Example',
         title: 'Article',
         description: '',
-        timeAgo: '',
-        siteIcon: Icons.rss_feed,
-        iconColor: Colors.blue,
-        iconBackgroundColor: Colors.white,
         link: 'https://full-text-failure.test/article',
         feedUrl: 'https://full-text-failure.test/feed',
       ),

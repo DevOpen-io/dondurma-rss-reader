@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
@@ -31,10 +30,6 @@ FeedItem _article([String id = 'upgrade-article']) => FeedItem(
   title: 'Previously saved article',
   description: 'Legacy summary',
   content: '<p>Legacy body</p>',
-  timeAgo: '1h',
-  siteIcon: Icons.rss_feed,
-  iconColor: Colors.blue,
-  iconBackgroundColor: Colors.blueGrey,
   link: 'https://example.test/article',
   feedUrl: 'https://example.test/feed',
   isBookmarked: true,

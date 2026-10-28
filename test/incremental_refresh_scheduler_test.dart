@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
@@ -45,10 +44,6 @@ class _Request {
           siteName: 'Test',
           title: id,
           description: '',
-          timeAgo: '',
-          siteIcon: Icons.rss_feed,
-          iconColor: Colors.blue,
-          iconBackgroundColor: Colors.white,
           feedUrl: url,
         ),
       ],
@@ -175,10 +170,6 @@ void main() {
       siteName: 'Test',
       title: id,
       description: '',
-      timeAgo: '',
-      siteIcon: Icons.rss_feed,
-      iconColor: Colors.blue,
-      iconBackgroundColor: Colors.white,
       feedUrl: 'https://fast.test/rss',
     );
     final box = Hive.box('feeds');

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:flutter/material.dart' show Color, Icons;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart' as http_testing;
@@ -288,10 +287,6 @@ void main() {
     siteName: 'F',
     title: 't',
     description: 'd',
-    timeAgo: 'now',
-    siteIcon: Icons.rss_feed,
-    iconColor: const Color(0xFF000000),
-    iconBackgroundColor: const Color(0xFFFFFFFF),
     link: 'https://f.com/$id',
     feedUrl: 'https://f.com/feed',
     pubDate: DateTime.utc(2026, 1, 1),

@@ -43,10 +43,6 @@ void main() {
     siteName: 'Example News',
     title: 'A reasonably long article title that should wrap by words',
     description: 'desc',
-    timeAgo: '1h',
-    siteIcon: Icons.web,
-    iconColor: Colors.blue,
-    iconBackgroundColor: Colors.blueGrey,
     link: 'https://example.com/a1',
     content:
         '<p>${'This is a long paragraph of article body text. ' * 30}</p>',
