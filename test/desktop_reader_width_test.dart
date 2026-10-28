@@ -116,6 +116,30 @@ void main() {
     expect(width, lessThanOrEqualTo(980));
   });
 
+  testWidgets('page notifications do not rebuild the article HTML', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1600, 900);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    await tester.pumpWidget(wrap(makeItem()));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pump(const Duration(milliseconds: 400));
+    await tester.pumpAndSettle();
+    final html = find.byType(Html);
+    expect(html, findsOneWidget);
+    final before = tester.widget(html);
+
+    // Saved-copy loads, status strips and full-text progress notify the
+    // page; with the same body, the styled HTML tree must stay as built.
+    final page = tester.element(html).read<ArticlePageProvider>();
+    // ignore: invalid_use_of_protected_member
+    page.notifyListeners();
+    await tester.pump();
+    expect(identical(tester.widget(html), before), isTrue);
+  }, variant: TargetPlatformVariant.only(TargetPlatform.linux));
+
   testWidgets('reader shrinks gracefully in a narrow pane', (tester) async {
     if (!PlatformCaps.isDesktop) return;
     // 900px window → reader pane is 900-620 = 280px wide.

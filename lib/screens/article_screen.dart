@@ -189,6 +189,30 @@ class _ArticlePageState extends State<ArticlePage> {
     }
   }
 
+  /// One body widget per reading-settings combination: an identical
+  /// instance lets page rebuilds skip the HTML subtree; [_ArticleHtml]
+  /// rebuilds itself when the content changes.
+  _ArticleHtml? _body;
+
+  _ArticleHtml _articleBody({
+    required double fontSize,
+    required String? fontFamily,
+    required double lineSpacing,
+  }) {
+    final body = _body;
+    if (body != null &&
+        body.fontSize == fontSize &&
+        body.fontFamily == fontFamily &&
+        body.lineSpacing == lineSpacing) {
+      return body;
+    }
+    return _body = _ArticleHtml(
+      fontSize: fontSize,
+      fontFamily: fontFamily,
+      lineSpacing: lineSpacing,
+    );
+  }
+
   // ---------------------------------------------------------------------------
   // Build
   // ---------------------------------------------------------------------------
@@ -228,6 +252,12 @@ class _ArticlePageState extends State<ArticlePage> {
 
     final hasHero =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
+    final heroLocal = hasHero
+        ? provider.localImages[widget.item.imageUrl]
+        : null;
+    final heroFile = heroLocal == null
+        ? null
+        : _trustedLocalImage(provider, heroLocal);
 
     final int? readingMinutes = provider.contentReady
         ? provider.readingMinutes
@@ -327,16 +357,28 @@ class _ArticlePageState extends State<ArticlePage> {
                           background: Stack(
                             fit: StackFit.expand,
                             children: [
-                              CachedNetworkImage(
-                                imageUrl: widget.item.imageUrl!,
-                                cacheManager: ArticleCacheManager.instance,
-                                fit: BoxFit.cover,
-                                memCacheWidth: 900,
-                                maxWidthDiskCache: 900,
-                                errorWidget: (_, _, _) => Container(
-                                  color: colorScheme.surfaceContainerHighest,
+                              // A prepared copy of the hero reads from the
+                              // durable media pool, so it shows offline.
+                              if (heroFile != null)
+                                Image.file(
+                                  heroFile,
+                                  fit: BoxFit.cover,
+                                  cacheWidth: 900,
+                                  errorBuilder: (_, _, _) => Container(
+                                    color: colorScheme.surfaceContainerHighest,
+                                  ),
+                                )
+                              else
+                                CachedNetworkImage(
+                                  imageUrl: widget.item.imageUrl!,
+                                  cacheManager: ArticleCacheManager.instance,
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: 900,
+                                  maxWidthDiskCache: 900,
+                                  errorWidget: (_, _, _) => Container(
+                                    color: colorScheme.surfaceContainerHighest,
+                                  ),
                                 ),
-                              ),
                               DecoratedBox(
                                 decoration: BoxDecoration(
                                   gradient: LinearGradient(
@@ -570,139 +612,10 @@ class _ArticlePageState extends State<ArticlePage> {
                                 : null,
                           ),
                         ] else ...[
-                          // Rich HTML content. LayoutBuilder supplies the
-                          // real content-column width — MediaQuery would give
-                          // the whole window, breaking embedded panes.
-                          LayoutBuilder(
-                            builder: (context, contentConstraints) {
-                              final contentWidth =
-                                  contentConstraints.maxWidth.isFinite
-                                  ? contentConstraints.maxWidth
-                                  : MediaQuery.of(context).size.width;
-                              return Html(
-                            data: provider.displayContent,
-                            extensions: [
-                              TagExtension(
-                                tagsToExtend: {"img-carousel"},
-                                builder: (extensionContext) {
-                                  final urlsStr =
-                                      extensionContext
-                                          .attributes['data-urls'] ??
-                                      '';
-                                  final urls = urlsStr
-                                      .split('|')
-                                      .where((u) => u.isNotEmpty)
-                                      .where(
-                                        (u) => _trustedImageSrc(provider, u),
-                                      )
-                                      .toList();
-                                  if (urls.isEmpty) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  return ArticleImageCarousel(imageUrls: urls);
-                                },
-                              ),
-                              TagExtension(
-                                tagsToExtend: {"img"},
-                                builder: (extensionContext) {
-                                  final String? src =
-                                      extensionContext.attributes['src'];
-                                  if (src == null) {
-                                    return const SizedBox.shrink();
-                                  }
-                                  // Durable media (#41): ready manifest
-                                  // entries were rewritten to file:// — read
-                                  // stored bytes instead of the network.
-                                  // Only paths the rewrite itself produced
-                                  // are trusted: a raw file:// src in feed
-                                  // HTML must never reach the filesystem.
-                                  if (src.startsWith('file://')) {
-                                    final file = _trustedLocalImage(
-                                      provider,
-                                      src,
-                                    );
-                                    if (file == null) {
-                                      return const SizedBox.shrink();
-                                    }
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 12,
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.file(
-                                          file,
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (_, _, _) =>
-                                              const SizedBox.shrink(),
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                  return Padding(
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(10),
-                                      child: CachedNetworkImage(
-                                        imageUrl: src,
-                                        cacheManager:
-                                            ArticleCacheManager.instance,
-                                        memCacheWidth: 800,
-                                        maxWidthDiskCache: 800,
-                                        fit: BoxFit.contain,
-                                        errorWidget: (_, _, _) =>
-                                            const SizedBox.shrink(),
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ],
-                            style: {
-                              "body": Style(
-                                fontSize: FontSize(baseFontSize),
-                                fontFamily: fontFamily,
-                                fontFamilyFallback: fontFamily == 'monospace'
-                                    ? monospaceFallback
-                                    : null,
-                                color: colorScheme.onSurface,
-                                lineHeight: LineHeight(settings.lineSpacing),
-                                margin: Margins.zero,
-                                padding: HtmlPaddings.zero,
-                              ),
-                              "a": Style(
-                                color: colorScheme.primary,
-                                textDecoration: TextDecoration.none,
-                              ),
-                              "img": Style(
-                                width: Width(contentWidth),
-                                margin: Margins.only(top: 12, bottom: 12),
-                              ),
-                              "figure": Style(
-                                margin: Margins.zero,
-                                padding: HtmlPaddings.zero,
-                              ),
-                              "p": Style(margin: Margins.only(bottom: 12)),
-                              "br": Style(margin: Margins.zero),
-                              "hr": Style(
-                                margin: Margins.only(top: 16, bottom: 16),
-                              ),
-                              "h1": Style(color: colorScheme.onSurface),
-                              "h2": Style(color: colorScheme.onSurface),
-                              "h3": Style(color: colorScheme.onSurface),
-                              "h4": Style(color: colorScheme.onSurface),
-                              "h5": Style(color: colorScheme.onSurface),
-                              "h6": Style(color: colorScheme.onSurface),
-                            },
-                            onLinkTap: (url, attributes, element) {
-                              if (url != null && url.isNotEmpty) {
-                                openArticleLink(context, url);
-                              }
-                            },
-                              );
-                            },
+                          _articleBody(
+                            fontSize: baseFontSize,
+                            fontFamily: fontFamily,
+                            lineSpacing: settings.lineSpacing,
                           ),
                         ],
 
@@ -1106,6 +1019,143 @@ class _NoticeBox extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: children,
       ),
+    );
+  }
+}
+
+/// The rendered article body. flutter_html rebuilds its whole styled tree on
+/// every rebuild, and an article open sends several page notifications
+/// (saved copy, status strip, full-text progress) — so this widget selects
+/// only [ArticlePageProvider.displayContent], and the page reuses one
+/// instance while the reading settings stay the same.
+class _ArticleHtml extends StatelessWidget {
+  final double fontSize;
+  final String? fontFamily;
+  final double lineSpacing;
+
+  const _ArticleHtml({
+    required this.fontSize,
+    required this.fontFamily,
+    required this.lineSpacing,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.read<ArticlePageProvider>();
+    final html = context.select<ArticlePageProvider, String>(
+      (p) => p.displayContent,
+    );
+    final colorScheme = Theme.of(context).colorScheme;
+    // LayoutBuilder supplies the real content-column width — MediaQuery
+    // would give the whole window, breaking embedded panes.
+    return LayoutBuilder(
+      builder: (context, contentConstraints) {
+        final contentWidth = contentConstraints.maxWidth.isFinite
+            ? contentConstraints.maxWidth
+            : MediaQuery.of(context).size.width;
+        return Html(
+          data: html,
+          extensions: [
+            TagExtension(
+              tagsToExtend: {"img-carousel"},
+              builder: (extensionContext) {
+                final urlsStr = extensionContext.attributes['data-urls'] ?? '';
+                final urls = urlsStr
+                    .split('|')
+                    .where((u) => u.isNotEmpty)
+                    .where((u) => _trustedImageSrc(provider, u))
+                    .toList();
+                if (urls.isEmpty) {
+                  return const SizedBox.shrink();
+                }
+                return ArticleImageCarousel(imageUrls: urls);
+              },
+            ),
+            TagExtension(
+              tagsToExtend: {"img"},
+              builder: (extensionContext) {
+                final String? src = extensionContext.attributes['src'];
+                if (src == null) {
+                  return const SizedBox.shrink();
+                }
+                // Durable media (#41): ready manifest
+                // entries were rewritten to file:// — read
+                // stored bytes instead of the network.
+                // Only paths the rewrite itself produced
+                // are trusted: a raw file:// src in feed
+                // HTML must never reach the filesystem.
+                if (src.startsWith('file://')) {
+                  final file = _trustedLocalImage(provider, src);
+                  if (file == null) {
+                    return const SizedBox.shrink();
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        file,
+                        fit: BoxFit.contain,
+                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      imageUrl: src,
+                      cacheManager: ArticleCacheManager.instance,
+                      memCacheWidth: 800,
+                      maxWidthDiskCache: 800,
+                      fit: BoxFit.contain,
+                      errorWidget: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+          style: {
+            "body": Style(
+              fontSize: FontSize(fontSize),
+              fontFamily: fontFamily,
+              fontFamilyFallback: fontFamily == 'monospace'
+                  ? monospaceFallback
+                  : null,
+              color: colorScheme.onSurface,
+              lineHeight: LineHeight(lineSpacing),
+              margin: Margins.zero,
+              padding: HtmlPaddings.zero,
+            ),
+            "a": Style(
+              color: colorScheme.primary,
+              textDecoration: TextDecoration.none,
+            ),
+            "img": Style(
+              width: Width(contentWidth),
+              margin: Margins.only(top: 12, bottom: 12),
+            ),
+            "figure": Style(margin: Margins.zero, padding: HtmlPaddings.zero),
+            "p": Style(margin: Margins.only(bottom: 12)),
+            "br": Style(margin: Margins.zero),
+            "hr": Style(margin: Margins.only(top: 16, bottom: 16)),
+            "h1": Style(color: colorScheme.onSurface),
+            "h2": Style(color: colorScheme.onSurface),
+            "h3": Style(color: colorScheme.onSurface),
+            "h4": Style(color: colorScheme.onSurface),
+            "h5": Style(color: colorScheme.onSurface),
+            "h6": Style(color: colorScheme.onSurface),
+          },
+          onLinkTap: (url, attributes, element) {
+            if (url != null && url.isNotEmpty) {
+              openArticleLink(context, url);
+            }
+          },
+        );
+      },
     );
   }
 }
