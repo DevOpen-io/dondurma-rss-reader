@@ -8,6 +8,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:ice_cream_rss_reader/services/article_identity.dart';
 import 'package:ice_cream_rss_reader/services/article_media_store.dart';
 import 'package:ice_cream_rss_reader/services/article_record_store.dart';
+import 'package:ice_cream_rss_reader/services/observed_article_persistence.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
 
 void main() {
@@ -64,6 +65,53 @@ void main() {
       tombstoned: tombstoned,
     );
   }
+
+  group('ArticleRecordStore decoded-state reuse', () {
+    test(
+      'a write by another store instance is seen on the next read',
+      () async {
+        final a = newStore();
+        final b = newStore();
+        await a.write(buildRecord(id: 'one'));
+        expect((await b.read(ref('one')))!.body, 'Body of one');
+        // b now holds the decoded text; a changes the file underneath it.
+        await a.write(buildRecord(id: 'one', body: 'Edited'));
+        expect((await b.read(ref('one')))!.body, 'Edited');
+        expect(await b.listRecords(), hasLength(1));
+      },
+    );
+
+    test('a failed write leaves no trace in later reads', () async {
+      final persistence = _FailingWrites(
+        FileObservedArticlePersistence(stateFile: stateFile),
+      );
+      final store = ArticleRecordStore(persistence);
+      await store.write(buildRecord(id: 'kept'));
+      expect(await store.listRecords(), hasLength(1));
+
+      persistence.failWrites = true;
+      expect(
+        await store.write(buildRecord(id: 'lost')),
+        StoreWriteResult.failed,
+      );
+      persistence.failWrites = false;
+
+      expect(await store.read(ref('lost')), isNull);
+      expect((await store.listRecords()).map((r) => r.id), ['kept']);
+    });
+
+    test('mutating one result never changes another', () async {
+      final store = newStore();
+      await store.write(buildRecord(id: 'one'));
+      final before = await store.listRecords();
+      await store.mutate(
+        ref('one'),
+        (current) => current!.copyWith(owners: {'bookmark', 'tempCache'}),
+      );
+      expect(before.single.owners, {'bookmark'});
+      expect((await store.read(ref('one')))!.owners, {'bookmark', 'tempCache'});
+    });
+  });
 
   group('ArticleRecordStore', () {
     test('record round-trips through a simulated restart', () async {
@@ -522,4 +570,24 @@ void main() {
       expect(await media.verify(entry), isFalse);
     });
   });
+}
+
+/// Delegating persistence whose writes can be made to throw.
+class _FailingWrites implements ObservedArticlePersistence {
+  _FailingWrites(this._inner);
+  final ObservedArticlePersistence _inner;
+  bool failWrites = false;
+
+  @override
+  Future<String?> read() => _inner.read();
+
+  @override
+  Future<void> write(String value) async {
+    if (failWrites) throw const FileSystemException('disk full');
+    await _inner.write(value);
+  }
+
+  @override
+  Future<ExclusiveResult<T>> runExclusive<T>(Future<T> Function() action) =>
+      _inner.runExclusive(action);
 }

@@ -417,7 +417,41 @@ class ArticleRecordStore {
   Future<Map<String, dynamic>?> _stateForMutation() async {
     final raw = await _persistence.read();
     if (raw == null || raw.isEmpty) return _migratedState();
-    return _tryDecode(raw);
+    return _decode(raw);
+  }
+
+  /// The last file text this store decoded, and its state. Every access
+  /// still reads the file — another isolate may have written it — but a
+  /// byte-identical text skips `jsonDecode`, which for an archive carrying
+  /// article bodies was the main cost of each read and of every member a
+  /// reconcile pass re-registers.
+  String? _decodedRaw;
+  Map<String, dynamic>? _decodedState;
+
+  /// Decoded state of [raw] as a private copy: writers replace entries of
+  /// the top-level maps (never edit a record's map in place), so copying
+  /// those maps keeps the reused state untouched.
+  Map<String, dynamic>? _decode(String raw) {
+    if (raw != _decodedRaw) {
+      _decodedState = _tryDecode(raw);
+      _decodedRaw = raw;
+    }
+    final state = _decodedState;
+    return state == null ? null : _copyState(state);
+  }
+
+  static Map<String, dynamic> _copyState(Map<String, dynamic> state) => {
+    ...state,
+    for (final key in const ['records', 'seen', 'quarantine'])
+      key: Map<String, dynamic>.of(state[key] as Map<String, dynamic>),
+  };
+
+  /// Persists [state]; the written text becomes the reusable decode.
+  Future<void> _writeState(Map<String, dynamic> state) async {
+    final raw = jsonEncode(state);
+    await _persistence.write(raw);
+    _decodedRaw = raw;
+    _decodedState = _copyState(state);
   }
 
   /// Lock-free read view. When schema 2 is absent but a legacy archive
@@ -425,14 +459,14 @@ class ArticleRecordStore {
   /// reader and writer agrees on one mapping. Null when undecodable.
   Future<Map<String, dynamic>?> _readState() async {
     final raw = await _persistence.read();
-    if (raw != null && raw.isNotEmpty) return _tryDecode(raw);
+    if (raw != null && raw.isNotEmpty) return _decode(raw);
     final legacy = await _legacy?.read();
     if (legacy == null || legacy.isEmpty) return _empty(0);
     final result = await _persistence.runExclusive(() async {
       final current = await _persistence.read();
-      if (current != null && current.isNotEmpty) return _tryDecode(current);
+      if (current != null && current.isNotEmpty) return _decode(current);
       final migrated = await _migratedState();
-      if (migrated != null) await _persistence.write(jsonEncode(migrated));
+      if (migrated != null) await _writeState(migrated);
       return migrated;
     });
     return result.acquired ? result.value : null;
@@ -575,7 +609,7 @@ class ArticleRecordStore {
               .copyWith(id: ref.id, feedUrl: ref.feedUrl)
               .toJson();
         }
-        await _persistence.write(jsonEncode(state));
+        await _writeState(state);
         return StoreWriteResult.applied;
       });
       return result.acquired ? result.value! : StoreWriteResult.failed;
@@ -637,7 +671,7 @@ class ArticleRecordStore {
         (state['records'] as Map<String, dynamic>)[ref.key] = record
             .copyWith(id: ref.id)
             .toJson();
-        await _persistence.write(jsonEncode(state));
+        await _writeState(state);
         return StoreWriteResult.applied;
       });
       return result.acquired ? result.value! : StoreWriteResult.failed;
@@ -692,7 +726,7 @@ class ArticleRecordStore {
         final existing = raw is String ? DateTime.tryParse(raw)?.toUtc() : null;
         if (existing == null || existing.isAfter(at)) {
           seen[ref.key] = at.toIso8601String();
-          await _persistence.write(jsonEncode(state));
+          await _writeState(state);
         }
         return StoreWriteResult.applied;
       });
@@ -751,7 +785,7 @@ class ArticleRecordStore {
         final seen = state['seen'] as Map<String, dynamic>;
         if (!seen.containsKey(ref.key)) return StoreWriteResult.applied;
         seen.remove(ref.key);
-        await _persistence.write(jsonEncode(state));
+        await _writeState(state);
         return StoreWriteResult.applied;
       });
       return result.acquired ? result.value! : StoreWriteResult.failed;
@@ -771,7 +805,7 @@ class ArticleRecordStore {
         final state = await _stateForMutation();
         if (state == null) return false;
         state['epoch'] = _nextEpoch(_epochOf(state));
-        await _persistence.write(jsonEncode(state));
+        await _writeState(state);
         return true;
       });
       return result.acquired && (result.value ?? false);
