@@ -130,8 +130,8 @@ class _CategorySection extends StatelessWidget {
     final tt = Theme.of(context).textTheme;
     final icon = CategoryIcon(
       category: categoryName,
-      size: 18,
-      color: cs.onPrimaryContainer,
+      size: 20,
+      color: cs.onSurfaceVariant,
     );
 
     return Container(
@@ -150,12 +150,8 @@ class _CategorySection extends StatelessWidget {
                 InkWell(
                   onTap: onIconTap,
                   borderRadius: BorderRadius.circular(10),
-                  child: Container(
+                  child: Padding(
                     padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer.withValues(alpha: 0.6),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
                     child: icon,
                   ),
                 ),
@@ -168,19 +164,9 @@ class _CategorySection extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: cs.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    '${subs.length}',
-                    style: tt.labelSmall?.copyWith(color: cs.onSurfaceVariant),
-                  ),
+                Text(
+                  '${subs.length}',
+                  style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant),
                 ),
                 const SizedBox(width: 2),
                 PopupMenuButton<_CategoryAction>(
@@ -299,18 +285,20 @@ class _FeedRow extends StatelessWidget {
             Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (sub.notificationsEnabled)
+                // Only the exceptions to the defaults are marked: a muted
+                // feed and a feed forced to full text.
+                if (!sub.notificationsEnabled)
                   Icon(
-                    Icons.notifications_active_outlined,
+                    Icons.notifications_off_outlined,
                     size: 14,
-                    color: cs.primary.withValues(alpha: 0.7),
+                    color: cs.onSurfaceVariant,
                   ),
                 if (sub.fullTextEnabled == true) ...[
-                  if (sub.notificationsEnabled) const SizedBox(width: 4),
+                  if (!sub.notificationsEnabled) const SizedBox(width: 4),
                   Icon(
                     Icons.article_outlined,
                     size: 14,
-                    color: cs.primary.withValues(alpha: 0.7),
+                    color: cs.onSurfaceVariant,
                   ),
                 ],
                 const SizedBox(width: 4),
