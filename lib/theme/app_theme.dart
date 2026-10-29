@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter/material.dart';
 
@@ -162,34 +164,72 @@ class AppThemeBuilder {
     checkboxSchemeColor: SchemeColor.primary,
     radioSchemeColor: SchemeColor.primary,
     sliderBaseSchemeColor: SchemeColor.primary,
-    chipSchemeColor: SchemeColor.primary,
     chipSelectedSchemeColor: SchemeColor.primaryContainer,
-    fabSchemeColor: SchemeColor.primaryContainer,
+    // The add button must stand out from the page in every scheme.
+    fabSchemeColor: SchemeColor.primary,
     drawerIndicatorSchemeColor: SchemeColor.primary,
     drawerIndicatorOpacity: 0.14,
     popupMenuSchemeColor: SchemeColor.surfaceContainerHigh,
     tooltipRadius: 8,
   );
 
-  static ThemeData light(FlexScheme scheme, AppFont font) => _applyOverrides(
-    FlexColorScheme.light(
-      scheme: scheme,
-      surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-      blendLevel: _lightBlend,
-      subThemesData: _subThemes,
-      fontFamily: font.family,
-    ).toTheme,
-    font.family,
-  );
+  static ThemeData light(FlexScheme scheme, AppFont font) =>
+      _build(scheme, font, Brightness.light);
 
-  static ThemeData dark(FlexScheme scheme, AppFont font) => _applyOverrides(
-    FlexColorScheme.dark(
-      scheme: scheme,
-      surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
-      blendLevel: _darkBlend,
-      subThemesData: _subThemes,
-      fontFamily: font.family,
-    ).toTheme,
-    font.family,
-  );
+  static ThemeData dark(FlexScheme scheme, AppFont font) =>
+      _build(scheme, font, Brightness.dark);
+
+  static ThemeData _build(FlexScheme scheme, AppFont font, Brightness b) {
+    FlexColorScheme flex({Color? onPrimary}) => b == Brightness.light
+        ? FlexColorScheme.light(
+            scheme: scheme,
+            surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+            blendLevel: _lightBlend,
+            subThemesData: _subThemes,
+            onPrimary: onPrimary,
+            fontFamily: font.family,
+          )
+        : FlexColorScheme.dark(
+            scheme: scheme,
+            surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+            blendLevel: _darkBlend,
+            subThemesData: _subThemes,
+            onPrimary: onPrimary,
+            fontFamily: font.family,
+          );
+    var theme = flex();
+    // Labels on the theme color (the add button, the reading-mode thumb)
+    // must read; a few schemes pair a mid-tone primary with white.
+    final primary = theme.toScheme.primary;
+    if (_contrast(theme.toScheme.onPrimary, primary) < 4.5) {
+      theme = flex(
+        onPrimary:
+            _contrast(Colors.black, primary) >= _contrast(Colors.white, primary)
+            ? Colors.black
+            : Colors.white,
+      );
+    }
+    return _applyOverrides(theme.toTheme, font.family);
+  }
+
+  static double _contrast(Color a, Color b) {
+    final la = a.computeLuminance(), lb = b.computeLuminance();
+    return (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05);
+  }
+
+  /// [accent] where it reads well on [background], else moved toward
+  /// [fallback] until it does: some schemes' brand color is too light for
+  /// small text (sakura, amber) or icons (outer space in dark mode).
+  static Color readableAccent(
+    Color accent, {
+    required Color background,
+    required Color fallback,
+    double minContrast = 4.5,
+  }) {
+    for (var t = 0.0; t < 1; t += 0.1) {
+      final color = Color.lerp(accent, fallback, t)!;
+      if (_contrast(color, background) >= minContrast) return color;
+    }
+    return fallback;
+  }
 }

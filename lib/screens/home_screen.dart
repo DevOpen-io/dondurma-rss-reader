@@ -46,8 +46,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isSearching = false;
-  // The add button shows its label until the list is scrolled down.
-  bool _addLabelShown = true;
+  // The add button shows its label until the list is scrolled down; only
+  // the button listens, not the whole screen.
+  final _addLabelShown = ValueNotifier(true);
   final TextEditingController _searchController = TextEditingController();
   final _feedScroll = AnchoredScrollController();
 
@@ -64,6 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
     SharedLinks.pending.removeListener(_openSharedLink);
     _searchController.dispose();
     _feedScroll.dispose();
+    _addLabelShown.dispose();
     super.dispose();
   }
 
@@ -104,7 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
     setState(() {
       _selectedIndex = index;
       // A new tab starts at its top, where the button says what it does.
-      _addLabelShown = true;
+      _addLabelShown.value = true;
     });
   }
 
@@ -120,9 +122,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ScrollDirection.forward => true,
       ScrollDirection.idle =>
         notification.metrics.pixels <= notification.metrics.minScrollExtent ||
-            _addLabelShown,
+            _addLabelShown.value,
     };
-    if (shown != _addLabelShown) setState(() => _addLabelShown = shown);
+    _addLabelShown.value = shown;
     return false;
   }
 
@@ -481,9 +483,12 @@ class _HomeScreenState extends State<HomeScreen> {
       // labeled button on the feed and folder tabs, not a menu entry.
       floatingActionButton:
           (_selectedIndex == 0 || _selectedIndex == 1) && !_isSearching
-          ? AddFeedButton(
-              labelShown: _addLabelShown,
-              onPressed: _showAddFeedDialog,
+          ? ValueListenableBuilder(
+              valueListenable: _addLabelShown,
+              builder: (context, shown, _) => AddFeedButton(
+                labelShown: shown,
+                onPressed: _showAddFeedDialog,
+              ),
             )
           : null,
       // Standard bar: fixed to the bottom edge. Folders are added from the
@@ -555,8 +560,8 @@ class _HomeScreenState extends State<HomeScreen> {
 // list. Widgets are constructed by itemBuilder only when rows scroll into view.
 // ---------------------------------------------------------------------------
 
-/// Feed-tab overflow entries: adding a feed, marking the view read and
-/// keeping the current search.
+/// Feed-tab overflow entries: marking the view read and keeping the
+/// current search.
 enum _FeedMenuAction { markRead, saveSearch }
 
 /// Everything the feed tab's list renders from [FeedProvider]. Rows select

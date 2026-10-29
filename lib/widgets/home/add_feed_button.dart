@@ -20,7 +20,8 @@ class AddFeedButton extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     return FloatingActionButton.extended(
       onPressed: onPressed,
-      tooltip: l10n.semanticAddFeed,
+      // Folded, the icon needs a name; unfolded, the label is it.
+      tooltip: labelShown ? null : l10n.semanticAddFeed,
       extendedPadding: const EdgeInsets.symmetric(horizontal: 16),
       extendedIconLabelSpacing: 0,
       icon: const Icon(Icons.add_rounded),

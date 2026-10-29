@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
 import '../../services/article_speech.dart';
+import '../../theme/app_theme.dart';
 
 /// Starts or stops reading [item] aloud; [html] is read at press time, so
 /// the full text is spoken once it has loaded.
@@ -29,7 +30,14 @@ class ReadAloudButton extends StatelessWidget {
           style: IconButton.styleFrom(
             minimumSize: const Size(48, 48),
             backgroundColor: active ? cs.primary : cs.surfaceContainerHigh,
-            foregroundColor: active ? cs.onPrimary : cs.primary,
+            foregroundColor: active
+                ? cs.onPrimary
+                : AppThemeBuilder.readableAccent(
+                    cs.primary,
+                    background: cs.surfaceContainerHigh,
+                    fallback: cs.onSurface,
+                    minContrast: 3,
+                  ),
           ),
           icon: Icon(active ? Icons.stop_rounded : Icons.headphones_rounded),
           tooltip: active ? l10n.stopReading : l10n.readAloud,

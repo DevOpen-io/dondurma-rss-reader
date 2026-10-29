@@ -48,43 +48,37 @@ class ArticleReadingModeToggle extends StatelessWidget {
                 padding: const EdgeInsets.all(_inset),
                 child: DecoratedBox(
                   decoration: ShapeDecoration(
-                    color: colorScheme.primaryContainer,
+                    color: colorScheme.primary,
                     shape: const StadiumBorder(),
-                    shadows: [
-                      BoxShadow(
-                        color: colorScheme.shadow.withValues(alpha: 0.08),
-                        blurRadius: 6,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
                   ),
                 ),
               ),
             ),
           ),
-          Row(
-            children: [
-              Expanded(
-                child: _ModeOption(
-                  label: l10n.modeShort,
-                  icon: Icons.short_text_rounded,
-                  isSelected: !isFullText,
-                  isLoading: false,
-                  onTap: isFullText && !isLoading ? onToggle : null,
-                  colorScheme: colorScheme,
+          // Ink shows above the track and thumb.
+          Material(
+            type: MaterialType.transparency,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _ModeOption(
+                    label: l10n.modeShort,
+                    isSelected: !isFullText,
+                    onTap: isFullText && !isLoading ? onToggle : null,
+                    colorScheme: colorScheme,
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _ModeOption(
-                  label: isLoading ? l10n.fullTextLoading : l10n.modeFull,
-                  icon: Icons.article_outlined,
-                  isSelected: isFullText,
-                  isLoading: isLoading,
-                  onTap: !isFullText && !isLoading ? onToggle : null,
-                  colorScheme: colorScheme,
+                Expanded(
+                  child: _ModeOption(
+                    label: l10n.modeFull,
+                    loadingLabel: isLoading ? l10n.fullTextLoading : null,
+                    isSelected: isFullText,
+                    onTap: !isFullText && !isLoading ? onToggle : null,
+                    colorScheme: colorScheme,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -94,17 +88,18 @@ class ArticleReadingModeToggle extends StatelessWidget {
 
 class _ModeOption extends StatelessWidget {
   final String label;
-  final IconData icon;
+
+  /// Set while this mode loads: a spinner shows beside the label and a
+  /// screen reader hears this instead.
+  final String? loadingLabel;
   final bool isSelected;
-  final bool isLoading;
   final VoidCallback? onTap;
   final ColorScheme colorScheme;
 
   const _ModeOption({
     required this.label,
-    required this.icon,
+    this.loadingLabel,
     required this.isSelected,
-    required this.isLoading,
     required this.onTap,
     required this.colorScheme,
   });
@@ -112,11 +107,12 @@ class _ModeOption extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isSelected
-        ? colorScheme.onPrimaryContainer
+        ? colorScheme.onPrimary
         : colorScheme.onSurfaceVariant;
     return Semantics(
       button: true,
       selected: isSelected,
+      label: loadingLabel,
       child: InkWell(
         customBorder: const StadiumBorder(),
         onTap: onTap,
@@ -124,11 +120,11 @@ class _ModeOption extends StatelessWidget {
           // The tap target is the whole half of the 48dp track.
           height: ArticleReadingModeToggle.height,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                if (isLoading)
+                if (loadingLabel != null) ...[
                   SizedBox(
                     width: 14,
                     height: 14,
@@ -136,28 +132,34 @@ class _ModeOption extends StatelessWidget {
                       strokeWidth: 2,
                       color: colorScheme.primary,
                     ),
-                  )
-                else
-                  Icon(icon, size: 18, color: color),
-                const SizedBox(width: 6),
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                // A long translation or large text shrinks a little rather
+                // than losing its end.
                 Flexible(
-                  child: AnimatedDefaultTextStyle(
-                    duration: motionDuration(
-                      context,
-                      const Duration(milliseconds: 220),
-                    ),
-                    style: TextStyle(
-                      fontFamily: DefaultTextStyle.of(context).style.fontFamily,
-                      fontSize: 14,
-                      fontWeight: isSelected
-                          ? FontWeight.w700
-                          : FontWeight.w600,
-                      color: color,
-                    ),
-                    child: Text(
-                      label,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: AnimatedDefaultTextStyle(
+                      duration: motionDuration(
+                        context,
+                        const Duration(milliseconds: 220),
+                      ),
+                      style: TextStyle(
+                        fontFamily: DefaultTextStyle.of(
+                          context,
+                        ).style.fontFamily,
+                        fontSize: 14,
+                        fontWeight: isSelected
+                            ? FontWeight.w700
+                            : FontWeight.w600,
+                        color: color,
+                      ),
+                      child: Text(
+                        label,
+                        maxLines: 1,
+                        semanticsLabel: loadingLabel == null ? null : '',
+                      ),
                     ),
                   ),
                 ),

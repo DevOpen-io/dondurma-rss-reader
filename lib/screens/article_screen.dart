@@ -24,6 +24,8 @@ import '../widgets/article/article_image_viewer.dart';
 import '../widgets/article/read_aloud.dart';
 import '../services/article_speech.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
+import '../widgets/article/article_source_card.dart';
+import '../theme/app_theme.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
@@ -400,10 +402,9 @@ class _ArticlePageState extends State<ArticlePage> {
                                       end: Alignment.bottomCenter,
                                       colors: [
                                         Colors.transparent,
-                                        colorScheme.surface.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        colorScheme.surface,
+                                        theme.scaffoldBackgroundColor
+                                            .withValues(alpha: 0.6),
+                                        theme.scaffoldBackgroundColor,
                                       ],
                                       stops: const [0.3, 0.75, 1.0],
                                     ),
@@ -460,7 +461,11 @@ class _ArticlePageState extends State<ArticlePage> {
                                 TextSpan(
                                   text: '${widget.item.category} · ',
                                   style: TextStyle(
-                                    color: colorScheme.primary,
+                                    color: AppThemeBuilder.readableAccent(
+                                      colorScheme.primary,
+                                      background: theme.scaffoldBackgroundColor,
+                                      fallback: colorScheme.onSurface,
+                                    ),
                                     fontWeight: FontWeight.w700,
                                   ),
                                 ),
@@ -615,10 +620,13 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         // Open the original page — the source as one card.
                         if (widget.item.link.isNotEmpty)
-                          _SourceCard(
+                          ArticleSourceCard(
                             item: widget.item,
-                            colorScheme: colorScheme,
-                            l10n: l10n,
+                            onOpen: () => openArticleLink(
+                              context,
+                              widget.item.link,
+                              title: widget.item.title,
+                            ),
                           ),
 
                         // Room for the read-aloud bar over the end.
@@ -702,110 +710,6 @@ class _ArticlePageState extends State<ArticlePage> {
 /// Readable-content-first strip: scope label, then the wait reason and
 /// media count, then at most one action. A bookmarked item whose durable
 /// write failed reads "could not save" — never "ready".
-/// The article's source at the end of the page: site name and address in
-/// one tappable card that opens the original.
-class _SourceCard extends StatelessWidget {
-  final FeedItem item;
-  final ColorScheme colorScheme;
-  final AppLocalizations l10n;
-
-  const _SourceCard({
-    required this.item,
-    required this.colorScheme,
-    required this.l10n,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final host = Uri.tryParse(
-      item.link,
-    )?.host.replaceFirst(RegExp(r'^www\.'), '');
-    final site = item.siteName.trim();
-    final title = site.isNotEmpty ? site : (host ?? l10n.openInBrowser);
-    return Semantics(
-      link: true,
-      label: '${l10n.readOnOriginalWebpage}: $title',
-      excludeSemantics: true,
-      child: Material(
-        color: colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-          side: BorderSide(color: colorScheme.outlineVariant),
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: () => openArticleLink(context, item.link, title: item.title),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.public_rounded,
-                    size: 20,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        l10n.readOnOriginalWebpage,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                          color: colorScheme.onSurface,
-                        ),
-                      ),
-                      if (host != null && host.isNotEmpty && host != title)
-                        Text(
-                          host,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.arrow_outward_rounded,
-                  size: 22,
-                  color: colorScheme.primary,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ArticleStatusStrip extends StatelessWidget {
   final FeedItem item;
   final ArticlePageProvider provider;

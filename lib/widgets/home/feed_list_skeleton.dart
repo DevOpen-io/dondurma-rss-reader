@@ -42,7 +42,7 @@ class FeedListSkeleton extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 10),
             child: Container(
               decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surface,
+                color: Theme.of(context).colorScheme.surfaceContainerLow,
                 borderRadius: BorderRadius.circular(16),
               ),
               padding: const EdgeInsets.all(14),
