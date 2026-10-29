@@ -148,7 +148,8 @@ void main() {
         _item('x', category: 'World', feed: 'b', link: shared),
         _item('other'),
       ]);
-      expect(feed.unreadInView(), hasLength(2), reason: 'one copy is shown');
+      expect(feed.filteredItems, hasLength(2), reason: 'one copy is shown');
+      expect(feed.unreadInView(), hasLength(3), reason: 'as the badge counts');
       expect(feed.unreadCount(), 3);
 
       await feed.markItemsAsRead(feed.unreadInView());
@@ -175,6 +176,23 @@ void main() {
     await feed.markItemsAsRead(feed.unreadInView());
 
     expect(feed.unreadCount(category: 'World'), 2);
+    feed.dispose();
+  });
+
+  test('a hidden copy whose shown twin was opened still gets marked', () async {
+    const shared = 'https://outlet.test/story';
+    final feed = await load([
+      _item('x', feed: 'a', link: shared),
+      _item('x', category: 'World', feed: 'b', link: shared),
+    ]);
+    await feed.markAsRead(feed.filteredItems.single); // Opened the shown one.
+    expect(feed.unreadCount(), 1);
+    expect(feed.hasUnreadInView, isTrue);
+
+    await feed.markItemsAsRead(feed.unreadInView());
+
+    expect(feed.unreadCount(), 0);
+    expect(feed.hasUnreadInView, isFalse);
     feed.dispose();
   });
 }

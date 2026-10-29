@@ -142,6 +142,7 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   List<FeedItem>? _filteredItemsCache;
+  List<FeedItem>? _viewItemsCache;
 
   // Snapshots of the upstream inputs that actually feed the filter pipeline.
   // Compared in [update] so unrelated upstream changes (theme, search history,
@@ -165,6 +166,7 @@ class FeedProvider extends ChangeNotifier {
   /// [notifyListeners] whenever any filter input changes.
   void _invalidateFilterCache() {
     _filteredItemsCache = null;
+    _viewItemsCache = null;
     _dateGroupsCache = null;
     _unreadByCategory = null;
     _unreadByFeed = null;
@@ -865,9 +867,12 @@ class FeedProvider extends ChangeNotifier {
   // Filtering pipeline (cached)
   // ---------------------------------------------------------------------------
 
-  /// The current view's filter pipeline over [_items]; without [dedupe]
-  /// it keeps the cross-feed copies of a link that the list shows once.
-  Iterable<FeedItem> _applyViewFilters({bool dedupe = true}) {
+  /// The current view before the cross-feed dedup: every copy of a link
+  /// the list shows once. Cached with the filtered list.
+  List<FeedItem> get _viewItems =>
+      _viewItemsCache ??= _applyViewFilters().toList();
+
+  Iterable<FeedItem> _applyViewFilters() {
     final globalKeywords = settingsProvider?.globalExcludedKeywords ?? [];
     final Map<String, List<String>> feedKeywordsMap = {};
     if (subscriptionProvider != null) {
@@ -892,7 +897,7 @@ class FeedProvider extends ChangeNotifier {
       filterCategories: _filterCategories,
       globalKeywords: globalKeywords,
       feedKeywordsMap: feedKeywordsMap,
-      dedupe: dedupe,
+      dedupe: false,
     );
   }
 
@@ -903,7 +908,7 @@ class FeedProvider extends ChangeNotifier {
   List<FeedItem> get _filteredItems {
     if (_filteredItemsCache != null) return _filteredItemsCache!;
 
-    final filtered = _applyViewFilters();
+    final filtered = deduplicateByLink(_viewItems);
 
     // Apply dynamic read/bookmark state
     _filteredItemsCache = filtered.map((item) {
@@ -1036,15 +1041,17 @@ class FeedProvider extends ChangeNotifier {
   /// Unread articles in the current view (folder, feed, search and sheet
   /// filters — the whole filtered list, not just the render window),
   /// optionally only those published more than [olderThan] ago. Undated
-  /// articles count as old, as in the date groups.
+  /// articles count as old, as in the date groups. Copies of a link the
+  /// list shows once count too, as in the unread badges: a hidden copy
+  /// stays unread when its shown twin was opened.
   List<FeedItem> unreadInView({Duration? olderThan}) {
     final cutoff = olderThan == null
         ? null
         : DateTime.now().subtract(olderThan);
-    return _filteredItems
+    return _viewItems
         .where(
           (item) =>
-              !item.isRead &&
+              !_readState.isRead(item) &&
               (cutoff == null ||
                   item.pubDate == null ||
                   item.pubDate!.isBefore(cutoff)),
@@ -1052,9 +1059,10 @@ class FeedProvider extends ChangeNotifier {
         .toList();
   }
 
-  /// Whether the current view has an unread article — cheap enough for a
-  /// `select`, it stops at the first one.
-  bool get hasUnreadInView => _filteredItems.any((item) => !item.isRead);
+  /// Whether the current view has an unread article, hidden copies
+  /// included — cheap enough for a `select`, it stops at the first one.
+  bool get hasUnreadInView =>
+      _viewItems.any((item) => !_readState.isRead(item));
 
   /// Marks [items] as read in one operation and returns how many changed.
   /// Callers pass the list they showed the user, so articles arriving in
@@ -1072,7 +1080,7 @@ class FeedProvider extends ChangeNotifier {
       if (link != null) links.add(link);
     }
     if (links.isNotEmpty) {
-      for (final copy in _applyViewFilters(dedupe: false)) {
+      for (final copy in _viewItems) {
         if (links.contains(usableArticleLink(copy.link)) &&
             _readState.mark(copy, read: true)) {
           marked++;

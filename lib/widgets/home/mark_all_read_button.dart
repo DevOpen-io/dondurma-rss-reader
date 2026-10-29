@@ -36,6 +36,8 @@ Future<void> showMarkReadDialog(BuildContext context) async {
     context: context,
     builder: (dialogCtx) => StatefulBuilder(
       builder: (dialogCtx, setState) => AlertDialog(
+        // Landscape phones and large text need the options to scroll.
+        scrollable: true,
         title: Text(l10n.markAllAsRead),
         contentPadding: const EdgeInsets.only(top: 16, bottom: 8),
         content: RadioGroup<_Scope>(
