@@ -696,7 +696,7 @@ class _FeedItemContent extends StatelessWidget {
             child: Text(
               [?scopeLabel, ?waitLabel].join(' · '),
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                color: colorScheme.onSurfaceVariant,
                 fontSize: 11,
               ),
               maxLines: 2,
