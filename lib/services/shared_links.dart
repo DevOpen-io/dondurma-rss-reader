@@ -22,8 +22,17 @@ abstract final class SharedLinks {
 }
 
 /// The first http(s) address in shared [text] — a page title often comes
-/// with it — without the punctuation that closes a sentence around it.
+/// with it — without the punctuation that closes a sentence around it. A
+/// closing parenthesis stays when the address opened one.
 String? sharedUrl(String text) {
-  final match = RegExp(r'https?://[^\s<>"]+').firstMatch(text)?.group(0);
-  return match?.replaceFirst(RegExp(r'[.,;:!?)\]]+$'), '');
+  var url = RegExp(r'https?://[^\s<>"]+').firstMatch(text)?.group(0);
+  if (url == null) return null;
+  while (url!.isNotEmpty) {
+    final last = url[url.length - 1];
+    final unbalanced =
+        last == ')' && '('.allMatches(url).length < ')'.allMatches(url).length;
+    if (!'.,;:!?]'.contains(last) && !unbalanced) break;
+    url = url.substring(0, url.length - 1);
+  }
+  return url;
 }

@@ -15,6 +15,10 @@ void main() {
       sharedUrl('Read this (https://site.test/x).'),
       'https://site.test/x',
     );
+    expect(
+      sharedUrl('See https://en.wikipedia.org/wiki/Dart_(language).'),
+      'https://en.wikipedia.org/wiki/Dart_(language)',
+    );
     expect(sharedUrl('just words, no link'), isNull);
     expect(sharedUrl('ftp://site.test/file'), isNull);
   });
