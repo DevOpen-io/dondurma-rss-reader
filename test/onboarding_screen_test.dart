@@ -124,12 +124,13 @@ void main() {
       tester.element(find.byType(OnboardingScreen)),
     );
 
-    // Categories are ordered by their most popular feed and show a count.
+    // Categories are ordered by their most popular feed. Chips carry no
+    // feed count: onboarding adds only the top five of a category.
     expect(
       tester.getTopLeft(find.text('Tech')).dx,
       lessThan(tester.getTopLeft(find.text('World')).dx),
     );
-    expect(find.text('7'), findsOneWidget);
+    expect(find.text('7'), findsNothing);
 
     final subscriptions = tester
         .element(find.byType(OnboardingScreen))

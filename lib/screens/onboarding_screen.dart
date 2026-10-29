@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
@@ -22,7 +21,6 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
-  late final AnimationController _bgController;
   late final AnimationController _entranceController;
   late final TabController _tabController;
 
@@ -45,11 +43,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
   @override
   void initState() {
     super.initState();
-
-    _bgController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 10),
-    )..repeat();
 
     _entranceController = AnimationController(
       vsync: this,
@@ -87,17 +80,15 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     super.didChangeDependencies();
     if (_motionPreferenceApplied) return;
     _motionPreferenceApplied = true;
-    // Reduced motion: skip the looping blob background and jump the entrance
-    // animation straight to its end state instead of animating content in.
+    // Reduced motion: jump the entrance animation straight to its end
+    // state instead of animating content in.
     if (MediaQuery.disableAnimationsOf(context)) {
-      _bgController.stop();
       _entranceController.value = 1.0;
     }
   }
 
   @override
   void dispose() {
-    _bgController.dispose();
     _entranceController.dispose();
     _tabController.dispose();
     super.dispose();
@@ -195,160 +186,143 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     final isDesktop = PlatformCaps.isDesktop;
 
     return Scaffold(
-      body: Stack(
-        children: [
-          // The painter repaints from the controller directly, inside its
-          // own layer: the onboarding content above is neither rebuilt nor
-          // repainted on each animation frame.
-          RepaintBoundary(
-            child: CustomPaint(
-              painter: _BlobPainter(
-                animation: _bgController,
-                color: colorScheme.primary,
-                subtle: isDesktop,
-              ),
-              child: const SizedBox.expand(),
-            ),
-          ),
-          SafeArea(
-            child: ConstrainedWidth(
-              // Desktop gets a wide but bounded column; mobile keeps 600.
-              maxWidth: isDesktop ? 880 : 600,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FadeTransition(
-                    opacity: _headerFade,
-                    child: SlideTransition(
-                      position: _headerSlide,
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
-                        child: Column(
-                          children: [
-                            Container(
-                              width: isDesktop ? 72 : 64,
-                              height: isDesktop ? 72 : 64,
-                              decoration: BoxDecoration(
-                                color: colorScheme.primaryContainer,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Icon(
-                                Icons.rss_feed_rounded,
-                                size: isDesktop ? 40 : 36,
-                                color: colorScheme.onPrimaryContainer,
-                              ),
-                            ),
-                            const SizedBox(height: 20),
-                            Text(
-                              l10n.onboardingTitle,
-                              textAlign: TextAlign.center,
-                              style: (isDesktop
-                                      ? Theme.of(
-                                          context,
-                                        ).textTheme.headlineMedium
-                                      : Theme.of(
-                                          context,
-                                        ).textTheme.headlineSmall)
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.w700,
-                                    color: colorScheme.onSurface,
-                                  ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              l10n.onboardingSubtitle,
-                              textAlign: TextAlign.center,
-                              style: (isDesktop
-                                      ? Theme.of(context).textTheme.bodyLarge
-                                      : Theme.of(
-                                          context,
-                                        ).textTheme.bodyMedium)
-                                  ?.copyWith(
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.6,
-                                    ),
-                                    height: 1.5,
-                                  ),
-                            ),
-                          ],
+      body: SafeArea(
+        child: ConstrainedWidth(
+          // Desktop gets a wide but bounded column; mobile keeps 600.
+          maxWidth: isDesktop ? 880 : 600,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              FadeTransition(
+                opacity: _headerFade,
+                child: SlideTransition(
+                  position: _headerSlide,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 28, 24, 0),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: isDesktop ? 72 : 64,
+                          height: isDesktop ? 72 : 64,
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Icon(
+                            Icons.rss_feed_rounded,
+                            size: isDesktop ? 40 : 36,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
                         ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  FadeTransition(
-                    opacity: _headerFade,
-                    child: TabBar(
-                      controller: _tabController,
-                      tabs: [
-                        Tab(text: l10n.tabGlobal),
-                        Tab(text: l10n.tabTurkish),
+                        const SizedBox(height: 20),
+                        Text(
+                          l10n.onboardingTitle,
+                          textAlign: TextAlign.center,
+                          style: (isDesktop
+                                  ? Theme.of(
+                                      context,
+                                    ).textTheme.headlineMedium
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.headlineSmall)
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colorScheme.onSurface,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          l10n.onboardingSubtitle,
+                          textAlign: TextAlign.center,
+                          style: (isDesktop
+                                  ? Theme.of(context).textTheme.bodyLarge
+                                  : Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium)
+                              ?.copyWith(
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
+                                height: 1.5,
+                              ),
+                        ),
                       ],
                     ),
                   ),
-                  Expanded(
-                    child: FadeTransition(
-                      opacity: _contentFade,
-                      child: TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildContent(
-                            feeds: _globalFeeds,
-                            loading: _loadingGlobal,
-                            error: _errorGlobal,
-                            selected: _selectedGlobal,
-                            onToggle: (cat) => setState(() {
-                              if (_selectedGlobal.contains(cat)) {
-                                _selectedGlobal.remove(cat);
-                              } else {
-                                _selectedGlobal.add(cat);
-                              }
-                            }),
-                            onRetry: () {
-                              setState(() {
-                                _loadingGlobal = true;
-                                _errorGlobal = false;
-                              });
-                              _loadGlobalFeeds();
-                            },
-                            l10n: l10n,
-                            colorScheme: colorScheme,
-                          ),
-                          _buildContent(
-                            feeds: _trFeeds,
-                            loading: _loadingTr,
-                            error: _errorTr,
-                            selected: _selectedTr,
-                            onToggle: (cat) => setState(() {
-                              if (_selectedTr.contains(cat)) {
-                                _selectedTr.remove(cat);
-                              } else {
-                                _selectedTr.add(cat);
-                              }
-                            }),
-                            onRetry: () {
-                              setState(() {
-                                _loadingTr = true;
-                                _errorTr = false;
-                              });
-                              _loadTrFeeds();
-                            },
-                            l10n: l10n,
-                            colorScheme: colorScheme,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  FadeTransition(
-                    opacity: _contentFade,
-                    child: _buildBottom(l10n, colorScheme),
-                  ),
-                ],
+                ),
               ),
-            ),
+              const SizedBox(height: 20),
+              FadeTransition(
+                opacity: _headerFade,
+                child: TabBar(
+                  controller: _tabController,
+                  tabs: [
+                    Tab(text: l10n.tabGlobal),
+                    Tab(text: l10n.tabTurkish),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: FadeTransition(
+                  opacity: _contentFade,
+                  child: TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildContent(
+                        feeds: _globalFeeds,
+                        loading: _loadingGlobal,
+                        error: _errorGlobal,
+                        selected: _selectedGlobal,
+                        onToggle: (cat) => setState(() {
+                          if (_selectedGlobal.contains(cat)) {
+                            _selectedGlobal.remove(cat);
+                          } else {
+                            _selectedGlobal.add(cat);
+                          }
+                        }),
+                        onRetry: () {
+                          setState(() {
+                            _loadingGlobal = true;
+                            _errorGlobal = false;
+                          });
+                          _loadGlobalFeeds();
+                        },
+                        l10n: l10n,
+                        colorScheme: colorScheme,
+                      ),
+                      _buildContent(
+                        feeds: _trFeeds,
+                        loading: _loadingTr,
+                        error: _errorTr,
+                        selected: _selectedTr,
+                        onToggle: (cat) => setState(() {
+                          if (_selectedTr.contains(cat)) {
+                            _selectedTr.remove(cat);
+                          } else {
+                            _selectedTr.add(cat);
+                          }
+                        }),
+                        onRetry: () {
+                          setState(() {
+                            _loadingTr = true;
+                            _errorTr = false;
+                          });
+                          _loadTrFeeds();
+                        },
+                        l10n: l10n,
+                        colorScheme: colorScheme,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              FadeTransition(
+                opacity: _contentFade,
+                child: _buildBottom(l10n, colorScheme),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -394,7 +368,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       );
     }
     final categories = _categoriesFor(feeds);
-    final counts = SuggestedFeed.categoryCounts(feeds);
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
       child: Wrap(
@@ -404,7 +377,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             .map(
               (cat) => _CategoryChip(
                 label: cat,
-                count: counts[cat] ?? 0,
                 selected: selected.contains(cat),
                 colorScheme: colorScheme,
                 desktop: PlatformCaps.isDesktop,
@@ -494,7 +466,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
 class _CategoryChip extends StatelessWidget {
   final String label;
-  final int count;
   final bool selected;
   final ColorScheme colorScheme;
   final bool desktop;
@@ -502,7 +473,6 @@ class _CategoryChip extends StatelessWidget {
 
   const _CategoryChip({
     required this.label,
-    required this.count,
     required this.selected,
     required this.colorScheme,
     required this.onTap,
@@ -552,72 +522,9 @@ class _CategoryChip extends StatelessWidget {
                 color: selected ? colorScheme.onPrimary : colorScheme.onSurface,
               ),
             ),
-            const SizedBox(width: 6),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: selected
-                    ? colorScheme.onPrimary.withValues(alpha: 0.25)
-                    : colorScheme.onSurface.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Text(
-                '$count',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: selected
-                      ? colorScheme.onPrimary
-                      : colorScheme.onSurface.withValues(alpha: 0.7),
-                ),
-              ),
-            ),
           ],
         ),
       ),
     );
   }
-}
-
-class _BlobPainter extends CustomPainter {
-  final Animation<double> animation;
-  final Color color;
-
-  /// Desktop: much smaller, fainter glows — the giant animated circles that
-  /// suit a phone overwhelm a large window.
-  final bool subtle;
-
-  _BlobPainter({
-    required this.animation,
-    required this.color,
-    this.subtle = false,
-  }) : super(repaint: animation);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final t = animation.value;
-    final alpha = subtle ? 0.035 : 0.07;
-    final paint = Paint()..color = color.withValues(alpha: alpha);
-    final s = subtle ? 0.5 : 1.0;
-
-    final b1x = size.width * (0.78 + 0.08 * sin(t * 2 * pi));
-    final b1y = size.height * (0.1 + 0.05 * cos(t * 2 * pi * 1.3));
-    canvas.drawCircle(Offset(b1x, b1y), size.width * 0.42 * s, paint);
-
-    final b2x = size.width * (0.12 + 0.07 * cos(t * 2 * pi * 0.7));
-    final b2y = size.height * (0.82 + 0.06 * sin(t * 2 * pi * 0.9));
-    canvas.drawCircle(Offset(b2x, b2y), size.width * 0.36 * s, paint);
-
-    if (!subtle) {
-      final b3x = size.width * (0.5 + 0.06 * sin(t * 2 * pi * 1.1 + pi));
-      final b3y = size.height * (0.48 + 0.04 * cos(t * 2 * pi * 0.8));
-      canvas.drawCircle(Offset(b3x, b3y), size.width * 0.26, paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _BlobPainter old) =>
-      old.animation != animation ||
-      old.color != color ||
-      old.subtle != subtle;
 }
