@@ -10,6 +10,7 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import '../models/feed_item.dart';
 import '../models/feed_subscription.dart';
 import '../models/refresh_progress.dart';
+import '../models/saved_search.dart';
 import '../services/article_identity.dart';
 import '../services/feed_backoff.dart';
 import '../services/app_reset_service.dart';
@@ -907,6 +908,29 @@ class FeedProvider extends ChangeNotifier {
     _selectedFeedUrl = null;
     // Drawer selection replaces sheet category chips — one category axis.
     _filterCategories = {};
+    _itemRenderLimit = _pageSize;
+    _invalidateFilterCache();
+    notifyListeners();
+  }
+
+  /// The current search with its scope and filters, to keep (#71).
+  SavedSearch currentSearch(String name) => SavedSearch(
+    name: name,
+    query: _searchQuery.trim(),
+    category: _selectedFeedUrl == null ? _selectedCategory : null,
+    feedUrl: _selectedFeedUrl,
+    readFilter: _readFilter,
+    filterCategories: _filterCategories.toList()..sort(),
+  );
+
+  /// Runs a saved search: its scope, filters and query, in one rebuild.
+  void applySavedSearch(SavedSearch search) {
+    _selectedCategory = search.category;
+    _selectedFeedUrl = search.feedUrl;
+    if (search.feedUrl != null) _selectedCategory = selectedFeedParentCategory;
+    _readFilter = search.readFilter;
+    _filterCategories = {...search.filterCategories};
+    _searchQuery = search.query;
     _itemRenderLimit = _pageSize;
     _invalidateFilterCache();
     notifyListeners();

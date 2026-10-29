@@ -2344,6 +2344,12 @@ abstract class AppLocalizations {
   /// **'Tags'**
   String get editTags;
 
+  /// No description provided for @editTagsHint.
+  ///
+  /// In en, this message translates to:
+  /// **'edit tags'**
+  String get editTagsHint;
+
   /// No description provided for @addTagHint.
   ///
   /// In en, this message translates to:

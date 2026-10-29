@@ -5,6 +5,7 @@ import 'package:workmanager/workmanager.dart';
 
 import '../services/background_fetch_service.dart';
 import '../l10n/supported_languages.dart';
+import '../models/saved_search.dart';
 import '../theme/app_fonts.dart';
 import '../utils/platform_caps.dart';
 
@@ -13,9 +14,6 @@ import '../utils/platform_caps.dart';
 /// Settings include: theme, locale, offline cache, background sync, notification
 /// preferences (master toggle, digest mode, quiet hours), display/readability
 /// options (font size, typeface, line spacing), and content filtering keywords.
-/// A search kept under a name (#71).
-typedef SavedSearch = ({String name, String query});
-
 class SettingsProvider extends ChangeNotifier {
   FlexScheme _flexScheme = FlexScheme.material;
   ThemeMode _themeMode = ThemeMode.system;
@@ -515,39 +513,30 @@ class SettingsProvider extends ChangeNotifier {
 
   static List<SavedSearch> _decodeSavedSearches(Object? raw) => [
     if (raw is List)
-      for (final entry in raw)
-        if (entry case {
-          'name': final String name,
-          'query': final String query,
-        } when name.trim().isNotEmpty && query.trim().isNotEmpty)
-          (name: name, query: query),
+      for (final entry in raw) ?SavedSearch.tryParse(entry),
   ];
 
-  static List<Map<String, String>> _encodeSavedSearches(
+  static List<Map<String, Object?>> _encodeSavedSearches(
     List<SavedSearch> searches,
-  ) => [
-    for (final s in searches) {'name': s.name, 'query': s.query},
-  ];
+  ) => [for (final s in searches) s.toJson()];
 
-  /// Keeps [query] under [name]; saving the same query again renames it.
-  Future<void> saveSearch(String name, String query) {
-    final q = query.trim();
-    final n = name.trim().isEmpty ? q : name.trim();
-    if (q.isEmpty) return Future.value();
-    final index = _savedSearches.indexWhere((s) => s.query == q);
+  /// Keeps [search]; the same search (query and filters) saved again
+  /// replaces the old entry, under the new name.
+  Future<void> saveSearch(SavedSearch search) {
+    final index = _savedSearches.indexWhere((s) => s.key == search.key);
     _savedSearches = [..._savedSearches];
     if (index >= 0) {
-      _savedSearches[index] = (name: n, query: q);
+      _savedSearches[index] = search;
     } else {
-      _savedSearches.add((name: n, query: q));
+      _savedSearches.add(search);
     }
     return _store('savedSearches', _encodeSavedSearches(_savedSearches));
   }
 
-  Future<void> removeSavedSearch(String query) {
+  Future<void> removeSavedSearch(SavedSearch search) {
     _savedSearches = [
       for (final s in _savedSearches)
-        if (s.query != query) s,
+        if (s.key != search.key) s,
     ];
     return _store('savedSearches', _encodeSavedSearches(_savedSearches));
   }

@@ -15,6 +15,7 @@ import '../widgets/home/home_search_history_panel.dart';
 import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_empty_state.dart';
 import '../widgets/home/feed_list_skeleton.dart';
+import '../models/saved_search.dart';
 import '../services/shared_links.dart';
 import '../widgets/saved_searches.dart';
 import '../widgets/home/add_category_dialog.dart';
@@ -62,14 +63,18 @@ class _HomeScreenState extends State<HomeScreen> {
     super.dispose();
   }
 
-  /// Runs [query] in the search field of the feed tab (a saved search).
-  void _openSearch(String query) {
+  /// Runs a saved search on the feed tab: its scope, filters and query.
+  void _openSearch(SavedSearch search) {
     setState(() {
       _selectedIndex = 0;
       _isSearching = true;
-      _searchController.text = query;
+      _searchController.text = search.query;
     });
-    context.read<FeedProvider>().setSearchQuery(query);
+    context.read<FeedProvider>().applySavedSearch(search);
+    // Show the results, not the keyboard the search field asks for.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => FocusManager.instance.primaryFocus?.unfocus(),
+    );
   }
 
   /// A link shared from another app opens "Add feed" with it filled in.
@@ -367,10 +372,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onSelected: (action) => switch (action) {
                 _FeedMenuAction.addFeed => _showAddFeedDialog(),
                 _FeedMenuAction.markRead => showMarkReadDialog(context),
-                _FeedMenuAction.saveSearch => showSaveSearchDialog(
-                  context,
-                  context.read<FeedProvider>().searchQuery.trim(),
-                ),
+                _FeedMenuAction.saveSearch => saveCurrentSearch(context),
               },
             ),
           ],

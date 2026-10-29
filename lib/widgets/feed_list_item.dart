@@ -108,6 +108,9 @@ class FeedListItem extends StatefulWidget {
   final VoidCallback? onLongPress;
   final String? longPressHint;
 
+  /// Extra line under the text, inside the row (a bookmark's tags).
+  final Widget? footer;
+
   const FeedListItem({
     super.key,
     required this.item,
@@ -115,6 +118,7 @@ class FeedListItem extends StatefulWidget {
     this.flat = false,
     this.onLongPress,
     this.longPressHint,
+    this.footer,
   });
 
   @override
@@ -269,6 +273,7 @@ class _FeedListItemState extends State<FeedListItem>
                 flat: widget.flat,
                 onLongPress: widget.onLongPress,
                 longPressHint: widget.longPressHint,
+                footer: widget.footer,
               ),
               builder: (context, extent, card) => Stack(
                 children: [
@@ -312,6 +317,7 @@ class _ArticleCard extends StatelessWidget {
   final bool flat;
   final VoidCallback? onLongPress;
   final String? longPressHint;
+  final Widget? footer;
 
   const _ArticleCard({
     required this.item,
@@ -323,6 +329,7 @@ class _ArticleCard extends StatelessWidget {
     this.navigationItems,
     this.onLongPress,
     this.longPressHint,
+    this.footer,
   });
 
   bool get _hasThumbnail => item.imageUrl != null && item.imageUrl!.isNotEmpty;
@@ -361,11 +368,21 @@ class _ArticleCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: _FeedItemContent(
-                  item: item,
-                  isRead: isRead,
-                  scopeLabel: scopeLabel,
-                  waitLabel: waitLabel,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _FeedItemContent(
+                      item: item,
+                      isRead: isRead,
+                      scopeLabel: scopeLabel,
+                      waitLabel: waitLabel,
+                    ),
+                    if (footer case final footer?) ...[
+                      const SizedBox(height: 6),
+                      footer,
+                    ],
+                  ],
                 ),
               ),
               if (_hasThumbnail) ...[

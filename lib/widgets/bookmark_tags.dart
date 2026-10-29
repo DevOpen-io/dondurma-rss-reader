@@ -47,7 +47,8 @@ class _BookmarkTagsSheetState extends State<BookmarkTagsSheet> {
       for (final tag in context.read<BookmarkProvider>().allTags)
         if (!_tags.contains(tag)) tag,
     ];
-    return Padding(
+    // Scrolls when the tags, large text or the keyboard leave no room.
+    return SingleChildScrollView(
       padding: EdgeInsets.fromLTRB(
         20,
         8,
@@ -175,13 +176,8 @@ class BookmarkTagFilter extends StatelessWidget {
 /// A bookmark's tags under its row, as quiet `#tag` text.
 class BookmarkTagLine extends StatelessWidget {
   final FeedItem item;
-  final EdgeInsetsGeometry padding;
 
-  const BookmarkTagLine({
-    super.key,
-    required this.item,
-    this.padding = const EdgeInsets.fromLTRB(16, 0, 16, 8),
-  });
+  const BookmarkTagLine({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -189,15 +185,12 @@ class BookmarkTagLine extends StatelessWidget {
       (b) => b.tagsOf(item),
     );
     if (tags.isEmpty) return const SizedBox.shrink();
-    return Padding(
-      padding: padding,
-      child: Text(
-        tags.map((t) => '#$t').join('  '),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-        ),
+    return Text(
+      tags.map((t) => '#$t').join('  '),
+      maxLines: 1,
+      overflow: TextOverflow.ellipsis,
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: Theme.of(context).colorScheme.primary,
       ),
     );
   }

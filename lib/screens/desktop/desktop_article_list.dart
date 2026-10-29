@@ -176,7 +176,12 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     );
     // A saved search sets the query from the sidebar: show it here.
     if (_searchController.text != provider.searchQuery) {
-      _searchController.text = provider.searchQuery;
+      _searchController.value = TextEditingValue(
+        text: provider.searchQuery,
+        selection: TextSelection.collapsed(
+          offset: provider.searchQuery.length,
+        ),
+      );
     }
     _rowIds = articleRowIds(widget.items);
     final remaining = _rowIds.toSet();
@@ -222,10 +227,8 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                                       size: 16,
                                     ),
                                     tooltip: l10n.saveSearch,
-                                    onPressed: () => showSaveSearchDialog(
-                                      context,
-                                      provider.searchQuery.trim(),
-                                    ),
+                                    onPressed: () =>
+                                        saveCurrentSearch(context),
                                   ),
                                 IconButton(
                                   icon: const Icon(Icons.close, size: 16),
@@ -552,8 +555,8 @@ class _DesktopArticleTile extends StatelessWidget {
             isBookmarked ? l10n.semanticRemoveBookmark : l10n.semanticBookmark,
           ),
         ),
-        // A bookmark's tags (#71).
-        if (isBookmarked)
+        // A bookmark's tags (#71) — a listed bookmark, not a legacy mark.
+        if (context.read<BookmarkProvider>().hasSavedCopy(item))
           PopupMenuItem(
             value: 'tags',
             child: _menuRow(context, Icons.label_outline, l10n.editTags),

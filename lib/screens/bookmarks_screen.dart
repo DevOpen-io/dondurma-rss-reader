@@ -55,25 +55,16 @@ class BookmarksScreen extends StatelessWidget {
                 // freezes isRead at save time, which would disagree with the
                 // feed list on the same record. A per-row Selector avoids
                 // rebuilding the whole list on every FeedProvider notify.
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Selector<FeedProvider, bool>(
-                      selector: (_, feed) => feed.isRead(item),
-                      builder: (_, isRead, _) => FeedListItem(
-                        item: item.copyWith(isRead: isRead),
-                        navigationItems: visible,
-                        flat: flat,
-                        onLongPress: () =>
-                            BookmarkTagsSheet.show(context, item),
-                        longPressHint: l10n.editTags,
-                      ),
-                    ),
-                    BookmarkTagLine(
-                      item: item,
-                      padding: EdgeInsets.fromLTRB(flat ? 16 : 4, 0, 16, 8),
-                    ),
-                  ],
+                return Selector<FeedProvider, bool>(
+                  selector: (_, feed) => feed.isRead(item),
+                  builder: (_, isRead, _) => FeedListItem(
+                    item: item.copyWith(isRead: isRead),
+                    navigationItems: visible,
+                    flat: flat,
+                    onLongPress: () => BookmarkTagsSheet.show(context, item),
+                    longPressHint: l10n.editTagsHint,
+                    footer: BookmarkTagLine(item: item),
+                  ),
                 );
               },
             ),

@@ -6,6 +6,7 @@ import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
 
 import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
+import 'package:ice_cream_rss_reader/models/saved_search.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/widgets/saved_searches.dart';
 
@@ -29,7 +30,7 @@ void main() {
   testWidgets('a tap runs the search; a long press can delete it', (
     tester,
   ) async {
-    final opened = <String>[];
+    final opened = <SavedSearch>[];
     final settings = SettingsProvider();
     await tester.pumpWidget(
       ChangeNotifierProvider.value(
@@ -53,7 +54,7 @@ void main() {
     expect(find.text('Saved searches'), findsOneWidget);
 
     await tester.tap(find.text('Flutter news'));
-    expect(opened, ['flutter']);
+    expect([for (final s in opened) s.query], ['flutter']);
 
     await tester.longPress(find.text('Flutter news'));
     await tester.pumpAndSettle();

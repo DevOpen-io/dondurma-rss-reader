@@ -409,6 +409,7 @@
   "readKeywordsDesc": "Bunlarla eşleşen makaleler gelir gelmez okundu olur",
   "onlyKeywords": "Yalnız eşleşenleri göster",
   "editTags": "Etiketler",
+  "editTagsHint": "etiketleri düzenle",
   "addTagHint": "Yeni etiket",
   "tagsAll": "Tümü",
   "tagHint": "Etiketlemek için bir yer imine basılı tutun",

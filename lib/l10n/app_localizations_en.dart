@@ -1238,6 +1238,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editTags => 'Tags';
 
   @override
+  String get editTagsHint => 'edit tags';
+
+  @override
   String get addTagHint => 'New tag';
 
   @override

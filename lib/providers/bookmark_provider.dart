@@ -100,8 +100,15 @@ class BookmarkProvider extends ChangeNotifier {
             if (tagsOf(b).contains(_tagFilter)) b,
         ];
 
+  /// Whether [item] is saved as a full bookmark — the kind that is listed
+  /// and can carry tags (legacy ID-only marks cannot).
+  bool hasSavedCopy(FeedItem item) =>
+      _savedBookmarks.any((b) => b.id == item.id && b.feedUrl == item.feedUrl);
+
   /// Replaces [item]'s tags (trimmed, without repeats; empty removes them).
+  /// Only a listed bookmark takes tags.
   Future<void> setTags(FeedItem item, Iterable<String> tags) async {
+    if (!hasSavedCopy(item)) return;
     final key = (item.feedUrl, item.id);
     final clean = {
       for (final tag in tags)
@@ -143,6 +150,7 @@ class BookmarkProvider extends ChangeNotifier {
   void _dropTags(FeedItem item) {
     if (_tags.remove((item.feedUrl, item.id)) == null) return;
     if (_tagFilter != null && !allTags.contains(_tagFilter)) _tagFilter = null;
+    notifyListeners();
     unawaited(_saveTags());
   }
 

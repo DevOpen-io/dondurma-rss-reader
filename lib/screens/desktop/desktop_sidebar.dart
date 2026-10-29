@@ -167,11 +167,11 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                               ),
                             SavedSearchList(
                               header: (_, title) => _SectionLabel(title),
-                              onOpen: (query) {
+                              onOpen: (search) {
                                 widget.onSectionChanged(
                                   DesktopSection.articles,
                                 );
-                                feed.setSearchQuery(query);
+                                feed.applySavedSearch(search);
                               },
                             ),
                           ],

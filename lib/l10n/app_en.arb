@@ -556,6 +556,7 @@
   "readKeywordsDesc": "Articles matching these are marked read as they arrive",
   "onlyKeywords": "Only show matching",
   "editTags": "Tags",
+  "editTagsHint": "edit tags",
   "addTagHint": "New tag",
   "tagsAll": "All",
   "tagHint": "Long-press a bookmark to tag it",

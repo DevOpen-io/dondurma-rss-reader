@@ -1256,10 +1256,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get editTags => 'Etiquetas';
 
   @override
+  String get editTagsHint => 'editar etiquetas';
+
+  @override
   String get addTagHint => 'Nueva etiqueta';
 
   @override
-  String get tagsAll => 'Todos';
+  String get tagsAll => 'Todas';
 
   @override
   String get tagHint => 'Mantén pulsado un marcador para etiquetarlo';

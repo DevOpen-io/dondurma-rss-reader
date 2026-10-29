@@ -1243,6 +1243,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get editTags => 'Etiketler';
 
   @override
+  String get editTagsHint => 'etiketleri düzenle';
+
+  @override
   String get addTagHint => 'Yeni etiket';
 
   @override
