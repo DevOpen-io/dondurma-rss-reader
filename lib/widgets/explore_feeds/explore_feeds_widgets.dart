@@ -304,41 +304,17 @@ class SuggestedFeedTile extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 3),
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              domain,
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.5,
-                                ),
-                              ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 7,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: colorScheme.secondaryContainer,
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              category,
-                              style: TextStyle(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                color: colorScheme.onSecondaryContainer,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        [
+                          if (domain.isNotEmpty) domain,
+                          category,
+                        ].join(' · '),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
@@ -374,10 +350,10 @@ class FaviconFallback extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    color: colorScheme.primaryContainer,
+    color: colorScheme.surfaceContainerHighest,
     child: Icon(
       Icons.rss_feed_rounded,
-      color: colorScheme.onPrimaryContainer,
+      color: colorScheme.onSurfaceVariant,
       size: 20,
     ),
   );
@@ -399,15 +375,11 @@ class ExploreSubscribeButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FilledButton.tonal(
+    return OutlinedButton(
       onPressed: onTap,
-      style: FilledButton.styleFrom(
-        backgroundColor: colorScheme.primaryContainer,
-        foregroundColor: colorScheme.onPrimaryContainer,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        visualDensity: VisualDensity.compact,
         textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       ),
       child: isLoading
@@ -434,38 +406,14 @@ class SubscribedBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      label: label,
-      child: Material(
-        color: colorScheme.secondaryContainer.withValues(alpha: 0.6),
-        borderRadius: BorderRadius.circular(10),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(10),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.check_rounded,
-                  size: 14,
-                  color: colorScheme.secondary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.secondary,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
+    return TextButton.icon(
+      onPressed: onTap,
+      icon: const Icon(Icons.check_rounded, size: 16),
+      label: Text(label),
+      style: TextButton.styleFrom(
+        foregroundColor: colorScheme.onSurfaceVariant,
+        visualDensity: VisualDensity.compact,
+        textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
       ),
     );
   }
