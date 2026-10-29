@@ -253,4 +253,24 @@ void main() {
       SystemUiOverlayStyle.light,
     );
   });
+
+  testWidgets('rotating the screen resets the zoom', (tester) async {
+    await pumpArticle(tester);
+    await tester.tap(find.byType(OpenableArticleImage));
+    await tester.pumpAndSettle();
+    final center = tester.getCenter(find.byType(InteractiveViewer));
+    await tester.tapAt(center);
+    await tester.pump(const Duration(milliseconds: 60));
+    await tester.tapAt(center);
+    await tester.pumpAndSettle();
+    expect(scale(tester), greaterThan(1));
+
+    tester.view.physicalSize = Size(
+      tester.view.physicalSize.height,
+      tester.view.physicalSize.width,
+    );
+    addTearDown(tester.view.reset);
+    await tester.pumpAndSettle();
+    expect(scale(tester), 1);
+  });
 }

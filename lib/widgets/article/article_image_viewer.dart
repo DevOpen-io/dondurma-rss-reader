@@ -117,6 +117,19 @@ class _ArticleImageViewerState extends State<ArticleImageViewer> {
 
   final _transform = TransformationController();
   Offset _doubleTapAt = Offset.zero;
+  Size? _screen;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // A zoom made for one orientation leaves the image off-centre in the
+    // other: rotating starts over at the fitted image.
+    final screen = MediaQuery.sizeOf(context);
+    if (_screen != null && _screen != screen) {
+      _transform.value = Matrix4.identity();
+    }
+    _screen = screen;
+  }
 
   @override
   void dispose() {
