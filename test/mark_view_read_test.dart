@@ -150,7 +150,7 @@ void main() {
       ]);
       expect(feed.filteredItems, hasLength(2), reason: 'one copy is shown');
       expect(feed.unreadInView(), hasLength(3), reason: 'as the badge counts');
-      expect(feed.unreadCount(), 3);
+      expect(feed.unreadCount(), 2, reason: 'the shared link counts once');
 
       await feed.markItemsAsRead(feed.unreadInView());
 
@@ -185,7 +185,10 @@ void main() {
       _item('x', feed: 'a', link: shared),
       _item('x', category: 'World', feed: 'b', link: shared),
     ]);
-    await feed.markAsRead(feed.filteredItems.single); // Opened the shown one.
+    // Read inside its own folder, where the World copy is not in view.
+    feed.selectCategory('News');
+    await feed.markAsRead(feed.filteredItems.single);
+    feed.selectCategory(null);
     expect(feed.unreadCount(), 1);
     expect(feed.hasUnreadInView, isTrue);
 

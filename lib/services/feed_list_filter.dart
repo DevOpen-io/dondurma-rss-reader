@@ -65,7 +65,7 @@ Iterable<FeedItem> applyFeedFilters({
   // Cross-feed dedup: the same article reachable through two subscriptions
   // (e.g. an outlet's "News" vs "World" feed) shows once. Runs last so an
   // excluded duplicate never consumes another copy's dedup slot.
-  return dedupe ? deduplicateByLink(filtered) : filtered;
+  return dedupe ? deduplicateByLink(filtered, isRead: isRead) : filtered;
 }
 
 /// Legacy offline-membership dedup key: the normalized absolute
@@ -90,14 +90,32 @@ String? usableArticleLink(String? link) {
 }
 
 /// Drops duplicate article links globally; without a usable link only
-/// duplicates within the same source can be identified safely.
-Iterable<FeedItem> deduplicateByLink(Iterable<FeedItem> items) sync* {
-  final seen = <Object>{};
+/// duplicates within the same source can be identified safely. The row
+/// keeps the first copy's place; with [isRead], an unread copy stands in
+/// for a read one, so the row shows what the unread badge counts (#70).
+Iterable<FeedItem> deduplicateByLink(
+  Iterable<FeedItem> items, {
+  bool Function(FeedItem item)? isRead,
+}) {
+  final slots = <Object, int>{};
+  final kept = <FeedItem>[];
   for (final item in items) {
-    final Object key = usableArticleLink(item.link) ?? (item.feedUrl, item.id);
-    if (seen.add(key)) yield item;
+    final key = articleKey(item);
+    final slot = slots[key];
+    if (slot == null) {
+      slots[key] = kept.length;
+      kept.add(item);
+    } else if (isRead != null && isRead(kept[slot]) && !isRead(item)) {
+      kept[slot] = item;
+    }
   }
+  return kept;
 }
+
+/// What makes two rows the same article: the usable link, else the source
+/// instance.
+Object articleKey(FeedItem item) =>
+    usableArticleLink(item.link) ?? (item.feedUrl, item.id);
 
 /// One keyword rule as typed (#69): a whole word or phrase, `/regex/` for
 /// a regular expression, either after `title:` to look at the title only.

@@ -42,6 +42,7 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Android share sheet: sharing a link to the app opens Add feed with it filled in (and feed discovery on save); a share before onboarding waits for the home screen. The activity is singleTask so a share reaches the running app. iOS share extension not built ([#67](https://github.com/DevOpen-io/dondurma-rss-reader/issues/67), 2026-10-29)
 - [x] Per-feed refresh interval (with the app / hourly / every 6 hours / daily) in the feed sheet: automatic foreground and background passes skip a feed until it is due, a pull to refresh fetches all; last fetch times persist per isolate like the cooldowns ([#68](https://github.com/DevOpen-io/dondurma-rss-reader/issues/68), 2026-10-29)
 - [x] Filter rules: any keyword list takes `/regex/` patterns and a `title:` prefix (title only); per-feed "Only show matching" list; a global "Mark read automatically" list applied as articles arrive and when the list changes. Author matching is not possible (feeds' authors are not stored) ([#69](https://github.com/DevOpen-io/dondurma-rss-reader/issues/69), 2026-10-29)
+- [x] Same article from several feeds: opening, marking or un-marking the shown row applies to the copies that view hides; unread badges count such an article once (overall and per folder); the row shows an unread copy when one exists. Copies in another folder keep their own state ([#70](https://github.com/DevOpen-io/dondurma-rss-reader/issues/70), 2026-10-29)
 
 ## Backlog
 

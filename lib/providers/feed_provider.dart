@@ -978,7 +978,7 @@ class FeedProvider extends ChangeNotifier {
   List<FeedItem> get _filteredItems {
     if (_filteredItemsCache != null) return _filteredItemsCache!;
 
-    final filtered = deduplicateByLink(_viewItems);
+    final filtered = deduplicateByLink(_viewItems, isRead: _readState.isRead);
 
     // Apply dynamic read/bookmark state
     _filteredItemsCache = filtered.map((item) {
@@ -1075,10 +1075,17 @@ class FeedProvider extends ChangeNotifier {
     final byCategory = <String, int>{};
     final byFeed = <String, int>{};
     int total = 0;
+    // An article several feeds carry is one row in a view, so one unread
+    // count: overall and per folder, as the lists show them (#70).
+    final counted = <Object>{};
+    final countedInCategory = <String, Set<Object>>{};
     for (final item in _items) {
       if (_readState.isRead(item)) continue;
-      total++;
-      byCategory[item.category] = (byCategory[item.category] ?? 0) + 1;
+      final key = articleKey(item);
+      if (counted.add(key)) total++;
+      if ((countedInCategory[item.category] ??= {}).add(key)) {
+        byCategory[item.category] = (byCategory[item.category] ?? 0) + 1;
+      }
       byFeed[item.feedUrl] = (byFeed[item.feedUrl] ?? 0) + 1;
     }
     _unreadByCategory = byCategory;
@@ -1086,9 +1093,10 @@ class FeedProvider extends ChangeNotifier {
     _unreadTotal = total;
   }
 
-  /// Marks this source instance as read (no-op if already read).
+  /// Marks this source instance as read, with the copies the current view
+  /// hides behind it (no-op if nothing changed).
   Future<void> markAsRead(FeedItem item) async {
-    if (_readState.mark(item, read: true)) {
+    if (_markWithViewCopies([item], read: true) > 0) {
       _invalidateFilterCache();
       notifyListeners();
       _scheduleReadStateSave();
@@ -1141,23 +1149,7 @@ class FeedProvider extends ChangeNotifier {
   /// copies it hides are marked with it. Copies outside the view (another
   /// folder) are separate rows there and keep their own read state.
   Future<int> markItemsAsRead(Iterable<FeedItem> items) async {
-    var marked = 0;
-    final links = <String>{};
-    for (final item in items) {
-      if (_readState.mark(item, read: true)) marked++;
-      // Also for a row already read: opening it left its hidden twin
-      // unread, and scrolling past it should catch that twin up.
-      final link = usableArticleLink(item.link);
-      if (link != null) links.add(link);
-    }
-    if (links.isNotEmpty) {
-      for (final copy in _viewItems) {
-        if (links.contains(usableArticleLink(copy.link)) &&
-            _readState.mark(copy, read: true)) {
-          marked++;
-        }
-      }
-    }
+    final marked = _markWithViewCopies(items, read: true);
     if (marked == 0) return 0;
     _invalidateFilterCache();
     notifyListeners();
@@ -1179,9 +1171,33 @@ class FeedProvider extends ChangeNotifier {
     _scheduleReadStateSave();
   }
 
-  /// Toggles the read/unread state of this source instance.
+  /// Sets [read] on [items] and on the copies of their links the current
+  /// view hides behind them (`deduplicateByLink`) — the row stands for all
+  /// of them. Copies outside the view (another folder) are separate rows
+  /// there and keep their own state. Also for an item already in that
+  /// state: its hidden twin may not be. Returns how many marks changed.
+  int _markWithViewCopies(Iterable<FeedItem> items, {required bool read}) {
+    var changed = 0;
+    final links = <String>{};
+    for (final item in items) {
+      if (_readState.mark(item, read: read)) changed++;
+      final link = usableArticleLink(item.link);
+      if (link != null) links.add(link);
+    }
+    if (links.isEmpty) return changed;
+    for (final copy in _viewItems) {
+      if (links.contains(usableArticleLink(copy.link)) &&
+          _readState.mark(copy, read: read)) {
+        changed++;
+      }
+    }
+    return changed;
+  }
+
+  /// Toggles the read/unread state of this source instance and of the
+  /// copies the current view hides behind it.
   Future<void> toggleReadStatus(FeedItem item) async {
-    _readState.mark(item, read: !_readState.isRead(item));
+    _markWithViewCopies([item], read: !_readState.isRead(item));
     _invalidateFilterCache();
     notifyListeners();
     _scheduleReadStateSave();
