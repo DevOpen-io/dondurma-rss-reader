@@ -454,6 +454,32 @@ void main() {
       expect(html, isNot(contains('Popular this week')));
     });
 
+    test('a comment thread longer than the story is still removed', () {
+      // slashdot.org: the story text has no <p>, so one comment thread
+      // holds most of the page's paragraphs — comments are never the story.
+      final reply =
+          '<li id="tree_2" class="comment oneline"><div class="commentBody">'
+          '<p>${'What is with the black leather jacket he always wears? ' * 12}'
+          '</p></div></li>';
+      final page =
+          '<html><body><div id="firehose">'
+          '<article><h2>Nvidia chief seen as target of spy plot</h2>'
+          '<div class="body"><i>${'American spy agencies had gathered '
+                  'striking intelligence about the plot.<br>' * 4}</i></div>'
+          '</article>'
+          '<ul id="commentlisting" class="d2"><li id="tree_1" class="comment">'
+          '<div class="commentBody"><p>First!</p></div>'
+          '<ul id="commtree_1">$reply</ul></li></ul>'
+          '</div></body></html>';
+
+      final html = FullTextExtractionService.extractArticleHtml(
+        Uint8List.fromList(utf8.encode(page)),
+      );
+
+      expect(html, contains('striking intelligence'));
+      expect(html, isNot(contains('leather jacket')));
+    });
+
     test('a headline-only <article> loses to the story body beside it', () {
       // gzt.com: the <article> holds the headline and the feed's summary
       // line; taking it returned exactly the feed excerpt.
@@ -512,6 +538,26 @@ void main() {
         ),
       );
       expect(counts['/story'], 1);
+    });
+
+    test('a publisher page under /articles/ is extracted as itself', () async {
+      // nature.com, ign.com: their own article paths start with /articles/.
+      handlers['/articles/plain-story'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(story);
+      };
+      final target = url('/articles/plain-story');
+
+      final html = await FullTextExtractionService.instance.extractFullText(
+        target,
+      );
+
+      expect(html, contains('only the full article carries'));
+      expect(counts[batchPath], isNull);
+      expect(
+        FullTextExtractionService.instance.hasFailedAttempt(target),
+        isFalse,
+      );
     });
 
     test('an unresolvable link fails honestly and a retry refetches', () async {

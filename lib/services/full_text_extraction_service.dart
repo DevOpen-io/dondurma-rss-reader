@@ -185,6 +185,11 @@ class FullTextExtractionService {
     caseSensitive: false,
   );
 
+  static final _commentPattern = RegExp(
+    r'(comment|disqus)',
+    caseSensitive: false,
+  );
+
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
@@ -261,11 +266,17 @@ class FullTextExtractionService {
         fetched = await _fetchPage(client, url);
         // Google News article links answer with a JS redirect stub; the
         // publisher URL has to be asked from Google before extracting.
+        // Publishers' own /articles/ pages carry no redirect markers and
+        // are extracted as themselves.
         final stub = fetched.$2;
-        if (fetched.$1.statusCode == 200 &&
-            stub != null &&
-            _googleNewsArticlePath.hasMatch(Uri.parse(url).path)) {
-          final target = await _resolveGoogleNews(client, url, stub);
+        final redirect =
+            fetched.$1.statusCode == 200 &&
+                stub != null &&
+                _googleNewsArticlePath.hasMatch(Uri.parse(url).path)
+            ? _googleNewsRedirect(stub)
+            : null;
+        if (redirect != null) {
+          final target = await _resolveGoogleNews(client, url, redirect);
           if (target == null) {
             _recordFailure(url, DateTime.now().add(transientFailureTtl));
             return null;
@@ -398,19 +409,26 @@ class FullTextExtractionService {
   static String? _dataAttr(String page, String name) =>
       RegExp('$name="([^"]+)"').firstMatch(page)?.group(1);
 
-  /// Asks Google's own decoding endpoint for the publisher URL behind a
-  /// Google News article [url], using the id/timestamp/signature its
-  /// redirect [stub] page carries. Null when any step fails.
-  Future<String?> _resolveGoogleNews(
-    http.Client client,
-    String url,
-    Uint8List stub,
-  ) async {
+  /// The id/timestamp/signature a Google News redirect [stub] page
+  /// carries, or null when the page is not such a stub.
+  static ({String id, int ts, String sg})? _googleNewsRedirect(Uint8List stub) {
     final page = utf8.decode(stub, allowMalformed: true);
     final id = _dataAttr(page, 'data-n-a-id');
     final ts = int.tryParse(_dataAttr(page, 'data-n-a-ts') ?? '');
     final sg = _dataAttr(page, 'data-n-a-sg');
     if (id == null || ts == null || sg == null) return null;
+    return (id: id, ts: ts, sg: sg);
+  }
+
+  /// Asks Google's own decoding endpoint for the publisher URL behind a
+  /// Google News article [url], using its stub page's [redirect] values.
+  /// Null when any step fails.
+  Future<String?> _resolveGoogleNews(
+    http.Client client,
+    String url,
+    ({String id, int ts, String sg}) redirect,
+  ) async {
+    final (:id, :ts, :sg) = redirect;
     final payload = jsonEncode([
       'garturlreq',
       // Fixed client context the endpoint expects, as Google's own page
@@ -578,8 +596,14 @@ class FullTextExtractionService {
       if (el.localName == 'html' || el.localName == 'body') continue;
       final classAttr = el.attributes['class'] ?? '';
       final idAttr = el.attributes['id'] ?? '';
-      if ((_nonContentClassPattern.hasMatch(classAttr) ||
-              _nonContentClassPattern.hasMatch(idAttr)) &&
+      if (!_nonContentClassPattern.hasMatch(classAttr) &&
+          !_nonContentClassPattern.hasMatch(idAttr)) {
+        continue;
+      }
+      // Comment threads are never the story, however long (slashdot.org
+      // stories have no <p>; one thread holds most paragraphs).
+      if (_commentPattern.hasMatch(classAttr) ||
+          _commentPattern.hasMatch(idAttr) ||
           paragraphTextLength(el) * 2 <= storyText) {
         el.remove();
       }
