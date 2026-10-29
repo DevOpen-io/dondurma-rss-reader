@@ -172,7 +172,7 @@
   "restoreBackupDesc": "Adds a backup's feeds, bookmarks and read marks and uses its settings",
   "restoreBackupConfirm": "Feeds, folders, bookmarks and read marks from the backup are added to what you have. Your settings are replaced by the backup's.",
   "restoreAction": "Restore",
-  "backupRestored": "Backup restored · {feeds} feeds and {bookmarks} bookmarks added",
+  "backupRestored": "Backup restored · feeds added: {feeds}, bookmarks added: {bookmarks}",
   "@backupRestored": {
     "placeholders": {
       "feeds": {
@@ -185,6 +185,7 @@
   },
   "backupInvalid": "This file is not a Dondurma backup.",
   "backupTooNew": "This backup comes from a newer version of the app. Update the app first.",
+  "restoreFailed": "Couldn't restore the backup. Some of it may already be in place.",
   "noFeedsFoundOrCancelled": "No feeds found or import was cancelled.",
   "importedFeeds": "Imported {count} new feed{count, plural, =1{} other{s}}.",
   "@importedFeeds": {

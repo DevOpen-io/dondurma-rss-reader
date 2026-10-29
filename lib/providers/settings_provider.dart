@@ -4,7 +4,9 @@ import 'package:hive_ce_flutter/hive_flutter.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../services/background_fetch_service.dart';
+import '../l10n/supported_languages.dart';
 import '../theme/app_fonts.dart';
+import '../utils/platform_caps.dart';
 
 /// Manages global application settings with Hive persistence.
 ///
@@ -222,47 +224,73 @@ class SettingsProvider extends ChangeNotifier {
   // Backup
   // ---------------------------------------------------------------------------
 
-  static bool _isString(Object? v) => v is String;
   static bool _isBool(Object? v) => v is bool;
-  static bool _isInt(Object? v) => v is int;
-  static bool _isNum(Object? v) => v is num;
   static bool _isStringList(Object? v) =>
       v is List && v.every((e) => e is String);
+  static bool Function(Object?) _oneOf(Iterable<Object> values) =>
+      (v) => values.contains(v);
+  static bool Function(Object?) _intIn(int min, int max) =>
+      (v) => v is int && v >= min && v <= max;
 
-  /// Settings a backup carries, each with the shape its value must have.
-  /// Onboarding and migration markers stay with the device.
+  /// Settings a backup carries, each with the values the app itself can
+  /// write — a hand-edited or foreign value is skipped. Onboarding and
+  /// migration markers stay with the device.
   static final _backupKeys = <String, bool Function(Object?)>{
-    'flexScheme': _isString,
-    'themeMode': _isString,
-    'locale': _isString,
-    'offlineCacheLimit': _isInt,
-    'cacheIntervalSeconds': _isInt,
+    'flexScheme': _oneOf(FlexScheme.values.map((s) => s.name)),
+    'themeMode': _oneOf(ThemeMode.values.map((m) => m.name)),
+    'locale': _oneOf(supportedAppLanguages.map((l) => l.locale.languageCode)),
+    'offlineCacheLimit': _intIn(0, 300),
+    'cacheIntervalSeconds': _intIn(30, 86400),
     'syncBackground': _isBool,
     'notificationsEnabled': _isBool,
-    'digestMode': _isString,
+    'digestMode': _oneOf(const ['instant', 'daily', 'weekly']),
     'quietHoursEnabled': _isBool,
-    'quietHoursStart': _isInt,
-    'quietHoursEnd': _isInt,
-    'appFont': _isString,
-    'fontSize': _isString,
-    'typeface': _isString,
-    'lineSpacing': _isNum,
+    'quietHoursStart': _intIn(0, 23),
+    'quietHoursEnd': _intIn(0, 23),
+    'appFont': _oneOf(AppFont.values.map((f) => f.key)),
+    'fontSize': _oneOf(const ['small', 'medium', 'large', 'xl']),
+    'typeface': _oneOf(articleTypefaces),
+    'lineSpacing': (v) => v is num && v >= 1 && v <= 3,
     'globalExcludedKeywords': _isStringList,
     'searchHistory': _isStringList,
     'adBlockEnabled': _isBool,
     'webviewDarkModeEnabled': _isBool,
-    'browserMode': _isString,
+    'browserMode': _oneOf(const ['builtin', 'external', 'system']),
     'autoFullText': _isBool,
-    'timeFormat': _isString,
-    'desktopReadingWidth': _isString,
-    'articleListStyle': _isString,
+    'timeFormat': _oneOf(const ['system', '12h', '24h']),
+    'desktopReadingWidth': _oneOf(const ['comfortable', 'expanded', 'full']),
+    'articleListStyle': _oneOf(const ['cards', 'list']),
     'markReadOnScroll': _isBool,
   };
 
-  /// The stored settings a backup carries.
+  /// The settings a backup carries, as in effect now — defaults included,
+  /// so a restore replaces every one of them.
   Map<String, Object> backupValues() => {
-    for (final key in _backupKeys.keys)
-      if (_box.get(key) case final Object value) key: value,
+    'flexScheme': _flexScheme.name,
+    'themeMode': _themeMode.name,
+    'locale': _locale.languageCode,
+    'offlineCacheLimit': _offlineCacheLimit,
+    'cacheIntervalSeconds': _cacheIntervalSeconds,
+    'syncBackground': _syncBackground,
+    'notificationsEnabled': _notificationsEnabled,
+    'digestMode': _digestMode,
+    'quietHoursEnabled': _quietHoursEnabled,
+    'quietHoursStart': _quietHoursStart,
+    'quietHoursEnd': _quietHoursEnd,
+    'appFont': _appFont.key,
+    'fontSize': _fontSize,
+    'typeface': _typeface,
+    'lineSpacing': _lineSpacing,
+    'globalExcludedKeywords': _globalExcludedKeywords,
+    'searchHistory': _searchHistory,
+    'adBlockEnabled': _adBlockEnabled,
+    'webviewDarkModeEnabled': _webviewDarkModeEnabled,
+    'browserMode': _browserMode,
+    'autoFullText': _autoFullText,
+    'timeFormat': _timeFormat,
+    'desktopReadingWidth': _desktopReadingWidth,
+    'articleListStyle': _articleListStyle,
+    'markReadOnScroll': _markReadOnScroll,
   };
 
   /// Replaces the settings with a backup's. Keys a backup does not carry, or
@@ -272,6 +300,12 @@ class SettingsProvider extends ChangeNotifier {
     for (final MapEntry(:key, :value) in values.entries) {
       final valid = _backupKeys[key];
       if (valid == null || !valid(value)) continue;
+      // Background sync is a phone switch; desktop has neither the
+      // scheduler nor the toggle, and its timer refresh depends on it.
+      if (key == 'syncBackground' &&
+          !PlatformCaps.supportsBackgroundScheduler) {
+        continue;
+      }
       await _box.put(key, switch (value) {
         final List list => list.cast<String>().toList(),
         // JSON has no float type: a whole-number spacing decodes as int.

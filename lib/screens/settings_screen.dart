@@ -1034,7 +1034,7 @@ class SettingsScreen extends StatelessWidget {
   }
 }
 
-/// A bundled font's name, set in that font so the picker previews it.
+
 /// Picks a backup file, checks it, confirms, and merges it into the app.
 Future<void> _restoreBackup(BuildContext context) async {
   final l10n = AppLocalizations.of(context);
@@ -1071,19 +1071,27 @@ Future<void> _restoreBackup(BuildContext context) async {
     ),
   );
   if (confirmed != true || !context.mounted) return;
-  final summary = await restoreAppBackup(
-    json,
-    settings: context.read<SettingsProvider>(),
-    subscriptions: context.read<SubscriptionProvider>(),
-    bookmarks: context.read<BookmarkProvider>(),
-    feed: context.read<FeedProvider>(),
-  );
+  final RestoreSummary summary;
+  try {
+    summary = await restoreAppBackup(
+      json,
+      settings: context.read<SettingsProvider>(),
+      subscriptions: context.read<SubscriptionProvider>(),
+      bookmarks: context.read<BookmarkProvider>(),
+      feed: context.read<FeedProvider>(),
+    );
+  } catch (_) {
+    return showAppToast(l10n.restoreFailed, type: AppToastType.error);
+  }
+  // The backup may have switched the language.
+  final done = context.mounted ? AppLocalizations.of(context) : l10n;
   showAppToast(
-    l10n.backupRestored(summary.feeds, summary.bookmarks),
+    done.backupRestored(summary.feeds, summary.bookmarks),
     type: AppToastType.success,
   );
 }
 
+/// A bundled font's name, set in that font so the picker previews it.
 class _FontName extends StatelessWidget {
   final AppFont font;
   const _FontName(this.font);

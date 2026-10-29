@@ -84,6 +84,7 @@ Future<RestoreSummary> restoreAppBackup(
   final feeds = await subscriptions.importFeeds(backup.subscriptions);
   final added = bookmarks.restoreBookmarks(backup.bookmarks);
   feed.restoreReadRefs(backup.readItems);
+  await feed.flushReadStates();
   return (feeds: feeds, bookmarks: added);
 }
 
@@ -211,9 +212,11 @@ Future<String?> pickBackupFile() async {
   return file?.readAsString();
 }
 
+// Messengers and mail apps often label a saved .json as plain text or
+// bytes; the content is checked on restore anyway.
 const _backupTypeGroup = XTypeGroup(
   label: 'Dondurma backup',
   extensions: ['json'],
-  mimeTypes: ['application/json'],
-  uniformTypeIdentifiers: ['public.json'],
+  mimeTypes: ['application/json', 'text/plain', 'application/octet-stream'],
+  uniformTypeIdentifiers: ['public.json', 'public.plain-text'],
 );

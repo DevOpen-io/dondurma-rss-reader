@@ -278,17 +278,51 @@ class BookmarkProvider extends ChangeNotifier {
   @visibleForTesting
   Future<void> persistBookmarks() => _saveBookmarkStates();
 
-  /// Adds the bookmarks from a backup that are not saved yet, each through
-  /// the normal save path so the offline pipeline prepares it again.
+  /// Adds the bookmarks from a backup that are not saved yet, in one
+  /// write. Like bookmarks restored at startup they only get their durable
+  /// record here; the unmetered preparation sweep downloads their text and
+  /// images later — a restore never spends mobile data on its own.
   /// Returns how many were added.
   int restoreBookmarks(Iterable<FeedItem> items) {
-    var added = 0;
+    final added = <FeedItem>[];
+    final seen = <(String, String)>{};
     for (final item in items) {
-      if (isBookmarked(item.id, feedUrl: item.feedUrl)) continue;
-      toggleBookmark(item);
-      added++;
+      if (isBookmarked(item.id, feedUrl: item.feedUrl) ||
+          !seen.add((item.feedUrl, item.id))) {
+        continue;
+      }
+      final saved = item.copyWith(isBookmarked: true);
+      _bookmarkedItemIds.add(item.id);
+      _savedBookmarks.add(saved);
+      added.add(saved);
     }
-    return added;
+    if (added.isEmpty) return 0;
+    _indexSnapshots();
+    notifyListeners();
+    _saveBookmarkStates();
+    final prep = _preparation;
+    if (prep != null) {
+      final generation = _restoreGeneration;
+      unawaited(() async {
+        var registered = false;
+        for (final item in added) {
+          bool claimStillLive() =>
+              !_disposed &&
+              generation == _restoreGeneration &&
+              isBookmarked(item.id, feedUrl: item.feedUrl);
+          if (!claimStillLive()) continue;
+          final result = await prep.registerArticle(
+            item,
+            const {'bookmark'},
+            fullText: _fullTextFor?.call(item.feedUrl) ?? true,
+            claimCheck: claimStillLive,
+          );
+          registered = registered || result == StoreWriteResult.applied;
+        }
+        if (registered && !_disposed) _claimLanded();
+      }());
+    }
+    return added.length;
   }
 
   /// Removes [item] from bookmarks, awaiting persistence.

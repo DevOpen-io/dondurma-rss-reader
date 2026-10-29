@@ -775,7 +775,7 @@ abstract class AppLocalizations {
   /// No description provided for @backupRestored.
   ///
   /// In en, this message translates to:
-  /// **'Backup restored · {feeds} feeds and {bookmarks} bookmarks added'**
+  /// **'Backup restored · feeds added: {feeds}, bookmarks added: {bookmarks}'**
   String backupRestored(int feeds, int bookmarks);
 
   /// No description provided for @backupInvalid.
@@ -789,6 +789,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'This backup comes from a newer version of the app. Update the app first.'**
   String get backupTooNew;
+
+  /// No description provided for @restoreFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t restore the backup. Some of it may already be in place.'**
+  String get restoreFailed;
 
   /// No description provided for @noFeedsFoundOrCancelled.
   ///

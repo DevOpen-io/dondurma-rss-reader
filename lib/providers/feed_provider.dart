@@ -1098,9 +1098,12 @@ class FeedProvider extends ChangeNotifier {
   /// Every read mark as `(feedUrl, id)`, for a backup.
   Set<(String, String)> get readRefs => _readState.refs;
 
-  /// Adds read marks from a backup; articles need not be loaded.
+  /// Adds read marks from a backup; articles need not be loaded. Stops at
+  /// the hard cap: above it the next save keeps only marks of loaded
+  /// articles, which right after a restore would drop the restored ones.
   void restoreReadRefs(Iterable<(String, String)> refs) {
-    if (!_readState.markRefs(refs)) return;
+    final room = _readIdsHardCap - _readState.refs.length;
+    if (room <= 0 || !_readState.markRefs(refs.take(room))) return;
     _invalidateFilterCache();
     notifyListeners();
     _scheduleReadStateSave();

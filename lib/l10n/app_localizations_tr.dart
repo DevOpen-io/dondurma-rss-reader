@@ -376,7 +376,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String backupRestored(int feeds, int bookmarks) {
-    return 'Yedek geri yüklendi · $feeds kaynak ve $bookmarks yer imi eklendi';
+    return 'Yedek geri yüklendi · eklenen kaynak: $feeds, yer imi: $bookmarks';
   }
 
   @override
@@ -385,6 +385,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get backupTooNew =>
       'Bu yedek uygulamanın daha yeni bir sürümünden. Önce uygulamayı güncelleyin.';
+
+  @override
+  String get restoreFailed =>
+      'Yedek geri yüklenemedi. Bir kısmı uygulanmış olabilir.';
 
   @override
   String get noFeedsFoundOrCancelled =>

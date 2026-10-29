@@ -373,7 +373,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String backupRestored(int feeds, int bookmarks) {
-    return 'Backup restored · $feeds feeds and $bookmarks bookmarks added';
+    return 'Backup restored · feeds added: $feeds, bookmarks added: $bookmarks';
   }
 
   @override
@@ -382,6 +382,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get backupTooNew =>
       'This backup comes from a newer version of the app. Update the app first.';
+
+  @override
+  String get restoreFailed =>
+      'Couldn\'t restore the backup. Some of it may already be in place.';
 
   @override
   String get noFeedsFoundOrCancelled =>
