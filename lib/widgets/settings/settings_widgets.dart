@@ -6,33 +6,20 @@ import '../adaptive_dialog.dart';
 
 class SettingsSectionTitle extends StatelessWidget {
   final String title;
-  final IconData icon;
 
-  const SettingsSectionTitle({
-    required this.title,
-    required this.icon,
-    super.key,
-  });
+  const SettingsSectionTitle({required this.title, super.key});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(left: 4, top: 20, bottom: 8),
-      child: Row(
-        children: [
-          Icon(icon, size: 16, color: theme.colorScheme.primary),
-          const SizedBox(width: 6),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: theme.colorScheme.primary,
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.1,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(left: 16, top: 24, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.primary,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -188,7 +175,7 @@ class SettingsSelectionTile<T> extends StatelessWidget {
       orElse: () => items.first,
     );
     final labelColor = enabled
-        ? theme.colorScheme.primary
+        ? theme.colorScheme.onSurfaceVariant
         : theme.colorScheme.onSurface.withValues(alpha: 0.4);
 
     return ListTile(
@@ -453,17 +440,9 @@ class SettingsIcon extends StatelessWidget {
   const SettingsIcon({required this.icon, this.color, super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final iconColor = color ?? theme.colorScheme.primary;
-    return Container(
-      width: 34,
-      height: 34,
-      decoration: BoxDecoration(
-        color: iconColor.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(9),
-      ),
-      child: Icon(icon, size: 19, color: iconColor),
-    );
-  }
+  Widget build(BuildContext context) => Icon(
+    icon,
+    size: 22,
+    color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
+  );
 }

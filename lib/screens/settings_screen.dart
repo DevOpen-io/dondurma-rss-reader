@@ -61,10 +61,7 @@ class SettingsScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         children: [
-          SettingsSectionTitle(
-            title: l10n.general,
-            icon: Icons.palette_outlined,
-          ),
+          SettingsSectionTitle(title: l10n.general),
           SettingsCard(
             children: [
               SettingsSelectionTile<FlexScheme>(
@@ -151,10 +148,7 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
 
-          SettingsSectionTitle(
-            title: l10n.openInBrowser,
-            icon: Icons.public_outlined,
-          ),
+          SettingsSectionTitle(title: l10n.openInBrowser),
           Builder(
             builder: (context) {
               final isMobile =
@@ -286,10 +280,7 @@ class SettingsScreen extends StatelessWidget {
             },
           ),
 
-          SettingsSectionTitle(
-            title: l10n.displayAndReadability,
-            icon: Icons.text_fields_rounded,
-          ),
+          SettingsSectionTitle(title: l10n.displayAndReadability),
           SettingsCard(
             children: [
               SettingsSelectionTile<AppFont>(
@@ -433,10 +424,7 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
 
-          SettingsSectionTitle(
-            title: l10n.contentFiltering,
-            icon: Icons.filter_alt_outlined,
-          ),
+          SettingsSectionTitle(title: l10n.contentFiltering),
           SettingsCard(
             children: [
               SettingsActionTile(
@@ -452,10 +440,7 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
 
-          SettingsSectionTitle(
-            title: l10n.notifications,
-            icon: Icons.notifications_outlined,
-          ),
+          SettingsSectionTitle(title: l10n.notifications),
           if (!NotificationService.instance.isSupported)
             _buildNotificationWarning(context, l10n),
           Opacity(
@@ -530,10 +515,7 @@ class SettingsScreen extends StatelessWidget {
             ),
           ),
 
-          SettingsSectionTitle(
-            title: l10n.dataAndStorage,
-            icon: Icons.storage_outlined,
-          ),
+          SettingsSectionTitle(title: l10n.dataAndStorage),
           SettingsCard(
             children: [
               SettingsSelectionTile<int>(
@@ -717,10 +699,7 @@ class SettingsScreen extends StatelessWidget {
             ],
           ),
 
-          SettingsSectionTitle(
-            title: l10n.about,
-            icon: Icons.info_outline_rounded,
-          ),
+          SettingsSectionTitle(title: l10n.about),
           SettingsCard(
             children: [
               GestureDetector(
