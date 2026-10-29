@@ -53,6 +53,7 @@ class TempCacheMembership {
     required Iterable<String> subscribedFeedUrls,
     required List<String> globalKeywords,
     required Map<String, List<String>> feedKeywordsMap,
+    Map<String, List<String>> feedOnlyKeywordsMap = const {},
     required int limit,
     required bool Function(String feedUrl) fullTextFor,
     DateTime? now,
@@ -63,6 +64,7 @@ class TempCacheMembership {
     final excluder = KeywordExcluder(
       globalKeywords: globalKeywords,
       feedKeywordsMap: feedKeywordsMap,
+      feedOnlyKeywordsMap: feedOnlyKeywordsMap,
     );
     // The record store keys everything on source instances ([ArticleRef],
     // canonical ids) — two feeds sharing a GUID are two candidates.

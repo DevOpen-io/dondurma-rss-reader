@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
+import '../services/feed_list_filter.dart';
 import '../utils/motion.dart';
 
 class KeywordInputSheet extends StatefulWidget {
@@ -26,6 +27,7 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
   late List<String> _keywords;
   final TextEditingController _controller = TextEditingController();
   bool _fieldFocused = false;
+  bool _invalid = false;
 
   @override
   void initState() {
@@ -42,13 +44,24 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
   void _addKeyword() {
     final input = _controller.text.trim();
     if (input.isNotEmpty) {
-      final newWords = input
-          .split(',')
-          .map((s) => s.trim())
-          .where((s) => s.isNotEmpty && !_keywords.contains(s));
-      if (newWords.isNotEmpty) {
-        setState(() => _keywords.addAll(newWords));
+      // A /pattern/ may hold commas; only plain words are comma lists.
+      final bare = input.replaceFirst(
+        RegExp(r'^title:\s*', caseSensitive: false),
+        '',
+      );
+      final rules = KeywordRule.isRegex(bare)
+          ? [input]
+          : input.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty);
+      // A rule that does not compile stays in the field to be fixed.
+      if (rules.any((r) => KeywordRule.tryParse(r) == null)) {
+        setState(() => _invalid = true);
+        return;
       }
+      final newWords = rules.where((s) => !_keywords.contains(s));
+      setState(() {
+        _invalid = false;
+        _keywords.addAll(newWords);
+      });
       _controller.clear();
     }
   }
@@ -150,6 +163,9 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
                             color: cs.onSurfaceVariant.withValues(alpha: 0.55),
                           ),
                         ),
+                        onChanged: (_) {
+                          if (_invalid) setState(() => _invalid = false);
+                        },
                         onSubmitted: (_) => _addKeyword(),
                       ),
                     ),
@@ -191,6 +207,15 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
                     ),
                   ),
                 ],
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 0),
+            child: Text(
+              _invalid ? l10n.invalidKeywordRule : l10n.keywordRulesHelp,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: _invalid ? cs.error : cs.onSurfaceVariant,
               ),
             ),
           ),

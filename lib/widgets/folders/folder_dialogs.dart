@@ -192,6 +192,7 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
   late final TextEditingController _nameController;
   late final TextEditingController _urlController;
   late List<String> _keywords;
+  late List<String> _onlyKeywords;
 
   @override
   void initState() {
@@ -199,6 +200,7 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
     _nameController = TextEditingController(text: widget.sub.name);
     _urlController = TextEditingController(text: widget.sub.url);
     _keywords = List.from(widget.sub.excludedKeywords);
+    _onlyKeywords = List.from(widget.sub.onlyKeywords);
   }
 
   @override
@@ -338,79 +340,18 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  Text(
-                    l10n.excludedKeywords,
-                    style: tt.labelMedium?.copyWith(
-                      color: cs.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: 0.1,
-                    ),
+                  _KeywordListField(
+                    label: l10n.excludedKeywords,
+                    icon: Icons.filter_alt_off_outlined,
+                    keywords: _keywords,
+                    onChanged: (kw) => setState(() => _keywords = kw),
                   ),
-                  const SizedBox(height: 6),
-                  InkWell(
-                    onTap: () => showAdaptiveSheet<void>(
-                      context,
-                      KeywordInputSheet(
-                        title: l10n.excludedKeywords,
-                        initialKeywords: _keywords,
-                        onSave: (kw) => setState(() => _keywords = kw),
-                        onReset: () => setState(() => _keywords = []),
-                      ),
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.surfaceContainerHigh,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.filter_alt_off_outlined,
-                            size: 20,
-                            color: cs.onSurfaceVariant,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              _keywords.isEmpty
-                                  ? l10n.excludedKeywords
-                                  : '${l10n.excludedKeywords} (${_keywords.length})',
-                              style: tt.bodyMedium?.copyWith(
-                                color: cs.onSurface,
-                              ),
-                            ),
-                          ),
-                          if (_keywords.isNotEmpty)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 3,
-                              ),
-                              decoration: BoxDecoration(
-                                color: cs.primaryContainer,
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: Text(
-                                '${_keywords.length}',
-                                style: tt.labelSmall?.copyWith(
-                                  color: cs.onPrimaryContainer,
-                                ),
-                              ),
-                            )
-                          else
-                            Icon(
-                              Icons.chevron_right_rounded,
-                              size: 18,
-                              color: cs.onSurfaceVariant,
-                            ),
-                        ],
-                      ),
-                    ),
+                  const SizedBox(height: 16),
+                  _KeywordListField(
+                    label: l10n.onlyKeywords,
+                    icon: Icons.filter_alt_outlined,
+                    keywords: _onlyKeywords,
+                    onChanged: (kw) => setState(() => _onlyKeywords = kw),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -461,6 +402,7 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
                           newUrl,
                           newName,
                           excludedKeywords: _keywords,
+                          onlyKeywords: _onlyKeywords,
                         )
                         .then((saved) {
                           if (!context.mounted) return;
@@ -492,6 +434,96 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// A keyword-rule list in the feed editor: label, summary row with the
+/// count, and the rule sheet on tap.
+class _KeywordListField extends StatelessWidget {
+  const _KeywordListField({
+    required this.label,
+    required this.icon,
+    required this.keywords,
+    required this.onChanged,
+  });
+
+  final String label;
+  final IconData icon;
+  final List<String> keywords;
+  final ValueChanged<List<String>> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final tt = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: tt.labelMedium?.copyWith(
+            color: cs.onSurfaceVariant,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.1,
+          ),
+        ),
+        const SizedBox(height: 6),
+        InkWell(
+          onTap: () => showAdaptiveSheet<void>(
+            context,
+            KeywordInputSheet(
+              title: label,
+              initialKeywords: keywords,
+              onSave: onChanged,
+              onReset: () => onChanged([]),
+            ),
+          ),
+          borderRadius: BorderRadius.circular(12),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: cs.surfaceContainerHigh,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Icon(icon, size: 20, color: cs.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    keywords.isEmpty ? label : '$label (${keywords.length})',
+                    style: tt.bodyMedium?.copyWith(color: cs.onSurface),
+                  ),
+                ),
+                if (keywords.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
+                    decoration: BoxDecoration(
+                      color: cs.primaryContainer,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${keywords.length}',
+                      style: tt.labelSmall?.copyWith(
+                        color: cs.onPrimaryContainer,
+                      ),
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 18,
+                    color: cs.onSurfaceVariant,
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

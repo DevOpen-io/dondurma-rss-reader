@@ -1215,6 +1215,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noLinkInShare => 'The shared text has no link to follow.';
 
   @override
+  String get keywordRulesHelp =>
+      'A word or phrase matches whole words. Write /…/ for a pattern; start with title: to check titles only.';
+
+  @override
+  String get invalidKeywordRule => 'This pattern is not valid.';
+
+  @override
+  String get readKeywords => 'Mark read automatically';
+
+  @override
+  String get readKeywordsDesc =>
+      'Articles matching these are marked read as they arrive';
+
+  @override
+  String get onlyKeywords => 'Only show matching';
+
+  @override
   String get clearFilters => 'Show all articles';
 
   @override

@@ -3,7 +3,7 @@ import 'dart:convert';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart'
-    show compute, debugPrint, mapEquals, setEquals;
+    show compute, debugPrint, listEquals, mapEquals, setEquals;
 import 'package:flutter/material.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
 
@@ -151,6 +151,11 @@ class FeedProvider extends ChangeNotifier {
   // quiet hours…) don't invalidate the cache and rebuild the whole feed list.
   List<String>? _lastGlobalKeywords;
   Map<String, List<String>>? _lastFeedKeywords;
+  Map<String, List<String>>? _lastFeedOnlyKeywords;
+  List<String>? _lastReadRules;
+
+  /// Compiled "mark read" rules (#69), rebuilt only when the list changes.
+  List<KeywordRule> _readRules = const [];
   Set<String>? _lastBookmarkIds;
   Set<(String, String)>? _lastBookmarkInstances;
   Map<String, bool?>? _knownFullTextPrefs;
@@ -512,6 +517,24 @@ class FeedProvider extends ChangeNotifier {
         );
     _lastGlobalKeywords = nextGlobalKeywords;
     _lastFeedKeywords = nextFeedKeywords;
+    // "Only show" lists (#69) are filter inputs too.
+    final nextFeedOnly = _feedOnlyKeywords(sub);
+    final onlyChanged =
+        _lastFeedOnlyKeywords == null ||
+        _lastFeedOnlyKeywords!.length != nextFeedOnly.length ||
+        nextFeedOnly.entries.any(
+          (e) => !listEquals(_lastFeedOnlyKeywords![e.key], e.value),
+        );
+    _lastFeedOnlyKeywords = nextFeedOnly;
+    // "Mark read" rules apply to the loaded articles when they change.
+    final nextReadRules = List<String>.of(set.globalReadKeywords);
+    final readRulesChanged = !listEquals(_lastReadRules, nextReadRules);
+    if (readRulesChanged) {
+      _lastReadRules = nextReadRules;
+      _readRules = [for (final r in nextReadRules) ?KeywordRule.tryParse(r)];
+    }
+    final filterChanged =
+        inputsChanged || onlyChanged || (readRulesChanged && _applyReadRules());
     _lastBookmarkIds = nextBookmarkIds;
     _lastBookmarkInstances = nextBookmarkInstances;
 
@@ -544,7 +567,7 @@ class FeedProvider extends ChangeNotifier {
       return;
     }
 
-    if (inputsChanged) {
+    if (filterChanged) {
       // Rebuild filter output — cheap, O(n) walk already cached.
       _invalidateFilterCache();
       Future.microtask(() {
@@ -566,7 +589,7 @@ class FeedProvider extends ChangeNotifier {
     // without waiting for a network pass (#37). Runs through the serialized
     // save chain so it can't interleave with an in-flight refresh write.
     // (isFirstUpdate already returned above.)
-    if (inputsChanged ||
+    if (filterChanged ||
         subscriptionsChanged ||
         fullTextPrefsChanged ||
         claimsChanged ||
@@ -674,6 +697,35 @@ class FeedProvider extends ChangeNotifier {
       }
     }
     _bindLegacyReads();
+    _applyReadRules();
+  }
+
+  /// "Only show" rules per feed, as filter and membership input.
+  static Map<String, List<String>> _feedOnlyKeywords(
+    SubscriptionProvider sub,
+  ) => {
+    for (final s in sub.subscriptions)
+      if (s.onlyKeywords.isNotEmpty) s.url: List<String>.of(s.onlyKeywords),
+  };
+
+  /// Marks unread loaded articles matching a "mark read" rule (#69) and
+  /// persists that; returns whether anything changed so callers rebuild.
+  bool _applyReadRules() {
+    if (_readRules.isEmpty) return false;
+    var changed = false;
+    for (final item in _items) {
+      if (_readState.isRead(item)) continue;
+      if (_readRules.any(
+        (r) => r.matches(title: item.title, description: item.description),
+      )) {
+        changed = _readState.mark(item, read: true) || changed;
+      }
+    }
+    if (changed) {
+      _invalidateFilterCache();
+      _scheduleReadStateSave();
+    }
+    return changed;
   }
 
   /// Gives unresolved legacy read ids to the instances now in view (items
@@ -912,6 +964,9 @@ class FeedProvider extends ChangeNotifier {
       filterCategories: _filterCategories,
       globalKeywords: globalKeywords,
       feedKeywordsMap: feedKeywordsMap,
+      feedOnlyKeywordsMap: subscriptionProvider == null
+          ? const {}
+          : _feedOnlyKeywords(subscriptionProvider!),
       dedupe: false,
     );
   }
@@ -1139,10 +1194,7 @@ class FeedProvider extends ChangeNotifier {
   /// Feeds behind a web page the user entered instead of a feed address,
   /// paced with the other requests to the same host.
   Future<List<DiscoveredFeed>> discoverFeeds(FeedPage page) async {
-    final found = await _feedService.discoverFeeds(
-      page,
-      pace: _hostPacer.pace,
-    );
+    final found = await _feedService.discoverFeeds(page, pace: _hostPacer.pace);
     // The add that follows fetches a feed on a host discovery just hit.
     if (found.length == 1) await _hostPacer.pace(found.single.url);
     return found;
@@ -1229,6 +1281,7 @@ class FeedProvider extends ChangeNotifier {
     sortByEffectivePubDateDesc(merged, DateTime.now());
     _items = merged;
     _bindLegacyReads();
+    _applyReadRules();
 
     final validators = _loadFeedValidators();
     if (result.etag != null || result.lastModified != null) {
@@ -1390,6 +1443,7 @@ class FeedProvider extends ChangeNotifier {
       _refreshPublishTimer = null;
       _items = mergeCurrent();
       _bindLegacyReads();
+      _applyReadRules();
       _isOffline = false;
       _invalidateFilterCache();
       notifyListeners();
@@ -1492,6 +1546,7 @@ class FeedProvider extends ChangeNotifier {
     // during this pass, not the stale inputs captured before HTTP started.
     _items = mergeCurrent();
     _bindLegacyReads();
+    _applyReadRules();
     _isOffline = !result.online;
     _isLoading = false;
     refreshProgress.value = refreshProgress.value.copyWith(
@@ -1746,6 +1801,7 @@ class FeedProvider extends ChangeNotifier {
         for (final sub in subscriptions.subscriptions)
           if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
       },
+      feedOnlyKeywordsMap: _feedOnlyKeywords(subscriptions),
       limit: limit,
       fullTextFor: (feedUrl) => subscriptions.effectiveFullText(
         feedUrl,

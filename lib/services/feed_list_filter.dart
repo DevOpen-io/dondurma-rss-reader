@@ -16,6 +16,7 @@ Iterable<FeedItem> applyFeedFilters({
   required Set<String> filterCategories,
   required List<String> globalKeywords,
   required Map<String, List<String>> feedKeywordsMap,
+  Map<String, List<String>> feedOnlyKeywordsMap = const {},
   bool dedupe = true,
 }) {
   Iterable<FeedItem> filtered = items;
@@ -50,11 +51,14 @@ Iterable<FeedItem> applyFeedFilters({
   }
 
   // Keyword filtering — compile regex patterns once for the entire pass
-  if (globalKeywords.isNotEmpty || feedKeywordsMap.isNotEmpty) {
+  if (globalKeywords.isNotEmpty ||
+      feedKeywordsMap.isNotEmpty ||
+      feedOnlyKeywordsMap.isNotEmpty) {
     filtered = _applyKeywordFilters(
       filtered,
       globalKeywords: globalKeywords,
       feedKeywordsMap: feedKeywordsMap,
+      feedOnlyKeywordsMap: feedOnlyKeywordsMap,
     );
   }
 
@@ -95,6 +99,49 @@ Iterable<FeedItem> deduplicateByLink(Iterable<FeedItem> items) sync* {
   }
 }
 
+/// One keyword rule as typed (#69): a whole word or phrase, `/regex/` for
+/// a regular expression, either after `title:` to look at the title only.
+/// Matching ignores case.
+class KeywordRule {
+  KeywordRule._(this._pattern, this._titleOnly);
+
+  final RegExp _pattern;
+  final bool _titleOnly;
+
+  static const _titlePrefix = 'title:';
+
+  /// The compiled rule, or null for an empty or invalid one — a stored rule
+  /// that no longer compiles is skipped rather than failing the list.
+  static KeywordRule? tryParse(String rule) {
+    var text = rule.trim();
+    var titleOnly = false;
+    if (text.toLowerCase().startsWith(_titlePrefix)) {
+      titleOnly = true;
+      text = text.substring(_titlePrefix.length).trim();
+    }
+    if (text.isEmpty) return null;
+    try {
+      final pattern = isRegex(text)
+          ? RegExp(text.substring(1, text.length - 1), caseSensitive: false)
+          : RegExp(
+              r'\b' + RegExp.escape(text.toLowerCase()) + r'\b',
+              caseSensitive: false,
+            );
+      return KeywordRule._(pattern, titleOnly);
+    } on FormatException {
+      return null;
+    }
+  }
+
+  /// Whether [text] (after an optional `title:`) is written as `/regex/`.
+  static bool isRegex(String text) =>
+      text.length > 2 && text.startsWith('/') && text.endsWith('/');
+
+  bool matches({required String title, required String description}) =>
+      _pattern.hasMatch(title) ||
+      (!_titleOnly && _pattern.hasMatch(description));
+}
+
 /// Pre-compiled permanent keyword exclusion (global + per-feed), usable
 /// outside the display pipeline — e.g. when cache candidates come from
 /// durable records rather than live [FeedItem]s (#37).
@@ -102,43 +149,40 @@ class KeywordExcluder {
   KeywordExcluder({
     required List<String> globalKeywords,
     required Map<String, List<String>> feedKeywordsMap,
-  }) : _globalPatterns = _compile(globalKeywords),
-       _feedPatternsMap = {
+    Map<String, List<String>> feedOnlyKeywordsMap = const {},
+  }) : _globalRules = _compile(globalKeywords),
+       _feedRulesMap = {
          for (final e in feedKeywordsMap.entries) e.key: _compile(e.value),
+       },
+       _feedOnlyRulesMap = {
+         for (final e in feedOnlyKeywordsMap.entries)
+           if (_compile(e.value) case final rules when rules.isNotEmpty)
+             e.key: rules,
        };
 
-  static List<RegExp> _compile(List<String> keywords) => keywords
-      .map(
-        (kw) => RegExp(
-          r'\b' + RegExp.escape(kw.toLowerCase()) + r'\b',
-          caseSensitive: false,
-        ),
-      )
-      .toList();
+  static List<KeywordRule> _compile(List<String> keywords) => [
+    for (final kw in keywords) ?KeywordRule.tryParse(kw),
+  ];
 
-  final List<RegExp> _globalPatterns;
-  final Map<String, List<RegExp>> _feedPatternsMap;
+  final List<KeywordRule> _globalRules;
+  final Map<String, List<KeywordRule>> _feedRulesMap;
+  final Map<String, List<KeywordRule>> _feedOnlyRulesMap;
 
-  /// Whether [title]/[description] match a global or feed-scoped exclusion.
+  /// Whether [title]/[description] match a global or feed-scoped exclusion,
+  /// or miss every "only show" rule of their feed.
   bool excludes({
     required String title,
     required String description,
     required String feedUrl,
   }) {
-    final feedPatterns = _feedPatternsMap[feedUrl];
-    if (_globalPatterns.isEmpty && feedPatterns == null) return false;
+    bool matchesAny(List<KeywordRule> rules) =>
+        rules.any((r) => r.matches(title: title, description: description));
 
-    bool matchesAny(List<RegExp> patterns) {
-      for (final regex in patterns) {
-        if (regex.hasMatch(title) || regex.hasMatch(description)) {
-          return true;
-        }
-      }
-      return false;
-    }
-
-    return (_globalPatterns.isNotEmpty && matchesAny(_globalPatterns)) ||
-        (feedPatterns != null && matchesAny(feedPatterns));
+    final only = _feedOnlyRulesMap[feedUrl];
+    if (only != null && !matchesAny(only)) return true;
+    final feedRules = _feedRulesMap[feedUrl];
+    return (_globalRules.isNotEmpty && matchesAny(_globalRules)) ||
+        (feedRules != null && matchesAny(feedRules));
   }
 }
 
@@ -146,10 +190,12 @@ Iterable<FeedItem> _applyKeywordFilters(
   Iterable<FeedItem> filtered, {
   required List<String> globalKeywords,
   required Map<String, List<String>> feedKeywordsMap,
+  required Map<String, List<String>> feedOnlyKeywordsMap,
 }) {
   final excluder = KeywordExcluder(
     globalKeywords: globalKeywords,
     feedKeywordsMap: feedKeywordsMap,
+    feedOnlyKeywordsMap: feedOnlyKeywordsMap,
   );
   return filtered.where(
     (item) => !excluder.excludes(

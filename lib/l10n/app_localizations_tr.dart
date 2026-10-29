@@ -1220,6 +1220,23 @@ class AppLocalizationsTr extends AppLocalizations {
       'Paylaşılan metinde takip edilecek bir bağlantı yok.';
 
   @override
+  String get keywordRulesHelp =>
+      'Kelime ya da ifade tam kelimeyle eşleşir. Desen için /…/ yazın; yalnız başlıkta aramak için title: ile başlayın.';
+
+  @override
+  String get invalidKeywordRule => 'Bu desen geçerli değil.';
+
+  @override
+  String get readKeywords => 'Otomatik okundu işaretle';
+
+  @override
+  String get readKeywordsDesc =>
+      'Bunlarla eşleşen makaleler gelir gelmez okundu olur';
+
+  @override
+  String get onlyKeywords => 'Yalnız eşleşenleri göster';
+
+  @override
   String get clearFilters => 'Tüm makaleleri göster';
 
   @override

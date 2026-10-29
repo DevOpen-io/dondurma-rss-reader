@@ -1233,6 +1233,23 @@ class AppLocalizationsEs extends AppLocalizations {
       'El texto compartido no tiene ningún enlace que seguir.';
 
   @override
+  String get keywordRulesHelp =>
+      'Una palabra o frase coincide con palabras completas. Escribe /…/ para un patrón; empieza con title: para buscar solo en títulos.';
+
+  @override
+  String get invalidKeywordRule => 'Este patrón no es válido.';
+
+  @override
+  String get readKeywords => 'Marcar como leído automáticamente';
+
+  @override
+  String get readKeywordsDesc =>
+      'Los artículos que coincidan se marcan como leídos al llegar';
+
+  @override
+  String get onlyKeywords => 'Mostrar solo coincidencias';
+
+  @override
   String get clearFilters => 'Mostrar todos los artículos';
 
   @override

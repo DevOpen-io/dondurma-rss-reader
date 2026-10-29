@@ -163,6 +163,7 @@ FeedSubscription _subscription(Map<String, dynamic> json) {
     notificationsEnabled: parsed.notificationsEnabled,
     fullTextEnabled: parsed.fullTextEnabled,
     excludedKeywords: parsed.excludedKeywords,
+    onlyKeywords: parsed.onlyKeywords,
     refreshIntervalMinutes: parsed.refreshIntervalMinutes,
   );
 }

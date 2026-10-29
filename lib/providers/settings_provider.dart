@@ -36,6 +36,7 @@ class SettingsProvider extends ChangeNotifier {
 
   // Content Filtering
   List<String> _globalExcludedKeywords = [];
+  List<String> _globalReadKeywords = [];
 
   // Search History
   List<String> _searchHistory = [];
@@ -90,6 +91,9 @@ class SettingsProvider extends ChangeNotifier {
   double get lineSpacing => _lineSpacing;
 
   List<String> get globalExcludedKeywords => _globalExcludedKeywords;
+
+  /// Articles matching these rules are marked read as they arrive (#69).
+  List<String> get globalReadKeywords => _globalReadKeywords;
 
   List<String> get searchHistory => _searchHistory;
 
@@ -183,6 +187,12 @@ class SettingsProvider extends ChangeNotifier {
             .toList() ??
         [];
 
+    _globalReadKeywords =
+        (_box.get('globalReadKeywords') as List<dynamic>?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        [];
+
     // Search history
     _searchHistory =
         (_box.get('searchHistory') as List<dynamic>?)
@@ -252,6 +262,7 @@ class SettingsProvider extends ChangeNotifier {
     'typeface': _oneOf(articleTypefaces),
     'lineSpacing': (v) => v is num && v >= 1 && v <= 3,
     'globalExcludedKeywords': _isStringList,
+    'globalReadKeywords': _isStringList,
     'searchHistory': _isStringList,
     'adBlockEnabled': _isBool,
     'webviewDarkModeEnabled': _isBool,
@@ -282,6 +293,7 @@ class SettingsProvider extends ChangeNotifier {
     'typeface': _typeface,
     'lineSpacing': _lineSpacing,
     'globalExcludedKeywords': _globalExcludedKeywords,
+    'globalReadKeywords': _globalReadKeywords,
     'searchHistory': _searchHistory,
     'adBlockEnabled': _adBlockEnabled,
     'webviewDarkModeEnabled': _webviewDarkModeEnabled,
@@ -431,6 +443,11 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   /// Enables or disables the built-in ad blocker for the in-app browser.
+  Future<void> setGlobalReadKeywords(List<String> keywords) {
+    _globalReadKeywords = keywords;
+    return _store('globalReadKeywords', keywords);
+  }
+
   Future<void> setAdBlockEnabled(bool value) {
     _adBlockEnabled = value;
     return _store('adBlockEnabled', value);

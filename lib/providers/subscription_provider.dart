@@ -469,6 +469,7 @@ class SubscriptionProvider extends ChangeNotifier {
     String newUrl,
     String newName, {
     List<String>? excludedKeywords,
+    List<String>? onlyKeywords,
   }) async {
     final index = _subscriptions.indexWhere((s) => s.url == oldUrl);
     if (index == -1) return false;
@@ -485,6 +486,7 @@ class SubscriptionProvider extends ChangeNotifier {
       url: newUrl,
       name: newName,
       excludedKeywords: excludedKeywords,
+      onlyKeywords: onlyKeywords,
     );
     await _saveSubscriptions();
     notifyListeners();

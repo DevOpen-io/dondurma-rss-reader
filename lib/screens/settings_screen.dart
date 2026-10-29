@@ -447,6 +447,17 @@ class SettingsScreen extends StatelessWidget {
                 ),
                 onTap: () => _showGlobalKeywordsDialog(context),
               ),
+              const SettingsTileDivider(),
+              SettingsActionTile(
+                icon: Icons.done_all,
+                title: l10n.readKeywords,
+                subtitle: l10n.readKeywordsDesc,
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+                onTap: () => _showReadKeywordsDialog(context),
+              ),
             ],
           ),
 
@@ -948,6 +959,20 @@ class SettingsScreen extends StatelessWidget {
         onSave: (keywords) =>
             settingsProvider.setGlobalExcludedKeywords(keywords),
         onReset: () => settingsProvider.setGlobalExcludedKeywords([]),
+      ),
+    );
+  }
+
+  void _showReadKeywordsDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+    final settingsProvider = context.read<SettingsProvider>();
+    showAdaptiveSheet<void>(
+      context,
+      KeywordInputSheet(
+        title: l10n.readKeywords,
+        initialKeywords: settingsProvider.globalReadKeywords,
+        onSave: settingsProvider.setGlobalReadKeywords,
+        onReset: () => settingsProvider.setGlobalReadKeywords([]),
       ),
     );
   }

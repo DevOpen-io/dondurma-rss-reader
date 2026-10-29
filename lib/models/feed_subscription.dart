@@ -13,6 +13,10 @@ class FeedSubscription {
   final bool notificationsEnabled;
   final bool? fullTextEnabled;
   final List<String> excludedKeywords;
+
+  /// When not empty, only articles matching one of these rules are shown
+  /// for this feed (#69).
+  final List<String> onlyKeywords;
   final String notificationEpoch;
 
   /// Minutes between automatic fetches of this feed; null follows the app's
@@ -26,6 +30,7 @@ class FeedSubscription {
     this.notificationsEnabled = true,
     this.fullTextEnabled,
     this.excludedKeywords = const [],
+    this.onlyKeywords = const [],
     String? notificationEpoch,
     this.refreshIntervalMinutes,
   }) : notificationEpoch = notificationEpoch ?? _newNotificationEpoch();
@@ -39,6 +44,7 @@ class FeedSubscription {
     _schemaKey: _schemaVersion,
     if (fullTextEnabled != null) 'fullTextEnabled': fullTextEnabled,
     'excludedKeywords': excludedKeywords,
+    if (onlyKeywords.isNotEmpty) 'onlyKeywords': onlyKeywords,
     'notificationEpoch': notificationEpoch,
     if (refreshIntervalMinutes != null)
       'refreshIntervalMinutes': refreshIntervalMinutes,
@@ -75,6 +81,11 @@ class FeedSubscription {
               ?.map((e) => e.toString())
               .toList() ??
           const [],
+      onlyKeywords:
+          (json['onlyKeywords'] as List<dynamic>?)
+              ?.map((e) => e.toString())
+              .toList() ??
+          const [],
       notificationEpoch:
           json['notificationEpoch'] as String? ?? _legacyNotificationEpoch,
       refreshIntervalMinutes: switch (json['refreshIntervalMinutes']) {
@@ -91,6 +102,7 @@ class FeedSubscription {
     bool? notificationsEnabled,
     bool? fullTextEnabled,
     List<String>? excludedKeywords,
+    List<String>? onlyKeywords,
     String? notificationEpoch,
   }) {
     return FeedSubscription(
@@ -100,6 +112,7 @@ class FeedSubscription {
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       fullTextEnabled: fullTextEnabled ?? this.fullTextEnabled,
       excludedKeywords: excludedKeywords ?? this.excludedKeywords,
+      onlyKeywords: onlyKeywords ?? this.onlyKeywords,
       notificationEpoch: notificationEpoch ?? this.notificationEpoch,
       refreshIntervalMinutes: refreshIntervalMinutes,
     );
@@ -113,6 +126,7 @@ class FeedSubscription {
       notificationsEnabled: notificationsEnabled,
       fullTextEnabled: value,
       excludedKeywords: excludedKeywords,
+      onlyKeywords: onlyKeywords,
       notificationEpoch: notificationEpoch,
       refreshIntervalMinutes: refreshIntervalMinutes,
     );
@@ -127,6 +141,7 @@ class FeedSubscription {
       notificationsEnabled: notificationsEnabled,
       fullTextEnabled: fullTextEnabled,
       excludedKeywords: excludedKeywords,
+      onlyKeywords: onlyKeywords,
       notificationEpoch: notificationEpoch,
       refreshIntervalMinutes: minutes,
     );

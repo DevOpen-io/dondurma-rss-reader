@@ -2302,6 +2302,36 @@ abstract class AppLocalizations {
   /// **'The shared text has no link to follow.'**
   String get noLinkInShare;
 
+  /// No description provided for @keywordRulesHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A word or phrase matches whole words. Write /…/ for a pattern; start with title: to check titles only.'**
+  String get keywordRulesHelp;
+
+  /// No description provided for @invalidKeywordRule.
+  ///
+  /// In en, this message translates to:
+  /// **'This pattern is not valid.'**
+  String get invalidKeywordRule;
+
+  /// No description provided for @readKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark read automatically'**
+  String get readKeywords;
+
+  /// No description provided for @readKeywordsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles matching these are marked read as they arrive'**
+  String get readKeywordsDesc;
+
+  /// No description provided for @onlyKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Only show matching'**
+  String get onlyKeywords;
+
   /// No description provided for @clearFilters.
   ///
   /// In en, this message translates to:

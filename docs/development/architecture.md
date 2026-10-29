@@ -66,7 +66,7 @@ Bu tablodaki yollar depo köküne göredir.
 
 ### `settings`
 
-`flexScheme`, `themeMode`, `locale`, `offlineCacheLimit`, `cacheIntervalSeconds`, `syncBackground`, `notificationsEnabled`, `digestMode`, `quietHoursEnabled`, `quietHoursStart`, `quietHoursEnd`, `appFont`, `fontSize`, `typeface`, `lineSpacing`, `globalExcludedKeywords`, `searchHistory`, `adBlockEnabled`, `webviewDarkModeEnabled`, `browserMode`, `autoFullText`, `markReadOnScroll`, `articleListStyle`, `hasSeenOnboarding`, `_boxesMigrated`.
+`flexScheme`, `themeMode`, `locale`, `offlineCacheLimit`, `cacheIntervalSeconds`, `syncBackground`, `notificationsEnabled`, `digestMode`, `quietHoursEnabled`, `quietHoursStart`, `quietHoursEnd`, `appFont`, `fontSize`, `typeface`, `lineSpacing`, `globalExcludedKeywords`, `globalReadKeywords`, `searchHistory`, `adBlockEnabled`, `webviewDarkModeEnabled`, `browserMode`, `autoFullText`, `markReadOnScroll`, `articleListStyle`, `hasSeenOnboarding`, `_boxesMigrated`.
 
 Yazı tipleri `assets/fonts` altında paketlidir (OFL lisansları lisans sayfasına `registerFontLicenses()` ile eklenir); ağdan font indirilmez. `appFont` (`outfit` varsayılan, `atkinson`, `lexend`, `literata`, `system`) arayüz temasını, `typeface` makale gövdesini belirler: `system` uygulama fontunu izler, eski `serif`/`sans-serif` değerleri Literata/Atkinson'a, `mono` platform eş aralıklı fontuna eşlenir.
 
@@ -113,7 +113,7 @@ Android paylaşım menüsü (#67): `MainActivity` (`launchMode="singleTask"`, `A
 - ara ve nihai listeyi `FeedCachePolicy.mergeVisibleFeeds` ile, güncel abonelik/yer imi girdileri ve aynı tarih sıralaması üzerinden birleştirir; 304/hata/cooldown kaynaklarının mevcut makalelerini korur;
 - ara yayınlarda kalıcı cache, bildirim veya hazırlık yan etkisi başlatmaz; bunlar yenileme sonu akışında kalır;
 - reset/cache temizleme generation'ları ve dispose, eski ara yayınları geçersiz kılar;
-- global ve feed keyword filtrelerini uygular;
+- global ve feed keyword filtrelerini uygular (kurallar `KeywordRule`: düz kelime tam kelime eşleşir, `/regex/` desen, `title:` yalnız başlık; feed başına `onlyKeywords` yalnız eşleşenleri bırakır; `globalReadKeywords` eşleşen makaleleri yüklenince okundu yapar);
 - ilk yüklemede bildirim göndermez (`_hasLoadedOnce`);
 - cache ve home widget verisini günceller;
 - geçici cache üyeliğini uzlaştırıp kalıcı makale hazırlığını tetikler.
