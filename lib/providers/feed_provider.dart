@@ -145,6 +145,7 @@ class FeedProvider extends ChangeNotifier {
 
   List<FeedItem>? _filteredItemsCache;
   List<FeedItem>? _viewItemsCache;
+  Map<Object, List<FeedItem>>? _viewGroupsCache;
 
   // Snapshots of the upstream inputs that actually feed the filter pipeline.
   // Compared in [update] so unrelated upstream changes (theme, search history,
@@ -174,6 +175,7 @@ class FeedProvider extends ChangeNotifier {
   void _invalidateFilterCache() {
     _filteredItemsCache = null;
     _viewItemsCache = null;
+    _viewGroupsCache = null;
     _dateGroupsCache = null;
     _unreadByCategory = null;
     _unreadByFeed = null;
@@ -1005,16 +1007,20 @@ class FeedProvider extends ChangeNotifier {
   List<FeedItem> get _filteredItems {
     if (_filteredItemsCache != null) return _filteredItemsCache!;
 
-    final filtered = deduplicateByLink(_viewItems, isRead: _readState.isRead);
-
-    // Apply dynamic read/bookmark state
-    _filteredItemsCache = filtered.map((item) {
-      final isRead = _readState.isRead(item);
-      final isBookmarked =
-          bookmarkProvider?.isBookmarked(item.id, feedUrl: item.feedUrl) ??
-          false;
-      return item.copyWith(isRead: isRead, isBookmarked: isBookmarked);
-    }).toList();
+    // One row per article (the first copy, cross-feed dedup); the row is
+    // read only when every copy the view holds is (#70).
+    _filteredItemsCache = [
+      for (final copies in _viewGroups.values)
+        copies.first.copyWith(
+          isRead: copies.every(_readState.isRead),
+          isBookmarked:
+              bookmarkProvider?.isBookmarked(
+                copies.first.id,
+                feedUrl: copies.first.feedUrl,
+              ) ??
+              false,
+        ),
+    ];
 
     return _filteredItemsCache!;
   }
@@ -1103,17 +1109,20 @@ class FeedProvider extends ChangeNotifier {
     final byFeed = <String, int>{};
     int total = 0;
     // An article several feeds carry is one row in a view, so one unread
-    // count: overall and per folder, as the lists show them (#70).
+    // count: overall, per folder and per feed, as the lists show them (#70).
     final counted = <Object>{};
     final countedInCategory = <String, Set<Object>>{};
+    final countedInFeed = <String, Set<Object>>{};
     for (final item in _items) {
       if (_readState.isRead(item)) continue;
-      final key = articleKey(item);
+      final key = _keyOf(item);
       if (counted.add(key)) total++;
       if ((countedInCategory[item.category] ??= {}).add(key)) {
         byCategory[item.category] = (byCategory[item.category] ?? 0) + 1;
       }
-      byFeed[item.feedUrl] = (byFeed[item.feedUrl] ?? 0) + 1;
+      if ((countedInFeed[item.feedUrl] ??= {}).add(key)) {
+        byFeed[item.feedUrl] = (byFeed[item.feedUrl] ?? 0) + 1;
+      }
     }
     _unreadByCategory = byCategory;
     _unreadByFeed = byFeed;
@@ -1153,21 +1162,47 @@ class FeedProvider extends ChangeNotifier {
     final cutoff = olderThan == null
         ? null
         : DateTime.now().subtract(olderThan);
-    return _viewItems
-        .where(
-          (item) =>
-              !_readState.isRead(item) &&
-              (cutoff == null ||
-                  item.pubDate == null ||
-                  item.pubDate!.isBefore(cutoff)),
-        )
-        .toList();
+    // One entry per article, as the badges count; marking it marks the
+    // copies the view hides.
+    return [
+      for (final copies in _viewGroups.values)
+        if (copies.where((c) => !_readState.isRead(c)).firstOrNull
+            case final unread?
+            when cutoff == null ||
+                copies.first.pubDate == null ||
+                copies.first.pubDate!.isBefore(cutoff))
+          unread,
+    ];
   }
 
   /// Whether the current view has an unread article, hidden copies
   /// included — cheap enough for a `select`, it stops at the first one.
   bool get hasUnreadInView =>
       _viewItems.any((item) => !_readState.isRead(item));
+
+  // The article key per item object, so a link is normalized once per
+  // article rather than on every open and recount (#70).
+  final _keys = Expando<Object>();
+  Object _keyOf(FeedItem item) => _keys[item] ??= articleKey(item);
+
+  /// The current view's copies per article, in list order; cached with the
+  /// view.
+  Map<Object, List<FeedItem>> get _viewGroups =>
+      _viewGroupsCache ??= () {
+        final groups = <Object, List<FeedItem>>{};
+        for (final item in _viewItems) {
+          (groups[_keyOf(item)] ??= []).add(item);
+        }
+        return groups;
+      }();
+
+  /// [item] with the copies of it the current view holds — only when
+  /// [item] is in the view: an article opened from elsewhere (bookmarks)
+  /// is just itself.
+  List<FeedItem> _copiesInView(FeedItem item) {
+    final copies = _viewGroups[_keyOf(item)];
+    return copies != null && copies.contains(item) ? copies : [item];
+  }
 
   /// Marks [items] as read in one operation and returns how many changed.
   /// Callers pass the list they showed the user, so articles arriving in
@@ -1198,39 +1233,38 @@ class FeedProvider extends ChangeNotifier {
     _scheduleReadStateSave();
   }
 
-  /// Sets [read] on [items] and on the copies of their links the current
-  /// view hides behind them (`deduplicateByLink`) — the row stands for all
-  /// of them. Copies outside the view (another folder) are separate rows
-  /// there and keep their own state. Also for an item already in that
-  /// state: its hidden twin may not be. Returns how many marks changed.
+  /// Sets [read] on [items] and, for an item in the current view, on the
+  /// copies of it the view hides (`deduplicateByLink`) — the row stands for
+  /// all of them. Copies outside the view (another folder) are separate
+  /// rows there and keep their own state; an item opened from outside the
+  /// view (bookmarks) changes only itself. Returns how many marks changed.
   int _markWithViewCopies(Iterable<FeedItem> items, {required bool read}) {
     var changed = 0;
-    final links = <String>{};
     for (final item in items) {
-      if (_readState.mark(item, read: read)) changed++;
-      final link = usableArticleLink(item.link);
-      if (link != null) links.add(link);
-    }
-    if (links.isEmpty) return changed;
-    for (final copy in _viewItems) {
-      if (links.contains(usableArticleLink(copy.link)) &&
-          _readState.mark(copy, read: read)) {
-        changed++;
+      for (final copy in _copiesInView(item)) {
+        if (_readState.mark(copy, read: read)) changed++;
       }
     }
     return changed;
   }
 
+
   /// Toggles the read/unread state of this source instance and of the
   /// copies the current view hides behind it.
   Future<void> toggleReadStatus(FeedItem item) async {
-    final read = !_readState.isRead(item);
+    // The row's state: read only when every copy it stands for is.
+    final copies = _copiesInView(item);
+    final read = !copies.every(_readState.isRead);
     _markWithViewCopies([item], read: read);
     // Unread by hand outranks the "mark read" rules (#69).
-    final key = (item.feedUrl, item.id);
-    if (read ? _ruleExempt.remove(key) : _ruleExempt.add(key)) {
-      _saveRuleExemptions();
+    var exemptionsChanged = false;
+    for (final copy in copies) {
+      final key = (copy.feedUrl, copy.id);
+      exemptionsChanged =
+          (read ? _ruleExempt.remove(key) : _ruleExempt.add(key)) ||
+          exemptionsChanged;
     }
+    if (exemptionsChanged) _saveRuleExemptions();
     _invalidateFilterCache();
     notifyListeners();
     _scheduleReadStateSave();

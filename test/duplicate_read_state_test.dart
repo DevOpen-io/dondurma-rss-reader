@@ -90,8 +90,8 @@ void main() {
     feed.dispose();
   });
 
-  test('read inside one folder, the other folder keeps its copy, and the '
-      'list shows that unread copy where the badge counts it', () async {
+  test('read inside one folder, the other folder keeps its copy; the All '
+      'row stays the first copy and reads unread while a copy is', () async {
     final feed = await load();
     feed.selectCategory('News');
     await feed.markAsRead(feed.filteredItems.single);
@@ -101,9 +101,40 @@ void main() {
 
     feed.selectCategory(null);
     final row = feed.filteredItems.firstWhere((i) => i.link == _shared);
-    expect(row.isRead, isFalse, reason: 'the unread copy is the one shown');
-    expect(row.feedUrl, 'https://b.test/feed');
+    expect(row.feedUrl, 'https://a.test/feed', reason: 'the row never swaps');
+    expect(row.isRead, isFalse, reason: 'the World copy is unread');
     expect(feed.unreadCount(), 2);
+
+    // Opening the row now reads the World copy too; the row stays put.
+    await feed.markAsRead(row);
+    final after = feed.filteredItems.firstWhere((i) => i.link == _shared);
+    expect(after.feedUrl, row.feedUrl);
+    expect(after.isRead, isTrue);
+    expect(readIn(feed, 'b'), isTrue);
+    feed.dispose();
+  });
+
+  test('an article opened from outside the view changes only itself', () async {
+    final feed = await load();
+    feed.selectCategory('World'); // Home shows World; Bookmarks opens News.
+    await feed.markAsRead(_item('a', 'News', link: _shared));
+    expect(readIn(feed, 'a'), isTrue);
+    expect(readIn(feed, 'b'), isFalse);
+    expect(feed.unreadCount(category: 'World'), 2);
+    feed.dispose();
+  });
+
+  test('a feed carrying one link twice counts it once', () async {
+    await Hive.box('feeds').put(
+      'cachedItemsJson',
+      jsonEncode([
+        _item('a', 'News', link: _shared).toJson(),
+        _item('a', 'News', link: _shared, id: 'x2').toJson(),
+      ]),
+    );
+    final feed = await load();
+    expect(feed.filteredItems, hasLength(1));
+    expect(feed.unreadCount(feedUrl: 'https://a.test/feed'), 1);
     feed.dispose();
   });
 }
