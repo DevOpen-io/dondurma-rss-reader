@@ -128,7 +128,7 @@ Sayfalama 50 öğe ile başlar; kategori, arama veya filtre değişiminde sıfı
 
 ## Tam metin
 
-`FullTextExtractionService` orijinal sayfayı browser başlıklarıyla çeker. Heuristic extractor script/style/nav gibi gürültüyü temizleyip en güçlü içerik adayını seçer. Ayrıştırma isolate içinde; paylaşılan FIFO cache 20 öğedir. Manuel makale seçimi, feed tri-state ve `autoFullText` birlikte değerlendirilir.
+`FullTextExtractionService` orijinal sayfayı browser başlıklarıyla çeker. Heuristic extractor script/style/nav gibi gürültüyü temizleyip en güçlü içerik adayını seçer; sayfanın paragraf metninin yarısından fazlasını taşıyan öğe sınıf adı ne olursa olsun (`no-sidebar`, `widget`, `inread-`) silinmez. Ayrıştırma isolate içinde; paylaşılan FIFO cache 20 öğedir. `news.google.com/rss/articles/…` bağlantıları JS yönlendirme sayfasıdır; servis sayfadaki `data-n-a-*` değerleriyle Google'ın `batchexecute` ucundan yayıncı URL'sini alıp onu çıkarır, alamazsa başarısız sayar. Feed gövdesinden anlamlı ölçüde uzun olmayan sonuç (`isMoreThanExcerpt`: ≥ 1,2× + 200 karakter, okuyucunun temizlediği metin üzerinde) başarı sayılmaz: makale sayfası "feed özeti gösteriliyor" uyarısını gösterir, sonuç cache'ten atılır (`discard`) ve manuel retry sayfayı yeniden çeker. Manuel makale seçimi, feed tri-state ve `autoFullText` birlikte değerlendirilir.
 
 ## Senkronizasyon ve bildirim
 

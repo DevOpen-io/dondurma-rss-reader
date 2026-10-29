@@ -538,7 +538,8 @@ void main() {
         client: client,
         extractFullText: (_) async {
           extracted++;
-          return '<p>full</p>';
+          // Longer than the RSS body, so it counts as full text.
+          return '<p>full</p><p>${'Story paragraph. ' * 20}</p>';
         },
       );
       await store.write(

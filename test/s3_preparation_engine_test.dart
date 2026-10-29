@@ -200,6 +200,25 @@ void main() {
       },
     );
 
+    test('an extraction that only repeats the RSS body is a failure, '
+        'never saved as extracted', () async {
+      const rss =
+          '<p>Süper Loto sonuçları için beklenen an geldi. Milyonlarca '
+          'liralık büyük ikramiyenin sahibini bulup bulmadığı merak '
+          'ediliyor.</p>';
+      final svc = service(
+        extract: (_) async => '<h1>Süper Loto sonuçları belli oldu</h1>$rss',
+      );
+      await svc.registerArticle(item(content: rss), const {'bookmark'});
+      await svc.prepareArticle(ref('art-1'));
+
+      final record = (await newStore().read(ref('art-1')))!;
+      expect(record.body, rss);
+      expect(record.bodySource, 'rss');
+      expect(record.bodyState, MediaState.failed);
+      expect(record.nextRetryAt, isNotNull);
+    });
+
     test(
       'extraction failure keeps RSS body, marks failed, schedules retry',
       () async {
