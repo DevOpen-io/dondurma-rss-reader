@@ -733,11 +733,11 @@ class SettingsScreen extends StatelessWidget {
                     bookmarks: context.read<BookmarkProvider>(),
                     feed: context.read<FeedProvider>(),
                   );
-                  final success = await saveBackupFile(json);
-                  if (context.mounted) {
+                  final saved = await saveBackupFile(json);
+                  if (saved != null && context.mounted) {
                     showAppToast(
-                      success ? l10n.exportSuccess : l10n.exportFailed,
-                      type: success ? AppToastType.success : AppToastType.error,
+                      saved ? l10n.backupExported : l10n.exportFailed,
+                      type: saved ? AppToastType.success : AppToastType.error,
                     );
                   }
                 },

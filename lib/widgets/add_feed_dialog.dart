@@ -7,7 +7,8 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/feed_discovery.dart';
-import '../services/feed_service.dart' show FeedFetchException;
+import '../services/feed_service.dart'
+    show FeedFetchErrorKind, FeedFetchException;
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'adaptive_dialog.dart';
@@ -363,11 +364,17 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
       }
     } catch (e) {
       if (context.mounted) {
+        // No network is not the address's fault: say so.
+        final message =
+            e is FeedFetchException &&
+                e.kind == FeedFetchErrorKind.connectivity
+            ? l10n.addFeedOffline
+            : l10n.feedAddError;
         setState(() {
           _isLoading = false;
-          _urlValidationError = l10n.feedAddError;
+          _urlValidationError = message;
         });
-        showAppToast(l10n.feedAddError, type: AppToastType.error);
+        showAppToast(message, type: AppToastType.error);
       }
     }
   }

@@ -172,7 +172,7 @@ void main() {
   ) async {
     await submit(tester, 'https://www.reddit.com/r/FlutterDev/');
 
-    expect(feeds.added, ['https://www.reddit.com/r/FlutterDev/.rss']);
+    expect(feeds.added, ['https://www.reddit.com/r/flutterdev/.rss']);
     expect(feeds.discovered, isEmpty);
     expect(dialogOpen(), isFalse);
   });

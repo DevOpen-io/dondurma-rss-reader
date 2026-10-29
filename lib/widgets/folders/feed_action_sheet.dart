@@ -230,6 +230,7 @@ class FeedActionSheet extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
+                        const SizedBox(width: 12),
                         Flexible(
                           flex: 2,
                           child: DropdownButton<int?>(

@@ -1212,6 +1212,13 @@ class AppLocalizationsEn extends AppLocalizations {
       'Couldn\'t find a feed at this address. Check the URL, or try the site\'s home page.';
 
   @override
+  String get backupExported => 'Backup exported.';
+
+  @override
+  String get addFeedOffline =>
+      'You\'re offline. Try again when you\'re connected.';
+
+  @override
   String get chooseFeed => 'Choose a feed';
 
   @override

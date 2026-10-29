@@ -61,11 +61,13 @@ String? knownFeedUrl(String input) {
       _ => null,
     };
     if (kind == null) return null;
+    // Reddit names ignore case: one feed address per subreddit or user.
+    final name = segments[1].toLowerCase();
     // A user's multireddit has its own feed.
     if (kind == 'user' && segments.length >= 4 && segments[2] == 'm') {
-      return 'https://www.reddit.com/user/${segments[1]}/m/${segments[3]}/.rss';
+      return 'https://www.reddit.com/user/$name/m/${segments[3].toLowerCase()}/.rss';
     }
-    return 'https://www.reddit.com/$kind/${segments[1]}/.rss';
+    return 'https://www.reddit.com/$kind/$name/.rss';
   }
 
   if (host == 'youtube.com' || host.endsWith('.youtube.com')) {

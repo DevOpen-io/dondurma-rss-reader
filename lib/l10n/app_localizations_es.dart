@@ -1229,6 +1229,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se encontró una fuente en esta dirección. Comprueba la URL o prueba con la página principal del sitio.';
 
   @override
+  String get backupExported => 'Copia exportada.';
+
+  @override
+  String get addFeedOffline =>
+      'Sin conexión. Inténtalo de nuevo cuando estés conectado.';
+
+  @override
   String get chooseFeed => 'Elige una fuente';
 
   @override

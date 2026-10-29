@@ -2296,6 +2296,18 @@ abstract class AppLocalizations {
   /// **'Couldn\'t find a feed at this address. Check the URL, or try the site\'s home page.'**
   String get feedAddError;
 
+  /// No description provided for @backupExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup exported.'**
+  String get backupExported;
+
+  /// No description provided for @addFeedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline. Try again when you\'re connected.'**
+  String get addFeedOffline;
+
   /// No description provided for @chooseFeed.
   ///
   /// In en, this message translates to:

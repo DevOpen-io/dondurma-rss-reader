@@ -548,6 +548,8 @@
   "readSwipeHint": "Tip: swipe an article right to mark it as read or unread.",
   "retry": "Try Again",
   "feedAddError": "Couldn't find a feed at this address. Check the URL, or try the site's home page.",
+  "backupExported": "Backup exported.",
+  "addFeedOffline": "You're offline. Try again when you're connected.",
   "chooseFeed": "Choose a feed",
   "noLinkInShare": "The shared text has no link to follow.",
   "keywordRulesHelp": "A word or phrase matches whole words. Write /…/ for a pattern; start with title: to check titles only.",

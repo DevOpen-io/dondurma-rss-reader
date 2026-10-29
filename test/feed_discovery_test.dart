@@ -17,7 +17,7 @@ void main() {
     test('rewrites subreddits and Reddit users', () {
       expect(
         knownFeedUrl('https://www.reddit.com/r/FlutterDev/'),
-        'https://www.reddit.com/r/FlutterDev/.rss',
+        'https://www.reddit.com/r/flutterdev/.rss',
       );
       expect(
         knownFeedUrl('https://old.reddit.com/r/dartlang/top/?t=week'),

@@ -1,38 +1,30 @@
 package io.devopen.dondurma
 
-import android.content.Intent
-import android.os.Bundle
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 
 class MainActivity : FlutterActivity() {
-    private var shareChannel: MethodChannel? = null
-
-    // Text shared to the app at launch, handed out once (#67).
-    private var initialText: String? = null
-
-    // A recreated activity (process death, Recents) still carries the
-    // share it was first started with; that share was already handled.
-    private var relaunched = false
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        relaunched = savedInstanceState != null ||
-            (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) != 0
-        super.onCreate(savedInstanceState)
+    companion object {
+        // Text handed over by ShareActivity, read once (#67). It lives in
+        // memory only, so an activity recreated after process death or from
+        // Recents never sees an old share again.
+        @Volatile
+        var pendingShare: String? = null
     }
+
+    private var shareChannel: MethodChannel? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        initialText = if (relaunched) null else sharedText(intent)
         shareChannel = MethodChannel(
             flutterEngine.dartExecutor.binaryMessenger,
             "io.devopen.dondurma/share",
         ).apply {
             setMethodCallHandler { call, result ->
                 if (call.method == "initialText") {
-                    result.success(initialText)
-                    initialText = null
+                    result.success(pendingShare)
+                    pendingShare = null
                 } else {
                     result.notImplemented()
                 }
@@ -40,18 +32,12 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    // A share while the app runs (singleTask) arrives here.
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        sharedText(intent)?.let { shareChannel?.invokeMethod("shared", it) }
+    // A share while the app runs brings the task to the front.
+    override fun onResume() {
+        super.onResume()
+        val text = pendingShare ?: return
+        val channel = shareChannel ?: return
+        pendingShare = null
+        channel.invokeMethod("shared", text)
     }
-
-    // Styled text arrives as a Spanned CharSequence; a share with no text
-    // (a file) becomes "" so the app can say it found no link.
-    private fun sharedText(intent: Intent?): String? =
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString() ?: ""
-        } else {
-            null
-        }
 }

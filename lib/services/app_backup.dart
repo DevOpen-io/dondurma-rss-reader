@@ -190,9 +190,9 @@ FeedItem _bookmark(Map<String, dynamic> json) {
 }
 
 /// Saves a backup file: the native save dialog on desktop, the share sheet
-/// on mobile (as OPML export does). Returns `true` on success or when the
-/// user cancels, `false` on an error.
-Future<bool> saveBackupFile(String json) async {
+/// on mobile (as OPML export does). Returns `true` when saved or shared,
+/// null when the user cancelled, `false` on an error.
+Future<bool?> saveBackupFile(String json) async {
   final date = DateTime.now().toIso8601String().substring(0, 10);
   final name = 'dondurma-backup-$date.json';
   try {
@@ -201,7 +201,7 @@ Future<bool> saveBackupFile(String json) async {
         acceptedTypeGroups: [_backupTypeGroup],
         suggestedName: name,
       );
-      if (location == null) return true;
+      if (location == null) return null;
       var path = location.path;
       if (!path.toLowerCase().endsWith('.json')) path = '$path.json';
       await File(path).writeAsString(json, flush: true);
@@ -213,8 +213,12 @@ Future<bool> saveBackupFile(String json) async {
     final result = await SharePlus.instance.share(
       ShareParams(files: [XFile(file.path, mimeType: 'application/json')]),
     );
-    return result.status == ShareResultStatus.success ||
-        result.status == ShareResultStatus.dismissed;
+    return switch (result.status) {
+      ShareResultStatus.success => true,
+      ShareResultStatus.dismissed => null,
+      // Platforms that cannot tell: the sheet did open with the file.
+      ShareResultStatus.unavailable => true,
+    };
   } catch (_) {
     return false;
   }

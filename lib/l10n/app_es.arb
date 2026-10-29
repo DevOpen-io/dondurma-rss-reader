@@ -401,6 +401,8 @@
   "readSwipeHint": "Consejo: desliza un artículo hacia la derecha para marcarlo como leído o no leído.",
   "retry": "Reintentar",
   "feedAddError": "No se encontró una fuente en esta dirección. Comprueba la URL o prueba con la página principal del sitio.",
+  "backupExported": "Copia exportada.",
+  "addFeedOffline": "Sin conexión. Inténtalo de nuevo cuando estés conectado.",
   "chooseFeed": "Elige una fuente",
   "noLinkInShare": "El texto compartido no tiene ningún enlace que seguir.",
   "keywordRulesHelp": "Una palabra o frase coincide con palabras completas. Escribe /…/ para un patrón; empieza con title: para buscar solo en títulos.",

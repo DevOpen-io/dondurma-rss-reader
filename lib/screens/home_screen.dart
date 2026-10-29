@@ -91,6 +91,8 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
     if (_selectedIndex != 0) _onItemTapped(0);
+    // One "Add feed" at a time: a new share replaces whatever is open.
+    Navigator.of(context).popUntil((route) => route.isFirst);
     showAdaptiveSheet<void>(context, AddFeedDialog(initialUrl: url));
   }
 

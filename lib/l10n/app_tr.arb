@@ -401,6 +401,8 @@
   "readSwipeHint": "İpucu: bir makaleyi sağa kaydırarak okundu veya okunmadı olarak işaretleyebilirsiniz.",
   "retry": "Tekrar Dene",
   "feedAddError": "Bu adreste bir kaynak bulunamadı. Adresi kontrol edin ya da sitenin ana sayfasını deneyin.",
+  "backupExported": "Yedek dışa aktarıldı.",
+  "addFeedOffline": "Çevrimdışısınız. Bağlanınca tekrar deneyin.",
   "chooseFeed": "Bir kaynak seçin",
   "noLinkInShare": "Paylaşılan metinde takip edilecek bir bağlantı yok.",
   "keywordRulesHelp": "Kelime ya da ifade tam kelimeyle eşleşir. Desen için /…/ yazın; yalnız başlıkta aramak için title: ile başlayın.",

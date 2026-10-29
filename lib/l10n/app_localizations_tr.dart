@@ -1216,6 +1216,12 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bu adreste bir kaynak bulunamadı. Adresi kontrol edin ya da sitenin ana sayfasını deneyin.';
 
   @override
+  String get backupExported => 'Yedek dışa aktarıldı.';
+
+  @override
+  String get addFeedOffline => 'Çevrimdışısınız. Bağlanınca tekrar deneyin.';
+
+  @override
   String get chooseFeed => 'Bir kaynak seçin';
 
   @override
