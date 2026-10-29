@@ -146,19 +146,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.rss_feed_rounded,
-                      color: cs.onPrimaryContainer,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   // The subtitle can overflow in big-font locales without
                   // a bounded width — let it ellipsize instead.
                   Expanded(

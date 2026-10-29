@@ -78,19 +78,6 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer,
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Icon(
-                      Icons.create_new_folder_outlined,
-                      color: cs.onPrimaryContainer,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
