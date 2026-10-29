@@ -1187,14 +1187,13 @@ class FeedProvider extends ChangeNotifier {
 
   /// The current view's copies per article, in list order; cached with the
   /// view.
-  Map<Object, List<FeedItem>> get _viewGroups =>
-      _viewGroupsCache ??= () {
-        final groups = <Object, List<FeedItem>>{};
-        for (final item in _viewItems) {
-          (groups[_keyOf(item)] ??= []).add(item);
-        }
-        return groups;
-      }();
+  Map<Object, List<FeedItem>> get _viewGroups => _viewGroupsCache ??= () {
+    final groups = <Object, List<FeedItem>>{};
+    for (final item in _viewItems) {
+      (groups[_keyOf(item)] ??= []).add(item);
+    }
+    return groups;
+  }();
 
   /// [item] with the copies of it the current view holds — only when
   /// [item] is in the view: an article opened from elsewhere (bookmarks)
@@ -1248,13 +1247,14 @@ class FeedProvider extends ChangeNotifier {
     return changed;
   }
 
-
   /// Toggles the read/unread state of this source instance and of the
-  /// copies the current view hides behind it.
+  /// copies the current view hides behind it. [item] carries the state its
+  /// row shows (`isRead`): a feed row its group's, a bookmark row its own.
   Future<void> toggleReadStatus(FeedItem item) async {
-    // The row's state: read only when every copy it stands for is.
+    // Flip what the caller showed: a feed row carries its group's state,
+    // a bookmark row its own copy's.
     final copies = _copiesInView(item);
-    final read = !copies.every(_readState.isRead);
+    final read = !item.isRead;
     _markWithViewCopies([item], read: read);
     // Unread by hand outranks the "mark read" rules (#69).
     var exemptionsChanged = false;

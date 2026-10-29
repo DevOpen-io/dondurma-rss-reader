@@ -262,7 +262,7 @@ void main() {
     expect((box.get('readItemRefs') as Map)['refs'], hasLength(2));
 
     // Without an explicit flush the batch lands after a short quiet period.
-    await feed.toggleReadStatus(article('r2'));
+    await feed.toggleReadStatus(article('r2').copyWith(isRead: true));
     await Future<void>.delayed(const Duration(milliseconds: 1200));
     expect((box.get('readItemRefs') as Map)['refs'], hasLength(1));
   });

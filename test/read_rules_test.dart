@@ -91,7 +91,7 @@ void main() {
 
     // Set back to unread by hand: no rule reads it again, not on the next
     // pass and not after a restart.
-    await feed.toggleReadStatus(_item('ad', ''));
+    await feed.toggleReadStatus(_item('ad', '').copyWith(isRead: true));
     expect(read('ad'), isFalse);
     await feed.refreshAll();
     expect(read('ad'), isFalse);

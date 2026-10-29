@@ -137,4 +137,22 @@ void main() {
     expect(feed.unreadCount(feedUrl: 'https://a.test/feed'), 1);
     feed.dispose();
   });
+
+  test('a bookmark row toggles what it shows, its own copy', () async {
+    final feed = await load();
+    feed.selectCategory('News');
+    await feed.markAsRead(feed.filteredItems.single); // a read, b unread.
+    feed.selectCategory(null);
+
+    // The bookmarks list shows copy a as read and offers "mark unread".
+    final bookmarkRow = _item(
+      'a',
+      'News',
+      link: _shared,
+    ).copyWith(isRead: true);
+    await feed.toggleReadStatus(bookmarkRow);
+
+    expect(readIn(feed, 'a'), isFalse);
+    feed.dispose();
+  });
 }
