@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -120,6 +122,45 @@ void main() {
     expect(page.feedHasFullArticle, isTrue);
     expect(page.fullTextFailed, isFalse);
     expect(page.consumeFullTextFailure(), isFalse);
+  });
+
+  test('full text that arrives after the summary was drawn replaces it',
+      () async {
+    FullTextExtractionService.debugClearSession();
+    final story = [
+      for (var i = 0; i < 12; i++)
+        '<p>Story paragraph $i, long enough to be the real article body '
+            'and not the one-line excerpt.</p>',
+    ].join();
+    final page = ArticlePageProvider(
+      item: FeedItem(
+        id: 'slow',
+        siteName: 'Site',
+        title: 'Slow page',
+        description: 'The one-line excerpt.',
+        link: 'https://slow.test/post',
+        feedUrl: 'https://slow.test/feed',
+      ),
+    );
+    addTearDown(page.dispose);
+    final gate = Completer<void>();
+    final client = MockClient((_) async {
+      await gate.future;
+      return http.Response(
+        '<html><body><article>$story</article></body></html>',
+        200,
+        headers: {'content-type': 'text/html; charset=utf-8'},
+      );
+    });
+
+    final loading = http.runWithClient(page.activateFullText, () => client);
+    // The reader draws while the page loads: the summary is what it has.
+    expect(page.displayContent, contains('one-line excerpt'));
+    gate.complete();
+    await loading;
+
+    expect(page.fullTextActive, isTrue);
+    expect(page.displayContent, contains('Story paragraph 11'));
   });
 
   group('full text that only repeats the feed excerpt', () {

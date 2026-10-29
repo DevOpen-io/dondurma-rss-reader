@@ -297,6 +297,10 @@ class ArticlePageProvider extends ChangeNotifier {
     }
 
     _isLoadingFullText = false;
+    // The reader drew the summary while the page loaded; what it shows now
+    // is worked out again from the result.
+    _cachedDisplayContent = null;
+    _cachedReadingMinutes = null;
     if (_feedHasFullArticle) {
       _fullTextActive = false;
       _fullTextContent = null;
