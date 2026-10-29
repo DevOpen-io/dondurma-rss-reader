@@ -109,22 +109,21 @@ void main() {
   group('looksLikeHtmlPage', () {
     Uint8List bytes(String s) => Uint8List.fromList(utf8.encode(s));
     test('pages are pages, feeds are not', () {
-      expect(looksLikeHtmlPage(bytes('<!DOCTYPE html><html>'), null), isTrue);
+      expect(looksLikeHtmlPage(bytes('<!DOCTYPE html><html>')), isTrue);
+      expect(looksLikeHtmlPage(bytes('\ufeff  <html lang="tr">')), isTrue);
+      expect(looksLikeHtmlPage(bytes(_rss)), isFalse);
+      expect(looksLikeHtmlPage(bytes('<feed xmlns="x">')), isFalse);
+      expect(looksLikeHtmlPage(bytes('<atom:feed xmlns:atom="x">')), isFalse);
+      expect(looksLikeHtmlPage(bytes('{"version": "x"}')), isFalse);
       expect(
-        looksLikeHtmlPage(bytes('\ufeff  <html lang="tr">'), null),
-        isTrue,
-      );
-      expect(looksLikeHtmlPage(bytes('<div>hi</div>'), 'text/html'), isTrue);
-      expect(looksLikeHtmlPage(bytes(_rss), 'text/html'), isFalse);
-      expect(looksLikeHtmlPage(bytes('<feed xmlns="x">'), null), isFalse);
-      expect(
-        looksLikeHtmlPage(bytes('{"version": "x"}'), 'text/html'),
-        isFalse,
-      );
-      expect(
-        looksLikeHtmlPage(bytes('<rss version="2.0"><channel><ti'), null),
+        looksLikeHtmlPage(bytes('<rss version="2.0"><channel><ti')),
         isFalse,
         reason: 'a broken feed is still a feed',
+      );
+      expect(
+        looksLikeHtmlPage(bytes('<div>no root</div>')),
+        isFalse,
+        reason: 'only an HTML root makes a page',
       );
     });
   });
@@ -174,6 +173,24 @@ void main() {
         'https://new.test/blog/',
       ], reason: 'the page is not downloaded again');
     });
+
+    test(
+      'a feed served as text/html after a long prolog still parses',
+      () async {
+        final prolog = '<!-- ${'x' * 1500} -->';
+        final service = FeedService(
+          client: MockClient(
+            (_) async => http.Response.bytes(
+              utf8.encode('<?xml version="1.0"?>$prolog${_rss.substring(21)}'),
+              200,
+              headers: {'content-type': 'text/html; charset=utf-8'},
+            ),
+          ),
+        );
+        final result = await service.fetchFeed('https://site.test/feed', '');
+        expect(result.items, hasLength(1));
+      },
+    );
 
     test('a broken feed fails without a page, so no discovery runs', () async {
       final service = FeedService(

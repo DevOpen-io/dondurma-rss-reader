@@ -213,7 +213,7 @@ class FeedService {
 
       // A web page instead of a feed: no isolate parse, and the page goes
       // back to the caller for discovery.
-      if (looksLikeHtmlPage(bodyBytes, responseHeaders['content-type'])) {
+      if (looksLikeHtmlPage(bodyBytes)) {
         throw FeedFetchException(
           FeedFetchErrorKind.parse,
           'Not a feed: the address returned a web page',

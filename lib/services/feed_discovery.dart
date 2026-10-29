@@ -13,25 +13,23 @@ class DiscoveredFeed {
   final String? title;
 }
 
-/// Whether a response is a web page rather than a feed: an HTML root, or
-/// an HTML content type, with no feed root near the top. Only such pages
-/// go to discovery — a broken feed keeps its parse error.
-bool looksLikeHtmlPage(Uint8List body, String? contentType) {
+/// Whether a response body is a web page rather than a feed: an HTML root
+/// near the top and no feed root. Judged by the body alone — feeds served
+/// as `text/html` with a long prolog are still feeds. Only such pages go to
+/// discovery; a broken feed keeps its parse error.
+bool looksLikeHtmlPage(Uint8List body) {
   final hasBom =
       body.length >= 3 && body[0] == 0xEF && body[1] == 0xBB && body[2] == 0xBF;
   final head = latin1
       .decode(body.sublist(hasBom ? 3 : 0, body.length.clamp(0, 1024)))
       .trimLeft()
       .toLowerCase();
-  if (head.startsWith('{') ||
-      head.contains('<rss') ||
-      head.contains('<feed') ||
-      head.contains('<rdf:rdf')) {
-    return false;
-  }
-  return head.contains('<html') ||
-      (contentType?.toLowerCase().contains('html') ?? false);
+  if (head.startsWith('{') || _feedRoot.hasMatch(head)) return false;
+  return head.contains('<html') || head.contains('<!doctype html');
 }
+
+// <rss, <feed and <rdf:RDF roots, also namespace-prefixed (<atom:feed).
+final _feedRoot = RegExp(r'<([\w.-]+:)?(rss|feed|rdf)[\s>/]');
 
 /// Paths tried on a site whose page advertises no feed, in order.
 const commonFeedPaths = [
