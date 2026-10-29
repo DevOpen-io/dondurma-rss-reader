@@ -127,11 +127,11 @@ class AppThemeBuilder {
       // The selection follows the brand color, not the scheme's secondary.
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: base.colorScheme.surfaceContainer,
-        indicatorColor: base.colorScheme.primaryContainer,
+        indicatorColor: base.colorScheme.primary.withValues(alpha: 0.12),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => IconThemeData(
             color: states.contains(WidgetState.selected)
-                ? base.colorScheme.onPrimaryContainer
+                ? base.colorScheme.primary
                 : base.colorScheme.onSurfaceVariant,
           ),
         ),

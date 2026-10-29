@@ -436,52 +436,22 @@ class _ArticlePageState extends State<ArticlePage> {
                       children: [
                         SizedBox(height: hasHero ? 4 : 20),
 
-                        // Category + Date row
-                        Row(
-                          children: [
-                            if (widget.item.category.isNotEmpty)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: colorScheme.primary.withValues(
-                                    alpha: 0.12,
-                                  ),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  widget.item.category.toUpperCase(),
-                                  style: TextStyle(
-                                    color: colorScheme.primary,
-                                    fontWeight: FontWeight.w700,
-                                    fontSize: 11,
-                                    letterSpacing: 0.8,
-                                  ),
-                                ),
-                              ),
+                        // Category · date · reading time — one quiet line.
+                        Text(
+                          [
                             if (widget.item.category.isNotEmpty &&
-                                dateStr.isNotEmpty)
-                              const SizedBox(width: 10),
-                            if (dateStr.isNotEmpty)
-                              Expanded(
-                                child: Text(
-                                  dateStr,
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.45,
-                                    ),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
+                                widget.item.category != 'Uncategorized')
+                              widget.item.category,
+                            if (dateStr.isNotEmpty) dateStr,
+                            readTimeText,
+                          ].join(' · '),
+                          style: TextStyle(
+                            color: colorScheme.onSurfaceVariant,
+                            fontSize: 13,
+                          ),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: 12),
 
                         // Title
                         Text(
@@ -493,32 +463,6 @@ class _ArticlePageState extends State<ArticlePage> {
                             height: 1.25,
                             letterSpacing: -0.3,
                           ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        // Estimated reading time
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.schedule_rounded,
-                              size: 15,
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.45,
-                              ),
-                            ),
-                            const SizedBox(width: 5),
-                            Text(
-                              readTimeText,
-                              style: TextStyle(
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500,
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: 0.45,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
 
                         // Durable-copy status strip (#41): scope label,
@@ -622,67 +566,34 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         const SizedBox(height: 28),
 
-                        // Bottom action row — "Open Original" button
-                        if (widget.item.link.isNotEmpty) ...[
-                          Container(
+                        // Open the original page — one plain button.
+                        if (widget.item.link.isNotEmpty)
+                          SizedBox(
                             width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest
-                                  .withValues(alpha: 0.35),
-                              borderRadius: BorderRadius.circular(16),
-                              border: Border.all(
-                                color: colorScheme.outlineVariant.withValues(
-                                  alpha: 0.15,
+                            child: Tooltip(
+                              message: l10n.readOnOriginalWebpage,
+                              child: OutlinedButton.icon(
+                                onPressed: () => openArticleLink(
+                                  context,
+                                  widget.item.link,
+                                  title: widget.item.title,
+                                ),
+                                icon: const Icon(
+                                  Icons.open_in_new_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  Uri.tryParse(widget.item.link)?.host ??
+                                      l10n.openInBrowser,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 48),
                                 ),
                               ),
                             ),
-                            child: Column(
-                              children: [
-                                Text(
-                                  l10n.readOnOriginalWebpage,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: colorScheme.onSurface.withValues(
-                                      alpha: 0.5,
-                                    ),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: FilledButton.icon(
-                                    onPressed: () => openArticleLink(
-                                      context,
-                                      widget.item.link,
-                                      title: widget.item.title,
-                                    ),
-                                    icon: const Icon(
-                                      Icons.public_rounded,
-                                      size: 18,
-                                    ),
-                                    label: Text(
-                                      Uri.tryParse(widget.item.link)?.host ??
-                                          l10n.openInBrowser,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    style: FilledButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 14,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ),
-                        ],
 
                         const SizedBox(height: 40),
                       ],
@@ -851,52 +762,47 @@ class _ArticleStatusStrip extends StatelessWidget {
               ),
             ],
           ),
-        _NoticeBox(
-          colorScheme: colorScheme,
-          tone: _NoticeTone.neutral,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  status.fullyReady ? Icons.offline_pin : Icons.schedule,
-                  size: 14,
-                  color: status.fullyReady
-                      ? colorScheme.secondary
-                      : colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    scope,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-                if (showRetry)
-                  TextButton(
-                    onPressed: () => unawaited(_retryMissing(context)),
-                    style: TextButton.styleFrom(
-                      minimumSize: const Size(48, 48),
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
-                    ),
+        Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(
                     child: Text(
-                      l10n.articleRetryMissing,
-                      style: const TextStyle(fontSize: 12),
+                      scope,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ),
-              ],
-            ),
-            if (details.isNotEmpty)
-              Text(
-                details.join(' · '),
-                style: TextStyle(
-                  fontSize: 11.5,
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                  if (showRetry)
+                    TextButton(
+                      onPressed: () => unawaited(_retryMissing(context)),
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size(48, 48),
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                      ),
+                      child: Text(
+                        l10n.articleRetryMissing,
+                        style: const TextStyle(fontSize: 12),
+                      ),
+                    ),
+                ],
               ),
-          ],
+              if (details.isNotEmpty)
+                Text(
+                  details.join(' · '),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
         ),
       ],
     );
@@ -941,7 +847,7 @@ bool _trustedImageSrc(ArticlePageProvider provider, String src) {
   return _trustedLocalImage(provider, src) != null;
 }
 
-enum _NoticeTone { neutral, info, warning }
+enum _NoticeTone { info, warning }
 
 class _NoticeBox extends StatelessWidget {
   final ColorScheme colorScheme;
@@ -957,7 +863,6 @@ class _NoticeBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = switch (tone) {
-      _NoticeTone.neutral => colorScheme.surfaceContainerHighest,
       _NoticeTone.info => colorScheme.primaryContainer.withValues(alpha: 0.35),
       _NoticeTone.warning => colorScheme.errorContainer.withValues(alpha: 0.35),
     };
