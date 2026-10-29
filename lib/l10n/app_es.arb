@@ -236,6 +236,7 @@
   "fullTextExtractionDesc": "Obtiene el contenido completo de la página web original",
   "fullTextLoading": "Cargando el artículo completo…",
   "fullTextFailed": "No se pudo cargar el contenido completo. Mostrando el resumen de la fuente.",
+  "feedHasFullArticle": "Esta fuente ya incluye el artículo completo.",
   "fullTextToggle": "Texto completo",
   "readingModeLabel": "Modo de lectura",
   "modeShort": "Resumen",

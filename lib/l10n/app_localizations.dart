@@ -1408,6 +1408,12 @@ abstract class AppLocalizations {
   /// **'Could not load full content. Showing feed excerpt.'**
   String get fullTextFailed;
 
+  /// Shown under the reading-mode switch when the page has nothing beyond the feed body, because the feed already carries the whole article.
+  ///
+  /// In en, this message translates to:
+  /// **'This feed already includes the full article.'**
+  String get feedHasFullArticle;
+
   /// No description provided for @fullTextToggle.
   ///
   /// In en, this message translates to:

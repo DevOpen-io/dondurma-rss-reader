@@ -366,6 +366,10 @@
   "fullTextExtractionDesc": "Fetch full content from the original webpage",
   "fullTextLoading": "Loading full article…",
   "fullTextFailed": "Could not load full content. Showing feed excerpt.",
+  "feedHasFullArticle": "This feed already includes the full article.",
+  "@feedHasFullArticle": {
+    "description": "Shown under the reading-mode switch when the page has nothing beyond the feed body, because the feed already carries the whole article."
+  },
   "fullTextToggle": "Full-Text",
   "readingModeLabel": "Reading mode",
   "modeShort": "Summary",

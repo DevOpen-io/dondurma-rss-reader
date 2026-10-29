@@ -247,6 +247,7 @@
   "fullTextExtractionDesc": "Orijinal web sayfasından tam içeriği getir",
   "fullTextLoading": "Tam makale yükleniyor…",
   "fullTextFailed": "Tam içerik yüklenemedi. Akış özeti gösteriliyor.",
+  "feedHasFullArticle": "Bu kaynak makalenin tamamını zaten veriyor.",
   "fullTextToggle": "Tam Metin",
   "searchHistory": "Arama Geçmişi",
   "clearSearchHistory": "Arama Geçmişini Temizle",

@@ -740,6 +740,10 @@ class AppLocalizationsTr extends AppLocalizations {
       'Tam içerik yüklenemedi. Akış özeti gösteriliyor.';
 
   @override
+  String get feedHasFullArticle =>
+      'Bu kaynak makalenin tamamını zaten veriyor.';
+
+  @override
   String get fullTextToggle => 'Tam Metin';
 
   @override

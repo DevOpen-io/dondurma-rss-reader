@@ -751,6 +751,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No se pudo cargar el contenido completo. Mostrando el resumen de la fuente.';
 
   @override
+  String get feedHasFullArticle =>
+      'Esta fuente ya incluye el artículo completo.';
+
+  @override
   String get fullTextToggle => 'Texto completo';
 
   @override

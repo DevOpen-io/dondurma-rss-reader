@@ -741,6 +741,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Could not load full content. Showing feed excerpt.';
 
   @override
+  String get feedHasFullArticle =>
+      'This feed already includes the full article.';
+
+  @override
   String get fullTextToggle => 'Full-Text';
 
   @override

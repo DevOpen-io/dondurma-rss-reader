@@ -87,6 +87,41 @@ void main() {
     expect(page.displayContent, isNot(contains('buy the box set')));
   });
 
+  test('a feed that already carries the whole article says so instead of '
+      'reporting a failure', () async {
+    FullTextExtractionService.debugClearSession();
+    final paragraphs = [
+      for (var i = 0; i < 12; i++)
+        '<p>Paragraph $i of a long post the feed ships whole, with enough '
+            'words in it to read like a real article body sentence.</p>',
+    ].join();
+    final page = ArticlePageProvider(
+      item: FeedItem(
+        id: 'full',
+        siteName: 'Blog',
+        title: 'A whole post',
+        description: 'A whole post',
+        content: paragraphs,
+        link: 'https://full.test/post',
+        feedUrl: 'https://full.test/feed',
+      ),
+    );
+    addTearDown(page.dispose);
+    final client = MockClient(
+      (_) async => http.Response(
+        '<html><body><article>$paragraphs</article></body></html>',
+        200,
+        headers: {'content-type': 'text/html; charset=utf-8'},
+      ),
+    );
+
+    await http.runWithClient(page.activateFullText, () => client);
+
+    expect(page.feedHasFullArticle, isTrue);
+    expect(page.fullTextFailed, isFalse);
+    expect(page.consumeFullTextFailure(), isFalse);
+  });
+
   group('full text that only repeats the feed excerpt', () {
     const excerpt =
         'Spanish football clubs were among those to hold a minute’s '

@@ -539,6 +539,29 @@ class _ArticlePageState extends State<ArticlePage> {
                             ],
                           ),
                         ],
+                        if (widget.item.link.isNotEmpty &&
+                            provider.feedHasFullArticle) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 14,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  l10n.feedHasFullArticle,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                         if (widget.item.link.isNotEmpty) ...[
                           if (provider.autoFullTextFailed ||
                               provider.fullTextFailed) ...[

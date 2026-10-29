@@ -55,6 +55,15 @@ class ArticlePageProvider extends ChangeNotifier {
   bool _autoFullTextFailed = false;
   bool get autoFullTextFailed => _autoFullTextFailed;
 
+  /// The page gave nothing beyond the feed's body because that body is
+  /// already the whole article (blogs that publish full posts): not a
+  /// failure, and the reader says so instead of offering a retry.
+  bool _feedHasFullArticle = false;
+  bool get feedHasFullArticle => _feedHasFullArticle;
+
+  /// Visible text from which a feed body counts as a whole article.
+  static const _fullArticleLength = 1000;
+
   /// Whether the last activation was automatic (from per-feed/global default).
   bool _lastAttemptAutomatic = false;
 
@@ -254,6 +263,7 @@ class ArticlePageProvider extends ChangeNotifier {
     _fullTextActive = true;
     _fullTextFailed = false;
     _autoFullTextFailed = false;
+    _feedHasFullArticle = false;
     _fullTextContent = null;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
@@ -282,10 +292,15 @@ class ArticlePageProvider extends ChangeNotifier {
     if (result != null && result.isNotEmpty && !_addsToFeedBody(result)) {
       _extractionService.discard(item.link);
       result = null;
+      _feedHasFullArticle =
+          _displayText(_feedBody).trim().length >= _fullArticleLength;
     }
 
     _isLoadingFullText = false;
-    if (result != null && result.isNotEmpty) {
+    if (_feedHasFullArticle) {
+      _fullTextActive = false;
+      _fullTextContent = null;
+    } else if (result != null && result.isNotEmpty) {
       _fullTextContent = result;
       _fullTextFailed = false;
       _autoFullTextFailed = false;
@@ -306,15 +321,17 @@ class ArticlePageProvider extends ChangeNotifier {
 
   /// Whether [html], as the reader would show it, gives more than the
   /// feed's own body for this item.
-  bool _addsToFeedBody(String html) {
+  bool _addsToFeedBody(String html) =>
+      FullTextExtractionService.isMoreThanExcerpt(
+        _displayText(html),
+        _displayText(_feedBody),
+      );
+
+  String get _feedBody {
     final current = item.content;
-    final feedBody = current != null && current.trim().isNotEmpty
+    return current != null && current.trim().isNotEmpty
         ? current
         : item.description;
-    return FullTextExtractionService.isMoreThanExcerpt(
-      _displayText(html),
-      _displayText(feedBody),
-    );
   }
 
   /// Visible text of [html] after the reader's own cleanup.
@@ -332,6 +349,7 @@ class ArticlePageProvider extends ChangeNotifier {
     _fullTextContent = null;
     _fullTextFailed = false;
     _autoFullTextFailed = false;
+    _feedHasFullArticle = false;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
     notifyListeners();
