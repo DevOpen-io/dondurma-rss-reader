@@ -1214,6 +1214,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get chooseFeed => 'Elige una fuente';
 
   @override
+  String get noLinkInShare =>
+      'El texto compartido no tiene ningún enlace que seguir.';
+
+  @override
   String get clearFilters => 'Mostrar todos los artículos';
 
   @override

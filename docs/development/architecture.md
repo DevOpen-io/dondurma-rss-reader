@@ -102,6 +102,8 @@ Hive kutularına ek olarak `ArticleRecordStore` ve `ObservedArticleStore`, foreg
 
 Yanıt bir HTML sayfasıysa (`looksLikeHtmlPage`) `fetchFeed` ayrıştırmaya girmeden `FeedFetchErrorKind.parse` hatası verir ve sayfayı `FeedFetchException.page` ile taşır; ayrıştırılamayan gerçek feed'lerde `page` boştur ve keşif çalışmaz. Kaynak ekleme bu sayfayı `FeedService.discoverFeeds`'e verir: `<link rel="alternate">` feed'leri isolate içinde okunur; hiç yoksa sitedeki `commonFeedPaths` sırayla denenir (istekler paylaşılan `HostPacer` ile). Birden çok feed seçim listesiyle sunulur, zaten abone olunanlar seçilemez. Reddit ve YouTube kanal/oynatma listesi adresleri `knownFeedUrl` ile istek atmadan feed adresine çevrilir (`lib/services/feed_discovery.dart`).
 
+Android paylaşım menüsü (#67): `MainActivity` (`launchMode="singleTask"`, `ACTION_SEND text/plain`) paylaşılan metni `io.devopen.dondurma/share` kanalıyla verir; açılıştaki metin `initialText` ile bir kez alınır, çalışırken gelenler `onNewIntent` → `shared` çağrısıyla gelir. `SharedLinks.pending` metni ana ekran açılana kadar tutar; ana ekran ilk bağlantıyla "Kaynak ekle"yi açar. `singleTask`, paylaşımın aynı Hive dosyalarına ikinci bir Flutter motoru açmasını önler.
+
 `FeedProvider.refreshAll()`, HTTP/merge işini `FeedRefresher`'a devreder:
 
 - eşzamanlı çağrıları `_refreshQueued` ile birleştirir;

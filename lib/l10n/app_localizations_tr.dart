@@ -1201,6 +1201,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String get chooseFeed => 'Bir kaynak seçin';
 
   @override
+  String get noLinkInShare =>
+      'Paylaşılan metinde takip edilecek bir bağlantı yok.';
+
+  @override
   String get clearFilters => 'Tüm makaleleri göster';
 
   @override

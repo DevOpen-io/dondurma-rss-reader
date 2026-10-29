@@ -15,6 +15,7 @@ import '../widgets/home/home_search_history_panel.dart';
 import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_empty_state.dart';
 import '../widgets/home/feed_list_skeleton.dart';
+import '../services/shared_links.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/mark_all_read_button.dart';
@@ -22,6 +23,7 @@ import '../widgets/home/offline_banner.dart';
 import '../widgets/home/refresh_progress_count.dart';
 import '../widgets/constrained_width.dart';
 import '../widgets/adaptive_dialog.dart';
+import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'categories_screen.dart';
 import 'bookmarks_screen.dart';
@@ -44,10 +46,36 @@ class _HomeScreenState extends State<HomeScreen> {
   final _feedScroll = AnchoredScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    SharedLinks.pending.addListener(_openSharedLink);
+    // A link shared before the home screen existed (cold start, onboarding).
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openSharedLink());
+  }
+
+  @override
   void dispose() {
+    SharedLinks.pending.removeListener(_openSharedLink);
     _searchController.dispose();
     _feedScroll.dispose();
     super.dispose();
+  }
+
+  /// A link shared from another app opens "Add feed" with it filled in.
+  void _openSharedLink() {
+    final text = SharedLinks.pending.value;
+    if (text == null || !mounted) return;
+    SharedLinks.pending.value = null;
+    final url = sharedUrl(text);
+    if (url == null) {
+      showAppToast(
+        AppLocalizations.of(context).noLinkInShare,
+        type: AppToastType.info,
+      );
+      return;
+    }
+    if (_selectedIndex != 0) _onItemTapped(0);
+    showAdaptiveSheet<void>(context, AddFeedDialog(initialUrl: url));
   }
 
   void _onItemTapped(int index) {

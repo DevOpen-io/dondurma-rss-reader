@@ -2266,6 +2266,12 @@ abstract class AppLocalizations {
   /// **'Choose a feed'**
   String get chooseFeed;
 
+  /// No description provided for @noLinkInShare.
+  ///
+  /// In en, this message translates to:
+  /// **'The shared text has no link to follow.'**
+  String get noLinkInShare;
+
   /// No description provided for @clearFilters.
   ///
   /// In en, this message translates to:

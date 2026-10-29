@@ -396,6 +396,7 @@
   "retry": "Tekrar Dene",
   "feedAddError": "Bu adreste bir kaynak bulunamadı. Adresi kontrol edin ya da sitenin ana sayfasını deneyin.",
   "chooseFeed": "Bir kaynak seçin",
+  "noLinkInShare": "Paylaşılan metinde takip edilecek bir bağlantı yok.",
   "clearFilters": "Tüm makaleleri göster",
   "thirtyMinutes": "30 Dakika",
   "semanticCategoryOptions": "Kategori seçenekleri",

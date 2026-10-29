@@ -39,6 +39,7 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Feed discovery: a site, YouTube channel/handle, subreddit, Mastodon or Bluesky address resolves to its feed (page alternates, then common paths); several feeds offer a choice ([#64](https://github.com/DevOpen-io/dondurma-rss-reader/issues/64), 2026-10-29)
 - [x] Whole-app backup: one JSON file with feeds, folders, settings, bookmarks (article as saved, no images) and read marks; restore checks the file, then merges feeds/bookmarks/read marks and replaces settings ([#65](https://github.com/DevOpen-io/dondurma-rss-reader/issues/65), 2026-10-29)
 - [x] Read aloud with the device speech engine (flutter_tts; Android, iOS, macOS, Windows — hidden on Linux): button beside the reading-mode switch, floating pause/resume/stop bar; one reader for the app, stops on another article or leaving it ([#66](https://github.com/DevOpen-io/dondurma-rss-reader/issues/66), 2026-10-29)
+- [x] Android share sheet: sharing a link to the app opens Add feed with it filled in (and feed discovery on save); a share before onboarding waits for the home screen. The activity is singleTask so a share reaches the running app. iOS share extension not built ([#67](https://github.com/DevOpen-io/dondurma-rss-reader/issues/67), 2026-10-29)
 
 ## Backlog
 

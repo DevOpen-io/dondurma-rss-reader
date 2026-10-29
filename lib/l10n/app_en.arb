@@ -543,6 +543,7 @@
   "retry": "Try Again",
   "feedAddError": "Couldn't find a feed at this address. Check the URL, or try the site's home page.",
   "chooseFeed": "Choose a feed",
+  "noLinkInShare": "The shared text has no link to follow.",
   "clearFilters": "Show all articles",
   "thirtyMinutes": "30 Minutes",
   "semanticCategoryOptions": "Category options",

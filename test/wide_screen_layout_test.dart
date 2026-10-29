@@ -11,6 +11,8 @@ import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
 import 'package:ice_cream_rss_reader/screens/home_screen.dart';
+import 'package:ice_cream_rss_reader/services/shared_links.dart';
+import 'package:ice_cream_rss_reader/widgets/add_feed_dialog.dart';
 import 'package:ice_cream_rss_reader/widgets/constrained_width.dart';
 
 void main() {
@@ -232,6 +234,19 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byTooltip('Add Category'), findsOneWidget);
       expect(find.byTooltip('Show menu'), findsNothing);
+    });
+
+    testWidgets('a link shared to the app opens add feed with it', (
+      tester,
+    ) async {
+      SharedLinks.pending.value = 'A headline https://site.test/post';
+      addTearDown(() => SharedLinks.pending.value = null);
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AddFeedDialog), findsOneWidget);
+      expect(find.text('https://site.test/post'), findsOneWidget);
+      expect(SharedLinks.pending.value, isNull, reason: 'handled once');
     });
 
     testWidgets('feed tab title fits a 360dp phone', (tester) async {

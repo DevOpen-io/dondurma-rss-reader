@@ -396,6 +396,7 @@
   "retry": "Reintentar",
   "feedAddError": "No se encontró una fuente en esta dirección. Comprueba la URL o prueba con la página principal del sitio.",
   "chooseFeed": "Elige una fuente",
+  "noLinkInShare": "El texto compartido no tiene ningún enlace que seguir.",
   "clearFilters": "Mostrar todos los artículos",
   "thirtyMinutes": "30 minutos",
   "semanticCategoryOptions": "Opciones de categoría",

@@ -14,7 +14,10 @@ import 'adaptive_dialog.dart';
 import 'folders/category_picker_sheet.dart';
 
 class AddFeedDialog extends StatefulWidget {
-  const AddFeedDialog({super.key});
+  /// An address to start from — a link shared to the app.
+  final String? initialUrl;
+
+  const AddFeedDialog({super.key, this.initialUrl});
 
   @override
   State<AddFeedDialog> createState() => _AddFeedDialogState();
@@ -37,6 +40,12 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     super.initState();
     _urlController.addListener(_onUrlChanged);
     _nameController.addListener(() => setState(() {}));
+    final initialUrl = widget.initialUrl;
+    if (initialUrl != null) {
+      _urlController.text = initialUrl;
+      _onUrlChanged();
+      _applySuggestion();
+    }
     _urlFocusNode.addListener(
       () => setState(() => _urlFocused = _urlFocusNode.hasFocus),
     );

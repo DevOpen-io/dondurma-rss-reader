@@ -1197,6 +1197,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chooseFeed => 'Choose a feed';
 
   @override
+  String get noLinkInShare => 'The shared text has no link to follow.';
+
+  @override
   String get clearFilters => 'Show all articles';
 
   @override

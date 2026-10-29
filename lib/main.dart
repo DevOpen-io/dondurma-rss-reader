@@ -27,6 +27,7 @@ import 'services/background_fetch_service.dart';
 import 'services/desktop_window_service.dart';
 import 'services/feed_backoff.dart';
 import 'services/notification_service.dart';
+import 'services/shared_links.dart';
 import 'services/widget_update_service.dart';
 import 'models/feed_item.dart';
 import 'utils/app_toast.dart';
@@ -85,6 +86,9 @@ void main() async {
       debugPrint('Failed to navigate from notification tap: $e');
     }
   });
+
+  // Links shared from other apps (Android share sheet) → "Add feed".
+  if (PlatformCaps.isAndroid) unawaited(SharedLinks.listen());
 
   // Home screen widget tap → open the tapped article inside the app.
   if (PlatformCaps.supportsHomeWidget) {
