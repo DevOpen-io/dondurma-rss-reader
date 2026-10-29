@@ -565,6 +565,7 @@ class FeedProvider extends ChangeNotifier {
     final fullTextPrefsChanged = !mapEquals(_knownFullTextPrefs, nextFullText);
     _knownFullTextPrefs = nextFullText;
 
+    if (filterChanged) _keywordHidden = Expando<bool>();
     if (isFirstUpdate) {
       refreshAll();
       _manageCacheTimer();
@@ -1153,7 +1154,7 @@ class FeedProvider extends ChangeNotifier {
     );
     for (final item in _items) {
       if (_readState.isRead(item)) continue;
-      if (excluder.excludes(
+      if (_keywordHidden[item] ??= excluder.excludes(
         title: item.title,
         description: item.description,
         feedUrl: item.feedUrl,
@@ -1229,6 +1230,10 @@ class FeedProvider extends ChangeNotifier {
   // article rather than on every open and recount (#70).
   final _keys = Expando<Object>();
   Object _keyOf(FeedItem item) => _keys[item] ??= articleKey(item);
+
+  // Whether the keyword lists hide an item, per item object: the badges are
+  // recounted after every read change. Replaced when the lists change.
+  var _keywordHidden = Expando<bool>();
 
   /// The current view's copies per article, in list order; cached with the
   /// view.

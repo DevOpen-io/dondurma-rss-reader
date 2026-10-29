@@ -65,7 +65,8 @@ class _FlutterTtsEngine implements SpeechEngine {
           .timeout(
             _acceptTimeout,
             onTimeout: () {
-              // The parked call would speak if an engine bound later.
+              // A call parked behind an engine still binding runs before
+              // this stop, so a late bind does not start reading.
               if (current()) unawaited(_tts.stop());
               return 0;
             },

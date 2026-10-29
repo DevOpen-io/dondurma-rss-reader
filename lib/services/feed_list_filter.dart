@@ -126,8 +126,8 @@ class KeywordRule {
   /// would freeze the list on an unlucky title.
   static final _nestedQuantifier = RegExp(r'\([^()]*[+*}][^()]*\)[+*{]');
 
-  /// Only ASCII punctuation, like `//` or `/`: the links and markup in
-  /// summaries are full of it, so such a word would hide most articles.
+  /// Only ASCII punctuation, like `//` (an empty pattern) or `/`: never a
+  /// word a reader means, and it would match stray marks in summaries.
   static final _punctuationOnly = RegExp(r'^[!-/:-@\[-`{-~\s]+$');
 
   /// The compiled rule, or null for an empty, invalid or unsafe one — a

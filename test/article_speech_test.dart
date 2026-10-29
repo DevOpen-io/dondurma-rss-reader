@@ -191,6 +191,37 @@ void main() {
     expect(speech.stateFor(_item('a')), SpeechState.idle);
   });
 
+  testWidgets('a late answer to an earlier speak leaves the next one alone', (
+    tester,
+  ) async {
+    const channel = MethodChannel('flutter_tts');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    final calls = <String>[];
+    var speaks = 0;
+    messenger.setMockMethodCallHandler(channel, (call) {
+      calls.add(call.method);
+      // The first speak is parked; the engine accepts the ones after it.
+      if (call.method == 'speak' && speaks++ == 0) {
+        return Completer<Object?>().future;
+      }
+      return Future.value(1);
+    });
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final speech = ArticleSpeech();
+    await speech.play(_item('a'), '<p>One.</p>');
+    await speech.play(_item('b'), '<p>Other.</p>');
+    final afterSwitch = calls.length;
+    // The parked speak of the first article times out now.
+    await tester.pump(const Duration(seconds: 30));
+
+    expect(speech.stateFor(_item('b')), SpeechState.playing);
+    expect(calls.skip(afterSwitch), isNot(contains('stop')));
+  });
+
   test('controls are offered where an engine exists', () {
     for (final (platform, supported) in [
       (TargetPlatform.android, true),

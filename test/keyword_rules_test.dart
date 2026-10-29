@@ -63,8 +63,7 @@ void main() {
     expect(KeywordRule.tryParse('/(unclosed/'), isNull);
     expect(KeywordRule.tryParse('title:'), isNull);
     expect(KeywordRule.tryParse('   '), isNull);
-    // An empty pattern, or link punctuation that every URL in a summary
-    // carries, would hide most articles.
+    // An empty pattern, or bare punctuation that is never a word.
     for (final rule in ['//', '/', '://', 'title: //', '...']) {
       expect(KeywordRule.tryParse(rule), isNull, reason: rule);
     }
