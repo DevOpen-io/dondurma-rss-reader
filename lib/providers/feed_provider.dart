@@ -113,6 +113,14 @@ class FeedProvider extends ChangeNotifier {
   bool _refreshQueued = false;
   Completer<void>? _refreshWaiter;
 
+  /// Subscription URLs the running pass fetches; null until it reads the
+  /// list, so a change landing before that read rides along with it.
+  Set<String>? _passSubscriptionUrls;
+
+  /// Connectivity came back while a pass was running. Decided when the pass
+  /// settles: only a pass that still ended offline earns a retry.
+  bool _connectivityReturnedMidPass = false;
+
   /// True while the current/queued pass carries a user request — the
   /// completion toast only fires for user-initiated passes.
   bool _refreshIsUserInitiated = false;
@@ -438,9 +446,15 @@ class FeedProvider extends ChangeNotifier {
     _setUnmetered(results);
     if (!_isOffline) return;
     final hasNetwork = results.any((r) => r != ConnectivityResult.none);
-    // Connectivity appearing mid-sync genuinely changes the inputs — an
-    // in-flight pass that ran fully offline must be followed by a real one.
-    if (hasNetwork) refreshAll(queueIfRunning: true);
+    if (!hasNetwork) return;
+    // Connectivity appearing mid-sync — an in-flight pass that ran fully
+    // offline must be followed by a real one; [refreshAll] decides once the
+    // pass settles, so a pass that reached the network is not repeated.
+    if (_isSyncing) {
+      _connectivityReturnedMidPass = true;
+    } else {
+      refreshAll();
+    }
   }
 
   /// Called by the `ChangeNotifierProxyProvider3` whenever any upstream
@@ -557,10 +571,14 @@ class FeedProvider extends ChangeNotifier {
     }
 
     // If subscriptions were added/removed, kick off a fresh fetch. A running
-    // pass fetched the OLD set, so this is a real input change — it earns a
-    // trailing pass rather than just attaching to the current one.
+    // pass that fetched the OLD set earns a trailing pass; one that already
+    // read the new set (onboarding/Explore refresh right after adding) or
+    // has not read it yet covers the change, so this just attaches.
     if (subscriptionsChanged) {
-      refreshAll(queueIfRunning: true);
+      final fetching = _passSubscriptionUrls;
+      refreshAll(
+        queueIfRunning: fetching != null && !setEquals(fetching, currentUrls),
+      );
     }
   }
 
@@ -1145,9 +1163,10 @@ class FeedProvider extends ChangeNotifier {
   /// Calls arriving while a pass is already running normally *attach* to it —
   /// a manual click, a timer tick, or a resume asking for "a sync" is already
   /// served by the in-flight pass. Pass `queueIfRunning: true` only when the
-  /// caller knows the inputs changed (new subscription, regained
-  /// connectivity) so the in-flight pass is followed by one fresh pass —
-  /// never an unbounded queue.
+  /// caller knows the in-flight pass read stale inputs (a subscription set it
+  /// did not fetch) so it is followed by one fresh pass — never an unbounded
+  /// queue. Connectivity regained mid-pass earns that pass only when the
+  /// in-flight one still ended offline.
   /// [userInitiated] marks passes driven by an explicit user action (refresh
   /// button, pull-to-refresh). A user request arriving mid-pass attaches to
   /// the running pass — no duplicate pass — and still marks it so the
@@ -1177,8 +1196,10 @@ class FeedProvider extends ChangeNotifier {
     try {
       do {
         _refreshQueued = false;
+        _connectivityReturnedMidPass = false;
+        _passSubscriptionUrls = null;
         await _performRefresh();
-      } while (_refreshQueued);
+      } while (_refreshQueued || (_connectivityReturnedMidPass && _isOffline));
     } catch (error, stackTrace) {
       failure = error;
       failureStack = stackTrace;
@@ -1195,6 +1216,8 @@ class FeedProvider extends ChangeNotifier {
       // the provider would deadlock and never refresh again.
       _isSyncing = false;
       _refreshIsUserInitiated = false;
+      _passSubscriptionUrls = null;
+      _connectivityReturnedMidPass = false;
       final waiter = _refreshWaiter;
       _refreshWaiter = null;
       if (waiter != null && !waiter.isCompleted) {
@@ -1230,6 +1253,7 @@ class FeedProvider extends ChangeNotifier {
     final subscriptions = List<FeedSubscription>.of(
       subscriptionProvider!.subscriptions,
     );
+    _passSubscriptionUrls = {for (final s in subscriptions) s.url};
     final epochs = {for (final s in subscriptions) s.url: s.notificationEpoch};
     final refreshGeneration = ++_refreshGeneration;
     final freshByFeed = <String, List<FeedItem>>{};

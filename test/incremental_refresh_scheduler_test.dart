@@ -50,6 +50,9 @@ class _Request {
       ],
     ),
   );
+  void failOffline() => result.completeError(
+    FeedFetchException(FeedFetchErrorKind.connectivity, 'offline'),
+  );
 }
 
 class _ControlledFeeds extends FeedService {
@@ -83,6 +86,7 @@ void main() {
   late SettingsProvider settings;
   late BookmarkProvider bookmarks;
   late List<_BatchTimer> timers;
+  late MockStreamHandlerEventSink connectivity;
   var disposed = false;
 
   setUp(() async {
@@ -100,6 +104,10 @@ void main() {
     messenger.setMockMethodCallHandler(
       const MethodChannel('home_widget'),
       (_) async => true,
+    );
+    messenger.setMockStreamHandler(
+      const EventChannel('dev.fluttercommunity.plus/connectivity_status'),
+      MockStreamHandler.inline(onListen: (_, events) => connectivity = events),
     );
     await Hive.box('settings').put('syncBackground', false);
     await Hive.box('feeds').put(
@@ -149,6 +157,13 @@ void main() {
     expect(await requests.moveNext(), isTrue);
     return requests.current;
   }
+
+  /// Whether [pass] settles before the provider requests another feed — a
+  /// trailing pass would ask first. Ends the test's use of [next].
+  Future<bool> settlesAlone(Future<void> pass) => Future.any([
+    pass.then((_) => true),
+    requests.moveNext().then((_) => false),
+  ]);
 
   Future<void> settleFeed(_Request request, String id, int completed) async {
     final settled = Completer<void>();
@@ -457,4 +472,87 @@ void main() {
       expect(timers.every((t) => !t.isActive), isTrue);
     },
   );
+
+  const third = 'https://third.test/rss';
+
+  test(
+    'a subscription change the running pass already read adds no pass',
+    () async {
+      final startup = feed.refreshAll();
+      (await next()).complete('fast-0');
+      (await next()).complete('slow-0');
+      await startup;
+
+      // Onboarding and Explore add feeds, then refresh; the ProxyProvider
+      // update reporting the change lands after the pass read the list.
+      await subscriptions.addFeed(third, 'third', 'Test');
+      final pass = feed.refreshAll();
+      final fetches = [await next(), await next(), await next()];
+      expect(fetches.map((r) => r.url), contains(third));
+      feed.update(subscriptions, settings, bookmarks);
+      for (final r in fetches) {
+        r.complete('${r.url}-1');
+      }
+      expect(await settlesAlone(pass), isTrue);
+    },
+  );
+
+  test(
+    'a subscription added after the pass read the list earns a trailing pass',
+    () async {
+      final a = await next();
+      final b = await next();
+      await subscriptions.addFeed(third, 'third', 'Test');
+      feed.update(subscriptions, settings, bookmarks);
+      final settled = feed.refreshAll();
+      a.complete('fast-0');
+      b.complete('slow-0');
+      final trailing = [await next(), await next(), await next()];
+      expect(trailing.map((r) => r.url), contains(third));
+      for (final r in trailing) {
+        r.complete('${r.url}-1');
+      }
+      await settled;
+    },
+  );
+
+  group('connectivity returning mid-pass', () {
+    Future<void> failStartupOffline() async {
+      final startup = feed.refreshAll();
+      (await next()).failOffline();
+      (await next()).failOffline();
+      await startup;
+      expect(feed.isOffline, isTrue);
+    }
+
+    test('adds no pass when the running pass reaches the network', () async {
+      await failStartupOffline();
+      final pass = feed.refreshAll(userInitiated: true);
+      final a = await next();
+      final b = await next();
+      connectivity.success(['wifi']);
+      await pumpEventQueue();
+      a.complete('fast-1');
+      b.complete('slow-1');
+      expect(await settlesAlone(pass), isTrue);
+      expect(feed.isOffline, isFalse);
+    });
+
+    test('retries once when the running pass still ended offline', () async {
+      await failStartupOffline();
+      final pass = feed.refreshAll(userInitiated: true);
+      final a = await next();
+      final b = await next();
+      connectivity.success(['wifi']);
+      await pumpEventQueue();
+      a.failOffline();
+      b.failOffline();
+      final retry = [await next(), await next()];
+      for (final r in retry) {
+        r.complete('${r.url}-1');
+      }
+      await pass;
+      expect(feed.isOffline, isFalse);
+    });
+  });
 }
