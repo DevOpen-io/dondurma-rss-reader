@@ -528,6 +528,24 @@ class SubscriptionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The language [feedUrl] is read aloud in; null detects it.
+  String? speechLanguageFor(String feedUrl) {
+    for (final s in _subscriptions) {
+      if (s.url == feedUrl) return s.speechLanguage;
+    }
+    return null;
+  }
+
+  /// Sets the language [feedUrl] is read aloud in; null detects it per
+  /// article.
+  Future<void> setSpeechLanguage(String feedUrl, String? code) async {
+    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
+    if (index == -1) return;
+    _subscriptions[index] = _subscriptions[index].copyWithSpeechLanguage(code);
+    await _saveSubscriptions();
+    notifyListeners();
+  }
+
   /// Imports a list of [FeedSubscription]s, skipping any whose URL already
   /// exists. Returns the number of newly added feeds.
   Future<int> importFeeds(List<FeedSubscription> feeds) async {

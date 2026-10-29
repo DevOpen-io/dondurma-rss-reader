@@ -244,6 +244,24 @@
   "resumeReading": "Resume",
   "stopReading": "Stop reading",
   "readAloudFailed": "Couldn't read the article aloud.",
+  "readingLanguage": "Reading language",
+  "readingLanguageCurrent": "Reading language: {language}",
+  "@readingLanguageCurrent": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "readingLanguageAutomatic": "Automatic",
+  "readingLanguageDetected": "Detected: {language}",
+  "@readingLanguageDetected": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
   "openInExternalBrowser": "Open in External Browser",
   "back": "Back",
   "forward": "Forward",

@@ -178,6 +178,7 @@ FeedSubscription _subscription(Map<String, dynamic> json) {
     excludedKeywords: parsed.excludedKeywords,
     onlyKeywords: parsed.onlyKeywords,
     refreshIntervalMinutes: parsed.refreshIntervalMinutes,
+    speechLanguage: parsed.speechLanguage,
   );
 }
 

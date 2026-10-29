@@ -549,6 +549,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get readAloudFailed => 'Makale sesli okunamadı.';
 
   @override
+  String get readingLanguage => 'Okuma dili';
+
+  @override
+  String readingLanguageCurrent(String language) {
+    return 'Okuma dili: $language';
+  }
+
+  @override
+  String get readingLanguageAutomatic => 'Otomatik';
+
+  @override
+  String readingLanguageDetected(String language) {
+    return 'Algılanan: $language';
+  }
+
+  @override
   String get openInExternalBrowser => 'Harici Tarayıcıda Aç';
 
   @override
