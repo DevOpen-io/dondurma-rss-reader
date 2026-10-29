@@ -195,4 +195,19 @@ void main() {
     expect(feed.hasUnreadInView, isFalse);
     feed.dispose();
   });
+
+  test('passing a row already read still marks its hidden twin', () async {
+    const shared = 'https://outlet.test/story';
+    final feed = await load([
+      _item('x', feed: 'a', link: shared),
+      _item('x', category: 'World', feed: 'b', link: shared),
+    ]);
+    final shown = feed.filteredItems.single;
+    await feed.markAsRead(shown); // Opened, then scrolled past.
+
+    await feed.markItemsAsRead([shown]);
+
+    expect(feed.unreadCount(), 0);
+    feed.dispose();
+  });
 }

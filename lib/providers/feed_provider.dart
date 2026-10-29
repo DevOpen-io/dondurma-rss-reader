@@ -1075,8 +1075,9 @@ class FeedProvider extends ChangeNotifier {
     var marked = 0;
     final links = <String>{};
     for (final item in items) {
-      if (!_readState.mark(item, read: true)) continue;
-      marked++;
+      if (_readState.mark(item, read: true)) marked++;
+      // Also for a row already read: opening it left its hidden twin
+      // unread, and scrolling past it should catch that twin up.
       final link = usableArticleLink(item.link);
       if (link != null) links.add(link);
     }
