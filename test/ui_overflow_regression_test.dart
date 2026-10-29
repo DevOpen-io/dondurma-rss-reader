@@ -109,6 +109,9 @@ void main() {
     expect(find.text('Varsayılan'), findsOneWidget);
     expect(find.text('Açık'), findsOneWidget);
     expect(find.text('Kapalı'), findsOneWidget);
+    // The refresh interval row (#68) shares the width without overflow.
+    expect(find.text('Yenileme sıklığı'), findsOneWidget);
+    expect(find.text('Uygulamayla'), findsOneWidget);
   });
 
   testWidgets('add feed dialog header fits at 340px width, 1.4x scale, TR', (

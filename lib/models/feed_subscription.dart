@@ -15,6 +15,10 @@ class FeedSubscription {
   final List<String> excludedKeywords;
   final String notificationEpoch;
 
+  /// Minutes between automatic fetches of this feed; null follows the app's
+  /// refresh cycle (#68). A pull to refresh always fetches.
+  final int? refreshIntervalMinutes;
+
   FeedSubscription({
     required this.url,
     required this.name,
@@ -23,6 +27,7 @@ class FeedSubscription {
     this.fullTextEnabled,
     this.excludedKeywords = const [],
     String? notificationEpoch,
+    this.refreshIntervalMinutes,
   }) : notificationEpoch = notificationEpoch ?? _newNotificationEpoch();
 
   /// Serializes this subscription to a JSON-compatible map.
@@ -35,6 +40,8 @@ class FeedSubscription {
     if (fullTextEnabled != null) 'fullTextEnabled': fullTextEnabled,
     'excludedKeywords': excludedKeywords,
     'notificationEpoch': notificationEpoch,
+    if (refreshIntervalMinutes != null)
+      'refreshIntervalMinutes': refreshIntervalMinutes,
   };
 
   /// Schema marker written by every tri-state-aware save.
@@ -70,6 +77,10 @@ class FeedSubscription {
           const [],
       notificationEpoch:
           json['notificationEpoch'] as String? ?? _legacyNotificationEpoch,
+      refreshIntervalMinutes: switch (json['refreshIntervalMinutes']) {
+        final int minutes when minutes > 0 => minutes,
+        _ => null,
+      },
     );
   }
 
@@ -90,6 +101,7 @@ class FeedSubscription {
       fullTextEnabled: fullTextEnabled ?? this.fullTextEnabled,
       excludedKeywords: excludedKeywords ?? this.excludedKeywords,
       notificationEpoch: notificationEpoch ?? this.notificationEpoch,
+      refreshIntervalMinutes: refreshIntervalMinutes,
     );
   }
 
@@ -102,6 +114,21 @@ class FeedSubscription {
       fullTextEnabled: value,
       excludedKeywords: excludedKeywords,
       notificationEpoch: notificationEpoch,
+      refreshIntervalMinutes: refreshIntervalMinutes,
+    );
+  }
+
+  /// [minutes] null follows the app's refresh cycle.
+  FeedSubscription copyWithRefreshInterval(int? minutes) {
+    return FeedSubscription(
+      url: url,
+      name: name,
+      category: category,
+      notificationsEnabled: notificationsEnabled,
+      fullTextEnabled: fullTextEnabled,
+      excludedKeywords: excludedKeywords,
+      notificationEpoch: notificationEpoch,
+      refreshIntervalMinutes: minutes,
     );
   }
 

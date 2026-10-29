@@ -81,6 +81,7 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 - `feedValidators`: URL bazlı ETag/Last-Modified
 - `feedRedirects`: abonelik URL'sinden öğrenilen son URL'ye eşleme
 - `feedBackoffUntil`, `feedBackoffUntil.bg`: ön plan ve arka plan yazarlarının ayrı cooldown snapshot'ları
+- `feedFetchedAt`, `feedFetchedAt.bg`: feed başına son başarılı çekim zamanı (aynı yuva sözleşmesi); `FeedSubscription.refreshIntervalMinutes` dolu olan feed'ler otomatik geçişlerde süre dolana kadar atlanır, kullanıcı yenilemesi hepsini çeker (#68)
 - `cacheEpoch`: cache temizleme sırasında arka plan yazılarını sınırlar
 - `bgKnownItemIds`: yalnız eski sürüm migration kanıtı; aktif deduplication kaynağı değildir
 

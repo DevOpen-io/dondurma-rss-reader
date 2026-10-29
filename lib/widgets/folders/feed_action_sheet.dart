@@ -204,6 +204,63 @@ class FeedActionSheet extends StatelessWidget {
                       ],
                     ),
                   ),
+                  Divider(
+                    height: 1,
+                    indent: 16,
+                    color: cs.outline.withValues(alpha: 0.2),
+                  ),
+                  // How often automatic refreshes fetch this feed (#68).
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.schedule_outlined,
+                          size: 20,
+                          color: cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            l10n.refreshInterval,
+                            style: tt.bodyMedium,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        // Half the row at most: large text ellipsizes
+                        // the choice instead of overflowing.
+                        Flexible(
+                          child: DropdownButton<int?>(
+                            value: sub.refreshIntervalMinutes,
+                            isExpanded: true,
+                            underline: const SizedBox.shrink(),
+                            borderRadius: BorderRadius.circular(12),
+                            items: [
+                              for (final (minutes, label) in [
+                                (null, l10n.refreshIntervalDefault),
+                                (60, l10n.refreshEveryHour),
+                                (360, l10n.refreshEvery6Hours),
+                                (1440, l10n.refreshDaily),
+                              ])
+                                DropdownMenuItem(
+                                  value: minutes,
+                                  child: Text(
+                                    label,
+                                    style: tt.bodyMedium,
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged: (minutes) => context
+                                .read<SubscriptionProvider>()
+                                .setRefreshInterval(sub.url, minutes),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),

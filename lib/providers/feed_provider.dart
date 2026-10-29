@@ -20,6 +20,7 @@ import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
 import '../services/feed_discovery.dart';
 import '../services/feed_list_filter.dart';
+import '../services/feed_schedule.dart';
 import '../services/feed_refresh.dart';
 import '../services/article_preparation_service.dart';
 import '../services/article_media_store.dart';
@@ -401,6 +402,7 @@ class FeedProvider extends ChangeNotifier {
       feedService: _feedService,
       observedArticleStore: _observedArticleStore,
       backoff: _feedBackoff,
+      schedule: _feedSchedule,
       hostPacer: _hostPacer,
     );
     _initialization = _loadState();
@@ -751,14 +753,26 @@ class FeedProvider extends ChangeNotifier {
   /// concurrent isolates can't lose each other's cooldowns. Loading
   /// merges: later expiries win, newer clears suppress superseded
   /// records.
-  void _loadFeedBackoff() => _feedBackoff.loadSlots(_box);
+  void _loadFeedBackoff() {
+    _feedBackoff.loadSlots(_box);
+    _feedSchedule.loadSlots(_box);
+  }
 
   /// Merge-then-write into this isolate's own slot: a background sync may
   /// have recorded a fresher 429 while this isolate was fetching — folding
   /// its slot in before the snapshot means the write can't drop a newer
   /// deadline. The background slot is never written from here.
-  void _saveFeedBackoff() =>
-      _feedBackoff.saveSlot(_box, FeedBackoff.foregroundSlot);
+  void _saveFeedBackoff() {
+    _feedBackoff.saveSlot(_box, FeedBackoff.foregroundSlot);
+    _feedSchedule.saveSlot(
+      _box,
+      FeedSchedule.foregroundSlot,
+      subscriptionProvider?.subscriptions.map((s) => s.url) ?? const [],
+    );
+  }
+
+  /// Last fetch per feed (#68), persisted next to the cooldowns.
+  final _feedSchedule = FeedSchedule();
 
   /// Learned per-feed redirect map (`{ canonicalUrl: resolvedUrl }`). A 301'd
   /// feed keeps answering at its new location; fetching it directly skips a
@@ -1396,6 +1410,7 @@ class FeedProvider extends ChangeNotifier {
         bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
         redirects: _loadFeedRedirects(),
         ticket: ticket,
+        honorIntervals: !_refreshIsUserInitiated,
         // Observation survives cache eviction, but not a factory reset or
         // the removal/replacement of this subscription namespace.
         canObserve: (url, epoch) =>
@@ -1866,6 +1881,7 @@ class FeedProvider extends ChangeNotifier {
     // Rate-limit state belongs to the wiped era too — otherwise an async
     // save (prep sweep) could resurrect it into the new box.
     _feedBackoff.reset();
+    _feedSchedule.reset();
     _needsInitialReconcile = true; // the next era bootstraps owners again
     _knownSubscriptionUrls = const {};
     // Queued record writes enqueued before the reset must no-op — a delayed

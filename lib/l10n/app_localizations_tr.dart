@@ -742,6 +742,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get fullTextOff => 'Kapalı';
 
   @override
+  String get refreshInterval => 'Yenileme sıklığı';
+
+  @override
+  String get refreshIntervalDefault => 'Uygulamayla';
+
+  @override
+  String get refreshEveryHour => 'Saatte bir';
+
+  @override
+  String get refreshEvery6Hours => '6 saatte bir';
+
+  @override
+  String get refreshDaily => 'Günde bir';
+
+  @override
   String get searchHistory => 'Arama Geçmişi';
 
   @override

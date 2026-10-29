@@ -1420,6 +1420,36 @@ abstract class AppLocalizations {
   /// **'Off'**
   String get fullTextOff;
 
+  /// No description provided for @refreshInterval.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refreshInterval;
+
+  /// No description provided for @refreshIntervalDefault.
+  ///
+  /// In en, this message translates to:
+  /// **'With the app'**
+  String get refreshIntervalDefault;
+
+  /// No description provided for @refreshEveryHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Every hour'**
+  String get refreshEveryHour;
+
+  /// No description provided for @refreshEvery6Hours.
+  ///
+  /// In en, this message translates to:
+  /// **'Every 6 hours'**
+  String get refreshEvery6Hours;
+
+  /// No description provided for @refreshDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Once a day'**
+  String get refreshDaily;
+
   /// No description provided for @searchHistory.
   ///
   /// In en, this message translates to:

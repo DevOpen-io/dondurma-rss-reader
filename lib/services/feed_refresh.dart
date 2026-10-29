@@ -5,6 +5,7 @@ import '../models/feed_subscription.dart';
 import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
 import 'feed_backoff.dart';
+import 'feed_schedule.dart';
 import 'feed_cache_policy.dart';
 import 'feed_service.dart';
 import 'lifecycle_gate.dart';
@@ -72,16 +73,22 @@ class FeedRefresher {
     required FeedService feedService,
     required ObservedArticleStore observedArticleStore,
     FeedBackoff? backoff,
+    FeedSchedule? schedule,
     Duration hostGap = const Duration(milliseconds: 500),
     HostPacer? hostPacer,
   }) : _feedService = feedService,
        _observedArticleStore = observedArticleStore,
        backoff = backoff ?? FeedBackoff(),
+       schedule = schedule ?? FeedSchedule(),
        _hostPacer = hostPacer ?? HostPacer(minGap: hostGap);
 
   /// Shared rate-limit policy — the provider preloads persisted deadlines
   /// so cooldowns survive process/isolate boundaries.
   final FeedBackoff backoff;
+
+  /// Last fetch per feed, for per-feed refresh intervals; the provider
+  /// preloads and persists it like [backoff].
+  final FeedSchedule schedule;
 
   /// Several subscriptions on one host (e.g. multiple subreddits) must
   /// not fan out under the global concurrency cap — same-host fetches
@@ -104,6 +111,9 @@ class FeedRefresher {
     void Function(String feedUrl, List<FeedItem> items)? onFreshFeed,
     bool Function(String feedUrl, String observationEpoch)? canObserve,
     LifecycleTicket? ticket,
+    // Automatic passes leave a feed alone until its own interval is up; a
+    // user's refresh fetches everything.
+    bool honorIntervals = false,
   }) async {
     // Snapshot current items per feed so a 304 — or a transient error — reuses
     // the feed's existing articles instead of dropping them this cycle.
@@ -137,9 +147,11 @@ class FeedRefresher {
     // TCP resets on constrained devices.
     final semaphore = AsyncSemaphore(_fetchConcurrency);
     final futures = subscriptions.map((sub) async {
-      // A backed-off feed keeps its cached items and its last error without
-      // touching the network — same treatment as an unproven failure.
-      if (backoff.isBackedOff(sub.url, DateTime.now())) {
+      // A backed-off feed — or one whose own interval is not up — keeps its
+      // cached items and its last error without touching the network, the
+      // same treatment as an unproven failure.
+      if (backoff.isBackedOff(sub.url, DateTime.now()) ||
+          (honorIntervals && !schedule.isDue(sub, DateTime.now()))) {
         skipped++;
         completed++;
         emit();
@@ -221,6 +233,7 @@ class FeedRefresher {
             : result.items.map((i) => i.copyWith(feedUrl: sub.url)).toList();
         if (!result.notModified) onFreshFeed?.call(sub.url, canonicalItems);
         backoff.recordSuccess(sub.url);
+        schedule.recordFetch(sub.url, DateTime.now());
         succeeded++;
         completed++;
         inFlight--;

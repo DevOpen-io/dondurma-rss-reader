@@ -514,6 +514,18 @@ class SubscriptionProvider extends ChangeNotifier {
     }
   }
 
+  /// Sets how often automatic refreshes fetch a feed; null follows the
+  /// app's refresh cycle.
+  Future<void> setRefreshInterval(String feedUrl, int? minutes) async {
+    final index = _subscriptions.indexWhere((s) => s.url == feedUrl);
+    if (index == -1) return;
+    _subscriptions[index] = _subscriptions[index].copyWithRefreshInterval(
+      minutes,
+    );
+    await _saveSubscriptions();
+    notifyListeners();
+  }
+
   /// Imports a list of [FeedSubscription]s, skipping any whose URL already
   /// exists. Returns the number of newly added feeds.
   Future<int> importFeeds(List<FeedSubscription> feeds) async {

@@ -11,6 +11,7 @@ import '../models/feed_subscription.dart';
 import 'article_identity.dart';
 import 'article_preparation_service.dart';
 import 'feed_backoff.dart';
+import 'feed_schedule.dart';
 import 'article_record_store.dart';
 import 'temp_cache_membership.dart';
 import 'feed_cache_policy.dart';
@@ -172,6 +173,7 @@ Future<void> runBgFetch() async {
     // are honored here, and limits hit here are persisted back so the next
     // foreground pass does not re-hammer a rate-limited feed either.
     final backoff = FeedBackoff()..loadSlots(feedsBox);
+    final schedule = FeedSchedule()..loadSlots(feedsBox);
     final validators = <String, dynamic>{};
     try {
       final rawValidators = feedsBox.get('feedValidators');
@@ -191,9 +193,11 @@ Future<void> runBgFetch() async {
     final pacer = HostPacer();
     final results = await Future.wait(
       subscriptions.map((sub) async {
-        // A feed inside its cooldown keeps its durable articles — the merge
-        // only replaces feeds with an authoritative fresh response anyway.
-        if (backoff.isBackedOff(sub.url, DateTime.now())) {
+        // A feed inside its cooldown, or whose own refresh interval is not
+        // up (#68), keeps its durable articles — the merge only replaces
+        // feeds with an authoritative fresh response anyway.
+        if (backoff.isBackedOff(sub.url, DateTime.now()) ||
+            !schedule.isDue(sub, DateTime.now())) {
           return (
             subscription: sub,
             items: <FeedItem>[],
@@ -226,6 +230,7 @@ Future<void> runBgFetch() async {
             lastModified: v?['lastModified'] as String?,
           );
           backoff.recordSuccess(sub.url);
+          schedule.recordFetch(sub.url, DateTime.now());
           if (result.etag != null || result.lastModified != null) {
             validators[sub.url] = {
               'etag': result.etag,
@@ -266,6 +271,11 @@ Future<void> runBgFetch() async {
     await publish(() async {
       await feedsBox.put('feedValidators', jsonEncode(validators));
       await backoff.saveSlot(feedsBox, FeedBackoff.backgroundSlot);
+      await schedule.saveSlot(
+        feedsBox,
+        FeedSchedule.backgroundSlot,
+        subscriptions.map((s) => s.url),
+      );
     }).catchError((_) => false);
 
     final allItems = results.expand((result) => result.items).toList();
