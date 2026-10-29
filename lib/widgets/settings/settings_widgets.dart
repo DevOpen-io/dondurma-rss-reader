@@ -44,9 +44,9 @@ class SettingsCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(16),
         child: Material(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(
-            alpha: 0.35,
-          ),
+          // The same surface as the article cards: it carries the theme
+          // tone, which a translucent fill washed out.
+          color: theme.colorScheme.surfaceContainerLow,
           child: Column(mainAxisSize: MainAxisSize.min, children: children),
         ),
       ),
@@ -447,6 +447,7 @@ class SettingsIcon extends StatelessWidget {
   Widget build(BuildContext context) => Icon(
     icon,
     size: 22,
-    color: color ?? Theme.of(context).colorScheme.onSurfaceVariant,
+    // Plain icons in the theme color, no tile behind them.
+    color: color ?? Theme.of(context).colorScheme.primary,
   );
 }

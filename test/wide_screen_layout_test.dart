@@ -1,11 +1,12 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
 
+import 'package:ice_cream_rss_reader/widgets/home/add_category_dialog.dart';
+import 'package:ice_cream_rss_reader/widgets/home/add_destination.dart';
 import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
@@ -212,73 +213,47 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('adding a feed is a labeled button on the feed and folder '
-        'tabs, not a menu entry', (tester) async {
+    testWidgets('the middle of the bottom bar always adds: a folder on the '
+        'folder tab, a feed on every other tab', (tester) async {
       await tester.pumpWidget(wrapHome());
       await tester.pumpAndSettle();
 
-      expect(
-        find.widgetWithText(FloatingActionButton, 'Add feed'),
-        findsOneWidget,
-      );
+      Finder add(String label) => find.widgetWithText(AddDestination, label);
+      expect(add('Add feed'), findsOneWidget);
       await tester.tap(find.byTooltip('Show menu'));
       await tester.pumpAndSettle();
-      Finder menuItem(String label) => find.ancestor(
-        of: find.text(label),
-        matching: find.byWidgetPredicate((w) => w is PopupMenuItem),
+      expect(
+        find.ancestor(
+          of: find.text('Add new feed'),
+          matching: find.byWidgetPredicate((w) => w is PopupMenuItem),
+        ),
+        findsNothing,
       );
-      expect(menuItem('Add new feed'), findsNothing);
-      expect(menuItem('Mark All as Read'), findsOneWidget);
-      expect(find.byTooltip('Add Category'), findsNothing);
       await tester.tapAt(Offset.zero); // Dismiss the menu.
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Categories'));
-      await tester.pumpAndSettle();
-      expect(find.byTooltip('Add Category'), findsOneWidget);
-      expect(find.byTooltip('Show menu'), findsNothing);
-      await tester.tap(find.widgetWithText(FloatingActionButton, 'Add feed'));
+      await tester.tap(add('Add feed'));
       await tester.pumpAndSettle();
       expect(find.byType(AddFeedDialog), findsOneWidget);
       Navigator.of(tester.element(find.byType(AddFeedDialog))).pop();
       await tester.pumpAndSettle();
-
-      await tester.tap(find.text('Bookmarks'));
-      await tester.pumpAndSettle();
-      expect(find.byType(FloatingActionButton), findsNothing);
-    });
-
-    testWidgets('the add button folds while reading down and is labeled '
-        'again on another tab', (tester) async {
-      await tester.pumpWidget(wrapHome());
-      await tester.pumpAndSettle();
-      final body = tester.element(
-        find
-            .descendant(
-              of: find.byType(NotificationListener<UserScrollNotification>),
-              matching: find.byType(Column),
-            )
-            .first,
-      );
-      UserScrollNotification(
-        metrics: FixedScrollMetrics(
-          minScrollExtent: 0,
-          maxScrollExtent: 2000,
-          pixels: 400,
-          viewportDimension: 600,
-          axisDirection: AxisDirection.down,
-          devicePixelRatio: 1,
-        ),
-        context: body,
-        direction: ScrollDirection.reverse,
-      ).dispatch(body);
-      await tester.pumpAndSettle();
-      expect(find.text('Add feed'), findsNothing);
-      expect(find.byType(FloatingActionButton), findsOneWidget);
+      expect(find.text('My Feeds'), findsWidgets, reason: 'still on Feeds');
 
       await tester.tap(find.text('Categories'));
       await tester.pumpAndSettle();
-      expect(find.text('Add feed'), findsOneWidget);
+      expect(add('Add Category'), findsOneWidget);
+      expect(add('Add feed'), findsNothing);
+      await tester.tap(add('Add Category'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AddCategoryDialog), findsOneWidget);
+      Navigator.of(tester.element(find.byType(AddCategoryDialog))).pop();
+      await tester.pumpAndSettle();
+
+      for (final tab in ['Bookmarks', 'Settings']) {
+        await tester.tap(find.text(tab));
+        await tester.pumpAndSettle();
+        expect(add('Add feed'), findsOneWidget, reason: tab);
+      }
     });
 
     testWidgets('a link shared to the app opens add feed with it', (

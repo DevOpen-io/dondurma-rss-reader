@@ -153,6 +153,16 @@ class AppThemeBuilder {
   static const _lightBlend = 12;
   static const _darkBlend = 22;
 
+  /// Every color comes from tonal palettes of the scheme's own colors, so
+  /// text on a colored control is a deep or light tone of that color (never
+  /// plain black on amber) and surfaces carry its hue. The chroma tones keep
+  /// the brand color as vivid as the scheme defines it.
+  static const _keyColors = FlexKeyColors(
+    useKeyColors: true,
+    useSecondary: true,
+    useTertiary: true,
+  );
+
   /// Controls follow the theme color rather than the scheme's secondary, so
   /// a chosen color shows wherever something is selected or switched on.
   static const _subThemes = FlexSubThemesData(
@@ -183,6 +193,8 @@ class AppThemeBuilder {
     FlexColorScheme flex({Color? onPrimary}) => b == Brightness.light
         ? FlexColorScheme.light(
             scheme: scheme,
+            keyColors: _keyColors,
+            tones: FlexTones.chroma(Brightness.light),
             surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
             blendLevel: _lightBlend,
             subThemesData: _subThemes,
@@ -191,6 +203,8 @@ class AppThemeBuilder {
           )
         : FlexColorScheme.dark(
             scheme: scheme,
+            keyColors: _keyColors,
+            tones: FlexTones.chroma(Brightness.dark),
             surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
             blendLevel: _darkBlend,
             subThemesData: _subThemes,

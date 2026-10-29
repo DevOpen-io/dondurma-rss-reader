@@ -416,12 +416,14 @@ class _ArticleCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         described,
+        // A full logical pixel: half of one fell between device pixels on
+        // rows of fractional height and faded out on some of them.
         Divider(
           height: 1,
-          thickness: 0.5,
+          thickness: 1,
           indent: 16,
           endIndent: 16,
-          color: colorScheme.outlineVariant,
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
         ),
       ],
     );
