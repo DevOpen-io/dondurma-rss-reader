@@ -84,10 +84,27 @@ String? resolveSpeechTag(String code, List<String> offered) {
   return matches.first;
 }
 
-/// The languages of the engine's [offered] tags, one each, by native name.
-List<String> offeredLanguages(List<String> offered) =>
-    {for (final tag in offered) _primary(tag)}.toList()
-      ..sort((a, b) => languageName(a).compareTo(languageName(b)));
+/// The named languages of the engine's [offered] tags, one each: [first]
+/// in its order, then the rest by native name.
+List<String> offeredLanguages(
+  List<String> offered, {
+  List<String> first = const [],
+}) {
+  // Engines also list languages by bare code ("BRX"); nobody picks those.
+  final named = {
+    for (final tag in offered)
+      if (_nativeNames.containsKey(_primary(tag))) _primary(tag),
+  };
+  final lead = [
+    for (final code in first)
+      if (named.remove(code)) code,
+  ];
+  return [
+    ...lead,
+    ...named.toList()
+      ..sort((a, b) => languageName(a).compareTo(languageName(b))),
+  ];
+}
 
 /// Words common in one Latin-script language and rare in the others; words
 /// shared across them ("de", "a", "en", "que") are left out.

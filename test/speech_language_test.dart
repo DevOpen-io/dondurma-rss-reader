@@ -121,13 +121,19 @@ void main() {
   });
 
   group('offeredLanguages', () {
-    test('one entry per language, by native name', () {
-      expect(offeredLanguages(['tr-TR', 'en-US', 'en-GB', 'xx-YY', 'de']), [
-        'de',
-        'en',
-        'tr',
-        'xx',
-      ]);
+    test('one entry per named language, by native name; bare codes the '
+        'reader cannot recognize are left out', () {
+      expect(
+        offeredLanguages(['tr-TR', 'en-US', 'en-GB', 'xx-YY', 'brx-IN', 'de']),
+        ['de', 'en', 'tr'],
+      );
+    });
+
+    test('the given languages come first, in their order', () {
+      expect(
+        offeredLanguages(['de', 'en-US', 'tr-TR', 'fr'], first: ['tr', 'en']),
+        ['tr', 'en', 'de', 'fr'],
+      );
     });
   });
 

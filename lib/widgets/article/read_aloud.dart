@@ -179,7 +179,14 @@ Future<void> _pickLanguage(BuildContext context, FeedItem item) async {
   final chosen = speech.chosenLanguage;
   final codes = offered.isEmpty
       ? [..._commonLanguages]
-      : offeredLanguages(offered);
+      : offeredLanguages(
+          offered,
+          // The article's language and the app's lead the list.
+          first: [
+            ?speech.automaticLanguage,
+            Localizations.localeOf(context).languageCode,
+          ],
+        );
   if (chosen != null && !codes.contains(chosen)) codes.insert(0, chosen);
   await showAdaptiveSheet<void>(
     context,
