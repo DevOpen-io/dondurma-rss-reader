@@ -67,9 +67,11 @@ Iterable<FeedItem> applyFeedFilters({
 /// http(s) link when usable, otherwise the legacy global archive ID.
 /// Display instances use source-local fallback identities below.
 String dedupeKey({required String? link, required String id}) =>
-    _usableArticleLink(link) ?? id;
+    usableArticleLink(link) ?? id;
 
-String? _usableArticleLink(String? link) {
+/// The normalized absolute http(s) link that identifies an article across
+/// feeds, or null when [link] cannot.
+String? usableArticleLink(String? link) {
   var key = ArticleIdentity.normalizeArticleUrl(link);
   if (key != null) {
     final uri = Uri.tryParse(key);
@@ -87,7 +89,7 @@ String? _usableArticleLink(String? link) {
 Iterable<FeedItem> deduplicateByLink(Iterable<FeedItem> items) sync* {
   final seen = <Object>{};
   for (final item in items) {
-    final Object key = _usableArticleLink(item.link) ?? (item.feedUrl, item.id);
+    final Object key = usableArticleLink(item.link) ?? (item.feedUrl, item.id);
     if (seen.add(key)) yield item;
   }
 }

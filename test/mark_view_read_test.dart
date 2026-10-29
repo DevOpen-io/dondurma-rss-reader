@@ -13,6 +13,7 @@ FeedItem _item(
   String feed = 'a',
   DateTime? pubDate,
   bool undated = false,
+  String? link,
 }) => FeedItem(
   id: id,
   siteName: feed,
@@ -20,7 +21,7 @@ FeedItem _item(
   description: '',
   category: category,
   feedUrl: 'https://$feed.test/feed',
-  link: 'https://$feed.test/$id',
+  link: link ?? 'https://$feed.test/$id',
   pubDate: undated ? null : pubDate ?? DateTime.now(),
 );
 
@@ -126,10 +127,38 @@ void main() {
     final first = await load(items);
     await first.markItemsAsRead(first.unreadInView());
     first.dispose();
+    await first.idle;
+    await Hive.close();
+    for (final name in ['feeds', 'settings', 'bookmarks']) {
+      await Hive.openBox(name);
+    }
 
     final restarted = FeedProvider();
     await restarted.refreshAll();
     expect(unreadIds(restarted), isEmpty);
     restarted.dispose();
   });
+
+  test(
+    'copies of a link hidden by the cross-feed dedup are marked too',
+    () async {
+      const shared = 'https://outlet.test/story';
+      final feed = await load([
+        _item('x', feed: 'a', link: shared),
+        _item('x', category: 'World', feed: 'b', link: shared),
+        _item('other'),
+      ]);
+      expect(feed.unreadInView(), hasLength(2), reason: 'one copy is shown');
+      expect(feed.unreadCount(), 3);
+
+      await feed.markItemsAsRead(feed.unreadInView());
+
+      expect(feed.unreadCount(), 0);
+      expect(feed.unreadCount(category: 'World'), 0);
+      feed.applySheetFilter(readFilter: 'unread', categories: {});
+      expect(feed.unreadInView(), isEmpty, reason: 'no hidden copy resurfaces');
+      expect(feed.hasUnreadInView, isFalse);
+      feed.dispose();
+    },
+  );
 }

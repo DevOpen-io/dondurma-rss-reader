@@ -1045,13 +1045,30 @@ class FeedProvider extends ChangeNotifier {
         .toList();
   }
 
+  /// Whether the current view has an unread article — cheap enough for a
+  /// `select`, it stops at the first one.
+  bool get hasUnreadInView => _filteredItems.any((item) => !item.isRead);
+
   /// Marks [items] as read in one operation and returns how many changed.
   /// Callers pass the list they showed the user, so articles arriving in
-  /// the meantime are not marked unseen.
+  /// the meantime are not marked unseen. The list shows one copy of a link
+  /// that several feeds carry (`deduplicateByLink`); the other copies are
+  /// the same article and are marked too, so unread counts reach zero.
   Future<int> markItemsAsRead(Iterable<FeedItem> items) async {
     var marked = 0;
+    final links = <String>{};
     for (final item in items) {
       if (_readState.mark(item, read: true)) marked++;
+      final link = usableArticleLink(item.link);
+      if (link != null) links.add(link);
+    }
+    if (links.isNotEmpty) {
+      for (final copy in _items) {
+        if (links.contains(usableArticleLink(copy.link)) &&
+            _readState.mark(copy, read: true)) {
+          marked++;
+        }
+      }
     }
     if (marked == 0) return 0;
     _invalidateFilterCache();

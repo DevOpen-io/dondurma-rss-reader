@@ -225,7 +225,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                   active: provider.hasActiveSheetFilter,
                   desktop: true,
                 ),
-                if (!widget.bookmarks) const MarkAllReadButton(desktop: true),
+                if (!widget.bookmarks) const MarkAllReadButton(),
                 // Progress lives in a dedicated ValueNotifier so per-feed
                 // updates repaint this chip only — never the whole list.
                 ValueListenableBuilder<RefreshProgress>(

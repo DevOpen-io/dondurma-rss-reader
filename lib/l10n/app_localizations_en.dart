@@ -108,17 +108,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markReadOlderThanWeek => 'Older than a week';
 
   @override
-  String markReadConfirm(int count) {
-    String _temp0 = intl.Intl.pluralLogic(
-      count,
-      locale: localeName,
-      other: 'Mark $count articles as read?',
-      one: 'Mark 1 article as read?',
-    );
-    return '$_temp0';
-  }
-
-  @override
   String get markReadAction => 'Mark as read';
 
   @override

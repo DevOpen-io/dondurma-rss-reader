@@ -260,12 +260,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
         ),
         actions: [
-          if (_selectedIndex == 0 && !_isSearching)
-            IconButton(
-              icon: const Icon(Icons.add),
-              tooltip: l10n.semanticAddFeed,
-              onPressed: _showAddFeedDialog,
-            ),
           if (_selectedIndex == 1)
             IconButton(
               icon: const Icon(Icons.create_new_folder_outlined),
@@ -273,7 +267,6 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _showAddFolderDialog,
             ),
           if (_selectedIndex == 0) ...[
-            const MarkAllReadButton(),
             if (!_isSearching) FilterSheetButton(active: hasActiveFilter),
             if (_isSearching)
               IconButton(
@@ -300,6 +293,23 @@ class _HomeScreenState extends State<HomeScreen> {
                   });
                 },
               ),
+            PopupMenuButton<_FeedMenuAction>(
+              itemBuilder: (_) => [
+                PopupMenuItem(
+                  value: _FeedMenuAction.addFeed,
+                  child: Text(l10n.semanticAddFeed),
+                ),
+                PopupMenuItem(
+                  value: _FeedMenuAction.markRead,
+                  enabled: context.read<FeedProvider>().hasUnreadInView,
+                  child: Text(l10n.markAllAsRead),
+                ),
+              ],
+              onSelected: (action) => switch (action) {
+                _FeedMenuAction.addFeed => _showAddFeedDialog(),
+                _FeedMenuAction.markRead => showMarkReadDialog(context),
+              },
+            ),
           ],
           const SizedBox(width: 8),
         ],
@@ -452,6 +462,9 @@ class _HomeScreenState extends State<HomeScreen> {
 /// Everything the feed tab's list renders from [FeedProvider]. Rows select
 /// their own read/bookmark/offline state, so a notification that changes
 /// none of these (sync stamps, status reloads) leaves the list alone.
+/// Feed-tab overflow entries: adding a feed and marking the view read.
+enum _FeedMenuAction { addFeed, markRead }
+
 typedef _FeedTabInputs = ({
   FeedDateGroups groups,
   bool isLoading,

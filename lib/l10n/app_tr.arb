@@ -31,7 +31,6 @@
   "markReadAll": "Tüm makaleler",
   "markReadOlderThanDay": "1 günden eskiler",
   "markReadOlderThanWeek": "1 haftadan eskiler",
-  "markReadConfirm": "{count} makale okundu işaretlensin mi?",
   "markReadAction": "Okundu işaretle",
   "editFeed": "Kaynağı Düzenle",
   "feedName": "Kaynak Adı",

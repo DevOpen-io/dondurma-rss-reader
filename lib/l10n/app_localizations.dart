@@ -286,12 +286,6 @@ abstract class AppLocalizations {
   /// **'Older than a week'**
   String get markReadOlderThanWeek;
 
-  /// No description provided for @markReadConfirm.
-  ///
-  /// In en, this message translates to:
-  /// **'{count, plural, =1{Mark 1 article as read?} other{Mark {count} articles as read?}}'**
-  String markReadConfirm(int count);
-
   /// No description provided for @markReadAction.
   ///
   /// In en, this message translates to:

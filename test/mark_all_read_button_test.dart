@@ -74,15 +74,15 @@ void main() {
   }
 
   bool enabled(WidgetTester tester, String label) => tester
-      .widget<PopupMenuItem<Object?>>(
+      .widget<RadioListTile<Object?>>(
         find.ancestor(
           of: find.text(label),
-          matching: find.byWidgetPredicate((w) => w is PopupMenuItem),
+          matching: find.byWidgetPredicate((w) => w is RadioListTile),
         ),
       )
-      .enabled;
+      .enabled!;
 
-  testWidgets('older-than choice confirms its count and marks only those', (
+  testWidgets('older-than choice marks only the older articles', (
     tester,
   ) async {
     final feed = await pumpButton(tester);
@@ -92,10 +92,13 @@ void main() {
     expect(enabled(tester, 'All articles'), isTrue);
     expect(enabled(tester, 'Older than a day'), isTrue);
     expect(enabled(tester, 'Older than a week'), isFalse);
+    // Each choice shows how many articles it marks.
+    expect(find.text('2'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('0'), findsOneWidget);
 
     await tester.tap(find.text('Older than a day'));
-    await tester.pumpAndSettle();
-    expect(find.text('Mark 1 article as read?'), findsOneWidget);
+    await tester.pump();
     await tester.tap(find.text('Mark as read'));
     await tester.pumpAndSettle();
 
@@ -108,13 +111,22 @@ void main() {
 
     await tester.tap(find.byTooltip('Mark All as Read'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('All articles'));
-    await tester.pumpAndSettle();
-    expect(find.text('Mark 2 articles as read?'), findsOneWidget);
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
     expect(feed.unreadInView(), hasLength(2));
+    await tester.runAsync(() async => feed.dispose());
+  });
+
+  testWidgets('the button is disabled when nothing in view is unread', (
+    tester,
+  ) async {
+    final feed = await pumpButton(tester);
+    await tester.runAsync(() => feed.markItemsAsRead(feed.unreadInView()));
+    await tester.pump();
+
+    final button = tester.widget<IconButton>(find.byType(IconButton));
+    expect(button.onPressed, isNull);
     await tester.runAsync(() async => feed.dispose());
   });
 }

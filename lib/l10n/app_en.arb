@@ -48,14 +48,6 @@
   "markReadAll": "All articles",
   "markReadOlderThanDay": "Older than a day",
   "markReadOlderThanWeek": "Older than a week",
-  "markReadConfirm": "{count, plural, =1{Mark 1 article as read?} other{Mark {count} articles as read?}}",
-  "@markReadConfirm": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
   "markReadAction": "Mark as read",
   "editFeed": "Edit Feed",
   "feedName": "Feed Name",

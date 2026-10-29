@@ -215,13 +215,40 @@ void main() {
       await tester.pumpWidget(wrapHome());
       await tester.pumpAndSettle();
 
-      expect(find.byTooltip('Add new feed'), findsOneWidget);
+      // The feed tab keeps add feed and mark read in its overflow menu.
+      await tester.tap(find.byTooltip('Show menu'));
+      await tester.pumpAndSettle();
+      Finder menuItem(String label) => find.ancestor(
+        of: find.text(label),
+        matching: find.byWidgetPredicate((w) => w is PopupMenuItem),
+      );
+      expect(menuItem('Add new feed'), findsOneWidget);
+      expect(menuItem('Mark All as Read'), findsOneWidget);
       expect(find.byTooltip('Add Category'), findsNothing);
+      await tester.tapAt(Offset.zero); // Dismiss the menu.
+      await tester.pumpAndSettle();
 
       await tester.tap(find.text('Categories'));
       await tester.pumpAndSettle();
       expect(find.byTooltip('Add Category'), findsOneWidget);
-      expect(find.byTooltip('Add new feed'), findsNothing);
+      expect(find.byTooltip('Show menu'), findsNothing);
+    });
+
+    testWidgets('feed tab title fits a 360dp phone', (tester) async {
+      tester.view.physicalSize = const Size(360, 740);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+
+      // The test font draws every glyph 1em wide, so measure the room the
+      // actions leave: "My Feeds" in bold 20sp needs about 95dp.
+      final title = find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text('My Feeds'),
+      );
+      expect(tester.getSize(title).width, greaterThanOrEqualTo(110));
     });
 
     testWidgets('feed list body capped at 680dp at tablet size', (

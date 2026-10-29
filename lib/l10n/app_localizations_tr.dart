@@ -109,11 +109,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markReadOlderThanWeek => '1 haftadan eskiler';
 
   @override
-  String markReadConfirm(int count) {
-    return '$count makale okundu işaretlensin mi?';
-  }
-
-  @override
   String get markReadAction => 'Okundu işaretle';
 
   @override
