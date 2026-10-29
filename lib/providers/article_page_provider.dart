@@ -258,8 +258,9 @@ class ArticlePageProvider extends ChangeNotifier {
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
 
-    // Offline path: a prepared full-text copy renders instantly.
-    if (_savedBodyExtracted) {
+    // Offline path: a prepared full-text copy renders instantly — unless it
+    // is no more than the feed's excerpt; then the page is tried live.
+    if (_savedBodyExtracted && _addsToFeedBody(_savedBody!)) {
       _fullTextContent = _savedBody;
       _isLoadingFullText = false;
       notifyListeners();
@@ -269,12 +270,19 @@ class ArticlePageProvider extends ChangeNotifier {
     _isLoadingFullText = true;
     notifyListeners();
 
-    final result = await _extractionService.extractFullText(
+    var result = await _extractionService.extractFullText(
       item.link,
       forceRefresh: !automatic,
     );
 
     if (_disposed) return;
+
+    // A "full text" that only repeats the excerpt (headline + summary, a
+    // teaser page) is a failure, not a success showing the same text.
+    if (result != null && result.isNotEmpty && !_addsToFeedBody(result)) {
+      _extractionService.discard(item.link);
+      result = null;
+    }
 
     _isLoadingFullText = false;
     if (result != null && result.isNotEmpty) {
@@ -294,6 +302,27 @@ class ArticlePageProvider extends ChangeNotifier {
       }
     }
     notifyListeners();
+  }
+
+  /// Whether [html], as the reader would show it, gives more than the
+  /// feed's own body for this item.
+  bool _addsToFeedBody(String html) {
+    final current = item.content;
+    final feedBody = current != null && current.trim().isNotEmpty
+        ? current
+        : item.description;
+    return FullTextExtractionService.isMoreThanExcerpt(
+      _displayText(html),
+      _displayText(feedBody),
+    );
+  }
+
+  /// Visible text of [html] after the reader's own cleanup.
+  String _displayText(String html) {
+    final body = html_parser.parse(html).body;
+    if (body == null) return '';
+    _preprocessHtml(body);
+    return body.text;
   }
 
   void deactivateFullText() {
@@ -438,8 +467,10 @@ class ArticlePageProvider extends ChangeNotifier {
     caseSensitive: false,
   );
 
+  // `ad-` only at the start of a class word — inside one it is `head-`,
+  // `lead-` or ntv.com.tr's `inread-` story wrapper.
   static final _adClassPattern = RegExp(
-    r'(ad-|advert|sponsor|promo|native-ad|outbrain|taboola|'
+    r'((?<![a-z0-9])ad-|advert|sponsor|promo|native-ad|outbrain|taboola|'
     r'related-stories|rec-rail|story-rail|commerce|affiliate)',
     caseSensitive: false,
   );
@@ -456,10 +487,14 @@ class ArticlePageProvider extends ChangeNotifier {
   };
 
   void _removeAdContent(html_dom.Element parent) {
+    // A wrapper holding most of the story is never an ad, whatever its
+    // class lists (Future plc's `flw-article-sponsored-disclaimer`).
+    final storyText = FullTextExtractionService.paragraphTextLength(parent);
     for (final el in parent.querySelectorAll('*').toList()) {
       final cls = el.attributes['class'] ?? '';
       final id = el.attributes['id'] ?? '';
-      if (_adClassPattern.hasMatch(cls) || _adClassPattern.hasMatch(id)) {
+      if ((_adClassPattern.hasMatch(cls) || _adClassPattern.hasMatch(id)) &&
+          FullTextExtractionService.paragraphTextLength(el) * 2 <= storyText) {
         el.remove();
         continue;
       }

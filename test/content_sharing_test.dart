@@ -20,6 +20,10 @@ FeedItem _item(String feed, {String title = 'Same story'}) => FeedItem(
   content: '<p>Excerpt from $feed</p>',
 );
 
+/// Longer than the excerpt — an extraction that only repeats the RSS body
+/// is not saved as full text.
+final _fullText = '<p>Full text</p><p>${'Story paragraph. ' * 20}</p>';
+
 void main() {
   late Directory root;
   late ArticleRecordStore records;
@@ -41,7 +45,7 @@ void main() {
       client: MockClient((_) async => http.Response('', 404)),
       extractFullText: (_) async {
         extractions++;
-        return '<p>Full text</p>';
+        return _fullText;
       },
     );
   });
@@ -60,7 +64,7 @@ void main() {
 
     await prep.registerArticle(b, {'bookmark'});
     final copy = (await records.read(ArticleRef.of(b)))!;
-    expect(copy.body, '<p>Full text</p>');
+    expect(copy.body, _fullText);
     expect(copy.bodyState, MediaState.ready);
     expect(copy.bodySource, 'extracted');
     expect(copy.feedUrl, b.feedUrl);
@@ -72,7 +76,7 @@ void main() {
       ArticleRef.of(a),
       (current) => current!.copyWith(body: () => '<p>Edited</p>'),
     );
-    expect((await records.read(ArticleRef.of(b)))!.body, '<p>Full text</p>');
+    expect((await records.read(ArticleRef.of(b)))!.body, _fullText);
   });
 
   test('without matching title the instances stay fully independent', () async {

@@ -1,4 +1,7 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
@@ -14,7 +17,7 @@ void main() {
 
   late HttpServer server;
   final counts = <String, int>{};
-  final handlers = <String, void Function(HttpRequest)>{};
+  final handlers = <String, FutureOr<void> Function(HttpRequest)>{};
 
   String url(String path) =>
       'http://${server.address.host}:${server.port}$path';
@@ -35,7 +38,7 @@ void main() {
       counts.update(request.uri.path, (v) => v + 1, ifAbsent: () => 1);
       final handler = handlers[request.uri.path];
       if (handler != null) {
-        handler(request);
+        await handler(request);
       } else {
         request.response.statusCode = HttpStatus.notFound;
       }
@@ -433,5 +436,110 @@ void main() {
       html,
     );
     expect(counts['/article'], 1);
+  });
+
+  group('real-page structures', () {
+    Uint8List fixture(String name) =>
+        File('test/fixtures/full_text/$name').readAsBytesSync();
+
+    test('layout classes around the story do not discard it', () {
+      // `globalheader-dark`, `no-sidebar`, `ContainerWithSidebarWrapper`
+      // describe the layout; matching them as boilerplate removed the
+      // whole document or the wrapper holding <main>.
+      final html = FullTextExtractionService.extractArticleHtml(
+        fixture('layout_classes_on_body.html'),
+      );
+      expect(html, isNotNull);
+      expect(html, contains('first pass that catches the mechanical issues'));
+      expect(html, isNot(contains('Popular this week')));
+    });
+
+    test('a headline-only <article> loses to the story body beside it', () {
+      // gzt.com: the <article> holds the headline and the feed's summary
+      // line; taking it returned exactly the feed excerpt.
+      final html = FullTextExtractionService.extractArticleHtml(
+        fixture('gzt_header_article.html'),
+      );
+      expect(html, contains('double-double yapan Nene'));
+      expect(html, contains('İsmail Kartal döneminde'));
+    });
+  });
+
+  group('Google News article links', () {
+    // news.google.com/rss/articles/... answers with a JS redirect stub;
+    // the publisher URL comes from Google's batchexecute endpoint.
+    String stub(String id) =>
+        '<html><body><c-wiz><div jscontroller="aLI87" data-n-a-id="$id" '
+        'data-n-a-ts="1793308169" data-n-a-sg="AdwtSYNLf5MZ"></div>'
+        '</c-wiz></body></html>';
+    final story =
+        '<html><body><article>'
+        '<p>${'The publisher story paragraph with real reporting. ' * 12}</p>'
+        '<p>${'A second paragraph only the full article carries. ' * 12}</p>'
+        '</article></body></html>';
+    const batchPath = '/_/DotsSplashUi/data/batchexecute';
+
+    test('resolves the publisher page and extracts it', () async {
+      String? batchBody;
+      handlers['/rss/articles/CBMiAbc'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(stub('CBMiAbc'));
+      };
+      handlers[batchPath] = (request) async {
+        batchBody = await utf8.decodeStream(request);
+        request.response.write(
+          ")]}'\n\n"
+          '[["wrb.fr","Fbv4je","[\\"garturlres\\",\\"${url('/story')}\\",1]",'
+          'null,null,null,"generic"]]',
+        );
+      };
+      handlers['/story'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(story);
+      };
+
+      final html = await FullTextExtractionService.instance.extractFullText(
+        url('/rss/articles/CBMiAbc?oc=5'),
+      );
+
+      expect(html, contains('only the full article carries'));
+      expect(
+        Uri.splitQueryString(batchBody!)['f.req'],
+        allOf(
+          contains('CBMiAbc'),
+          contains('1793308169'),
+          contains('AdwtSYNLf5MZ'),
+        ),
+      );
+      expect(counts['/story'], 1);
+    });
+
+    test('an unresolvable link fails honestly and a retry refetches', () async {
+      handlers['/rss/articles/CBMiDead'] = (request) {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(stub('CBMiDead'));
+      };
+      handlers[batchPath] = (request) {
+        request.response.statusCode = HttpStatus.badRequest;
+      };
+      final target = url('/rss/articles/CBMiDead');
+
+      expect(
+        await FullTextExtractionService.instance.extractFullText(target),
+        isNull,
+      );
+      expect(
+        FullTextExtractionService.instance.hasFailedAttempt(target),
+        isTrue,
+      );
+      expect(
+        await FullTextExtractionService.instance.extractFullText(
+          target,
+          forceRefresh: true,
+        ),
+        isNull,
+      );
+      expect(counts['/rss/articles/CBMiDead'], 2);
+    });
   });
 }

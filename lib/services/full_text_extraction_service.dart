@@ -204,6 +204,11 @@ class FullTextExtractionService {
     if (forceRefresh ? _inServerCooldown(url) : hasFailedAttempt(url)) {
       return true;
     }
+    return _hostBlocked(url, forceRefresh);
+  }
+
+  /// The shared host-level rate-limit part of [_blocked].
+  bool _hostBlocked(String url, bool forceRefresh) {
     final b = backoff;
     if (b == null) return false;
     final now = DateTime.now();
@@ -247,24 +252,32 @@ class FullTextExtractionService {
         return null;
       }
       _deferredUrls.remove(url);
-      // The body streams with a cap, so a runaway page is dropped instead
-      // of buffered whole.
       final client = http.Client();
-      final (http.StreamedResponse, Uint8List?) fetched;
+      // The URL whose host answered — the publisher page for a resolved
+      // Google News link, so host-wide rate limits land on that host.
+      var fetchedUrl = url;
+      (http.StreamedResponse, Uint8List?) fetched;
       try {
-        fetched = await sendBounded(
-          client,
-          http.Request('GET', Uri.parse(url))
-            ..headers.addAll({
-              'User-Agent': _userAgent,
-              'Accept':
-                  'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-              'Accept-Language': 'en-US,en;q=0.9',
-            }),
-          maxBytes: maxPageBytes,
-          accept: (response) => response.statusCode == 200,
-          timeout: const Duration(seconds: 15),
-        );
+        fetched = await _fetchPage(client, url);
+        // Google News article links answer with a JS redirect stub; the
+        // publisher URL has to be asked from Google before extracting.
+        final stub = fetched.$2;
+        if (fetched.$1.statusCode == 200 &&
+            stub != null &&
+            _googleNewsArticlePath.hasMatch(Uri.parse(url).path)) {
+          final target = await _resolveGoogleNews(client, url, stub);
+          if (target == null) {
+            _recordFailure(url, DateTime.now().add(transientFailureTtl));
+            return null;
+          }
+          await pacer.pace(target);
+          if (_hostBlocked(target, forceRefresh)) {
+            _markDeferred(url);
+            return null;
+          }
+          fetchedUrl = target;
+          fetched = await _fetchPage(client, target);
+        }
       } finally {
         client.close();
       }
@@ -297,7 +310,7 @@ class FullTextExtractionService {
             response.statusCode == 503 ||
             retryAfter != null) {
           backoff?.recordFailure(
-            url,
+            fetchedUrl,
             FeedFetchException(
               FeedFetchErrorKind.httpStatus,
               'Full-text fetch failed (Status: ${response.statusCode})',
@@ -334,6 +347,124 @@ class FullTextExtractionService {
     }
   }
 
+  /// Drops [url]'s extraction result when the caller found it no better
+  /// than the feed's own excerpt: it is not served from the cache again and
+  /// automatic attempts stop for the session. An explicit retry
+  /// ([extractFullText] with `forceRefresh`) still fetches the page anew.
+  void discard(String url) {
+    _cache.remove(url);
+    _recordFailure(url, _permanentDeadline);
+  }
+
+  static final _whitespace = RegExp(r'\s+');
+
+  /// Visible text of [html], whitespace collapsed.
+  static String plainText(String html) =>
+      (parse(html).body?.text ?? '').replaceAll(_whitespace, ' ').trim();
+
+  /// Whether [fullText] gives the reader meaningfully more than
+  /// [excerptText] (both plain text). A page that only yields its headline,
+  /// the feed's own summary and a dateline is not a full article.
+  static bool isMoreThanExcerpt(String fullText, String excerptText) {
+    final full = fullText.replaceAll(_whitespace, ' ').trim().length;
+    final excerpt = excerptText.replaceAll(_whitespace, ' ').trim().length;
+    if (excerpt == 0) return full > 0;
+    return full >= excerpt * 1.2 + 200;
+  }
+
+  /// GETs [url] with browser headers. The body streams with a cap, so a
+  /// runaway page is dropped instead of buffered whole; it is only read
+  /// for a 200.
+  Future<(http.StreamedResponse, Uint8List?)> _fetchPage(
+    http.Client client,
+    String url,
+  ) => sendBounded(
+    client,
+    http.Request('GET', Uri.parse(url))
+      ..headers.addAll({
+        'User-Agent': _userAgent,
+        'Accept':
+            'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+      }),
+    maxBytes: maxPageBytes,
+    accept: (response) => response.statusCode == 200,
+    timeout: const Duration(seconds: 15),
+  );
+
+  /// `news.google.com/rss/articles/<id>` (and `/articles/<id>`).
+  static final _googleNewsArticlePath = RegExp(r'^/(rss/)?articles/');
+
+  static String? _dataAttr(String page, String name) =>
+      RegExp('$name="([^"]+)"').firstMatch(page)?.group(1);
+
+  /// Asks Google's own decoding endpoint for the publisher URL behind a
+  /// Google News article [url], using the id/timestamp/signature its
+  /// redirect [stub] page carries. Null when any step fails.
+  Future<String?> _resolveGoogleNews(
+    http.Client client,
+    String url,
+    Uint8List stub,
+  ) async {
+    final page = utf8.decode(stub, allowMalformed: true);
+    final id = _dataAttr(page, 'data-n-a-id');
+    final ts = int.tryParse(_dataAttr(page, 'data-n-a-ts') ?? '');
+    final sg = _dataAttr(page, 'data-n-a-sg');
+    if (id == null || ts == null || sg == null) return null;
+    final payload = jsonEncode([
+      'garturlreq',
+      // Fixed client context the endpoint expects, as Google's own page
+      // sends it.
+      [
+        [
+          'X', 'X', ['X', 'X'], null, null, 1, 1, 'US:en', null, 1, //
+          null, null, null, null, null, 0, 1,
+        ],
+        'X', 'X', 1, [1, 1, 1], 1, 1, null, 0, 0, null, 0, //
+      ],
+      id,
+      ts,
+      sg,
+    ]);
+    final response = await client
+        .post(
+          Uri.parse(url).resolve('/_/DotsSplashUi/data/batchexecute'),
+          headers: {
+            'User-Agent': _userAgent,
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8',
+          },
+          body: {
+            'f.req': jsonEncode([
+              [
+                ['Fbv4je', payload, null, 'generic'],
+              ],
+            ]),
+          },
+        )
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode != 200) return null;
+    // `)]}'` guard line, then one JSON envelope per line.
+    for (final line in const LineSplitter().convert(response.body)) {
+      if (!line.startsWith('[')) continue;
+      try {
+        for (final entry in jsonDecode(line) as List) {
+          if (entry is! List || entry.length < 3 || entry[0] != 'wrb.fr') {
+            continue;
+          }
+          final inner = jsonDecode(entry[2] as String) as List;
+          final target = Uri.tryParse(inner[1] as String);
+          if (inner[0] == 'garturlres' &&
+              target != null &&
+              (target.isScheme('http') || target.isScheme('https')) &&
+              !_googleNewsArticlePath.hasMatch(target.path)) {
+            return target.toString();
+          }
+        }
+      } catch (_) {}
+    }
+    return null;
+  }
+
   /// Decodes [bodyBytes] and runs the full extraction pipeline, returning the
   /// inner HTML of the best content block or `null` when none qualifies.
   ///
@@ -346,27 +477,7 @@ class FullTextExtractionService {
     // 1. Remove obviously non-content elements
     _removeBoilerplate(document);
 
-    // 2. Try <article> first — many modern sites wrap content in <article>
-    final articles = document.getElementsByTagName('article');
-    if (articles.isNotEmpty) {
-      final best = _pickBestCandidate(articles);
-      if (best != null) {
-        final html = _extractInnerHtml(best);
-        if (html.isNotEmpty) return html;
-      }
-    }
-
-    // 3. Try <main>
-    final mains = document.getElementsByTagName('main');
-    if (mains.isNotEmpty) {
-      final best = _pickBestCandidate(mains);
-      if (best != null) {
-        final html = _extractInnerHtml(best);
-        if (html.isNotEmpty) return html;
-      }
-    }
-
-    // 4. Fall back to heuristic scoring across all block elements
+    // 2. Heuristic scoring across all block elements
     final body = document.body;
     if (body == null) return null;
 
@@ -374,8 +485,6 @@ class FullTextExtractionService {
     for (final tag in ['div', 'section']) {
       candidates.addAll(body.getElementsByTagName(tag));
     }
-
-    if (candidates.isEmpty) return null;
 
     Element? bestCandidate;
     double bestScore = 0;
@@ -387,11 +496,38 @@ class FullTextExtractionService {
         bestCandidate = el;
       }
     }
+    final block = bestScore < 20 ? null : bestCandidate;
 
-    if (bestCandidate == null || bestScore < 20) return null;
+    // 3. Prefer <article>, then <main> — many modern sites wrap content in
+    // them — unless that element is only the headline block and the story
+    // paragraphs sit beside it (gzt.com): a single-article block with far
+    // more paragraph text wins then.
+    for (final tag in ['article', 'main']) {
+      final best = _pickBestCandidate(document.getElementsByTagName(tag));
+      if (best == null) continue;
+      if (block != null &&
+          block.getElementsByTagName('article').length <= 1 &&
+          paragraphTextLength(block) > 2 * paragraphTextLength(best)) {
+        break;
+      }
+      final html = _extractInnerHtml(best);
+      if (html.isNotEmpty) return html;
+    }
 
-    final result = _extractInnerHtml(bestCandidate);
+    if (block == null) return null;
+    final result = _extractInnerHtml(block);
     return result.isNotEmpty ? result : null;
+  }
+
+  /// Text length of [el]'s substantial paragraphs — the story itself, as
+  /// opposed to headlines, bylines and link lists.
+  static int paragraphTextLength(Element el) {
+    var length = 0;
+    for (final p in el.getElementsByTagName('p')) {
+      final text = p.text.trim();
+      if (text.length > 25) length += text.length;
+    }
+    return length;
   }
 
   // ---------------------------------------------------------------------------
@@ -430,12 +566,21 @@ class FullTextExtractionService {
       }
     }
 
-    // Remove elements whose class or id strongly suggest non-content
+    // Remove elements whose class or id strongly suggest non-content.
+    // Root and wrapper classes often describe the layout instead
+    // (`no-sidebar`, bbc.co.uk's `ContainerWithSidebarWrapper`, Valnet's
+    // `<article class="widget">`), so <html>/<body> and any element holding
+    // most of the page's paragraph text are kept.
+    final storyText = document.body == null
+        ? 0
+        : paragraphTextLength(document.body!);
     for (final el in document.querySelectorAll('*').toList()) {
+      if (el.localName == 'html' || el.localName == 'body') continue;
       final classAttr = el.attributes['class'] ?? '';
       final idAttr = el.attributes['id'] ?? '';
-      if (_nonContentClassPattern.hasMatch(classAttr) ||
-          _nonContentClassPattern.hasMatch(idAttr)) {
+      if ((_nonContentClassPattern.hasMatch(classAttr) ||
+              _nonContentClassPattern.hasMatch(idAttr)) &&
+          paragraphTextLength(el) * 2 <= storyText) {
         el.remove();
       }
     }
