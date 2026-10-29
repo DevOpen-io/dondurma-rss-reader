@@ -13,6 +13,7 @@ import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
 import 'package:ice_cream_rss_reader/screens/categories_screen.dart';
 import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
@@ -105,6 +106,8 @@ void main() {
       ChangeNotifierProvider<SubscriptionProvider>.value(value: subs),
       ChangeNotifierProvider<FeedProvider>(create: (_) => _SpyFeedProvider()),
       ChangeNotifierProvider(create: (_) => BookmarkProvider()),
+      // The sidebar lists saved searches from the settings.
+      ChangeNotifierProvider(create: (_) => SettingsProvider()),
     ],
     child: MaterialApp.router(
       locale: const Locale('en'),

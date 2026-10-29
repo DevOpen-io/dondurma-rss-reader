@@ -66,7 +66,7 @@ Bu tablodaki yollar depo köküne göredir.
 
 ### `settings`
 
-`flexScheme`, `themeMode`, `locale`, `offlineCacheLimit`, `cacheIntervalSeconds`, `syncBackground`, `notificationsEnabled`, `digestMode`, `quietHoursEnabled`, `quietHoursStart`, `quietHoursEnd`, `appFont`, `fontSize`, `typeface`, `lineSpacing`, `globalExcludedKeywords`, `globalReadKeywords`, `searchHistory`, `adBlockEnabled`, `webviewDarkModeEnabled`, `browserMode`, `autoFullText`, `markReadOnScroll`, `articleListStyle`, `hasSeenOnboarding`, `_boxesMigrated`.
+`flexScheme`, `themeMode`, `locale`, `offlineCacheLimit`, `cacheIntervalSeconds`, `syncBackground`, `notificationsEnabled`, `digestMode`, `quietHoursEnabled`, `quietHoursStart`, `quietHoursEnd`, `appFont`, `fontSize`, `typeface`, `lineSpacing`, `globalExcludedKeywords`, `globalReadKeywords`, `searchHistory`, `savedSearches`, `adBlockEnabled`, `webviewDarkModeEnabled`, `browserMode`, `autoFullText`, `markReadOnScroll`, `articleListStyle`, `hasSeenOnboarding`, `_boxesMigrated`.
 
 Yazı tipleri `assets/fonts` altında paketlidir (OFL lisansları lisans sayfasına `registerFontLicenses()` ile eklenir); ağdan font indirilmez. `appFont` (`outfit` varsayılan, `atkinson`, `lexend`, `literata`, `system`) arayüz temasını, `typeface` makale gövdesini belirler: `system` uygulama fontunu izler, eski `serif`/`sans-serif` değerleri Literata/Atkinson'a, `mono` platform eş aralıklı fontuna eşlenir.
 
@@ -87,7 +87,7 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 
 ### `bookmarks`
 
-`bookmarkedItemsJson` tam öğeleri; `bookmarkedItemIds` hızlı üyelik kontrolünü tutar.
+`bookmarkedItemsJson` tam öğeleri; `bookmarkedItemIds` hızlı üyelik kontrolünü tutar. `bookmarkTags` yer imi başına etiketleri `(feedUrl, id)` ile tutar; yer imi kalkınca etiketleri de silinir (#71).
 
 Yeni kalıcı alanlarda eski kayıtlar için fallback zorunlu. `FeedSubscription.fullTextEnabled` tri-state: `null` global ayarı izler, `true` zorla açar, `false` zorla kapatır. `fullTextSchema: 2` eski `false` kayıtlarını ayırır.
 

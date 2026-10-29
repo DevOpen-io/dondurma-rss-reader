@@ -13,6 +13,9 @@ import '../utils/platform_caps.dart';
 /// Settings include: theme, locale, offline cache, background sync, notification
 /// preferences (master toggle, digest mode, quiet hours), display/readability
 /// options (font size, typeface, line spacing), and content filtering keywords.
+/// A search kept under a name (#71).
+typedef SavedSearch = ({String name, String query});
+
 class SettingsProvider extends ChangeNotifier {
   FlexScheme _flexScheme = FlexScheme.material;
   ThemeMode _themeMode = ThemeMode.system;
@@ -40,6 +43,7 @@ class SettingsProvider extends ChangeNotifier {
 
   // Search History
   List<String> _searchHistory = [];
+  List<SavedSearch> _savedSearches = [];
 
   // Ad Blocker
   bool _adBlockEnabled = true;
@@ -96,6 +100,9 @@ class SettingsProvider extends ChangeNotifier {
   List<String> get globalReadKeywords => _globalReadKeywords;
 
   List<String> get searchHistory => _searchHistory;
+
+  /// Searches kept under a name, shown in the drawer and sidebar (#71).
+  List<SavedSearch> get savedSearches => _savedSearches;
 
   bool get adBlockEnabled => _adBlockEnabled;
 
@@ -200,6 +207,8 @@ class SettingsProvider extends ChangeNotifier {
             .toList() ??
         [];
 
+    _savedSearches = _decodeSavedSearches(_box.get('savedSearches'));
+
     // Ad Blocker
     _adBlockEnabled = _box.get('adBlockEnabled', defaultValue: true);
 
@@ -264,6 +273,8 @@ class SettingsProvider extends ChangeNotifier {
     'globalExcludedKeywords': _isStringList,
     'globalReadKeywords': _isStringList,
     'searchHistory': _isStringList,
+    'savedSearches': (v) =>
+        v is List && _decodeSavedSearches(v).length == v.length,
     'adBlockEnabled': _isBool,
     'webviewDarkModeEnabled': _isBool,
     'browserMode': _oneOf(const ['builtin', 'external', 'system']),
@@ -295,6 +306,7 @@ class SettingsProvider extends ChangeNotifier {
     'globalExcludedKeywords': _globalExcludedKeywords,
     'globalReadKeywords': _globalReadKeywords,
     'searchHistory': _searchHistory,
+    'savedSearches': _encodeSavedSearches(_savedSearches),
     'adBlockEnabled': _adBlockEnabled,
     'webviewDarkModeEnabled': _webviewDarkModeEnabled,
     'browserMode': _browserMode,
@@ -319,6 +331,9 @@ class SettingsProvider extends ChangeNotifier {
         continue;
       }
       await _box.put(key, switch (value) {
+        final List list when key == 'savedSearches' => _encodeSavedSearches(
+          _decodeSavedSearches(list),
+        ),
         final List list => list.cast<String>().toList(),
         // JSON has no float type: a whole-number spacing decodes as int.
         final int number when key == 'lineSpacing' => number.toDouble(),
@@ -496,6 +511,45 @@ class SettingsProvider extends ChangeNotifier {
     if (style != 'cards' && style != 'list') return;
     _articleListStyle = style;
     await _store('articleListStyle', style);
+  }
+
+  static List<SavedSearch> _decodeSavedSearches(Object? raw) => [
+    if (raw is List)
+      for (final entry in raw)
+        if (entry case {
+          'name': final String name,
+          'query': final String query,
+        } when name.trim().isNotEmpty && query.trim().isNotEmpty)
+          (name: name, query: query),
+  ];
+
+  static List<Map<String, String>> _encodeSavedSearches(
+    List<SavedSearch> searches,
+  ) => [
+    for (final s in searches) {'name': s.name, 'query': s.query},
+  ];
+
+  /// Keeps [query] under [name]; saving the same query again renames it.
+  Future<void> saveSearch(String name, String query) {
+    final q = query.trim();
+    final n = name.trim().isEmpty ? q : name.trim();
+    if (q.isEmpty) return Future.value();
+    final index = _savedSearches.indexWhere((s) => s.query == q);
+    _savedSearches = [..._savedSearches];
+    if (index >= 0) {
+      _savedSearches[index] = (name: n, query: q);
+    } else {
+      _savedSearches.add((name: n, query: q));
+    }
+    return _store('savedSearches', _encodeSavedSearches(_savedSearches));
+  }
+
+  Future<void> removeSavedSearch(String query) {
+    _savedSearches = [
+      for (final s in _savedSearches)
+        if (s.query != query) s,
+    ];
+    return _store('savedSearches', _encodeSavedSearches(_savedSearches));
   }
 
   /// Adds a search query to the history.

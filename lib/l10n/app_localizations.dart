@@ -2338,6 +2338,60 @@ abstract class AppLocalizations {
   /// **'Only show matching'**
   String get onlyKeywords;
 
+  /// No description provided for @editTags.
+  ///
+  /// In en, this message translates to:
+  /// **'Tags'**
+  String get editTags;
+
+  /// No description provided for @addTagHint.
+  ///
+  /// In en, this message translates to:
+  /// **'New tag'**
+  String get addTagHint;
+
+  /// No description provided for @tagsAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get tagsAll;
+
+  /// No description provided for @tagHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Long-press a bookmark to tag it'**
+  String get tagHint;
+
+  /// No description provided for @saveSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Save search'**
+  String get saveSearch;
+
+  /// No description provided for @savedSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved searches'**
+  String get savedSearches;
+
+  /// No description provided for @savedSearchName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get savedSearchName;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @tagHintDesktop.
+  ///
+  /// In en, this message translates to:
+  /// **'Right-click a bookmark to tag it'**
+  String get tagHintDesktop;
+
   /// No description provided for @clearFilters.
   ///
   /// In en, this message translates to:

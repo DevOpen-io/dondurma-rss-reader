@@ -4,6 +4,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
+import '../widgets/bookmark_tags.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/constrained_width.dart';
 import '../widgets/empty_state.dart';
@@ -33,31 +34,51 @@ class BookmarksScreen extends StatelessWidget {
     final flat = context.select<SettingsProvider, bool>(
       (s) => s.articleListStyle == 'list',
     );
+    final visible = bookmarkProvider.visibleBookmarks;
     return ConstrainedWidth(
-      child: ListView.builder(
-        // List rows run edge to edge; cards keep margins.
-        padding: EdgeInsets.only(
-          top: flat ? 0 : 16.0,
-          left: flat ? 0 : 16.0,
-          right: flat ? 0 : 16.0,
-          bottom: 16.0,
-        ),
-        itemCount: bookmarkedItems.length,
-        itemBuilder: (context, index) {
-          final item = bookmarkedItems[index];
-          // Bookmarks show the live read state — the stored JSON freezes
-          // isRead at save time, which would disagree with the feed list on
-          // the same record. A per-row Selector avoids rebuilding the whole
-          // list on every FeedProvider notify.
-          return Selector<FeedProvider, bool>(
-            selector: (_, feed) => feed.isRead(item),
-            builder: (_, isRead, _) => FeedListItem(
-              item: item.copyWith(isRead: isRead),
-              navigationItems: bookmarkedItems,
-              flat: flat,
+      child: Column(
+        children: [
+          const BookmarkTagFilter(),
+          Expanded(
+            child: ListView.builder(
+              // List rows run edge to edge; cards keep margins.
+              padding: EdgeInsets.only(
+                top: flat ? 8 : 16.0,
+                left: flat ? 0 : 16.0,
+                right: flat ? 0 : 16.0,
+                bottom: 16.0,
+              ),
+              itemCount: visible.length,
+              itemBuilder: (context, index) {
+                final item = visible[index];
+                // Bookmarks show the live read state — the stored JSON
+                // freezes isRead at save time, which would disagree with the
+                // feed list on the same record. A per-row Selector avoids
+                // rebuilding the whole list on every FeedProvider notify.
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Selector<FeedProvider, bool>(
+                      selector: (_, feed) => feed.isRead(item),
+                      builder: (_, isRead, _) => FeedListItem(
+                        item: item.copyWith(isRead: isRead),
+                        navigationItems: visible,
+                        flat: flat,
+                        onLongPress: () =>
+                            BookmarkTagsSheet.show(context, item),
+                        longPressHint: l10n.editTags,
+                      ),
+                    ),
+                    BookmarkTagLine(
+                      item: item,
+                      padding: EdgeInsets.fromLTRB(flat ? 16 : 4, 0, 16, 8),
+                    ),
+                  ],
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }

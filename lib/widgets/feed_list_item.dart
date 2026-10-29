@@ -103,11 +103,18 @@ class FeedListItem extends StatefulWidget {
   /// (Settings › Article list).
   final bool flat;
 
+  /// A long press on the row (bookmark tags, #71); [longPressHint] names it
+  /// for screen readers.
+  final VoidCallback? onLongPress;
+  final String? longPressHint;
+
   const FeedListItem({
     super.key,
     required this.item,
     this.navigationItems,
     this.flat = false,
+    this.onLongPress,
+    this.longPressHint,
   });
 
   @override
@@ -260,6 +267,8 @@ class _FeedListItemState extends State<FeedListItem>
                 waitLabel: waitLabel,
                 navigationItems: widget.navigationItems,
                 flat: widget.flat,
+                onLongPress: widget.onLongPress,
+                longPressHint: widget.longPressHint,
               ),
               builder: (context, extent, card) => Stack(
                 children: [
@@ -301,6 +310,8 @@ class _ArticleCard extends StatelessWidget {
   final String? waitLabel;
   final List<FeedItem>? navigationItems;
   final bool flat;
+  final VoidCallback? onLongPress;
+  final String? longPressHint;
 
   const _ArticleCard({
     required this.item,
@@ -310,6 +321,8 @@ class _ArticleCard extends StatelessWidget {
     required this.waitLabel,
     required this.flat,
     this.navigationItems,
+    this.onLongPress,
+    this.longPressHint,
   });
 
   bool get _hasThumbnail => item.imageUrl != null && item.imageUrl!.isNotEmpty;
@@ -325,6 +338,7 @@ class _ArticleCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         borderRadius: radius,
+        onLongPress: onLongPress,
         onTap: () {
           final feedProvider = context.read<FeedProvider>();
           final window = articleNavigationWindow(
@@ -374,11 +388,14 @@ class _ArticleCard extends StatelessWidget {
         ),
       ),
     );
-    if (!flat) return row;
+    final described = longPressHint == null
+        ? row
+        : Semantics(onLongPressHint: longPressHint, child: row);
+    if (!flat) return described;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        row,
+        described,
         Divider(
           height: 1,
           thickness: 0.5,

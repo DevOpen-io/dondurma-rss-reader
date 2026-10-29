@@ -16,6 +16,7 @@ import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_empty_state.dart';
 import '../widgets/home/feed_list_skeleton.dart';
 import '../services/shared_links.dart';
+import '../widgets/saved_searches.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/mark_all_read_button.dart';
@@ -59,6 +60,16 @@ class _HomeScreenState extends State<HomeScreen> {
     _searchController.dispose();
     _feedScroll.dispose();
     super.dispose();
+  }
+
+  /// Runs [query] in the search field of the feed tab (a saved search).
+  void _openSearch(String query) {
+    setState(() {
+      _selectedIndex = 0;
+      _isSearching = true;
+      _searchController.text = query;
+    });
+    context.read<FeedProvider>().setSearchQuery(query);
   }
 
   /// A link shared from another app opens "Add feed" with it filled in.
@@ -342,10 +353,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   enabled: context.read<FeedProvider>().hasUnreadInView,
                   child: Text(l10n.markAllAsRead),
                 ),
+                if (_isSearching)
+                  PopupMenuItem(
+                    value: _FeedMenuAction.saveSearch,
+                    enabled: context
+                        .read<FeedProvider>()
+                        .searchQuery
+                        .trim()
+                        .isNotEmpty,
+                    child: Text(l10n.saveSearch),
+                  ),
               ],
               onSelected: (action) => switch (action) {
                 _FeedMenuAction.addFeed => _showAddFeedDialog(),
                 _FeedMenuAction.markRead => showMarkReadDialog(context),
+                _FeedMenuAction.saveSearch => showSaveSearchDialog(
+                  context,
+                  context.read<FeedProvider>().searchQuery.trim(),
+                ),
               },
             ),
           ],
@@ -358,6 +383,7 @@ class _HomeScreenState extends State<HomeScreen> {
             _onItemTapped(0);
           }
         },
+        onSavedSearch: _openSearch,
       ),
       body: _selectedIndex == 0
           ? Selector<FeedProvider, _FeedTabInputs>(
@@ -497,8 +523,9 @@ class _HomeScreenState extends State<HomeScreen> {
 // list. Widgets are constructed by itemBuilder only when rows scroll into view.
 // ---------------------------------------------------------------------------
 
-/// Feed-tab overflow entries: adding a feed and marking the view read.
-enum _FeedMenuAction { addFeed, markRead }
+/// Feed-tab overflow entries: adding a feed, marking the view read and
+/// keeping the current search.
+enum _FeedMenuAction { addFeed, markRead, saveSearch }
 
 /// Everything the feed tab's list renders from [FeedProvider]. Rows select
 /// their own read/bookmark/offline state, so a notification that changes

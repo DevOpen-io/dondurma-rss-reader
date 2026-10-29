@@ -100,7 +100,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
   List<FeedItem> _currentItems(FeedDateGroups groups) {
     final feed = context.read<FeedProvider>();
     if (_section == DesktopSection.bookmarks) {
-      final bookmarks = context.read<BookmarkProvider>().bookmarkedItems;
+      final bookmarks = context.read<BookmarkProvider>().visibleBookmarks;
       return [
         for (final item in bookmarks) item.copyWith(isRead: feed.isRead(item)),
       ];

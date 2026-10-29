@@ -1240,6 +1240,33 @@ class AppLocalizationsTr extends AppLocalizations {
   String get onlyKeywords => 'Yalnız eşleşenleri göster';
 
   @override
+  String get editTags => 'Etiketler';
+
+  @override
+  String get addTagHint => 'Yeni etiket';
+
+  @override
+  String get tagsAll => 'Tümü';
+
+  @override
+  String get tagHint => 'Etiketlemek için bir yer imine basılı tutun';
+
+  @override
+  String get saveSearch => 'Aramayı kaydet';
+
+  @override
+  String get savedSearches => 'Kayıtlı aramalar';
+
+  @override
+  String get savedSearchName => 'Ad';
+
+  @override
+  String get rename => 'Yeniden adlandır';
+
+  @override
+  String get tagHintDesktop => 'Etiketlemek için bir yer imine sağ tıklayın';
+
+  @override
   String get clearFilters => 'Tüm makaleleri göster';
 
   @override

@@ -1253,6 +1253,34 @@ class AppLocalizationsEs extends AppLocalizations {
   String get onlyKeywords => 'Mostrar solo coincidencias';
 
   @override
+  String get editTags => 'Etiquetas';
+
+  @override
+  String get addTagHint => 'Nueva etiqueta';
+
+  @override
+  String get tagsAll => 'Todos';
+
+  @override
+  String get tagHint => 'Mantén pulsado un marcador para etiquetarlo';
+
+  @override
+  String get saveSearch => 'Guardar búsqueda';
+
+  @override
+  String get savedSearches => 'Búsquedas guardadas';
+
+  @override
+  String get savedSearchName => 'Nombre';
+
+  @override
+  String get rename => 'Renombrar';
+
+  @override
+  String get tagHintDesktop =>
+      'Haz clic derecho en un marcador para etiquetarlo';
+
+  @override
   String get clearFilters => 'Mostrar todos los artículos';
 
   @override

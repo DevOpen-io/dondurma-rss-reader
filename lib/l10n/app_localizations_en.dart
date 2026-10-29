@@ -1235,6 +1235,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onlyKeywords => 'Only show matching';
 
   @override
+  String get editTags => 'Tags';
+
+  @override
+  String get addTagHint => 'New tag';
+
+  @override
+  String get tagsAll => 'All';
+
+  @override
+  String get tagHint => 'Long-press a bookmark to tag it';
+
+  @override
+  String get saveSearch => 'Save search';
+
+  @override
+  String get savedSearches => 'Saved searches';
+
+  @override
+  String get savedSearchName => 'Name';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get tagHintDesktop => 'Right-click a bookmark to tag it';
+
+  @override
   String get clearFilters => 'Show all articles';
 
   @override

@@ -67,6 +67,85 @@ class BookmarkProvider extends ChangeNotifier {
   /// The full list of bookmarked articles.
   List<FeedItem> get bookmarkedItems => _savedBookmarks;
 
+  // ---------------------------------------------------------------------------
+  // Tags (#71)
+  // ---------------------------------------------------------------------------
+
+  /// Tags per bookmark, keyed by source instance; persisted as
+  /// `bookmarkTags`. A removed bookmark loses its tags.
+  final Map<(String, String), List<String>> _tags = {};
+  String? _tagFilter;
+
+  List<String> tagsOf(FeedItem item) =>
+      _tags[(item.feedUrl, item.id)] ?? const [];
+
+  /// Every tag in use, alphabetically.
+  List<String> get allTags =>
+      {for (final tags in _tags.values) ...tags}.toList()..sort();
+
+  /// The tag the bookmarks list is narrowed to; null shows all.
+  String? get tagFilter => _tagFilter;
+
+  void selectTag(String? tag) {
+    if (_tagFilter == tag) return;
+    _tagFilter = tag;
+    notifyListeners();
+  }
+
+  /// The bookmarks to list under [tagFilter].
+  List<FeedItem> get visibleBookmarks => _tagFilter == null
+      ? _savedBookmarks
+      : [
+          for (final b in _savedBookmarks)
+            if (tagsOf(b).contains(_tagFilter)) b,
+        ];
+
+  /// Replaces [item]'s tags (trimmed, without repeats; empty removes them).
+  Future<void> setTags(FeedItem item, Iterable<String> tags) async {
+    final key = (item.feedUrl, item.id);
+    final clean = {
+      for (final tag in tags)
+        if (tag.trim().isNotEmpty) tag.trim(),
+    }.toList();
+    if (clean.isEmpty) {
+      _tags.remove(key);
+    } else {
+      _tags[key] = clean;
+    }
+    if (_tagFilter != null && !allTags.contains(_tagFilter)) _tagFilter = null;
+    notifyListeners();
+    await _saveTags();
+  }
+
+  void _loadTags() {
+    final raw = _box.get('bookmarkTags');
+    if (raw is! String) return;
+    try {
+      for (final entry in jsonDecode(raw) as List<dynamic>) {
+        final map = entry as Map<String, dynamic>;
+        _tags[(map['feedUrl'] as String, map['id'] as String)] = [
+          for (final tag in map['tags'] as List<dynamic>) tag as String,
+        ];
+      }
+    } catch (error) {
+      debugPrint('Ignoring unreadable bookmark tags: $error');
+    }
+  }
+
+  Future<void> _saveTags() => _box.put(
+    'bookmarkTags',
+    jsonEncode([
+      for (final MapEntry(key: (feedUrl, id), value: tags) in _tags.entries)
+        {'feedUrl': feedUrl, 'id': id, 'tags': tags},
+    ]),
+  );
+
+  void _dropTags(FeedItem item) {
+    if (_tags.remove((item.feedUrl, item.id)) == null) return;
+    if (_tagFilter != null && !allTags.contains(_tagFilter)) _tagFilter = null;
+    unawaited(_saveTags());
+  }
+
   /// The set of bookmarked article IDs (for fast lookups).
   Set<String> get bookmarkedItemIds => _bookmarkedItemIds;
 
@@ -192,6 +271,7 @@ class BookmarkProvider extends ChangeNotifier {
     if (bookmarkedIds != null) {
       _bookmarkedItemIds.addAll(bookmarkedIds.cast<String>());
     }
+    _loadTags();
     _indexSnapshots();
     notifyListeners();
   }
@@ -220,6 +300,7 @@ class BookmarkProvider extends ChangeNotifier {
         _bookmarkedItemIds.remove(id);
       }
       _stripBookmarkOwner(ArticleRef.of(originalItem));
+      _dropTags(originalItem);
     } else {
       _bookmarkedItemIds.add(id);
       final updatedItem = originalItem.copyWith(isBookmarked: true);
@@ -344,6 +425,7 @@ class BookmarkProvider extends ChangeNotifier {
     try {
       await persistBookmarks();
       _stripBookmarkOwner(ArticleRef.of(item));
+      _dropTags(item);
       return true;
     } catch (_) {
       // De-dupe in case the item was re-bookmarked while the write was in
@@ -377,6 +459,8 @@ class BookmarkProvider extends ChangeNotifier {
     _restoreGeneration++;
     _savedBookmarks.clear();
     _bookmarkedItemIds.clear();
+    _tags.clear();
+    _tagFilter = null;
     _indexSnapshots();
     await _box.clear();
     notifyListeners();

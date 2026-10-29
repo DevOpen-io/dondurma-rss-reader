@@ -43,17 +43,18 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Per-feed refresh interval (with the app / hourly / every 6 hours / daily) in the feed sheet: automatic foreground and background passes skip a feed until it is due, a pull to refresh fetches all; last fetch times persist per isolate like the cooldowns ([#68](https://github.com/DevOpen-io/dondurma-rss-reader/issues/68), 2026-10-29)
 - [x] Filter rules: any keyword list takes `/regex/` patterns and a `title:` prefix (title only); per-feed "Only show matching" list; a global "Mark read automatically" list applied as articles arrive and when the list changes. Author matching is not possible (feeds' authors are not stored) ([#69](https://github.com/DevOpen-io/dondurma-rss-reader/issues/69), 2026-10-29)
 - [x] Same article from several feeds: opening, marking or un-marking the shown row applies to the copies that view hides; unread badges count such an article once (overall and per folder); the row shows an unread copy when one exists. Copies in another folder keep their own state ([#70](https://github.com/DevOpen-io/dondurma-rss-reader/issues/70), 2026-10-29)
+- [x] Bookmark tags (long-press a bookmark, right-click on desktop; filter chips above the bookmarks; tags under each row) and saved searches (⋮ › Save search while searching, desktop search field button; listed in the drawer and sidebar; long-press to rename or delete); both travel in backups ([#71](https://github.com/DevOpen-io/dondurma-rss-reader/issues/71), 2026-10-29)
 
 ## Backlog
 
 - [ ] Broader provider, service, navigation, platform integration tests
 - [ ] Privacy-preserving reading statistics
 - [ ] Configurable retention and low-data controls beyond the existing automatic unmetered media preparation
-- [ ] Bookmark tags/export, reading queue/archive
+- [ ] Bookmark export, reading queue/archive
 - [ ] Read-later integrations
 - [ ] Feed pinning/order/bulk actions/health status
 - [ ] Notification actions, badges, feed sounds
-- [ ] Advanced/saved search and match highlighting
+- [ ] Advanced search and match highlighting
 - [ ] Compact list, thumbnail/accent controls, navigation shortcuts
 - [ ] Detailed per-feed sync log and storage usage
 

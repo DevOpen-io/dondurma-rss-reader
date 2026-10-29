@@ -17,6 +17,7 @@ import '../../utils/share_actions.dart';
 import '../../utils/time_format.dart';
 import '../../widgets/feed_list_item.dart' show confirmBookmarkToggle;
 import '../../widgets/anchored_feed_list.dart';
+import '../../widgets/bookmark_tags.dart';
 import '../../widgets/home/feed_empty_state.dart';
 import '../../widgets/home/feed_list_skeleton.dart';
 import '../../widgets/home/home_pagination_footer.dart';
@@ -26,6 +27,7 @@ import '../../widgets/home/offline_banner.dart';
 import '../../widgets/home/refresh_progress_count.dart';
 import '../../widgets/in_app_browser.dart' show openArticleLink;
 import '../../widgets/empty_state.dart';
+import '../../widgets/saved_searches.dart';
 import 'package:intl/intl.dart';
 
 /// Middle column of the desktop layout: search/filter/refresh toolbar plus
@@ -172,6 +174,10 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
     final markOnScroll = context.select<SettingsProvider, bool>(
       (s) => s.markReadOnScroll,
     );
+    // A saved search sets the query from the sidebar: show it here.
+    if (_searchController.text != provider.searchQuery) {
+      _searchController.text = provider.searchQuery;
+    }
     _rowIds = articleRowIds(widget.items);
     final remaining = _rowIds.toSet();
     _tileKeys.removeWhere((id, _) => !remaining.contains(id));
@@ -206,13 +212,30 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                         ),
                       ),
                       suffixIcon: provider.searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.close, size: 16),
-                              tooltip: l10n.close,
-                              onPressed: () {
-                                _searchController.clear();
-                                provider.setSearchQuery('');
-                              },
+                          ? Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                if (!widget.bookmarks)
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.bookmark_add_outlined,
+                                      size: 16,
+                                    ),
+                                    tooltip: l10n.saveSearch,
+                                    onPressed: () => showSaveSearchDialog(
+                                      context,
+                                      provider.searchQuery.trim(),
+                                    ),
+                                  ),
+                                IconButton(
+                                  icon: const Icon(Icons.close, size: 16),
+                                  tooltip: l10n.close,
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    provider.setSearchQuery('');
+                                  },
+                                ),
+                              ],
                             )
                           : null,
                     ),
@@ -285,6 +308,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
           // ── Offline banner ───────────────────────────────────────────
           if (provider.isOffline && provider.items.isNotEmpty)
             const OfflineBanner(desktop: true),
+          if (widget.bookmarks) const BookmarkTagFilter(),
 
           // ── List ─────────────────────────────────────────────────────
           Expanded(
@@ -528,6 +552,12 @@ class _DesktopArticleTile extends StatelessWidget {
             isBookmarked ? l10n.semanticRemoveBookmark : l10n.semanticBookmark,
           ),
         ),
+        // A bookmark's tags (#71).
+        if (isBookmarked)
+          PopupMenuItem(
+            value: 'tags',
+            child: _menuRow(context, Icons.label_outline, l10n.editTags),
+          ),
         if (item.link.isNotEmpty)
           PopupMenuItem(
             value: 'open',
@@ -550,6 +580,8 @@ class _DesktopArticleTile extends StatelessWidget {
           unawaited(context.read<FeedProvider>().toggleReadStatus(item));
         case 'bookmark':
           unawaited(confirmBookmarkToggle(context, item));
+        case 'tags':
+          unawaited(BookmarkTagsSheet.show(context, item));
         case 'open':
           openArticleLink(context, item.link, external: true);
         case 'copy':

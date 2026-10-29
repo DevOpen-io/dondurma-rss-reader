@@ -9,6 +9,7 @@ import '../../utils/motion.dart';
 import '../../widgets/category_icon.dart';
 import '../../widgets/folders/explorer_tree.dart';
 import '../../widgets/folders/folder_actions.dart';
+import '../../widgets/saved_searches.dart';
 
 /// Content-navigation column of the desktop layout: the category+feed
 /// tree with add affordances. App-level destinations (All News, Bookmarks,
@@ -164,6 +165,15 @@ class _DesktopSidebarState extends State<DesktopSidebar> {
                                   DesktopSection.articles,
                                 ),
                               ),
+                            SavedSearchList(
+                              header: (_, title) => _SectionLabel(title),
+                              onOpen: (query) {
+                                widget.onSectionChanged(
+                                  DesktopSection.articles,
+                                );
+                                feed.setSearchQuery(query);
+                              },
+                            ),
                           ],
                         ),
                       ),

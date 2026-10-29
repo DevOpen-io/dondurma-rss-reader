@@ -56,7 +56,10 @@ String exportAppBackup({
     'customCategories': folders.custom,
     'categoryIcons': folders.icons,
     'categoryOrder': folders.order,
-    'bookmarks': [for (final item in bookmarks.bookmarkedItems) item.toJson()],
+    'bookmarks': [
+      for (final item in bookmarks.bookmarkedItems)
+        {...item.toJson(), 'tags': bookmarks.tagsOf(item)},
+    ],
     'readItems': [
       for (final (feedUrl, id) in feed.readRefs) [feedUrl, id],
     ],
@@ -83,6 +86,9 @@ Future<RestoreSummary> restoreAppBackup(
   );
   final feeds = await subscriptions.importFeeds(backup.subscriptions);
   final added = bookmarks.restoreBookmarks(backup.bookmarks);
+  for (final (item, tags) in backup.bookmarkTags) {
+    if (bookmarks.tagsOf(item).isEmpty) await bookmarks.setTags(item, tags);
+  }
   feed.restoreReadRefs(backup.readItems);
   await feed.flushReadStates();
   return (feeds: feeds, bookmarks: added);
@@ -99,6 +105,7 @@ typedef _Backup = ({
   Map<String, Object?> categoryIcons,
   List<String> categoryOrder,
   List<FeedItem> bookmarks,
+  List<(FeedItem, List<String>)> bookmarkTags,
   List<(String, String)> readItems,
 });
 
@@ -133,6 +140,12 @@ _Backup _parse(String json) {
       bookmarks: [
         for (final raw in list('bookmarks'))
           _bookmark(raw as Map<String, dynamic>),
+      ],
+      bookmarkTags: [
+        for (final raw in list('bookmarks'))
+          if ((raw as Map<String, dynamic>)['tags'] case final List tags
+              when tags.isNotEmpty)
+            (_bookmark(raw), tags.cast<String>().toList()),
       ],
       readItems: [
         for (final raw in list('readItems'))

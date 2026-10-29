@@ -13,6 +13,7 @@ import '../screens/explore_feeds_page.dart';
 import 'category_icon.dart';
 import 'folders/explorer_tree.dart';
 import 'folders/folder_actions.dart';
+import 'saved_searches.dart';
 
 /// Navigation drawer showing category-based feed filtering.
 ///
@@ -22,7 +23,10 @@ import 'folders/folder_actions.dart';
 class AppDrawer extends StatelessWidget {
   final VoidCallback? onFeedSelected;
 
-  const AppDrawer({super.key, this.onFeedSelected});
+  /// Runs a saved search's query in the feed list (#71).
+  final ValueChanged<String>? onSavedSearch;
+
+  const AppDrawer({super.key, this.onFeedSelected, this.onSavedSearch});
 
   @override
   Widget build(BuildContext context) {
@@ -155,6 +159,15 @@ class AppDrawer extends StatelessWidget {
                           isUncategorizedNode: true,
                         ),
                       ],
+
+                      if (onSavedSearch case final open?)
+                        SavedSearchList(
+                          header: _buildSectionHeader,
+                          onOpen: (query) {
+                            Scaffold.of(context).closeDrawer();
+                            open(query);
+                          },
+                        ),
 
                       _buildSectionHeader(context, l10n.discover),
                       _buildDrawerItem(
