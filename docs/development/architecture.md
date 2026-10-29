@@ -147,6 +147,8 @@ Observation delivery'den önce gelir. Global/per-feed kapalı, quiet hours veya 
 - `InAppBrowser`: yerleşik WebView veya external/system açılış; EasyList/AdGuard; isteğe bağlı DarkReader.
 - `OpmlService`: nested/flat OPML, duplicate URL atlama, sistem dosya seçici/paylaşım sayfası.
 - `ImageCacheService`: makale ve küçük görsel için ayrı cache manager'lar.
+- `ArticleSpeech` (#66): `flutter_tts` ile cihazın konuşma motoru; uygulama genelinde tek okuyucu, makale değişince/çıkınca durur. Android 11+ için manifest `<queries>` TTS_SERVICE; iOS `playback` ses kategorisi ve `audio` arka plan modu. Linux'ta motor yok, denetimler gizli. Yalnız Android emülatöründe denenir; iOS/macOS/Windows doğrulanmadı.
+- `SharedLinks` (#67): Android paylaşım menüsünden gelen metin, ana ekranda "Kaynak ekle".
 
 Depoda Android/iOS widget kaynaklarının bulunması platformun cihazda doğrulandığı anlamına gelmez. iOS yapılandırmasının tarihli incelemesi [iOS araştırmasında](../research/2026-10-03-ios-viability-audit.md), güncel build/submission akışı [yayın rehberindedir](../operations/releases.md).
 

@@ -171,6 +171,7 @@
   "pauseReading": "Duraklat",
   "resumeReading": "Sürdür",
   "stopReading": "Okumayı durdur",
+  "readAloudFailed": "Makale sesli okunamadı.",
   "openInExternalBrowser": "Harici Tarayıcıda Aç",
   "back": "Geri",
   "forward": "İleri",

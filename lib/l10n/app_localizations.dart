@@ -1096,6 +1096,12 @@ abstract class AppLocalizations {
   /// **'Stop reading'**
   String get stopReading;
 
+  /// No description provided for @readAloudFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read the article aloud.'**
+  String get readAloudFailed;
+
   /// No description provided for @openInExternalBrowser.
   ///
   /// In en, this message translates to:

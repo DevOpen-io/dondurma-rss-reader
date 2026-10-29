@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/article_speech.dart';
@@ -61,6 +62,18 @@ void main() {
         'Two',
         'Caption',
       ]);
+    });
+
+    test('media fallbacks and tables are not read; asides are blocks', () {
+      expect(
+        speechParts(
+          'T',
+          'Lead<aside>Note</aside>More'
+              '<video>Your browser does not support video.</video>'
+              '<table><tr><td>cell</td></tr></table>',
+        ),
+        ['T', 'Lead', 'Note', 'More'],
+      );
     });
 
     test('text outside blocks is still read', () {
@@ -144,4 +157,33 @@ void main() {
       expect(speech.stateFor(_item('a')), SpeechState.idle);
     });
   });
+
+  test('an engine failure ends reading instead of hanging', () async {
+    final speech = ArticleSpeech(engine: _FailingEngine());
+    await speech.play(_item('a'), '<p>One.</p>');
+    await Future<void>.delayed(Duration.zero);
+    expect(speech.stateFor(_item('a')), SpeechState.idle);
+  });
+
+  test('controls are offered where an engine exists', () {
+    for (final (platform, supported) in [
+      (TargetPlatform.android, true),
+      (TargetPlatform.iOS, true),
+      (TargetPlatform.windows, true),
+      (TargetPlatform.macOS, true),
+      (TargetPlatform.linux, false),
+    ]) {
+      debugDefaultTargetPlatformOverride = platform;
+      expect(ArticleSpeech.supported, supported, reason: '$platform');
+    }
+    debugDefaultTargetPlatformOverride = null;
+  });
+}
+
+class _FailingEngine implements SpeechEngine {
+  @override
+  Future<void> speak(String text) => Future.error(StateError('no engine'));
+
+  @override
+  Future<void> stop() async {}
 }

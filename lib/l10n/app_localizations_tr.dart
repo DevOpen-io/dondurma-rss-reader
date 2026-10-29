@@ -546,6 +546,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get stopReading => 'Okumayı durdur';
 
   @override
+  String get readAloudFailed => 'Makale sesli okunamadı.';
+
+  @override
   String get openInExternalBrowser => 'Harici Tarayıcıda Aç';
 
   @override

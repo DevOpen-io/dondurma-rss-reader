@@ -555,6 +555,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get stopReading => 'Dejar de leer';
 
   @override
+  String get readAloudFailed => 'No se pudo leer el artículo en voz alta.';
+
+  @override
   String get openInExternalBrowser => 'Abrir en navegador externo';
 
   @override

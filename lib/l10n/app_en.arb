@@ -243,6 +243,7 @@
   "pauseReading": "Pause",
   "resumeReading": "Resume",
   "stopReading": "Stop reading",
+  "readAloudFailed": "Couldn't read the article aloud.",
   "openInExternalBrowser": "Open in External Browser",
   "back": "Back",
   "forward": "Forward",

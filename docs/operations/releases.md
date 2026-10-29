@@ -8,6 +8,11 @@ handles Apple signing/packaging and store APIs. There are no Python or shell
 helper files. Flutter is pinned to 3.47.4, Java to 17, and iOS to macOS 15 /
 Xcode 26.3. iOS uses Swift Package Manager exclusively, with an iOS 15.5 minimum.
 The compatible Workmanager update fixes its earlier SPM package layout.
+`flutter_tts` (read aloud, #66) ships no `Package.swift` for iOS/macOS, so
+those builds need Flutter's CocoaPods fallback for that plugin; run
+`flutter build ios --no-codesign` on the macOS runner before the next tag
+(unverified on this repo so far). Its Windows plugin needs `nuget.exe` on
+the PATH.
 
 Pull requests and main pushes run analysis/tests and produce a **debug-signed**
 APK artifact for testing. Exact `vMAJOR.MINOR.PATCH` tags produce signed APK,

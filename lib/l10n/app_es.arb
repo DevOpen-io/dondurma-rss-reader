@@ -171,6 +171,7 @@
   "pauseReading": "Pausar",
   "resumeReading": "Reanudar",
   "stopReading": "Dejar de leer",
+  "readAloudFailed": "No se pudo leer el artículo en voz alta.",
   "openInExternalBrowser": "Abrir en navegador externo",
   "back": "Atrás",
   "forward": "Adelante",

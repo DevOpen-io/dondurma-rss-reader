@@ -491,13 +491,19 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         const SizedBox(height: 16),
 
-                        // Reading mode toggle — visible affordance for new users
-                        if (widget.item.link.isNotEmpty) ...[
+                        // Reading mode toggle — visible affordance for new
+                        // users — and read aloud, which needs no link. The
+                        // button wraps below when the row runs out of room.
+                        if (widget.item.link.isNotEmpty ||
+                            ArticleSpeech.supported) ...[
                           const SizedBox(height: 10),
-                          Row(
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
-                              Flexible(
-                                child: ArticleReadingModeToggle(
+                              if (widget.item.link.isNotEmpty)
+                                ArticleReadingModeToggle(
                                   isFullText:
                                       provider.fullTextActive &&
                                       provider.fullTextContent != null,
@@ -506,16 +512,15 @@ class _ArticlePageState extends State<ArticlePage> {
                                   colorScheme: colorScheme,
                                   l10n: l10n,
                                 ),
-                              ),
-                              if (ArticleSpeech.supported) ...[
-                                const SizedBox(width: 8),
+                              if (ArticleSpeech.supported)
                                 ReadAloudButton(
                                   item: widget.item,
                                   html: () => provider.displayContent,
                                 ),
-                              ],
                             ],
                           ),
+                        ],
+                        if (widget.item.link.isNotEmpty) ...[
                           if (provider.autoFullTextFailed ||
                               provider.fullTextFailed) ...[
                             const SizedBox(height: 8),
@@ -623,7 +628,8 @@ class _ArticlePageState extends State<ArticlePage> {
                             ),
                           ),
 
-                        const SizedBox(height: 40),
+                        // Room for the read-aloud bar over the end.
+                        ReadAloudSpacer(item: widget.item),
                       ],
                             ),
                           );

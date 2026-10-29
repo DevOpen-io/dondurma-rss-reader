@@ -28,7 +28,13 @@ class ReadAloudButton extends StatelessWidget {
           icon: Icon(active ? Icons.stop_rounded : Icons.volume_up_outlined),
           tooltip: active ? l10n.stopReading : l10n.readAloud,
           onPressed: () => unawaited(
-            active ? speech.stop() : speech.play(item, html()),
+            active
+                ? speech.stop()
+                : speech.play(
+                    item,
+                    html(),
+                    failureMessage: l10n.readAloudFailed,
+                  ),
           ),
         );
       },
@@ -71,7 +77,13 @@ class ReadAloudControls extends StatelessWidget {
                     ),
                     tooltip: playing ? l10n.pauseReading : l10n.resumeReading,
                     onPressed: () => unawaited(
-                      playing ? speech.pause() : speech.play(item, html()),
+                      playing
+                          ? speech.pause()
+                          : speech.play(
+                              item,
+                              html(),
+                              failureMessage: l10n.readAloudFailed,
+                            ),
                     ),
                   ),
                   Flexible(
@@ -92,6 +104,25 @@ class ReadAloudControls extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+/// The article's end spacing, taller while [item] is read so the floating
+/// bar does not cover the last button.
+class ReadAloudSpacer extends StatelessWidget {
+  final FeedItem item;
+
+  const ReadAloudSpacer({super.key, required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final speech = ArticleSpeech.instance;
+    return ListenableBuilder(
+      listenable: speech,
+      builder: (context, _) => SizedBox(
+        height: speech.stateFor(item) == SpeechState.idle ? 40 : 112,
+      ),
     );
   }
 }
