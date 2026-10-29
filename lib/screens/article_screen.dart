@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:html/dom.dart' as dom;
 import 'package:cached_network_image_ce/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
@@ -356,7 +357,7 @@ class _ArticlePageState extends State<ArticlePage> {
                   flexibleSpace: hasHero
                       ? FlexibleSpaceBar(
                           stretchModes: const [StretchMode.zoomBackground],
-                          background: OpenableArticleImage(
+                          background: OpenableCoverImage(
                             image: heroFile != null
                                 ? FileImage(heroFile)
                                 : CachedNetworkImageProvider(
@@ -832,6 +833,17 @@ class _ArticleStatusStrip extends StatelessWidget {
   }
 }
 
+/// The `href` of the nearest `<a>` around [element], if any.
+String? _enclosingLinkHref(dom.Element? element) {
+  for (var e = element?.parent; e != null; e = e.parent) {
+    if (e.localName == 'a') {
+      final href = e.attributes['href']?.trim();
+      return href == null || href.isEmpty ? null : href;
+    }
+  }
+  return null;
+}
+
 /// Resolves a `file://` image src to its [File] only when it matches the
 /// managed-media scheme AND appears in the provider's rewrite map — feed
 /// HTML is untrusted, so a raw `file://` URL never reaches the filesystem
@@ -946,6 +958,12 @@ class _ArticleHtml extends StatelessWidget {
                 if (src == null) {
                   return const SizedBox.shrink();
                 }
+                // An image inside a link opens the viewer; the viewer
+                // offers the link.
+                final href = _enclosingLinkHref(extensionContext.element);
+                final VoidCallback? openLink = href == null
+                    ? null
+                    : () => openArticleLink(context, href);
                 // Durable media (#41): ready manifest
                 // entries were rewritten to file:// — read
                 // stored bytes instead of the network.
@@ -961,6 +979,7 @@ class _ArticleHtml extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 12),
                     child: OpenableArticleImage(
                       image: FileImage(file),
+                      onOpenLink: openLink,
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
                         child: Image.file(
@@ -979,6 +998,7 @@ class _ArticleHtml extends StatelessWidget {
                       src,
                       cacheManager: ArticleCacheManager.instance,
                     ),
+                    onOpenLink: openLink,
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(10),
                       child: CachedNetworkImage(

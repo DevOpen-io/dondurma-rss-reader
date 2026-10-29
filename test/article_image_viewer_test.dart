@@ -102,4 +102,155 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(ArticleImageViewer), findsNothing);
   });
+
+  Widget app(Widget home) => MaterialApp(
+    localizationsDelegates: AppLocalizations.localizationsDelegates,
+    supportedLocales: AppLocalizations.supportedLocales,
+    home: home,
+  );
+
+  testWidgets('an image inside text stays its own button for screen readers', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: Text.rich(
+            TextSpan(
+              children: [
+                const TextSpan(text: 'Hello world '),
+                WidgetSpan(
+                  child: OpenableArticleImage(
+                    image: _pixel,
+                    child: const SizedBox(width: 40, height: 40),
+                  ),
+                ),
+                const TextSpan(text: ' more text'),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final node = tester.getSemantics(find.byType(OpenableArticleImage));
+    expect(node.label, 'Open image');
+    expect(node.flagsCollection.isButton, isTrue);
+    semantics.dispose();
+  });
+
+  testWidgets('a disabled image neither opens nor announces itself', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: OpenableArticleImage(
+            image: _pixel,
+            enabled: false,
+            child: const SizedBox(width: 200, height: 120),
+          ),
+        ),
+      ),
+    );
+    expect(find.bySemanticsLabel('Open image'), findsNothing);
+    await tester.tap(find.byType(OpenableArticleImage));
+    await tester.pumpAndSettle();
+    expect(find.byType(ArticleImageViewer), findsNothing);
+  });
+
+  testWidgets('a cover collapsed into the toolbar does not open', (
+    tester,
+  ) async {
+    final controller = ScrollController();
+    addTearDown(controller.dispose);
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: CustomScrollView(
+            controller: controller,
+            slivers: [
+              SliverAppBar(
+                pinned: true,
+                expandedHeight: 280,
+                flexibleSpace: FlexibleSpaceBar(
+                  background: OpenableCoverImage(
+                    image: _pixel,
+                    child: const ColoredBox(color: Colors.blue),
+                  ),
+                ),
+              ),
+              const SliverToBoxAdapter(child: SizedBox(height: 3000)),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    // Expanded: the cover opens.
+    await tester.tapAt(const Offset(400, 200));
+    await tester.pumpAndSettle();
+    expect(find.byType(ArticleImageViewer), findsOneWidget);
+    await tester.tap(find.widgetWithIcon(IconButton, Icons.close));
+    await tester.pumpAndSettle();
+
+    controller.jumpTo(1000);
+    await tester.pumpAndSettle();
+    await tester.tapAt(const Offset(400, 30)); // Empty toolbar space.
+    await tester.pumpAndSettle();
+    expect(find.byType(ArticleImageViewer), findsNothing);
+  });
+
+  testWidgets('an image inside a link offers the link in the viewer', (
+    tester,
+  ) async {
+    var opened = 0;
+    await tester.pumpWidget(
+      app(
+        Scaffold(
+          body: OpenableArticleImage(
+            image: _pixel,
+            onOpenLink: () => opened++,
+            child: const SizedBox(width: 200, height: 120),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.byType(OpenableArticleImage));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('Open link'));
+    await tester.pumpAndSettle();
+
+    expect(opened, 1);
+    expect(find.byType(ArticleImageViewer), findsNothing);
+  });
+
+  testWidgets('the viewer decodes at most twice the screen size', (
+    tester,
+  ) async {
+    await pumpArticle(tester);
+    await tester.tap(find.byType(OpenableArticleImage));
+    await tester.pumpAndSettle();
+
+    final image = tester.widget<Image>(
+      find.descendant(
+        of: find.byType(ArticleImageViewer),
+        matching: find.byType(Image),
+      ),
+    );
+    expect(image.image, isA<ResizeImage>());
+    final view = tester.view;
+    final screen = view.physicalSize.longestSide;
+    expect((image.image as ResizeImage).width, (screen * 2).round());
+    expect(
+      tester
+          .widget<AnnotatedRegion<SystemUiOverlayStyle>>(
+            find.byType(AnnotatedRegion<SystemUiOverlayStyle>).last,
+          )
+          .value,
+      SystemUiOverlayStyle.light,
+    );
+  });
 }

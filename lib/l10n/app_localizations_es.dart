@@ -499,6 +499,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get openImage => 'Abrir imagen';
 
   @override
+  String get openLink => 'Abrir enlace';
+
+  @override
   String get openInExternalBrowser => 'Abrir en navegador externo';
 
   @override

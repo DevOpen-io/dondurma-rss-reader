@@ -155,6 +155,7 @@
   "invalidUrlFormat": "Geçersiz URL biçimi",
   "close": "Kapat",
   "openImage": "Görseli aç",
+  "openLink": "Bağlantıyı aç",
   "openInExternalBrowser": "Harici Tarayıcıda Aç",
   "back": "Geri",
   "forward": "İleri",

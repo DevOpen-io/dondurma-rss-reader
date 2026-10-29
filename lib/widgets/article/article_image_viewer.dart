@@ -5,30 +5,71 @@ import '../../l10n/app_localizations.dart';
 import '../../utils/motion.dart';
 
 /// Makes an article image open full screen in [ArticleImageViewer] on tap.
-/// The tap wins over an enclosing link: the viewer has its own way out.
+/// The tap wins over an enclosing link; [onOpenLink] then puts that link in
+/// the viewer. While not [enabled] (a collapsed cover) the image is inert;
+/// the tree keeps its shape so the image is not rebuilt.
 class OpenableArticleImage extends StatelessWidget {
   final ImageProvider image;
   final Widget child;
+  final bool enabled;
+  final VoidCallback? onOpenLink;
 
   const OpenableArticleImage({
     super.key,
     required this.image,
     required this.child,
+    this.enabled = true,
+    this.onOpenLink,
   });
 
   @override
   Widget build(BuildContext context) {
+    // A container node: inline in a paragraph, the button must not absorb
+    // the surrounding text.
     return Semantics(
-      button: true,
-      label: AppLocalizations.of(context).openImage,
+      container: true,
+      button: enabled,
+      label: enabled ? AppLocalizations.of(context).openImage : null,
       child: MouseRegion(
-        cursor: SystemMouseCursors.zoomIn,
+        cursor: enabled ? SystemMouseCursors.zoomIn : MouseCursor.defer,
         child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: () => ArticleImageViewer.open(context, image),
+          behavior: enabled
+              ? HitTestBehavior.opaque
+              : HitTestBehavior.deferToChild,
+          onTap: enabled
+              ? () => ArticleImageViewer.open(
+                  context,
+                  image,
+                  onOpenLink: onOpenLink,
+                )
+              : null,
           child: child,
         ),
       ),
+    );
+  }
+}
+
+/// A [FlexibleSpaceBar] cover that opens only while some of it shows:
+/// collapsed into a pinned toolbar it is invisible and must not catch taps.
+class OpenableCoverImage extends StatelessWidget {
+  const OpenableCoverImage({
+    super.key,
+    required this.image,
+    required this.child,
+  });
+
+  final ImageProvider image;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    final bar = context
+        .dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
+    return OpenableArticleImage(
+      image: image,
+      enabled: bar == null || bar.currentExtent > bar.minExtent + 1,
+      child: child,
     );
   }
 }
@@ -39,9 +80,16 @@ class OpenableArticleImage extends StatelessWidget {
 class ArticleImageViewer extends StatefulWidget {
   final ImageProvider image;
 
-  const ArticleImageViewer({super.key, required this.image});
+  /// Opens the link the image sits in, after the viewer closes.
+  final VoidCallback? onOpenLink;
 
-  static Future<void> open(BuildContext context, ImageProvider image) {
+  const ArticleImageViewer({super.key, required this.image, this.onOpenLink});
+
+  static Future<void> open(
+    BuildContext context,
+    ImageProvider image, {
+    VoidCallback? onOpenLink,
+  }) {
     return Navigator.of(context).push(
       PageRouteBuilder<void>(
         transitionDuration: motionDuration(
@@ -52,7 +100,8 @@ class ArticleImageViewer extends StatefulWidget {
           context,
           const Duration(milliseconds: 150),
         ),
-        pageBuilder: (_, _, _) => ArticleImageViewer(image: image),
+        pageBuilder: (_, _, _) =>
+            ArticleImageViewer(image: image, onOpenLink: onOpenLink),
         transitionsBuilder: (_, animation, _, child) =>
             FadeTransition(opacity: animation, child: child),
       ),
@@ -95,7 +144,13 @@ class _ArticleImageViewerState extends State<ArticleImageViewer> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return CallbackShortcuts(
+    // Decoded no larger than twice the screen: enough to zoom into, without
+    // holding a camera-sized bitmap in the image cache.
+    final media = MediaQuery.of(context);
+    final maxPixels = (media.size.longestSide * media.devicePixelRatio * 2)
+        .round();
+    final onOpenLink = widget.onOpenLink;
+    final viewer = CallbackShortcuts(
       bindings: {
         const SingleActivator(LogicalKeyboardKey.escape): () =>
             Navigator.of(context).maybePop(),
@@ -116,8 +171,13 @@ class _ArticleImageViewerState extends State<ArticleImageViewer> {
                   maxScale: 5,
                   child: Center(
                     child: Image(
-                      image: widget.image,
-                      fit: BoxFit.contain,
+                      image: ResizeImage(
+                        widget.image,
+                        width: maxPixels,
+                        height: maxPixels,
+                        policy: ResizeImagePolicy.fit,
+                      ),
+                      fit: BoxFit.scaleDown,
                       width: double.infinity,
                       height: double.infinity,
                       loadingBuilder: (_, child, progress) => progress == null
@@ -149,10 +209,34 @@ class _ArticleImageViewerState extends State<ArticleImageViewer> {
                   ),
                 ),
               ),
+              if (onOpenLink != null)
+                PositionedDirectional(
+                  top: 0,
+                  end: 0,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: IconButton(
+                        icon: const Icon(Icons.open_in_new),
+                        color: Colors.white,
+                        tooltip: l10n.openLink,
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          onOpenLink();
+                        },
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
       ),
+    );
+    // Light status-bar icons over the black backdrop.
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light,
+      child: viewer,
     );
   }
 }

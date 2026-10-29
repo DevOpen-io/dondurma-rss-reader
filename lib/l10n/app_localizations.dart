@@ -1000,6 +1000,12 @@ abstract class AppLocalizations {
   /// **'Open image'**
   String get openImage;
 
+  /// No description provided for @openLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Open link'**
+  String get openLink;
+
   /// No description provided for @openInExternalBrowser.
   ///
   /// In en, this message translates to:

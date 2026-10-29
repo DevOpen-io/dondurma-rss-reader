@@ -491,6 +491,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get openImage => 'Görseli aç';
 
   @override
+  String get openLink => 'Bağlantıyı aç';
+
+  @override
   String get openInExternalBrowser => 'Harici Tarayıcıda Aç';
 
   @override

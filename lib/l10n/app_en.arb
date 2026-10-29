@@ -217,6 +217,7 @@
   "invalidUrlFormat": "Invalid URL format",
   "close": "Close",
   "openImage": "Open image",
+  "openLink": "Open link",
   "openInExternalBrowser": "Open in External Browser",
   "back": "Back",
   "forward": "Forward",
