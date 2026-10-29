@@ -33,7 +33,7 @@
   "markReadOlderThanWeek": "1 haftadan eskiler",
   "markReadAction": "Okundu işaretle",
   "markReadOnScroll": "Kaydırınca okundu işaretle",
-  "markReadOnScrollDesc": "Listede kaydırıp geçtiğin makaleler okundu olur",
+  "markReadOnScrollDesc": "Listede kaydırıp geçtiğiniz makaleler okundu olur",
   "editFeed": "Kaynağı Düzenle",
   "feedName": "Kaynak Adı",
   "feedUrl": "Kaynak URL'si",

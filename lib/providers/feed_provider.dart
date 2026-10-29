@@ -1066,7 +1066,8 @@ class FeedProvider extends ChangeNotifier {
     var marked = 0;
     final links = <String>{};
     for (final item in items) {
-      if (_readState.mark(item, read: true)) marked++;
+      if (!_readState.mark(item, read: true)) continue;
+      marked++;
       final link = usableArticleLink(item.link);
       if (link != null) links.add(link);
     }

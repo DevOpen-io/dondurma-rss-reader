@@ -116,7 +116,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get markReadOnScrollDesc =>
-      'Listede kaydırıp geçtiğin makaleler okundu olur';
+      'Listede kaydırıp geçtiğiniz makaleler okundu olur';
 
   @override
   String get editFeed => 'Kaynağı Düzenle';

@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart' show ScrollCacheExtent;
 
@@ -64,10 +67,11 @@ class AnchoredFeedList extends StatefulWidget {
   final ScrollPhysics? physics;
   final double cacheExtent;
 
-  /// Called after a scroll frame with the indexes of article rows the user
-  /// scrolled past: rows that were on screen and then left through the top
-  /// edge while scrolling down. Rows inserted above the screen were never
-  /// seen and are not reported; each row is reported once.
+  /// Called once a scroll has settled with the indexes of the article rows
+  /// the user scrolled past: rows that were on screen and then left through
+  /// the top edge while scrolling down. Rows a rebuild inserted or moved
+  /// above the screen are not reported, and each row is reported once.
+  /// Batching keeps the caller's rebuild away from the finger.
   final void Function(List<int> indexes)? onArticlesScrolledPast;
 
   @override
@@ -83,11 +87,15 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
   var _indexes = <Object, int>{};
   Object? _centerId;
   double? _pendingPixels;
-  // Scrolled-past tracking: rows seen on screen and rows already reported.
-  final _seenIds = <Object>{};
+  // Scrolled-past tracking: rows on screen at the last check, rows passed
+  // but not reported yet, and rows already passed.
+  var _visibleIds = <Object>{};
+  final _pendingIds = <Object>{};
   final _passedIds = <Object>{};
   var _scrolledDown = false;
+  var _rowsMoved = false;
   var _passCheckScheduled = false;
+  Timer? _reportTimer;
 
   ScrollController get _controller => widget.controller ?? _ownController;
 
@@ -102,6 +110,7 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
     super.didUpdateWidget(oldWidget);
     // Identical IDs can still carry new titles, text scale or row heights.
     _captureAnchor(oldWidget);
+    if (!listEquals(oldWidget.rowIds, widget.rowIds)) _rowsMoved = true;
   }
 
   @override
@@ -161,16 +170,25 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
     _rowKeys.removeWhere(
       (id, key) => !remaining.contains(id) || key.currentContext == null,
     );
-    _seenIds.retainAll(remaining);
+    _visibleIds.retainAll(remaining);
+    _pendingIds.retainAll(remaining);
     _passedIds.retainAll(remaining);
   }
 
-  bool _onScrollUpdate(ScrollUpdateNotification notification) {
+  bool _onScroll(ScrollNotification notification) {
     if (widget.onArticlesScrolledPast == null || notification.depth != 0) {
       return false;
     }
-    if ((notification.scrollDelta ?? 0) > 0) _scrolledDown = true;
-    _schedulePassCheck();
+    if (notification is ScrollUpdateNotification) {
+      if ((notification.scrollDelta ?? 0) > 0) _scrolledDown = true;
+      _reportTimer?.cancel();
+      _schedulePassCheck();
+    } else if (notification is ScrollEndNotification) {
+      _schedulePassCheck();
+      // Wheel ticks each end a scroll; wait for the burst to settle.
+      _reportTimer?.cancel();
+      _reportTimer = Timer(const Duration(milliseconds: 300), _reportPassed);
+    }
     return false;
   }
 
@@ -185,40 +203,61 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
   }
 
   void _checkScrolledPast() {
-    final report = widget.onArticlesScrolledPast;
     final down = _scrolledDown;
+    final moved = _rowsMoved;
     _scrolledDown = false;
+    _rowsMoved = false;
     final viewport =
         _viewportKey.currentContext?.findRenderObject() as RenderBox?;
-    if (report == null ||
-        viewport == null ||
-        !viewport.attached ||
-        !viewport.hasSize) {
-      return;
-    }
-    final passed = <int>[];
+    if (viewport == null || !viewport.attached || !viewport.hasSize) return;
+    final visible = <Object>{};
+    int? firstVisible;
     for (final MapEntry(key: id, value: key) in _rowKeys.entries) {
       final index = _indexes[id];
-      if (index == null || !(widget.isArticle?.call(index) ?? true)) continue;
+      if (index == null) continue;
       final box = key.currentContext?.findRenderObject() as RenderBox?;
       if (box == null || !box.attached || !box.hasSize) continue;
       final y = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
       if (!y.isFinite) continue; // Kept-alive offscreen row, see above.
-      final bottom = y + box.size.height;
-      if (bottom > 0 && y < viewport.size.height) {
-        _seenIds.add(id);
-      } else if (down &&
-          bottom <= 0 &&
-          _seenIds.contains(id) &&
-          _passedIds.add(id)) {
-        passed.add(index);
+      if (y + box.size.height <= 0 || y >= viewport.size.height) continue;
+      visible.add(id);
+      if (firstVisible == null || index < firstVisible) firstVisible = index;
+    }
+    // A row that was on screen and now lies above the first visible one
+    // left through the top edge — even when it is no longer mounted, as a
+    // fling can carry it past the cache extent between two frames. After a
+    // rebuild that changed the rows, the order moved, not the user.
+    if (down && !moved && firstVisible != null) {
+      for (final id in _visibleIds) {
+        final index = _indexes[id];
+        if (index != null &&
+            index < firstVisible &&
+            (widget.isArticle?.call(index) ?? true) &&
+            _passedIds.add(id)) {
+          _pendingIds.add(id);
+        }
       }
     }
-    if (passed.isNotEmpty) report(passed..sort());
+    _visibleIds = visible;
+  }
+
+  void _reportPassed() {
+    final report = widget.onArticlesScrolledPast;
+    final indexes = [for (final id in _pendingIds) ?_indexes[id]]..sort();
+    _pendingIds.clear();
+    if (report != null && indexes.isNotEmpty) report(indexes);
   }
 
   @override
   void dispose() {
+    _reportTimer?.cancel();
+    // Leaving the list mid-scroll still reports what was passed — after
+    // this frame, outside the tree teardown.
+    final report = widget.onArticlesScrolledPast;
+    final indexes = [for (final id in _pendingIds) ?_indexes[id]]..sort();
+    if (report != null && indexes.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => report(indexes));
+    }
     _ownController.dispose();
     super.dispose();
   }
@@ -234,7 +273,7 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
       for (var i = 0; i < widget.rowIds.length; i++) widget.rowIds[i]: i,
     };
     final split = _centerId == null ? 0 : (indexes[_centerId!] ?? 0);
-    // Records what this layout puts on screen as seen.
+    // Records what this layout puts on screen.
     if (widget.onArticlesScrolledPast != null) _schedulePassCheck();
     final keyIndexes = {
       for (final e in _rowKeys.entries) e.value: indexes[e.key],
@@ -259,8 +298,8 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
             );
             _pendingPixels = null;
           }
-          return NotificationListener<ScrollUpdateNotification>(
-            onNotification: _onScrollUpdate,
+          return NotificationListener<ScrollNotification>(
+            onNotification: _onScroll,
             child: CustomScrollView(
               controller: _controller,
               physics: widget.physics,
