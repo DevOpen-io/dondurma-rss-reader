@@ -1,9 +1,12 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
 import '../../models/feed_item.dart';
 import '../../providers/article_page_provider.dart';
+import '../../services/article_speech.dart';
 import '../../utils/motion.dart';
 import '../../utils/share_actions.dart';
 import '../../widgets/in_app_browser.dart';
@@ -51,6 +54,13 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
   @override
   void didUpdateWidget(covariant DesktopReaderPane oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // Another article (or none) ends reading the last one aloud.
+    final item = widget.item;
+    unawaited(
+      item == null
+          ? ArticleSpeech.instance.stop()
+          : ArticleSpeech.instance.stopIfNot(item),
+    );
     // Selecting a different article resets the reading position.
     if ((oldWidget.item?.feedUrl, oldWidget.item?.id) !=
             (widget.item?.feedUrl, widget.item?.id) &&
@@ -61,6 +71,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
 
   @override
   void dispose() {
+    unawaited(ArticleSpeech.instance.stop());
     _scrollController.dispose();
     super.dispose();
   }

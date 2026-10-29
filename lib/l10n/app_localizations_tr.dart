@@ -531,6 +531,21 @@ class AppLocalizationsTr extends AppLocalizations {
   String get openLink => 'Bağlantıyı aç';
 
   @override
+  String get readAloud => 'Sesli oku';
+
+  @override
+  String get readingAloud => 'Sesli okunuyor';
+
+  @override
+  String get pauseReading => 'Duraklat';
+
+  @override
+  String get resumeReading => 'Sürdür';
+
+  @override
+  String get stopReading => 'Okumayı durdur';
+
+  @override
   String get openInExternalBrowser => 'Harici Tarayıcıda Aç';
 
   @override

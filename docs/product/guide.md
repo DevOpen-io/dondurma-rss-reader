@@ -43,4 +43,4 @@ Calm, capable, personal. Ice-cream identity adds warmth; functionality stays ser
 
 ## Current boundary
 
-Local-first feed reading. TTS, statistics, tags, external read-later services, advanced search, and reading queues remain backlog, not shipped features.
+Local-first feed reading. Statistics, tags, external read-later services, advanced search, and reading queues remain backlog, not shipped features.

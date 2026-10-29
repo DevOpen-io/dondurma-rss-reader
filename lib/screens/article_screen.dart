@@ -21,6 +21,8 @@ import '../widgets/article/article_circle_buttons.dart';
 import '../widgets/article/article_content_skeleton.dart';
 import '../widgets/article/article_image_carousel.dart';
 import '../widgets/article/article_image_viewer.dart';
+import '../widgets/article/read_aloud.dart';
+import '../services/article_speech.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
@@ -66,6 +68,8 @@ class _ArticleScreenState extends State<ArticleScreen> {
 
   @override
   void dispose() {
+    // Leaving the article ends reading it aloud.
+    unawaited(ArticleSpeech.instance.stop());
     _pageController.dispose();
     super.dispose();
   }
@@ -77,6 +81,7 @@ class _ArticleScreenState extends State<ArticleScreen> {
       itemCount: widget.items.length,
       onPageChanged: (index) {
         setState(() => _currentIndex = index);
+        unawaited(ArticleSpeech.instance.stopIfNot(widget.items[index]));
         // Mark the new article as read
         context.read<FeedProvider>().markAsRead(widget.items[index]);
       },
@@ -489,14 +494,27 @@ class _ArticlePageState extends State<ArticlePage> {
                         // Reading mode toggle — visible affordance for new users
                         if (widget.item.link.isNotEmpty) ...[
                           const SizedBox(height: 10),
-                          ArticleReadingModeToggle(
-                            isFullText:
-                                provider.fullTextActive &&
-                                provider.fullTextContent != null,
-                            isLoading: provider.isLoadingFullText,
-                            onToggle: provider.toggleFullText,
-                            colorScheme: colorScheme,
-                            l10n: l10n,
+                          Row(
+                            children: [
+                              Flexible(
+                                child: ArticleReadingModeToggle(
+                                  isFullText:
+                                      provider.fullTextActive &&
+                                      provider.fullTextContent != null,
+                                  isLoading: provider.isLoadingFullText,
+                                  onToggle: provider.toggleFullText,
+                                  colorScheme: colorScheme,
+                                  l10n: l10n,
+                                ),
+                              ),
+                              if (ArticleSpeech.supported) ...[
+                                const SizedBox(width: 8),
+                                ReadAloudButton(
+                                  item: widget.item,
+                                  html: () => provider.displayContent,
+                                ),
+                              ],
+                            ],
                           ),
                           if (provider.autoFullTextFailed ||
                               provider.fullTextFailed) ...[
@@ -617,6 +635,23 @@ class _ArticlePageState extends State<ArticlePage> {
               ],
             ),
           ),
+
+          // ── Read-aloud controls ──────────────────────────────────────
+          if (ArticleSpeech.supported)
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: SafeArea(
+                top: false,
+                child: Center(
+                  child: ReadAloudControls(
+                    item: widget.item,
+                    html: () => provider.displayContent,
+                  ),
+                ),
+              ),
+            ),
 
           // ── Reading progress bar ─────────────────────────────────────
           Positioned(

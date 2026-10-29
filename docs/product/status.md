@@ -38,11 +38,11 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Optional mark-as-read on scroll (Settings, off by default): article rows seen on screen and scrolled past the top edge are marked read in the phone and desktop lists ([#63](https://github.com/DevOpen-io/dondurma-rss-reader/issues/63), 2026-10-29)
 - [x] Feed discovery: a site, YouTube channel/handle, subreddit, Mastodon or Bluesky address resolves to its feed (page alternates, then common paths); several feeds offer a choice ([#64](https://github.com/DevOpen-io/dondurma-rss-reader/issues/64), 2026-10-29)
 - [x] Whole-app backup: one JSON file with feeds, folders, settings, bookmarks (article as saved, no images) and read marks; restore checks the file, then merges feeds/bookmarks/read marks and replaces settings ([#65](https://github.com/DevOpen-io/dondurma-rss-reader/issues/65), 2026-10-29)
+- [x] Read aloud with the device speech engine (flutter_tts; Android, iOS, macOS, Windows — hidden on Linux): button beside the reading-mode switch, floating pause/resume/stop bar; one reader for the app, stops on another article or leaving it ([#66](https://github.com/DevOpen-io/dondurma-rss-reader/issues/66), 2026-10-29)
 
 ## Backlog
 
 - [ ] Broader provider, service, navigation, platform integration tests
-- [ ] TTS with lifecycle-safe controls
 - [ ] Privacy-preserving reading statistics
 - [ ] Configurable retention and low-data controls beyond the existing automatic unmetered media preparation
 - [ ] Bookmark tags/export, reading queue/archive

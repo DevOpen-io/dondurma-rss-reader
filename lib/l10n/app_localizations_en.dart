@@ -533,6 +533,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get openLink => 'Open link';
 
   @override
+  String get readAloud => 'Read aloud';
+
+  @override
+  String get readingAloud => 'Reading aloud';
+
+  @override
+  String get pauseReading => 'Pause';
+
+  @override
+  String get resumeReading => 'Resume';
+
+  @override
+  String get stopReading => 'Stop reading';
+
+  @override
   String get openInExternalBrowser => 'Open in External Browser';
 
   @override

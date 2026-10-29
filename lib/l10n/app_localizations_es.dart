@@ -540,6 +540,21 @@ class AppLocalizationsEs extends AppLocalizations {
   String get openLink => 'Abrir enlace';
 
   @override
+  String get readAloud => 'Leer en voz alta';
+
+  @override
+  String get readingAloud => 'Leyendo en voz alta';
+
+  @override
+  String get pauseReading => 'Pausar';
+
+  @override
+  String get resumeReading => 'Reanudar';
+
+  @override
+  String get stopReading => 'Dejar de leer';
+
+  @override
   String get openInExternalBrowser => 'Abrir en navegador externo';
 
   @override

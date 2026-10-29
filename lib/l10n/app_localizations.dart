@@ -1066,6 +1066,36 @@ abstract class AppLocalizations {
   /// **'Open link'**
   String get openLink;
 
+  /// No description provided for @readAloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get readAloud;
+
+  /// No description provided for @readingAloud.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading aloud'**
+  String get readingAloud;
+
+  /// No description provided for @pauseReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Pause'**
+  String get pauseReading;
+
+  /// No description provided for @resumeReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
+  String get resumeReading;
+
+  /// No description provided for @stopReading.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reading'**
+  String get stopReading;
+
   /// No description provided for @openInExternalBrowser.
   ///
   /// In en, this message translates to:
