@@ -9,6 +9,7 @@ import 'package:hive_ce/hive.dart';
 
 import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
+import 'package:ice_cream_rss_reader/models/refresh_progress.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
@@ -218,6 +219,59 @@ void main() {
     expect(appToastController.current, isNotNull);
     expect(appToastController.current!.type, AppToastType.success);
     expect(server.counts['/slow.xml'], 1);
+  });
+
+  test('a pull during an automatic pass fetches interval feeds too', () async {
+    // The first pass answers at once; later ones wait for the gate so a
+    // pull can join while the automatic pass runs.
+    final gate = Completer<void>();
+    server.handlers['/slow.xml'] = (r) async {
+      if ((server.counts['/slow.xml'] ?? 0) > 1) {
+        await gate.future.timeout(const Duration(seconds: 5));
+      }
+      return _ok(r, _rss('A', ['a1']));
+    };
+    server.handlers['/daily.xml'] = (r) => _ok(r, _rss('D', ['d1']));
+    await seedSubs([
+      FeedSubscription(url: server.url('/slow.xml'), name: 'A', category: 'T'),
+      FeedSubscription(
+        url: server.url('/daily.xml'),
+        name: 'D',
+        category: 'T',
+        refreshIntervalMinutes: 1440,
+      ),
+    ]);
+    final feed = makeProvider();
+    addTearDown(feed.dispose);
+    await feed.refreshAll(); // Fetches both; the daily feed is now not due.
+    expect(server.counts['/daily.xml'], 1);
+
+    final autoPass = feed.refreshAll(); // Skips the daily feed.
+    final pull = feed.refreshAll(userInitiated: true);
+    gate.complete();
+    await Future.wait([autoPass, pull]);
+
+    expect(server.counts['/daily.xml'], 2, reason: 'the pull fetched it');
+  });
+
+  test('a pass with nothing due is a finished no-op, not offline', () async {
+    server.handlers['/daily.xml'] = (r) => _ok(r, _rss('D', ['d1']));
+    await seedSubs([
+      FeedSubscription(
+        url: server.url('/daily.xml'),
+        name: 'D',
+        category: 'T',
+        refreshIntervalMinutes: 1440,
+      ),
+    ]);
+    final feed = makeProvider();
+    addTearDown(feed.dispose);
+    await feed.refreshAll();
+    await feed.refreshAll(); // Nothing due.
+
+    expect(server.counts['/daily.xml'], 1);
+    expect(feed.isOffline, isFalse);
+    expect(feed.refreshProgress.value.phase, RefreshPhase.completed);
   });
 
   test('all feeds failing shows the all-failed message', () async {

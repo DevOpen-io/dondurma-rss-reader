@@ -746,10 +746,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullTextOff => 'Off';
 
   @override
-  String get refreshInterval => 'Refresh';
+  String get refreshInterval => 'Refresh interval';
 
   @override
-  String get refreshIntervalDefault => 'With the app';
+  String get refreshIntervalDefault => 'App default';
 
   @override
   String get refreshEveryHour => 'Every hour';

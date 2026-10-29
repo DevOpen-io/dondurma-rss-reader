@@ -748,7 +748,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get refreshInterval => 'Yenileme sıklığı';
 
   @override
-  String get refreshIntervalDefault => 'Uygulamayla';
+  String get refreshIntervalDefault => 'Varsayılan';
 
   @override
   String get refreshEveryHour => 'Saatte bir';

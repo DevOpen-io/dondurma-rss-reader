@@ -26,7 +26,9 @@ class FeedSchedule {
     final minutes = sub.refreshIntervalMinutes;
     if (minutes == null) return true;
     final last = _fetched[sub.url];
+    // A stamp from the future (the clock was moved back) proves nothing.
     return last == null ||
+        last.isAfter(now) ||
         !now.isBefore(last.add(Duration(minutes: minutes) - _slack));
   }
 

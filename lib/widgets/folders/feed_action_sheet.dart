@@ -220,7 +220,9 @@ class FeedActionSheet extends StatelessWidget {
                           color: cs.onSurfaceVariant,
                         ),
                         const SizedBox(width: 12),
-                        Expanded(
+                        // Same split as the full-text row: a loose label,
+                        // two thirds of the rest for the choice.
+                        Flexible(
                           child: Text(
                             l10n.refreshInterval,
                             style: tt.bodyMedium,
@@ -228,12 +230,12 @@ class FeedActionSheet extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                        // Half the row at most: large text ellipsizes
-                        // the choice instead of overflowing.
                         Flexible(
+                          flex: 2,
                           child: DropdownButton<int?>(
                             value: sub.refreshIntervalMinutes,
                             isExpanded: true,
+                            alignment: AlignmentDirectional.centerEnd,
                             underline: const SizedBox.shrink(),
                             borderRadius: BorderRadius.circular(12),
                             items: [

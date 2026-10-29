@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_schedule.dart';
@@ -112,14 +113,18 @@ void main() {
       );
       final hourly = _sub('https://a.test/feed', minutes: 60);
       final plain = _sub('https://b.test/feed');
-      Future<void> pass({required bool automatic}) => refresher.refresh(
-        subscriptions: [hourly, plain],
-        existingItems: const [],
-        validators: const {},
-        bookmarkedItems: const [],
-        redirects: const {},
-        honorIntervals: automatic,
-      );
+      var cached = <FeedItem>[];
+      Future<void> pass({required bool automatic}) async {
+        final result = await refresher.refresh(
+          subscriptions: [hourly, plain],
+          existingItems: cached,
+          validators: const {},
+          bookmarkedItems: const [],
+          redirects: const {},
+          honorIntervals: automatic,
+        );
+        cached = result.items;
+      }
 
       await pass(automatic: true);
       expect(requests, ['https://a.test/feed', 'https://b.test/feed']);
@@ -145,5 +150,76 @@ void main() {
     expect(FeedSubscription.fromJson(json).refreshIntervalMinutes, isNull);
     expect(sub.copyWithFullTextMode(true).refreshIntervalMinutes, 360);
     expect(sub.copyWith(name: 'x').refreshIntervalMinutes, 360);
+  });
+
+  test('a stamp from the future does not block a feed', () {
+    final schedule = FeedSchedule();
+    final now = DateTime(2026, 10, 29, 12);
+    final hourly = _sub('https://a.test/feed', minutes: 60);
+    schedule.recordFetch(hourly.url, DateTime(2027, 1, 1));
+    expect(schedule.isDue(hourly, now), isTrue);
+  });
+
+  test('only offered intervals are kept from JSON', () {
+    final json = _sub('https://a.test/feed', minutes: 60).toJson()
+      ..['refreshIntervalMinutes'] = 120;
+    expect(FeedSubscription.fromJson(json).refreshIntervalMinutes, isNull);
+  });
+
+  test('a pass that skips every feed has not attempted the network; a feed '
+      'with nothing cached is fetched even when not due', () async {
+    final requests = <String>[];
+    final refresher = FeedRefresher(
+      feedService: FeedService(
+        client: MockClient((request) async {
+          requests.add(request.url.toString());
+          return http.Response(
+            _rss,
+            200,
+            headers: {'content-type': 'application/rss+xml'},
+          );
+        }),
+      ),
+      observedArticleStore: ObservedArticleStore(
+        FileObservedArticlePersistence(
+          stateFile: File('${root.path}/observed2.json'),
+        ),
+      ),
+      hostGap: Duration.zero,
+    );
+    final hourly = _sub('https://a.test/feed', minutes: 60);
+    final first = await refresher.refresh(
+      subscriptions: [hourly],
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+      honorIntervals: true,
+    );
+    expect(first.attempted, isTrue);
+
+    requests.clear();
+    final skipped = await refresher.refresh(
+      subscriptions: [hourly],
+      existingItems: first.items,
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+      honorIntervals: true,
+    );
+    expect(requests, isEmpty);
+    expect(skipped.attempted, isFalse);
+    expect(skipped.items, hasLength(1), reason: 'cached articles kept');
+
+    final emptied = await refresher.refresh(
+      subscriptions: [hourly],
+      existingItems: const [],
+      validators: const {},
+      bookmarkedItems: const [],
+      redirects: const {},
+      honorIntervals: true,
+    );
+    expect(requests, ['https://a.test/feed'], reason: 'nothing cached');
+    expect(emptied.attempted, isTrue);
   });
 }

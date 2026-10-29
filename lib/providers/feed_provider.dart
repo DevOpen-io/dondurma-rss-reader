@@ -1342,7 +1342,17 @@ class FeedProvider extends ChangeNotifier {
     if (_disposed || subscriptionProvider == null) return;
 
     if (_isSyncing) {
-      if (queueIfRunning) _refreshQueued = true;
+      // An automatic pass may skip feeds whose own interval is not up; a
+      // user asking now gets one trailing pass that fetches every feed.
+      // Without such feeds the running pass already covers the request.
+      final skipsIntervals =
+          !_refreshIsUserInitiated &&
+          subscriptionProvider!.subscriptions.any(
+            (s) => s.refreshIntervalMinutes != null,
+          );
+      if (queueIfRunning || (userInitiated && skipsIntervals)) {
+        _refreshQueued = true;
+      }
       if (userInitiated) {
         _refreshIsUserInitiated = true;
         refreshProgress.value = refreshProgress.value.copyWith(
@@ -1397,6 +1407,9 @@ class FeedProvider extends ChangeNotifier {
   /// owns the `_isSyncing` guard and trailing-refresh coalescing.
   Future<void> _performRefresh() async {
     if (_disposed) return;
+    // Fixed when the pass starts: a user request joining later is served by
+    // the trailing pass refreshAll queues for it.
+    final honorIntervals = !_refreshIsUserInitiated;
     _isLoading = true;
     notifyListeners();
 
@@ -1464,7 +1477,7 @@ class FeedProvider extends ChangeNotifier {
         bookmarkedItems: bookmarkProvider?.bookmarkedItems ?? const [],
         redirects: _loadFeedRedirects(),
         ticket: ticket,
-        honorIntervals: !_refreshIsUserInitiated,
+        honorIntervals: honorIntervals,
         // Observation survives cache eviction, but not a factory reset or
         // the removal/replacement of this subscription namespace.
         canObserve: (url, epoch) =>
@@ -1547,13 +1560,18 @@ class FeedProvider extends ChangeNotifier {
     _items = mergeCurrent();
     _bindLegacyReads();
     _applyReadRules();
-    _isOffline = !result.online;
+    // A pass that skipped every feed (none due, or all cooling down) did
+    // not touch the network: it is a finished no-op, not an offline pass.
+    final networkUnknown = !result.attempted;
+    if (!networkUnknown) _isOffline = !result.online;
     _isLoading = false;
     refreshProgress.value = refreshProgress.value.copyWith(
       // online==false with real HTTP errors means every feed failed for a
       // definitive reason — report 'failed', not 'offline'. Offline is only
       // when failures were connectivity-unproven.
-      phase: !result.online
+      phase: networkUnknown
+          ? RefreshPhase.completed
+          : !result.online
           ? (result.feedErrors.isEmpty
                 ? RefreshPhase.offline
                 : RefreshPhase.failed)
@@ -1598,7 +1616,7 @@ class FeedProvider extends ChangeNotifier {
     _lastSyncDuration = stopwatch.elapsed;
     // Stamp only when a feed actually reached the network — an all-offline
     // pass must not look like a real sync to the resume/periodic gates.
-    if (result.online) _lastSyncTime = DateTime.now();
+    if (result.online || networkUnknown) _lastSyncTime = DateTime.now();
     // Notify debug screen that sync state + timestamps have updated.
     if (!_disposed) notifyListeners();
 

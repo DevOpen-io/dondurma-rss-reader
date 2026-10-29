@@ -1429,13 +1429,13 @@ abstract class AppLocalizations {
   /// No description provided for @refreshInterval.
   ///
   /// In en, this message translates to:
-  /// **'Refresh'**
+  /// **'Refresh interval'**
   String get refreshInterval;
 
   /// No description provided for @refreshIntervalDefault.
   ///
   /// In en, this message translates to:
-  /// **'With the app'**
+  /// **'App default'**
   String get refreshIntervalDefault;
 
   /// No description provided for @refreshEveryHour.

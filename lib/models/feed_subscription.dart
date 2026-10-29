@@ -23,6 +23,10 @@ class FeedSubscription {
   /// refresh cycle (#68). A pull to refresh always fetches.
   final int? refreshIntervalMinutes;
 
+  /// The intervals the feed sheet offers; any other stored value (a
+  /// hand-edited backup) follows the app's cycle.
+  static const refreshIntervals = [60, 360, 1440];
+
   FeedSubscription({
     required this.url,
     required this.name,
@@ -89,7 +93,7 @@ class FeedSubscription {
       notificationEpoch:
           json['notificationEpoch'] as String? ?? _legacyNotificationEpoch,
       refreshIntervalMinutes: switch (json['refreshIntervalMinutes']) {
-        final int minutes when minutes > 0 => minutes,
+        final int minutes when refreshIntervals.contains(minutes) => minutes,
         _ => null,
       },
     );

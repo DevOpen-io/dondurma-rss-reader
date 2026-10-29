@@ -38,7 +38,8 @@ class RefreshProgress {
   /// Feeds that recorded a failure.
   final int failed;
 
-  /// Feeds skipped by cooldown before touching the network.
+  /// Feeds skipped before touching the network: cooling down, or their
+  /// own refresh interval not up (#68).
   final int skipped;
 
   /// Requests currently in flight.

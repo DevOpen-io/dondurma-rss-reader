@@ -235,7 +235,7 @@
   "fullTextOn": "Açık",
   "fullTextOff": "Kapalı",
   "refreshInterval": "Yenileme sıklığı",
-  "refreshIntervalDefault": "Uygulamayla",
+  "refreshIntervalDefault": "Varsayılan",
   "refreshEveryHour": "Saatte bir",
   "refreshEvery6Hours": "6 saatte bir",
   "refreshDaily": "Günde bir",

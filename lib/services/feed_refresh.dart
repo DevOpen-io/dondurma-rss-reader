@@ -23,6 +23,10 @@ typedef FeedRefreshResult = ({
   /// At least one feed reached the network (HTTP 200 or 304).
   bool online,
 
+  /// At least one feed was not skipped (cooldown, interval): when none was,
+  /// the pass learned nothing about the network.
+  bool attempted,
+
   /// At least one feed returned an HTTP 200 body — worth persisting.
   bool anyFreshBody,
 
@@ -150,8 +154,12 @@ class FeedRefresher {
       // A backed-off feed — or one whose own interval is not up — keeps its
       // cached items and its last error without touching the network, the
       // same treatment as an unproven failure.
+      // A feed with nothing cached (the global cache let it go) is fetched
+      // anyway, or it would sit empty until its interval is up.
       if (backoff.isBackedOff(sub.url, DateTime.now()) ||
-          (honorIntervals && !schedule.isDue(sub, DateTime.now()))) {
+          (honorIntervals &&
+              existingByFeed[sub.url]?.isNotEmpty == true &&
+              !schedule.isDue(sub, DateTime.now()))) {
         skipped++;
         completed++;
         emit();
@@ -380,6 +388,7 @@ class FeedRefresher {
       items: items,
       claimedItems: claimedItems,
       online: online,
+      attempted: outcomes.any((o) => !o.skipped),
       anyFreshBody: anyFreshBody,
       validators: newValidators,
       feedErrors: feedErrors,

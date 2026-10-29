@@ -756,10 +756,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get fullTextOff => 'Desactivado';
 
   @override
-  String get refreshInterval => 'Actualizar';
+  String get refreshInterval => 'Frecuencia de actualización';
 
   @override
-  String get refreshIntervalDefault => 'Con la app';
+  String get refreshIntervalDefault => 'Predeterminado';
 
   @override
   String get refreshEveryHour => 'Cada hora';
