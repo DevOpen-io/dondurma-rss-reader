@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
+import '../providers/settings_provider.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/constrained_width.dart';
 import '../widgets/empty_state.dart';
@@ -29,12 +30,16 @@ class BookmarksScreen extends StatelessWidget {
       );
     }
 
+    final flat = context.select<SettingsProvider, bool>(
+      (s) => s.articleListStyle == 'list',
+    );
     return ConstrainedWidth(
       child: ListView.builder(
-        padding: const EdgeInsets.only(
-          top: 16.0,
-          left: 16.0,
-          right: 16.0,
+        // List rows run edge to edge; cards keep margins.
+        padding: EdgeInsets.only(
+          top: flat ? 0 : 16.0,
+          left: flat ? 0 : 16.0,
+          right: flat ? 0 : 16.0,
           bottom: 120.0,
         ),
         itemCount: bookmarkedItems.length,
@@ -49,6 +54,7 @@ class BookmarksScreen extends StatelessWidget {
             builder: (_, isRead, _) => FeedListItem(
               item: item.copyWith(isRead: isRead),
               navigationItems: bookmarkedItems,
+              flat: flat,
             ),
           );
         },

@@ -11,6 +11,7 @@ import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
+import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
 import 'package:ice_cream_rss_reader/screens/bookmarks_screen.dart';
 import 'package:ice_cream_rss_reader/utils/app_toast.dart';
@@ -26,6 +27,7 @@ void main() {
     Hive.init(tempDir.path);
     await Hive.openBox('feeds');
     await Hive.openBox('bookmarks');
+    await Hive.openBox('settings');
   });
 
   tearDownAll(() {
@@ -419,6 +421,7 @@ void main() {
             ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
             ChangeNotifierProvider.value(value: bookmarks),
             ChangeNotifierProvider.value(value: feed),
+            ChangeNotifierProvider(create: (_) => SettingsProvider()),
           ],
           child: MaterialApp(
             localizationsDelegates: AppLocalizations.localizationsDelegates,

@@ -17,7 +17,6 @@ import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import '../utils/offline_status_labels.dart';
 import '../utils/time_format.dart';
-import 'category_icon.dart';
 
 const int _articleNavigationWindowRadius = 25;
 
@@ -100,7 +99,16 @@ class FeedListItem extends StatefulWidget {
   /// Defaults to the feed's [FeedProvider.filteredItems].
   final List<FeedItem>? navigationItems;
 
-  const FeedListItem({super.key, required this.item, this.navigationItems});
+  /// Flat list row split by a hairline instead of a rounded card
+  /// (Settings › Article list).
+  final bool flat;
+
+  const FeedListItem({
+    super.key,
+    required this.item,
+    this.navigationItems,
+    this.flat = false,
+  });
 
   @override
   State<FeedListItem> createState() => _FeedListItemState();
@@ -241,17 +249,17 @@ class _FeedListItemState extends State<FeedListItem>
                 unawaited(confirmBookmarkToggle(context, widget.item)),
           },
           child: Container(
-            margin: const EdgeInsets.only(bottom: 10.0),
+            margin: EdgeInsets.only(bottom: widget.flat ? 0 : 10.0),
             child: ValueListenableBuilder<double>(
               valueListenable: _drag,
               child: _ArticleCard(
                 item: widget.item,
                 isRead: isRead,
                 isBookmarked: isBookmarked,
-                status: status,
                 scopeLabel: scopeLabel,
                 waitLabel: waitLabel,
                 navigationItems: widget.navigationItems,
+                flat: widget.flat,
               ),
               builder: (context, extent, card) => Stack(
                 children: [
@@ -261,6 +269,7 @@ class _FeedListItemState extends State<FeedListItem>
                       isRead: isRead,
                       isBookmarked: isBookmarked,
                       actionTriggered: _actionTriggered,
+                      flat: widget.flat,
                     ),
                   GestureDetector(
                     onHorizontalDragUpdate: _onHorizontalDragUpdate,
@@ -288,18 +297,18 @@ class _ArticleCard extends StatelessWidget {
   final FeedItem item;
   final bool isRead;
   final bool isBookmarked;
-  final ArticleStatus? status;
   final String? scopeLabel;
   final String? waitLabel;
   final List<FeedItem>? navigationItems;
+  final bool flat;
 
   const _ArticleCard({
     required this.item,
     required this.isRead,
     required this.isBookmarked,
-    required this.status,
     required this.scopeLabel,
     required this.waitLabel,
+    required this.flat,
     this.navigationItems,
   });
 
@@ -308,13 +317,14 @@ class _ArticleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final radius = BorderRadius.circular(flat ? 0 : 18);
 
-    return Material(
-      color: colorScheme.surfaceContainerLow,
-      borderRadius: BorderRadius.circular(18),
+    final row = Material(
+      color: flat ? Colors.transparent : colorScheme.surfaceContainerLow,
+      borderRadius: radius,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: radius,
         onTap: () {
           final feedProvider = context.read<FeedProvider>();
           final window = articleNavigationWindow(
@@ -330,17 +340,16 @@ class _ArticleCard extends StatelessWidget {
           });
         },
         child: Padding(
-          padding: const EdgeInsets.all(14.0),
+          padding: flat
+              ? const EdgeInsets.symmetric(horizontal: 16, vertical: 14)
+              : const EdgeInsets.all(14.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _FeedItemIcon(item: item, isRead: isRead),
-              const SizedBox(width: 12),
               Expanded(
                 child: _FeedItemContent(
                   item: item,
                   isRead: isRead,
-                  status: status,
                   scopeLabel: scopeLabel,
                   waitLabel: waitLabel,
                 ),
@@ -365,6 +374,20 @@ class _ArticleCard extends StatelessWidget {
         ),
       ),
     );
+    if (!flat) return row;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row,
+        Divider(
+          height: 1,
+          thickness: 0.5,
+          indent: 16,
+          endIndent: 16,
+          color: colorScheme.outlineVariant,
+        ),
+      ],
+    );
   }
 }
 
@@ -377,12 +400,14 @@ class _SwipeBackground extends StatelessWidget {
   final bool isRead;
   final bool isBookmarked;
   final bool actionTriggered;
+  final bool flat;
 
   const _SwipeBackground({
     required this.isSwipingRight,
     required this.isRead,
     required this.isBookmarked,
     required this.actionTriggered,
+    required this.flat,
   });
 
   @override
@@ -394,7 +419,7 @@ class _SwipeBackground extends StatelessWidget {
           color: isSwipingRight
               ? colorScheme.primary.withValues(alpha: 0.1)
               : colorScheme.secondary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(flat ? 0 : 18),
         ),
         alignment: isSwipingRight
             ? Alignment.centerLeft
@@ -414,43 +439,6 @@ class _SwipeBackground extends StatelessWidget {
             color: isSwipingRight ? colorScheme.primary : colorScheme.secondary,
             size: 28,
           ),
-        ),
-      ),
-    );
-  }
-}
-
-// =============================================================================
-// Feed source icon — always category icon, left side
-// =============================================================================
-
-class _FeedItemIcon extends StatelessWidget {
-  final FeedItem item;
-  final bool isRead;
-
-  const _FeedItemIcon({required this.item, required this.isRead});
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    // Theme-derived tile colors, so the tile follows every color scheme.
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isRead
-            ? colorScheme.primaryContainer.withValues(alpha: 0.45)
-            : colorScheme.primaryContainer,
-        borderRadius: BorderRadius.circular(11),
-      ),
-      child: Center(
-        child: CategoryIcon(
-          category: item.category,
-          size: 20,
-          color: isRead
-              ? colorScheme.onPrimaryContainer.withValues(alpha: 0.55)
-              : colorScheme.onPrimaryContainer,
         ),
       ),
     );
@@ -592,14 +580,12 @@ String? _waitLabel(
 class _FeedItemContent extends StatelessWidget {
   final FeedItem item;
   final bool isRead;
-  final ArticleStatus? status;
   final String? scopeLabel;
   final String? waitLabel;
 
   const _FeedItemContent({
     required this.item,
     required this.isRead,
-    required this.status,
     required this.scopeLabel,
     required this.waitLabel,
   });
@@ -702,38 +688,19 @@ class _FeedItemContent extends StatelessWidget {
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
-        // Scope line first, wait reason second (#41) — a real text label,
+        // Scope line first, wait reason second (#41) — a quiet text label,
         // not an icon-only hint.
         if (scopeLabel != null || waitLabel != null)
           Padding(
-            padding: const EdgeInsets.only(top: 5),
-            child: Row(
-              children: [
-                Icon(
-                  (status?.fullyReady ?? false)
-                      ? Icons.offline_pin
-                      : Icons.schedule,
-                  size: 12,
-                  color: (status?.fullyReady ?? false)
-                      ? colorScheme.secondary.withValues(alpha: 0.8)
-                      : colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    [?scopeLabel, ?waitLabel].join(' · '),
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withValues(
-                        alpha: 0.9,
-                      ),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
+            padding: const EdgeInsets.only(top: 6),
+            child: Text(
+              [?scopeLabel, ?waitLabel].join(' · '),
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.75),
+                fontSize: 11,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
           ),
       ],

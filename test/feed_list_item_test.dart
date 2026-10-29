@@ -11,6 +11,7 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/widgets/category_icon.dart';
 import 'package:ice_cream_rss_reader/widgets/feed_list_item.dart';
 
 void main() {
@@ -46,7 +47,7 @@ void main() {
     feedUrl: 'https://example.com/feed',
   );
 
-  Widget wrap(FeedItem item) => MultiProvider(
+  Widget wrap(FeedItem item, {bool flat = false}) => MultiProvider(
     providers: [
       ChangeNotifierProvider(create: (_) => SubscriptionProvider()),
       ChangeNotifierProvider(create: (_) => BookmarkProvider()),
@@ -55,7 +56,7 @@ void main() {
     child: MaterialApp(
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: Scaffold(body: FeedListItem(item: item)),
+      home: Scaffold(body: FeedListItem(item: item, flat: flat)),
     ),
   );
 
@@ -160,4 +161,37 @@ void main() {
       handle.dispose();
     },
   );
+
+  testWidgets('rows carry no category icon tile', (tester) async {
+    for (final flat in [false, true]) {
+      await tester.pumpWidget(wrap(buildItem(), flat: flat));
+      await tester.pumpAndSettle();
+      expect(find.byType(CategoryIcon), findsNothing);
+    }
+  });
+
+  testWidgets('list style draws a flat row with a hairline, not a card', (
+    tester,
+  ) async {
+    Material card() => tester.widget<Material>(
+      find
+          .descendant(
+            of: find.byWidgetPredicate(
+              (w) => w.runtimeType.toString() == '_ArticleCard',
+            ),
+            matching: find.byType(Material),
+          )
+          .first,
+    );
+
+    await tester.pumpWidget(wrap(buildItem()));
+    await tester.pumpAndSettle();
+    expect(card().color, isNot(Colors.transparent));
+    expect(find.byType(Divider), findsNothing);
+
+    await tester.pumpWidget(wrap(buildItem(), flat: true));
+    await tester.pumpAndSettle();
+    expect(card().color, Colors.transparent);
+    expect(find.byType(Divider), findsOneWidget);
+  });
 }

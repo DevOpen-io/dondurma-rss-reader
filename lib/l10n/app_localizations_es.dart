@@ -33,13 +33,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchFeeds => 'Buscar fuentes...';
 
   @override
-  String get today => 'HOY';
+  String get today => 'Hoy';
 
   @override
-  String get yesterday => 'AYER';
+  String get yesterday => 'Ayer';
 
   @override
-  String get older => 'ANTERIORES';
+  String get older => 'Anteriores';
 
   @override
   String get subscribedOnly => 'Solo suscripciones';
@@ -420,6 +420,15 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get readingWidthFull => 'Ancho completo';
+
+  @override
+  String get articleListStyle => 'Lista de artículos';
+
+  @override
+  String get articleListCards => 'Tarjetas';
+
+  @override
+  String get articleListRows => 'Lista';
 
   @override
   String get contentFiltering => 'Filtrado de contenido';

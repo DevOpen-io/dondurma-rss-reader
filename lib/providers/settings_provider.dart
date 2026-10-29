@@ -58,6 +58,10 @@ class SettingsProvider extends ChangeNotifier {
   // reading is unaffected.
   String _desktopReadingWidth = 'expanded';
 
+  // Article rows on the phone layout: 'cards' (rounded tiles) or 'list'
+  // (flat rows split by hairlines).
+  String _articleListStyle = 'cards';
+
   // ---------------------------------------------------------------------------
   // Getters
   // ---------------------------------------------------------------------------
@@ -95,6 +99,8 @@ class SettingsProvider extends ChangeNotifier {
   String get timeFormat => _timeFormat;
 
   String get desktopReadingWidth => _desktopReadingWidth;
+
+  String get articleListStyle => _articleListStyle;
 
   // ---------------------------------------------------------------------------
   // Hive box accessor
@@ -200,6 +206,8 @@ class SettingsProvider extends ChangeNotifier {
       'desktopReadingWidth',
       defaultValue: 'expanded',
     );
+
+    _articleListStyle = _box.get('articleListStyle', defaultValue: 'cards');
 
     notifyListeners();
   }
@@ -350,6 +358,13 @@ class SettingsProvider extends ChangeNotifier {
     if (mode != 'comfortable' && mode != 'expanded' && mode != 'full') return;
     _desktopReadingWidth = mode;
     await _store('desktopReadingWidth', mode);
+  }
+
+  /// Sets how the phone layout draws article rows: `'cards'` or `'list'`.
+  Future<void> setArticleListStyle(String style) async {
+    if (style != 'cards' && style != 'list') return;
+    _articleListStyle = style;
+    await _store('articleListStyle', style);
   }
 
   /// Adds a search query to the history.

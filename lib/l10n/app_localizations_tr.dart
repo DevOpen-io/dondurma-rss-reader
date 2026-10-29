@@ -33,13 +33,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchFeeds => 'Haber kaynakları ara...';
 
   @override
-  String get today => 'BUGÜN';
+  String get today => 'Bugün';
 
   @override
-  String get yesterday => 'DÜN';
+  String get yesterday => 'Dün';
 
   @override
-  String get older => 'DAHA ESKİ';
+  String get older => 'Daha eski';
 
   @override
   String get subscribedOnly => 'Yalnızca Abonelikler';
@@ -412,6 +412,15 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get readingWidthFull => 'Tam genişlik';
+
+  @override
+  String get articleListStyle => 'Makale Listesi';
+
+  @override
+  String get articleListCards => 'Kartlar';
+
+  @override
+  String get articleListRows => 'Liste';
 
   @override
   String get contentFiltering => 'İçerik Filtreleme';

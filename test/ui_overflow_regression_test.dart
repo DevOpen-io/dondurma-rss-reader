@@ -168,7 +168,7 @@ void main() {
   testWidgets(
     'feed list item hides category entirely below the meta threshold',
     (tester) async {
-      tester.view.physicalSize = const Size(340, 700);
+      tester.view.physicalSize = const Size(288, 700);
       tester.view.devicePixelRatio = 1.0;
       addTearDown(tester.view.reset);
 

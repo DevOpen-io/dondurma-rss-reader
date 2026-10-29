@@ -72,6 +72,9 @@ class _HomeScreenState extends State<HomeScreen> {
     List<FeedItem> olderItems,
   ) {
     final l10n = AppLocalizations.of(context);
+    final flat = context.select<SettingsProvider, bool>(
+      (s) => s.articleListStyle == 'list',
+    );
     final bool hasAnyItems =
         todayItems.isNotEmpty ||
         yesterdayItems.isNotEmpty ||
@@ -174,8 +177,11 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _buildSectionHeader(label),
                           ),
                           _ItemEntry(:final item) => Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: FeedListItem(item: item),
+                            // List rows run edge to edge; cards keep margins.
+                            padding: EdgeInsets.symmetric(
+                              horizontal: flat ? 0 : 16,
+                            ),
+                            child: FeedListItem(item: item, flat: flat),
                           ),
                           _WidgetEntry(:final child) => child,
                         };
@@ -498,30 +504,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildSectionHeader(String title) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: Row(
-        children: [
-          Container(
-            width: 3,
-            height: 14,
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            title.toUpperCase(),
-            style: TextStyle(
-              color: colorScheme.primary.withValues(alpha: 0.85),
-              fontSize: 11.5,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 1.2,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(top: 20, bottom: 8),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }

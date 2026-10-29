@@ -378,6 +378,24 @@ class SettingsScreen extends StatelessWidget {
                 onChanged: (v) =>
                     context.read<SettingsProvider>().setLineSpacing(v!),
               ),
+              const SettingsTileDivider(),
+              SettingsSelectionTile<String>(
+                icon: Icons.view_agenda_outlined,
+                title: l10n.articleListStyle,
+                value: settings.articleListStyle,
+                items: [
+                  DropdownMenuItem(
+                    value: 'cards',
+                    child: Text(l10n.articleListCards),
+                  ),
+                  DropdownMenuItem(
+                    value: 'list',
+                    child: Text(l10n.articleListRows),
+                  ),
+                ],
+                onChanged: (v) =>
+                    context.read<SettingsProvider>().setArticleListStyle(v!),
+              ),
               if (PlatformCaps.isDesktop) ...[
                 const SettingsTileDivider(),
                 SettingsSelectionTile<String>(

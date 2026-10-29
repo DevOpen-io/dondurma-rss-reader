@@ -87,6 +87,16 @@ void main() {
       expect(Hive.box('settings').get('appFont'), 'atkinson');
       expect(SettingsProvider().appFont, AppFont.atkinson);
     });
+
+    test('article list style defaults to cards and persists list', () async {
+      await Hive.box('settings').clear();
+      final settings = SettingsProvider();
+      expect(settings.articleListStyle, 'cards');
+      await settings.setArticleListStyle('list');
+      expect(SettingsProvider().articleListStyle, 'list');
+      await settings.setArticleListStyle('grid');
+      expect(SettingsProvider().articleListStyle, 'list');
+    });
   });
 
   test('font licenses reach the license page', () async {

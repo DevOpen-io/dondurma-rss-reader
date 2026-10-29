@@ -151,19 +151,19 @@ abstract class AppLocalizations {
   /// No description provided for @today.
   ///
   /// In en, this message translates to:
-  /// **'TODAY'**
+  /// **'Today'**
   String get today;
 
   /// No description provided for @yesterday.
   ///
   /// In en, this message translates to:
-  /// **'YESTERDAY'**
+  /// **'Yesterday'**
   String get yesterday;
 
   /// No description provided for @older.
   ///
   /// In en, this message translates to:
-  /// **'OLDER'**
+  /// **'Older'**
   String get older;
 
   /// No description provided for @subscribedOnly.
@@ -849,6 +849,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Full width'**
   String get readingWidthFull;
+
+  /// No description provided for @articleListStyle.
+  ///
+  /// In en, this message translates to:
+  /// **'Article List'**
+  String get articleListStyle;
+
+  /// No description provided for @articleListCards.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards'**
+  String get articleListCards;
+
+  /// No description provided for @articleListRows.
+  ///
+  /// In en, this message translates to:
+  /// **'List'**
+  String get articleListRows;
 
   /// No description provided for @contentFiltering.
   ///
