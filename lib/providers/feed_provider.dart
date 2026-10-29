@@ -18,6 +18,7 @@ import '../services/lifecycle_gate.dart';
 import '../services/read_state.dart';
 import '../services/feed_date_groups.dart';
 import '../services/feed_decisions.dart';
+import '../services/feed_discovery.dart';
 import '../services/feed_list_filter.dart';
 import '../services/feed_refresh.dart';
 import '../services/article_preparation_service.dart';
@@ -1105,6 +1106,11 @@ class FeedProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
   // Refresh & sync
   // ---------------------------------------------------------------------------
+
+  /// Feeds behind a web page the user entered instead of a feed address,
+  /// paced with the other requests to the same host.
+  Future<List<DiscoveredFeed>> discoverFeeds(String url) =>
+      _feedService.discoverFeeds(url, pace: _hostPacer.pace);
 
   /// Validates, persists, and makes a subscription usable in one awaited
   /// foreground transaction. The authoritative validation response is reused

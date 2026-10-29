@@ -735,6 +735,53 @@ void main() {
   );
 
   test(
+    'a web page is not a feed: add fails with a parse error, discovery finds its feed',
+    () async {
+      final page = server.url('/site/');
+      server.handlers['/site/'] = (request) async {
+        request.response.headers.contentType = ContentType.html;
+        request.response.write(
+          '<html><head><link rel="alternate" '
+          'type="application/rss+xml" href="feed.xml"></head></html>',
+        );
+        await request.response.close();
+      };
+      server.handlers['/site/feed.xml'] = (request) =>
+          _respond200(request, _rss('Site', ['site-article']));
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+
+      await expectLater(
+        providers.feed.addSubscriptionAndRefresh(page, 'Site', 'Test'),
+        throwsA(
+          isA<FeedFetchException>().having(
+            (e) => e.kind,
+            'kind',
+            FeedFetchErrorKind.parse,
+          ),
+        ),
+      );
+      expect(providers.subscriptions.hasFeedUrl(page), isFalse);
+
+      final found = await providers.feed.discoverFeeds(page);
+      expect([for (final f in found) f.url], [server.url('/site/feed.xml')]);
+      expect(
+        await providers.feed.addSubscriptionAndRefresh(
+          found.single.url,
+          'Site',
+          'Test',
+        ),
+        isTrue,
+      );
+      expect(
+        providers.feed.items.map((item) => item.id),
+        contains('site-article'),
+      );
+      providers.feed.dispose();
+    },
+  );
+
+  test(
     'suggested add uses same immediate foreground fetch and persistence lifecycle',
     () async {
       final url = server.url('/suggested.xml');

@@ -68,7 +68,7 @@
   "delete": "Delete",
   "reset": "Reset",
   "addRssFeed": "Add RSS Feed",
-  "addFeedSubtitle": "Paste a feed address to subscribe",
+  "addFeedSubtitle": "Paste a site or feed address to subscribe",
   "useSuggestedName": "Use \"{name}\" as name",
   "@useSuggestedName": {
     "placeholders": {
@@ -516,7 +516,8 @@
   "bookmarksSwipeHint": "Swipe left on any article to save it here.",
   "readSwipeHint": "Tip: swipe an article right to mark it as read or unread.",
   "retry": "Try Again",
-  "feedAddError": "Couldn't find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.",
+  "feedAddError": "Couldn't find a feed at this address. Check the URL, or try the site's home page.",
+  "chooseFeed": "Choose a feed",
   "clearFilters": "Show all articles",
   "thirtyMinutes": "30 Minutes",
   "semanticCategoryOptions": "Category options",

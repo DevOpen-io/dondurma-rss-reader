@@ -150,7 +150,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addRssFeed => 'Add RSS Feed';
 
   @override
-  String get addFeedSubtitle => 'Paste a feed address to subscribe';
+  String get addFeedSubtitle => 'Paste a site or feed address to subscribe';
 
   @override
   String useSuggestedName(String name) {
@@ -1139,7 +1139,10 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedAddError =>
-      'Couldn\'t find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.';
+      'Couldn\'t find a feed at this address. Check the URL, or try the site\'s home page.';
+
+  @override
+  String get chooseFeed => 'Choose a feed';
 
   @override
   String get clearFilters => 'Show all articles';

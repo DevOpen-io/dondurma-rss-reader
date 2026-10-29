@@ -152,7 +152,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get addFeedSubtitle =>
-      'Abone olmak için kaynak (RSS) adresini yapıştırın';
+      'Abone olmak için site ya da kaynak (RSS) adresini yapıştırın';
 
   @override
   String useSuggestedName(String name) {
@@ -1143,7 +1143,10 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get feedAddError =>
-      'Bu adreste RSS kaynağı bulunamadı. Adresi kontrol edin: çoğu kaynak adresi /feed veya /rss ile biter.';
+      'Bu adreste bir kaynak bulunamadı. Adresi kontrol edin ya da sitenin ana sayfasını deneyin.';
+
+  @override
+  String get chooseFeed => 'Bir kaynak seçin';
 
   @override
   String get clearFilters => 'Tüm makaleleri göster';

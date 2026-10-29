@@ -6,6 +6,9 @@ import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/feed_discovery.dart';
+import '../services/feed_service.dart'
+    show FeedFetchErrorKind, FeedFetchException;
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'adaptive_dialog.dart';
@@ -301,18 +304,36 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
     setState(() => _isLoading = true);
 
-    final url = _urlController.text.trim();
     final name = _nameController.text.trim();
     String category = _categoryController.text.trim();
     if (category.isEmpty) category = 'Uncategorized';
+    final typed = _urlController.text.trim();
 
     try {
       final feeds = context.read<FeedProvider>();
-      final success = await feeds.addSubscriptionAndRefresh(
-        url,
-        name,
-        category,
-      );
+      // Pages known to hide their feed (Reddit) or map to one without a
+      // request (YouTube channel ids) skip straight to the feed address.
+      var url = knownFeedUrl(typed) ?? typed;
+      bool success;
+      try {
+        success = await feeds.addSubscriptionAndRefresh(url, name, category);
+      } on FeedFetchException catch (e) {
+        // A web page, not a feed: look for the feed it advertises.
+        if (e.kind != FeedFetchErrorKind.parse) rethrow;
+        final found = await feeds.discoverFeeds(url);
+        if (!context.mounted) return;
+        if (found.isEmpty) rethrow;
+        final chosen = found.length == 1
+            ? found.single
+            : await _pickFeed(context, found);
+        if (chosen == null) {
+          if (mounted) setState(() => _isLoading = false);
+          return;
+        }
+        url = chosen.url;
+        if (!context.mounted) return;
+        success = await feeds.addSubscriptionAndRefresh(url, name, category);
+      }
       if (success) {
         if (context.mounted) {
           context.pop();
@@ -339,6 +360,31 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         showAppToast(l10n.feedAddError, type: AppToastType.error);
       }
     }
+  }
+
+  /// Lets the user pick one of several feeds a page advertises.
+  Future<DiscoveredFeed?> _pickFeed(
+    BuildContext context,
+    List<DiscoveredFeed> feeds,
+  ) {
+    return showDialog<DiscoveredFeed>(
+      context: context,
+      builder: (dialogCtx) => SimpleDialog(
+        title: Text(AppLocalizations.of(dialogCtx).chooseFeed),
+        children: [
+          for (final feed in feeds)
+            ListTile(
+              title: Text(feed.title ?? Uri.parse(feed.url).path),
+              subtitle: Text(
+                feed.url,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              onTap: () => Navigator.of(dialogCtx).pop(feed),
+            ),
+        ],
+      ),
+    );
   }
 
   @override

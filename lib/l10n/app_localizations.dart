@@ -367,7 +367,7 @@ abstract class AppLocalizations {
   /// No description provided for @addFeedSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Paste a feed address to subscribe'**
+  /// **'Paste a site or feed address to subscribe'**
   String get addFeedSubtitle;
 
   /// No description provided for @useSuggestedName.
@@ -2167,8 +2167,14 @@ abstract class AppLocalizations {
   /// No description provided for @feedAddError.
   ///
   /// In en, this message translates to:
-  /// **'Couldn\'t find an RSS feed at this address. Check the URL: most feed addresses end with /feed or /rss.'**
+  /// **'Couldn\'t find a feed at this address. Check the URL, or try the site\'s home page.'**
   String get feedAddError;
+
+  /// No description provided for @chooseFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a feed'**
+  String get chooseFeed;
 
   /// No description provided for @clearFilters.
   ///

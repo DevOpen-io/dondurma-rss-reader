@@ -13,6 +13,7 @@ import '../models/feed_item.dart';
 import 'feed_date_groups.dart';
 import '../utils/retry_after.dart';
 import 'article_identity.dart';
+import 'feed_discovery.dart';
 
 /// Why a feed fetch failed — lets health reporting tell a dead feed apart
 /// from a dead network.
@@ -64,7 +65,7 @@ class FeedService {
 
   final http.Client _client;
 
-  FeedService() : _client = http.Client();
+  FeedService({http.Client? client}) : _client = client ?? http.Client();
 
   void dispose() => _client.close();
 
@@ -167,60 +168,11 @@ class FeedService {
       if (etag != null) headers['If-None-Match'] = etag;
       if (lastModified != null) headers['If-Modified-Since'] = lastModified;
 
-      // Follow redirects manually (max 5 hops) — package:http's auto-follow
-      // hides the final URL, but learning it lets callers skip the hop.
-      var currentUrl = url;
-      http.StreamedResponse? streamed;
-      for (var hops = 0; hops < 5; hops++) {
-        final uri = Uri.parse(currentUrl);
-        if (uri.scheme != 'http' && uri.scheme != 'https') {
-          throw FeedFetchException(
-            FeedFetchErrorKind.httpStatus,
-            'Refusing non-HTTP redirect target: ${uri.scheme}',
-          );
-        }
-        // Conditional validators belong to the origin that issued them —
-        // forwarding them cross-origin both leaks them and fetches the
-        // wrong resource's validator state. Origin = scheme+host+port:
-        // http→https or :8080→:443 must drop validators too.
-        final crossOrigin = !sameOrigin(url, uri.toString());
-        final request = http.Request('GET', uri)
-          ..followRedirects = false
-          ..headers.addAll(headers);
-        if (crossOrigin) {
-          request.headers.remove('If-None-Match');
-          request.headers.remove('If-Modified-Since');
-        }
-        final next = await _client
-            .send(request)
-            .timeout(const Duration(seconds: 10));
-        final location = next.headers['location'];
-        if (next.isRedirect && location != null) {
-          // Discard the hop's body with the same bounds as a final
-          // response — a redirect with an unbounded/slow body could pin
-          // the connection otherwise.
-          await _discardBody(next.stream);
-          final resolved = Uri.parse(currentUrl).resolve(location);
-          // A relative Location can still produce an exotic scheme
-          // (file:, javascript:) — the next loop iteration rejects it.
-          currentUrl = resolved.toString();
-          continue;
-        }
-        streamed = next;
-        break;
-      }
-      if (streamed == null) {
-        throw FeedFetchException(
-          FeedFetchErrorKind.httpStatus,
-          'Failed to load RSS feed (redirect limit exceeded)',
-        );
-      }
-      final statusCode = streamed.statusCode;
-      final responseHeaders = streamed.headers;
-      // The send() timeout only covers response headers — a drip-feeding
-      // server could hold the body open forever. Bound both the byte count
-      // and the wall-clock time of the download itself.
-      final bodyBytes = await _readBoundedBody(streamed.stream);
+      final response = await _get(url, headers);
+      final statusCode = response.statusCode;
+      final responseHeaders = response.headers;
+      final bodyBytes = response.bodyBytes;
+      final currentUrl = response.finalUrl;
 
       // A differing final URL means the feed moved — callers learn it and
       // skip the redirect round-trip on the next cycle.
@@ -287,6 +239,115 @@ class FeedService {
         'Could not fetch or parse feed: $e',
       );
     }
+  }
+
+  /// GETs [url], following up to 5 redirects by hand, and reads the body
+  /// within the size and time bounds. Conditional validators in [headers]
+  /// are dropped on a cross-origin hop.
+  Future<
+    ({
+      int statusCode,
+      Map<String, String> headers,
+      Uint8List bodyBytes,
+      String finalUrl,
+    })
+  >
+  _get(String url, Map<String, String> headers) async {
+    // Follow redirects manually (max 5 hops) — package:http's auto-follow
+    // hides the final URL, but learning it lets callers skip the hop.
+    var currentUrl = url;
+    http.StreamedResponse? streamed;
+    for (var hops = 0; hops < 5; hops++) {
+      final uri = Uri.parse(currentUrl);
+      if (uri.scheme != 'http' && uri.scheme != 'https') {
+        throw FeedFetchException(
+          FeedFetchErrorKind.httpStatus,
+          'Refusing non-HTTP redirect target: ${uri.scheme}',
+        );
+      }
+      // Conditional validators belong to the origin that issued them —
+      // forwarding them cross-origin both leaks them and fetches the
+      // wrong resource's validator state. Origin = scheme+host+port:
+      // http→https or :8080→:443 must drop validators too.
+      final crossOrigin = !sameOrigin(url, uri.toString());
+      final request = http.Request('GET', uri)
+        ..followRedirects = false
+        ..headers.addAll(headers);
+      if (crossOrigin) {
+        request.headers.remove('If-None-Match');
+        request.headers.remove('If-Modified-Since');
+      }
+      final next = await _client
+          .send(request)
+          .timeout(const Duration(seconds: 10));
+      final location = next.headers['location'];
+      if (next.isRedirect && location != null) {
+        // Discard the hop's body with the same bounds as a final
+        // response — a redirect with an unbounded/slow body could pin
+        // the connection otherwise.
+        await _discardBody(next.stream);
+        final resolved = Uri.parse(currentUrl).resolve(location);
+        // A relative Location can still produce an exotic scheme
+        // (file:, javascript:) — the next loop iteration rejects it.
+        currentUrl = resolved.toString();
+        continue;
+      }
+      streamed = next;
+      break;
+    }
+    if (streamed == null) {
+      throw FeedFetchException(
+        FeedFetchErrorKind.httpStatus,
+        'Failed to load RSS feed (redirect limit exceeded)',
+      );
+    }
+    // The send() timeout only covers response headers — a drip-feeding
+    // server could hold the body open forever. Bound both the byte count
+    // and the wall-clock time of the download itself.
+    return (
+      statusCode: streamed.statusCode,
+      headers: streamed.headers,
+      bodyBytes: await _readBoundedBody(streamed.stream),
+      finalUrl: currentUrl,
+    );
+  }
+
+  /// Feeds behind a web page the user entered instead of a feed address:
+  /// the page's `<link rel="alternate">` feeds, or else the first of
+  /// [commonFeedPaths] on its site that parses as a feed. [pace] runs
+  /// before every request (the shared host pacer). Empty when nothing is
+  /// found; a failed page request throws.
+  Future<List<DiscoveredFeed>> discoverFeeds(
+    String url, {
+    Future<void> Function(String url)? pace,
+  }) async {
+    await pace?.call(url);
+    final page = await _get(url, const {
+      'User-Agent': _userAgent,
+      'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.9',
+    });
+    if (page.statusCode != 200) return const [];
+    final pageUrl = Uri.parse(page.finalUrl);
+    final linked = feedLinksInHtml(
+      _decodeBody(
+        page.bodyBytes,
+        declaredCharset: _charsetFrom(page.headers['content-type']),
+      ),
+      pageUrl,
+    );
+    if (linked.isNotEmpty) return linked;
+    for (final path in commonFeedPaths) {
+      final candidate = pageUrl.resolve(path).toString();
+      await pace?.call(candidate);
+      try {
+        await fetchFeed(candidate, '');
+        return [DiscoveredFeed(candidate)];
+      } on FeedFetchException {
+        // Not a feed here — try the next path.
+      }
+    }
+    return const [];
   }
 
   /// Whether two URLs share a scheme, host, and port — the boundary at

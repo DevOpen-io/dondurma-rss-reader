@@ -153,7 +153,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get addFeedSubtitle =>
-      'Pega la dirección de una fuente para suscribirte';
+      'Pega la dirección de un sitio o de una fuente para suscribirte';
 
   @override
   String useSuggestedName(String name) {
@@ -1155,7 +1155,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get feedAddError =>
-      'No se encontró una fuente RSS en esta dirección. Comprueba la URL: la mayoría de las direcciones de fuentes terminan en /feed o /rss.';
+      'No se encontró una fuente en esta dirección. Comprueba la URL o prueba con la página principal del sitio.';
+
+  @override
+  String get chooseFeed => 'Elige una fuente';
 
   @override
   String get clearFilters => 'Mostrar todos los artículos';
