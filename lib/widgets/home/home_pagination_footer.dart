@@ -14,7 +14,7 @@ class HomePaginationFooter extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final (hasItems, isLoadingMore, hasMoreItems) = context
         .select<FeedProvider, (bool, bool, bool)>(
-          (p) => (p.items.isNotEmpty, p.isLoadingMore, p.hasMoreItems),
+          (p) => (p.filteredItems.isNotEmpty, p.isLoadingMore, p.hasMoreItems),
         );
     if (!hasItems) return const SizedBox.shrink();
 
