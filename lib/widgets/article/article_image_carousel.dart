@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../services/article_media_store.dart';
 import '../../services/image_cache_service.dart';
 import '../../utils/motion.dart';
+import 'article_image_viewer.dart';
 
 class ArticleImageCarousel extends StatefulWidget {
   final List<String> imageUrls;
@@ -63,28 +64,42 @@ class _ArticleImageCarouselState extends State<ArticleImageCarousel> {
                 // at managed local files — only `m_`-scheme paths resolve.
                 if (url.startsWith('file://')) {
                   final file = ArticleMediaStore.managedFileFromSrc(url);
-                  return ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: file == null
-                        ? _brokenImage(context)
-                        : Image.file(
-                            file,
-                            fit: BoxFit.cover,
-                            width: double.infinity,
-                            errorBuilder: (_, _, _) => _brokenImage(context),
-                          ),
+                  if (file == null) {
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: _brokenImage(context),
+                    );
+                  }
+                  return OpenableArticleImage(
+                    image: FileImage(file),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: Image.file(
+                        file,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        errorBuilder: (_, _, _) => _brokenImage(context),
+                      ),
+                    ),
                   );
                 }
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: CachedNetworkImage(
-                    imageUrl: url,
+                return OpenableArticleImage(
+                  image: CachedNetworkImageProvider(
+                    url,
                     cacheManager: ArticleCacheManager.instance,
-                    memCacheWidth: 800,
-                    maxWidthDiskCache: 800,
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                    errorWidget: (context, url, error) => _brokenImage(context),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: CachedNetworkImage(
+                      imageUrl: url,
+                      cacheManager: ArticleCacheManager.instance,
+                      memCacheWidth: 800,
+                      maxWidthDiskCache: 800,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      errorWidget: (context, url, error) =>
+                          _brokenImage(context),
+                    ),
                   ),
                 );
               },

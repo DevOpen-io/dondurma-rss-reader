@@ -982,6 +982,12 @@ abstract class AppLocalizations {
   /// **'Close'**
   String get close;
 
+  /// No description provided for @openImage.
+  ///
+  /// In en, this message translates to:
+  /// **'Open image'**
+  String get openImage;
+
   /// No description provided for @openInExternalBrowser.
   ///
   /// In en, this message translates to:

@@ -19,6 +19,7 @@ import '../widgets/in_app_browser.dart';
 import '../widgets/article/article_circle_buttons.dart';
 import '../widgets/article/article_content_skeleton.dart';
 import '../widgets/article/article_image_carousel.dart';
+import '../widgets/article/article_image_viewer.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
@@ -355,48 +356,56 @@ class _ArticlePageState extends State<ArticlePage> {
                   flexibleSpace: hasHero
                       ? FlexibleSpaceBar(
                           stretchModes: const [StretchMode.zoomBackground],
-                          background: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              // A prepared copy of the hero reads from the
-                              // durable media pool, so it shows offline.
-                              if (heroFile != null)
-                                Image.file(
-                                  heroFile,
-                                  fit: BoxFit.cover,
-                                  cacheWidth: 900,
-                                  errorBuilder: (_, _, _) => Container(
-                                    color: colorScheme.surfaceContainerHighest,
+                          background: OpenableArticleImage(
+                            image: heroFile != null
+                                ? FileImage(heroFile)
+                                : CachedNetworkImageProvider(
+                                    widget.item.imageUrl!,
+                                    cacheManager: ArticleCacheManager.instance,
                                   ),
-                                )
-                              else
-                                CachedNetworkImage(
-                                  imageUrl: widget.item.imageUrl!,
-                                  cacheManager: ArticleCacheManager.instance,
-                                  fit: BoxFit.cover,
-                                  memCacheWidth: 900,
-                                  maxWidthDiskCache: 900,
-                                  errorWidget: (_, _, _) => Container(
-                                    color: colorScheme.surfaceContainerHighest,
+                            child: Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                // A prepared copy of the hero reads from the
+                                // durable media pool, so it shows offline.
+                                if (heroFile != null)
+                                  Image.file(
+                                    heroFile,
+                                    fit: BoxFit.cover,
+                                    cacheWidth: 900,
+                                    errorBuilder: (_, _, _) => Container(
+                                      color: colorScheme.surfaceContainerHighest,
+                                    ),
+                                  )
+                                else
+                                  CachedNetworkImage(
+                                    imageUrl: widget.item.imageUrl!,
+                                    cacheManager: ArticleCacheManager.instance,
+                                    fit: BoxFit.cover,
+                                    memCacheWidth: 900,
+                                    maxWidthDiskCache: 900,
+                                    errorWidget: (_, _, _) => Container(
+                                      color: colorScheme.surfaceContainerHighest,
+                                    ),
+                                  ),
+                                DecoratedBox(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      begin: Alignment.topCenter,
+                                      end: Alignment.bottomCenter,
+                                      colors: [
+                                        Colors.transparent,
+                                        colorScheme.surface.withValues(
+                                          alpha: 0.6,
+                                        ),
+                                        colorScheme.surface,
+                                      ],
+                                      stops: const [0.3, 0.75, 1.0],
+                                    ),
                                   ),
                                 ),
-                              DecoratedBox(
-                                decoration: BoxDecoration(
-                                  gradient: LinearGradient(
-                                    begin: Alignment.topCenter,
-                                    end: Alignment.bottomCenter,
-                                    colors: [
-                                      Colors.transparent,
-                                      colorScheme.surface.withValues(
-                                        alpha: 0.6,
-                                      ),
-                                      colorScheme.surface,
-                                    ],
-                                    stops: const [0.3, 0.75, 1.0],
-                                  ),
-                                ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
                         )
                       : null,
@@ -950,27 +959,36 @@ class _ArticleHtml extends StatelessWidget {
                   }
                   return Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: Image.file(
-                        file,
-                        fit: BoxFit.contain,
-                        errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                    child: OpenableArticleImage(
+                      image: FileImage(file),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10),
+                        child: Image.file(
+                          file,
+                          fit: BoxFit.contain,
+                          errorBuilder: (_, _, _) => const SizedBox.shrink(),
+                        ),
                       ),
                     ),
                   );
                 }
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(10),
-                    child: CachedNetworkImage(
-                      imageUrl: src,
+                  child: OpenableArticleImage(
+                    image: CachedNetworkImageProvider(
+                      src,
                       cacheManager: ArticleCacheManager.instance,
-                      memCacheWidth: 800,
-                      maxWidthDiskCache: 800,
-                      fit: BoxFit.contain,
-                      errorWidget: (_, _, _) => const SizedBox.shrink(),
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: CachedNetworkImage(
+                        imageUrl: src,
+                        cacheManager: ArticleCacheManager.instance,
+                        memCacheWidth: 800,
+                        maxWidthDiskCache: 800,
+                        fit: BoxFit.contain,
+                        errorWidget: (_, _, _) => const SizedBox.shrink(),
+                      ),
                     ),
                   ),
                 );
