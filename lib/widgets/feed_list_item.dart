@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 import '../l10n/app_localizations.dart';
+import 'adaptive_dialog.dart';
 import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
@@ -64,21 +65,23 @@ Future<void> confirmBookmarkToggle(BuildContext context, FeedItem item) async {
     return;
   }
   final l10n = AppLocalizations.of(context);
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogContext) => AlertDialog(
-      title: Text(l10n.removeBookmarkTitle),
-      content: Text(l10n.removeBookmarkConfirm),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogContext).pop(false),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogContext).pop(true),
-          child: Text(l10n.remove),
-        ),
-      ],
+  final confirmed = await showAdaptiveSheet<bool>(
+    context,
+    Builder(
+      builder: (dialogContext) => ActionSheet(
+        title: Text(l10n.removeBookmarkTitle),
+        content: Text(l10n.removeBookmarkConfirm),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l10n.remove),
+          ),
+        ],
+      ),
     ),
   );
   if (confirmed != true || !context.mounted) return;

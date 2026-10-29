@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../adaptive_dialog.dart';
 import '../../providers/feed_provider.dart';
 
 enum _Scope {
@@ -22,7 +23,7 @@ enum _Scope {
 /// Asks which unread articles of the current view (folder, feed, search and
 /// sheet filters) to mark read — all, or only those older than a day or a
 /// week, each with its count — and marks the chosen list. The lists are
-/// taken when the dialog opens, so articles arriving meanwhile stay unread.
+/// taken when the sheet opens, so articles arriving meanwhile stay unread.
 Future<void> showMarkReadDialog(BuildContext context) async {
   final l10n = AppLocalizations.of(context);
   final feed = context.read<FeedProvider>();
@@ -32,14 +33,11 @@ Future<void> showMarkReadDialog(BuildContext context) async {
   };
   if (lists[_Scope.all]!.isEmpty) return;
   var scope = _Scope.all;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogCtx) => StatefulBuilder(
-      builder: (dialogCtx, setState) => AlertDialog(
-        // Landscape phones and large text need the options to scroll.
-        scrollable: true,
+  final confirmed = await showAdaptiveSheet<bool>(
+    context,
+    StatefulBuilder(
+      builder: (sheetCtx, setState) => ActionSheet(
         title: Text(l10n.markAllAsRead),
-        contentPadding: const EdgeInsets.only(top: 16, bottom: 8),
         content: RadioGroup<_Scope>(
           groupValue: scope,
           onChanged: (value) => setState(() => scope = value!),
@@ -50,8 +48,8 @@ Future<void> showMarkReadDialog(BuildContext context) async {
                 RadioListTile<_Scope>(
                   value: option,
                   enabled: lists[option]!.isNotEmpty,
-                  // Lines the radios up with the dialog title.
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  // Radios line up with the sheet title.
+                  contentPadding: EdgeInsets.zero,
                   title: Text(option.label(l10n)),
                   secondary: Text('${lists[option]!.length}'),
                 ),
@@ -59,12 +57,12 @@ Future<void> showMarkReadDialog(BuildContext context) async {
           ),
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(false),
+          OutlinedButton(
+            onPressed: () => Navigator.of(sheetCtx).pop(false),
             child: Text(l10n.cancel),
           ),
           FilledButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            onPressed: () => Navigator.of(sheetCtx).pop(true),
             child: Text(l10n.markReadAction),
           ),
         ],

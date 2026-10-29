@@ -20,9 +20,9 @@ Future<void> _askName(
   required bool isNew,
 }) async {
   final settings = context.read<SettingsProvider>();
-  final name = await showDialog<String>(
-    context: context,
-    builder: (_) => _SearchNameDialog(initialName: search.name, isNew: isNew),
+  final name = await showAdaptiveSheet<String>(
+    context,
+    _SearchNameDialog(initialName: search.name, isNew: isNew),
   );
   if (name == null) return;
   await settings.saveSearch(
@@ -52,7 +52,7 @@ class _SearchNameDialogState extends State<_SearchNameDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AlertDialog(
+    return ActionSheet(
       title: Text(widget.isNew ? l10n.saveSearch : l10n.rename),
       content: TextField(
         controller: _controller,
@@ -61,7 +61,7 @@ class _SearchNameDialogState extends State<_SearchNameDialog> {
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.cancel),
         ),

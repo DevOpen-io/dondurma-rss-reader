@@ -386,20 +386,19 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     List<DiscoveredFeed> feeds,
   ) {
     final subscriptions = context.read<SubscriptionProvider>();
-    return showDialog<DiscoveredFeed>(
-      context: context,
-      builder: (dialogCtx) {
+    return showAdaptiveSheet<DiscoveredFeed>(
+      context,
+      Builder(
+        builder: (dialogCtx) {
         final l10n = AppLocalizations.of(dialogCtx);
-        return AlertDialog(
+        return ActionSheet(
           title: Text(l10n.chooseFeed),
-          scrollable: true,
-          contentPadding: const EdgeInsets.only(top: 12, bottom: 8),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               for (final feed in feeds)
                 ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  contentPadding: EdgeInsets.zero,
                   enabled: !subscriptions.hasFeedUrl(feed.url),
                   title: Text(feed.title ?? Uri.parse(feed.url).path),
                   subtitle: Text(
@@ -418,13 +417,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
             ],
           ),
           actions: [
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.of(dialogCtx).pop(),
               child: Text(l10n.cancel),
             ),
           ],
         );
       },
+      ),
     );
   }
 

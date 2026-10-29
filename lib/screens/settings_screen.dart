@@ -981,20 +981,16 @@ class SettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (context) => ActionSheet(
         title: Text(l10n.factoryResetConfirmTitle),
         content: Text(l10n.factoryResetConfirmDesc),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              l10n.cancel,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
+            child: Text(l10n.cancel),
           ),
           FilledButton.tonal(
             onPressed: () async {
@@ -1055,6 +1051,7 @@ class SettingsScreen extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
@@ -1078,21 +1075,23 @@ Future<void> _restoreBackup(BuildContext context) async {
     return problem(BackupProblem.notABackup);
   }
   if (json == null || !context.mounted) return;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogCtx) => AlertDialog(
-      title: Text(l10n.restoreBackup),
-      content: Text(l10n.restoreBackupConfirm),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogCtx).pop(false),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogCtx).pop(true),
-          child: Text(l10n.restoreAction),
-        ),
-      ],
+  final confirmed = await showAdaptiveSheet<bool>(
+    context,
+    Builder(
+      builder: (dialogCtx) => ActionSheet(
+        title: Text(l10n.restoreBackup),
+        content: Text(l10n.restoreBackupConfirm),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(l10n.restoreAction),
+          ),
+        ],
+      ),
     ),
   );
   if (confirmed != true || !context.mounted) return;

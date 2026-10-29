@@ -102,17 +102,21 @@ class _SettingsTileLabel extends StatelessWidget {
   }
 
   void _showInfoDialog(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(title),
-        content: Text(info!),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(MaterialLocalizations.of(dialogContext).okButtonLabel),
-          ),
-        ],
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (dialogContext) => ActionSheet(
+          title: Text(title),
+          content: Text(info!),
+          actions: [
+            FilledButton.tonal(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(
+                MaterialLocalizations.of(dialogContext).okButtonLabel,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

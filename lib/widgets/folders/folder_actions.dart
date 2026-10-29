@@ -71,16 +71,13 @@ void showCategoryActions(BuildContext context, String category, int feedCount) {
 }
 
 void showCategoryIconDialog(BuildContext context, String category) {
-  showDialog<void>(
-    context: context,
-    builder: (_) => EmojiIconDialog(category: category),
-  );
+  showAdaptiveSheet<void>(context, EmojiIconDialog(category: category));
 }
 
 void showRenameCategoryDialog(BuildContext context, String category) {
-  showDialog<void>(
-    context: context,
-    builder: (_) => EditCategoryDialog(currentCategory: category),
+  showAdaptiveSheet<void>(
+    context,
+    EditCategoryDialog(currentCategory: category),
   );
 }
 
@@ -124,29 +121,34 @@ void _confirmDelete(
   // Captured up front: the row or node that opened the dialog is usually
   // gone by the time the delete has been written.
   final feed = context.read<FeedProvider>();
-  showDialog<void>(
-    context: context,
-    builder: (dialogCtx) {
-      final cs = Theme.of(dialogCtx).colorScheme;
-      return AlertDialog(
-        title: Text(title),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogCtx).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: cs.error),
-            onPressed: () {
-              delete().then((_) => feed.refreshAll());
-              Navigator.of(dialogCtx).pop();
-            },
-            child: Text(confirmLabel, style: TextStyle(color: cs.onError)),
-          ),
-        ],
-      );
-    },
+  showAdaptiveSheet<void>(
+    context,
+    Builder(
+      builder: (dialogCtx) {
+        final cs = Theme.of(dialogCtx).colorScheme;
+        return ActionSheet(
+          title: Text(title),
+          content: Text(message),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(l10n.cancel),
+            ),
+            FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: cs.error,
+                foregroundColor: cs.onError,
+              ),
+              onPressed: () {
+                delete().then((_) => feed.refreshAll());
+                Navigator.of(dialogCtx).pop();
+              },
+              child: Text(confirmLabel),
+            ),
+          ],
+        );
+      },
+    ),
   );
 }
 

@@ -205,18 +205,18 @@ void main() {
       await settle(tester);
 
       expect(find.byType(FeedActionSheet), findsNothing);
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(ActionSheet), findsOneWidget);
       expect(subs.subscriptions.map((s) => s.name), contains('Feed A1'));
 
       await tester.tap(
         find.descendant(
-          of: find.byType(AlertDialog),
+          of: find.byType(ActionSheet),
           matching: find.text('Delete'),
         ),
       );
       await settleWrites(tester, before + 1);
 
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ActionSheet), findsNothing);
       expect(subs.subscriptions.map((s) => s.name), isNot(contains('Feed A1')));
       expect(feedOf(tester).refreshes, before + 1);
       expect(tester.takeException(), isNull);
@@ -233,7 +233,7 @@ void main() {
       await tester.tap(find.text('Cancel'));
       await settle(tester);
 
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ActionSheet), findsNothing);
       expect(subs.subscriptions.length, 3);
       expect(tester.takeException(), isNull);
     });
@@ -251,11 +251,11 @@ void main() {
       await tester.tap(find.text('Delete Category'));
       await settle(tester);
 
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(ActionSheet), findsOneWidget);
       await tester.tap(find.text('Delete All'));
       await settleWrites(tester, before + 1);
 
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ActionSheet), findsNothing);
       expect(
         subs.subscriptions.map((s) => s.category),
         everyElement('Science'),
@@ -471,7 +471,7 @@ void main() {
       await settle(tester);
       await tester.tap(
         find.descendant(
-          of: find.byType(AlertDialog),
+          of: find.byType(ActionSheet),
           matching: find.text('Delete'),
         ),
       );
