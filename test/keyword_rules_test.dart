@@ -63,7 +63,12 @@ void main() {
     expect(KeywordRule.tryParse('/(unclosed/'), isNull);
     expect(KeywordRule.tryParse('title:'), isNull);
     expect(KeywordRule.tryParse('   '), isNull);
-    expect(KeywordRule.tryParse('//'), isNotNull, reason: 'the word "//"');
+    // An empty pattern, or link punctuation that every URL in a summary
+    // carries, would hide most articles.
+    for (final rule in ['//', '/', '://', 'title: //', '...']) {
+      expect(KeywordRule.tryParse(rule), isNull, reason: rule);
+    }
+    expect(KeywordRule.tryParse('C++'), isNotNull);
   });
 
   test('an invalid stored rule is skipped, the rest still hide', () {

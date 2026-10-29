@@ -314,9 +314,9 @@ void main() {
     await settle(tester);
     key.currentState!.openDrawer();
     await settle(tester);
-    // The app-name header overflows under the square-glyph test font only.
-    final header = tester.takeException();
-    expect(header == null || '$header'.contains('overflowed'), isTrue);
+    // The app name is wider than the drawer under the square-glyph test
+    // font, as under a large system font on a device: it must still fit.
+    expect(tester.takeException(), isNull);
   }
 
   group('drawer', () {

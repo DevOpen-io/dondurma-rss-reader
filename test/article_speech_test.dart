@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/services/article_speech.dart';
@@ -162,6 +163,31 @@ void main() {
     final speech = ArticleSpeech(engine: _FailingEngine());
     await speech.play(_item('a'), '<p>One.</p>');
     await Future<void>.delayed(Duration.zero);
+    expect(speech.stateFor(_item('a')), SpeechState.idle);
+  });
+
+  testWidgets('a speak the platform never answers fails instead of hanging', (
+    tester,
+  ) async {
+    // Android with the speech engine missing or disabled: flutter_tts parks
+    // the call until an engine binds, which never happens.
+    const channel = MethodChannel('flutter_tts');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      channel,
+      (call) => call.method == 'speak'
+          ? Completer<Object?>().future
+          : Future.value(1),
+    );
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final speech = ArticleSpeech();
+    await speech.play(_item('a'), '<p>One.</p>');
+    expect(speech.stateFor(_item('a')), SpeechState.playing);
+    await tester.pump(const Duration(seconds: 30));
     expect(speech.stateFor(_item('a')), SpeechState.idle);
   });
 

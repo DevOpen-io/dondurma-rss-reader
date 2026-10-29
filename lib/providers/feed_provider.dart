@@ -1137,8 +1137,29 @@ class FeedProvider extends ChangeNotifier {
     final counted = <Object>{};
     final countedInCategory = <String, Set<Object>>{};
     final countedInFeed = <String, Set<Object>>{};
+    // Nor are articles the keyword rules hide: a badge must not promise
+    // rows its list never shows.
+    final subscriptions = subscriptionProvider?.subscriptions ?? const [];
+    final excluder = KeywordExcluder(
+      globalKeywords: settingsProvider?.globalExcludedKeywords ?? const [],
+      feedKeywordsMap: {
+        for (final sub in subscriptions)
+          if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
+      },
+      feedOnlyKeywordsMap: {
+        for (final sub in subscriptions)
+          if (sub.onlyKeywords.isNotEmpty) sub.url: sub.onlyKeywords,
+      },
+    );
     for (final item in _items) {
       if (_readState.isRead(item)) continue;
+      if (excluder.excludes(
+        title: item.title,
+        description: item.description,
+        feedUrl: item.feedUrl,
+      )) {
+        continue;
+      }
       final key = _keyOf(item);
       if (counted.add(key)) total++;
       if ((countedInCategory[item.category] ??= {}).add(key)) {

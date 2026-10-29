@@ -41,6 +41,11 @@ class _FlutterTtsEngine implements SpeechEngine {
   final _tts = FlutterTts();
   Completer<void>? _utterance;
 
+  /// How long speak may take to be accepted. On Android with the engine
+  /// missing or disabled flutter_tts parks the call until an engine binds,
+  /// which never happens; binding a working engine takes a second or two.
+  static const _acceptTimeout = Duration(seconds: 10);
+
   void _settle([Object? error]) {
     final utterance = _utterance;
     _utterance = null;
@@ -52,11 +57,28 @@ class _FlutterTtsEngine implements SpeechEngine {
   Future<void> speak(String text) {
     _settle();
     final utterance = _utterance = Completer<void>();
+    // A late answer to an earlier speak must not end the current one.
+    bool current() => identical(_utterance, utterance);
     unawaited(
-      _tts.speak(text).then((result) {
-        // 0 means the engine refused the utterance outright.
-        if (result == 0) _settle('speak refused');
-      }, onError: _settle),
+      _tts
+          .speak(text)
+          .timeout(
+            _acceptTimeout,
+            onTimeout: () {
+              // The parked call would speak if an engine bound later.
+              if (current()) unawaited(_tts.stop());
+              return 0;
+            },
+          )
+          .then(
+            (result) {
+              // 0 means the engine refused the utterance outright.
+              if (result == 0 && current()) _settle('speak refused');
+            },
+            onError: (Object error) {
+              if (current()) _settle(error);
+            },
+          ),
     );
     return utterance.future;
   }

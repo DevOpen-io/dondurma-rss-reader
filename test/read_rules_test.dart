@@ -99,6 +99,13 @@ void main() {
     await subs.editSubscription(_feed, _feed, 'A', onlyKeywords: ['flutter']);
     feed.update(subs, settings, bookmarks);
     expect([for (final i in feed.filteredItems) i.id], ['flutter']);
+    // Badges count what the lists show: the unread ad is hidden now.
+    expect(feed.unreadCount(), 1);
+    expect(feed.unreadCount(feedUrl: _feed), 1);
+
+    await settings.setGlobalExcludedKeywords(['flutter']);
+    feed.update(subs, settings, bookmarks);
+    expect(feed.unreadCount(), 0, reason: 'hide rules count too');
 
     feed.dispose();
   });

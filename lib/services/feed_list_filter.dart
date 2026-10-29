@@ -126,6 +126,10 @@ class KeywordRule {
   /// would freeze the list on an unlucky title.
   static final _nestedQuantifier = RegExp(r'\([^()]*[+*}][^()]*\)[+*{]');
 
+  /// Only ASCII punctuation, like `//` or `/`: the links and markup in
+  /// summaries are full of it, so such a word would hide most articles.
+  static final _punctuationOnly = RegExp(r'^[!-/:-@\[-`{-~\s]+$');
+
   /// The compiled rule, or null for an empty, invalid or unsafe one — a
   /// stored rule that does not pass is skipped rather than failing the list.
   static KeywordRule? tryParse(String rule) =>
@@ -148,6 +152,7 @@ class KeywordRule {
         // A pattern that matches empty text would hide or read everything.
         if (pattern.hasMatch('')) return null;
       } else {
+        if (_punctuationOnly.hasMatch(text)) return null;
         // Word edges by Unicode letters and digits: `\b` only knows ASCII,
         // so Turkish or Cyrillic words never matched.
         pattern = RegExp(

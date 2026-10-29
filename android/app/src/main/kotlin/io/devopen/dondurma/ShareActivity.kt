@@ -21,6 +21,10 @@ class ShareActivity : Activity() {
                 intent.getCharSequenceExtra(Intent.EXTRA_TEXT)?.toString() ?: ""
         }
         packageManager.getLaunchIntentForPackage(packageName)?.let {
+            // The launcher's intent names no package. Recents keeps one task
+            // per launch intent, so a share task that carried one would sit
+            // beside the launcher's task — and both could hold the app.
+            it.setPackage(null)
             it.addFlags(
                 Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED,
