@@ -11,7 +11,6 @@ import '../widgets/app_drawer.dart';
 import '../widgets/anchored_feed_list.dart';
 import '../widgets/feed_list_item.dart';
 import '../widgets/add_feed_dialog.dart';
-import '../widgets/home/home_bottom_nav.dart';
 import '../widgets/home/home_search_history_panel.dart';
 import '../widgets/home/home_pagination_footer.dart';
 import '../widgets/home/feed_empty_state.dart';
@@ -120,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    entries.add(const _WidgetEntry(SizedBox(height: 80)));
+    entries.add(const _WidgetEntry(SizedBox(height: 16)));
     final articleIds = articleRowIds([
       ...todayItems,
       ...yesterdayItems,
@@ -220,7 +219,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final routeScroll = PrimaryScrollController.maybeOf(context);
     final feedTab = _selectedIndex == 0 || routeScroll == null;
     final scaffold = Scaffold(
-      extendBody: true,
       appBar: AppBar(
         title: AnimatedSwitcher(
           duration: motionDuration(context, const Duration(milliseconds: 300)),
@@ -261,6 +259,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
         ),
         actions: [
+          if (_selectedIndex == 0 && !_isSearching)
+            IconButton(
+              icon: const Icon(Icons.add),
+              tooltip: l10n.semanticAddFeed,
+              onPressed: _showAddFeedDialog,
+            ),
+          if (_selectedIndex == 1)
+            IconButton(
+              icon: const Icon(Icons.create_new_folder_outlined),
+              tooltip: l10n.addFolder,
+              onPressed: _showAddFolderDialog,
+            ),
           if (_selectedIndex == 0) ...[
             if (!_isSearching) FilterSheetButton(active: hasActiveFilter),
             if (_isSearching)
@@ -368,124 +378,38 @@ class _HomeScreenState extends State<HomeScreen> {
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),
-      bottomNavigationBar: Padding(
-        padding: EdgeInsets.fromLTRB(
-          16,
-          0,
-          16,
-          16 + MediaQuery.viewPaddingOf(context).bottom,
-        ),
+      // Standard bar: fixed to the bottom edge, no floating chrome. Adding
+      // feeds and folders lives in the app bar of the tab it belongs to.
+      bottomNavigationBar: ColoredBox(
+        color: Theme.of(context).colorScheme.surfaceContainer,
         child: ConstrainedWidth(
           maxWidth: 480,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.10),
-                  blurRadius: 24,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
-              child: Material(
-                color: Theme.of(context).colorScheme.surfaceContainer,
-                child: SizedBox(
-                  height: 64,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: NavBarItem(
-                          icon: _selectedIndex == 0
-                              ? Icons.list
-                              : Icons.list_outlined,
-                          label: l10n.feedsTab,
-                          selected: _selectedIndex == 0,
-                          onTap: () => _onItemTapped(0),
-                        ),
-                      ),
-                      Expanded(
-                        child: NavBarItem(
-                          icon: _selectedIndex == 1
-                              ? Icons.folder
-                              : Icons.folder_outlined,
-                          label: l10n.foldersTab,
-                          selected: _selectedIndex == 1,
-                          onTap: () => _onItemTapped(1),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 10,
-                        ),
-                        child: AnimatedOpacity(
-                          opacity: _selectedIndex <= 1 ? 1.0 : 0.0,
-                          duration: motionDuration(
-                            context,
-                            const Duration(milliseconds: 150),
-                          ),
-                          child: IgnorePointer(
-                            ignoring: _selectedIndex > 1,
-                            child: Tooltip(
-                              message: _selectedIndex == 0
-                                  ? l10n.semanticAddFeed
-                                  : l10n.addFolder,
-                              child: GestureDetector(
-                                onTap: _selectedIndex == 0
-                                    ? _showAddFeedDialog
-                                    : _showAddFolderDialog,
-                                child: Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                  child: Icon(
-                                    _selectedIndex == 0
-                                        ? Icons.add
-                                        : Icons.create_new_folder_outlined,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onPrimary,
-                                    size: 22,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: NavBarItem(
-                          icon: _selectedIndex == 2
-                              ? Icons.bookmark
-                              : Icons.bookmark_border,
-                          label: l10n.bookmarksTab,
-                          selected: _selectedIndex == 2,
-                          onTap: () => _onItemTapped(2),
-                        ),
-                      ),
-                      Expanded(
-                        child: NavBarItem(
-                          icon: _selectedIndex == 3
-                              ? Icons.settings
-                              : Icons.settings_outlined,
-                          label: l10n.settingsTab,
-                          selected: _selectedIndex == 3,
-                          onTap: () => _onItemTapped(3),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+          child: NavigationBar(
+            height: 68,
+            selectedIndex: _selectedIndex,
+            onDestinationSelected: _onItemTapped,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.list_outlined),
+                selectedIcon: const Icon(Icons.list),
+                label: l10n.feedsTab,
               ),
-            ),
+              NavigationDestination(
+                icon: const Icon(Icons.folder_outlined),
+                selectedIcon: const Icon(Icons.folder),
+                label: l10n.foldersTab,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.bookmark_border),
+                selectedIcon: const Icon(Icons.bookmark),
+                label: l10n.bookmarksTab,
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.settings_outlined),
+                selectedIcon: const Icon(Icons.settings),
+                label: l10n.settingsTab,
+              ),
+            ],
           ),
         ),
       ),

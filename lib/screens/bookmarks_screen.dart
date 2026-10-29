@@ -40,7 +40,7 @@ class BookmarksScreen extends StatelessWidget {
           top: flat ? 0 : 16.0,
           left: flat ? 0 : 16.0,
           right: flat ? 0 : 16.0,
-          bottom: 120.0,
+          bottom: 16.0,
         ),
         itemCount: bookmarkedItems.length,
         itemBuilder: (context, index) {

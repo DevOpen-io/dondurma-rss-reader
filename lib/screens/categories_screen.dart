@@ -79,7 +79,7 @@ class CategoriesScreen extends StatelessWidget {
     return ConstrainedWidth(
       maxWidth: PlatformCaps.isDesktop ? 860 : 680,
       child: ListView.builder(
-        padding: const EdgeInsets.fromLTRB(0, 8, 0, 128),
+        padding: const EdgeInsets.fromLTRB(0, 8, 0, 16),
         itemCount: sortedCategoryNames.length,
         itemBuilder: (context, index) {
           final categoryName = sortedCategoryNames[index];

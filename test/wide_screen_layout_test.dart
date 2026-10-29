@@ -164,7 +164,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('nav pill sits in bottom quarter of screen at tablet size', (
+    testWidgets('nav bar sits in bottom quarter of screen at tablet size', (
       tester,
     ) async {
       tester.view.physicalSize = const Size(2560, 1600);
@@ -176,8 +176,14 @@ void main() {
 
       final logicalScreenHeight = 1600 / 2.0; // 800dp
 
-      final feedsFinder = find.bySemanticsLabel('Feeds');
-      final settingsFinder = find.bySemanticsLabel('Settings');
+      final feedsFinder = find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Feeds'),
+      );
+      final settingsFinder = find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text('Settings'),
+      );
 
       expect(feedsFinder, findsOneWidget);
       expect(settingsFinder, findsOneWidget);
@@ -185,9 +191,37 @@ void main() {
       final feedsTop = tester.getTopLeft(feedsFinder).dy;
       final settingsBottom = tester.getBottomRight(settingsFinder).dy;
 
-      // Pill should sit in the bottom 25% of the screen.
+      // The bar should sit in the bottom 25% of the screen.
       expect(feedsTop, greaterThan(logicalScreenHeight * 0.75));
       expect(settingsBottom, closeTo(logicalScreenHeight, 20));
+    });
+
+    testWidgets('nav labels fit a phone at 1.4x text scale', (tester) async {
+      tester.view.physicalSize = const Size(340, 700);
+      tester.view.devicePixelRatio = 1.0;
+      tester.platformDispatcher.textScaleFactorTestValue = 1.4;
+      addTearDown(tester.view.reset);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('add actions live in the app bar of their tab', (
+      tester,
+    ) async {
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+
+      expect(find.byTooltip('Add new feed'), findsOneWidget);
+      expect(find.byTooltip('Add Category'), findsNothing);
+
+      await tester.tap(find.text('Categories'));
+      await tester.pumpAndSettle();
+      expect(find.byTooltip('Add Category'), findsOneWidget);
+      expect(find.byTooltip('Add new feed'), findsNothing);
     });
 
     testWidgets('feed list body capped at 680dp at tablet size', (

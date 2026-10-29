@@ -124,6 +124,18 @@ class AppThemeBuilder {
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
+      // The selection follows the brand color, not the scheme's secondary.
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: base.colorScheme.surfaceContainer,
+        indicatorColor: base.colorScheme.primaryContainer,
+        iconTheme: WidgetStateProperty.resolveWith(
+          (states) => IconThemeData(
+            color: states.contains(WidgetState.selected)
+                ? base.colorScheme.onPrimaryContainer
+                : base.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ),
       bottomSheetTheme: const BottomSheetThemeData(
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),

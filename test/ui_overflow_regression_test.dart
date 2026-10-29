@@ -14,7 +14,6 @@ import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
 import 'package:ice_cream_rss_reader/widgets/add_feed_dialog.dart';
 import 'package:ice_cream_rss_reader/widgets/feed_list_item.dart';
 import 'package:ice_cream_rss_reader/widgets/folders/feed_action_sheet.dart';
-import 'package:ice_cream_rss_reader/widgets/home/home_bottom_nav.dart';
 
 // #57/#58 regression: sheets that used fixed Rows overflowed under large
 // text scale + long translations. Flutter reports a RenderFlex overflow as
@@ -188,39 +187,4 @@ void main() {
       expect(find.textContaining('apnews'), findsOneWidget);
     },
   );
-
-  testWidgets('nav bar label stays readable at 1.4x scale', (tester) async {
-    tester.view.physicalSize = const Size(340, 700);
-    tester.view.devicePixelRatio = 1.0;
-    addTearDown(tester.view.reset);
-
-    await tester.pumpWidget(
-      wrap(
-        subs: subs,
-        child: Row(
-          children: [
-            Expanded(
-              child: NavBarItem(
-                icon: Icons.folder,
-                label: 'Kategoriler',
-                selected: true,
-                onTap: () {},
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 50));
-
-    // 10.5px label at 1.4x overflows a quarter-width slot unless the
-    // text scale is clamped — effective size stays at or under ~1.2x.
-    final text = tester.widget<Text>(find.text('Kategoriler'));
-    final scaler = MediaQuery.textScalerOf(
-      tester.element(find.text('Kategoriler')),
-    );
-    expect(scaler.scale(10.5), lessThanOrEqualTo(10.5 * 1.25));
-    expect(text.overflow, TextOverflow.ellipsis);
-  });
 }
