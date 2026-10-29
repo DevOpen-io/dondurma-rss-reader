@@ -44,14 +44,7 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
   void _addKeyword() {
     final input = _controller.text.trim();
     if (input.isNotEmpty) {
-      // A /pattern/ may hold commas; only plain words are comma lists.
-      final bare = input.replaceFirst(
-        RegExp(r'^title:\s*', caseSensitive: false),
-        '',
-      );
-      final rules = KeywordRule.isRegex(bare)
-          ? [input]
-          : input.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty);
+      final rules = KeywordRule.split(input);
       // A rule that does not compile stays in the field to be fixed.
       if (rules.any((r) => KeywordRule.tryParse(r) == null)) {
         setState(() => _invalid = true);
@@ -107,10 +100,14 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Text(
-                  widget.title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
+                Expanded(
+                  child: Text(
+                    widget.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
               ],
@@ -294,6 +291,9 @@ class _KeywordInputSheetState extends State<KeywordInputSheet> {
                 FilledButton(
                   onPressed: () {
                     _addKeyword();
+                    // An invalid rule in the field stays open to be fixed,
+                    // never silently dropped.
+                    if (_invalid) return;
                     widget.onSave(_keywords);
                     Navigator.of(context).pop();
                   },

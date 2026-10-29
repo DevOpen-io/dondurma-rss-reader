@@ -533,8 +533,9 @@ class FeedProvider extends ChangeNotifier {
       _lastReadRules = nextReadRules;
       _readRules = [for (final r in nextReadRules) ?KeywordRule.tryParse(r)];
     }
-    final filterChanged =
-        inputsChanged || onlyChanged || (readRulesChanged && _applyReadRules());
+    // Marks are not membership input: only the hide/only lists are.
+    final rulesMarked = readRulesChanged && _applyReadRules();
+    final filterChanged = inputsChanged || onlyChanged;
     _lastBookmarkIds = nextBookmarkIds;
     _lastBookmarkInstances = nextBookmarkInstances;
 
@@ -567,7 +568,7 @@ class FeedProvider extends ChangeNotifier {
       return;
     }
 
-    if (filterChanged) {
+    if (filterChanged || rulesMarked) {
       // Rebuild filter output — cheap, O(n) walk already cached.
       _invalidateFilterCache();
       Future.microtask(() {
@@ -682,6 +683,13 @@ class FeedProvider extends ChangeNotifier {
     }
 
     _loadFeedBackoff();
+    final exempt = _box.get(_ruleExemptKey);
+    if (exempt is List) {
+      _ruleExempt.addAll([
+        for (final pair in exempt)
+          if (pair case [final String feedUrl, final String id]) (feedUrl, id),
+      ]);
+    }
 
     final String? cachedItemsData = _box.get('cachedItemsJson');
     if (cachedItemsData != null) {
@@ -708,13 +716,32 @@ class FeedProvider extends ChangeNotifier {
       if (s.onlyKeywords.isNotEmpty) s.url: List<String>.of(s.onlyKeywords),
   };
 
+  /// Articles set back to unread by hand, which "mark read" rules leave
+  /// alone from then on (persisted, bounded to loaded articles).
+  final _ruleExempt = <(String, String)>{};
+  static const _ruleExemptKey = 'readRuleExemptions';
+
+  void _saveRuleExemptions() {
+    if (_ruleExempt.length > 500) {
+      final live = {for (final i in _items) (i.feedUrl, i.id)};
+      _ruleExempt.retainWhere(live.contains);
+    }
+    _box.put(_ruleExemptKey, [
+      for (final (feedUrl, id) in _ruleExempt) [feedUrl, id],
+    ]);
+  }
+
   /// Marks unread loaded articles matching a "mark read" rule (#69) and
   /// persists that; returns whether anything changed so callers rebuild.
+  /// An article marked unread by hand is never read again by a rule.
   bool _applyReadRules() {
     if (_readRules.isEmpty) return false;
     var changed = false;
     for (final item in _items) {
-      if (_readState.isRead(item)) continue;
+      if (_readState.isRead(item) ||
+          _ruleExempt.contains((item.feedUrl, item.id))) {
+        continue;
+      }
       if (_readRules.any(
         (r) => r.matches(title: item.title, description: item.description),
       )) {
@@ -1197,7 +1224,13 @@ class FeedProvider extends ChangeNotifier {
   /// Toggles the read/unread state of this source instance and of the
   /// copies the current view hides behind it.
   Future<void> toggleReadStatus(FeedItem item) async {
-    _markWithViewCopies([item], read: !_readState.isRead(item));
+    final read = !_readState.isRead(item);
+    _markWithViewCopies([item], read: read);
+    // Unread by hand outranks the "mark read" rules (#69).
+    final key = (item.feedUrl, item.id);
+    if (read ? _ruleExempt.remove(key) : _ruleExempt.add(key)) {
+      _saveRuleExemptions();
+    }
     _invalidateFilterCache();
     notifyListeners();
     _scheduleReadStateSave();
@@ -1948,6 +1981,7 @@ class FeedProvider extends ChangeNotifier {
     _selectedCategory = null;
     _selectedFeedUrl = null;
     _readState.clear();
+    _ruleExempt.clear();
     _readSaveTimer?.cancel();
     _readSaveTimer = null;
     _statusGeneration++;

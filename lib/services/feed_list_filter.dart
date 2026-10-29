@@ -128,9 +128,24 @@ class KeywordRule {
 
   static const _titlePrefix = 'title:';
 
-  /// The compiled rule, or null for an empty or invalid one — a stored rule
-  /// that no longer compiles is skipped rather than failing the list.
-  static KeywordRule? tryParse(String rule) {
+  /// Text beyond this is not searched: a long summary must not make a rule
+  /// expensive, and titles are far shorter.
+  static const _maxText = 1000;
+
+  // Rules are compiled once per text, not on every filter pass.
+  static final _compiled = <String, KeywordRule?>{};
+
+  /// A group repeated by a quantifier that itself holds one, like
+  /// `(\w+\s?)+` — the shape of patterns that backtrack exponentially and
+  /// would freeze the list on an unlucky title.
+  static final _nestedQuantifier = RegExp(r'\([^()]*[+*}][^()]*\)[+*{]');
+
+  /// The compiled rule, or null for an empty, invalid or unsafe one — a
+  /// stored rule that does not pass is skipped rather than failing the list.
+  static KeywordRule? tryParse(String rule) =>
+      _compiled.putIfAbsent(rule, () => _parse(rule));
+
+  static KeywordRule? _parse(String rule) {
     var text = rule.trim();
     var titleOnly = false;
     if (text.toLowerCase().startsWith(_titlePrefix)) {
@@ -138,26 +153,61 @@ class KeywordRule {
       text = text.substring(_titlePrefix.length).trim();
     }
     if (text.isEmpty) return null;
+    final RegExp pattern;
     try {
-      final pattern = isRegex(text)
-          ? RegExp(text.substring(1, text.length - 1), caseSensitive: false)
-          : RegExp(
-              r'\b' + RegExp.escape(text.toLowerCase()) + r'\b',
-              caseSensitive: false,
-            );
-      return KeywordRule._(pattern, titleOnly);
+      if (isRegex(text)) {
+        final source = text.substring(1, text.length - 1);
+        if (_nestedQuantifier.hasMatch(source)) return null;
+        pattern = RegExp(source, caseSensitive: false, unicode: true);
+        // A pattern that matches empty text would hide or read everything.
+        if (pattern.hasMatch('')) return null;
+      } else {
+        // Word edges by Unicode letters and digits: `\b` only knows ASCII,
+        // so Turkish or Cyrillic words never matched.
+        pattern = RegExp(
+          r'(?<![\p{L}\p{N}_])' +
+              RegExp.escape(text.toLowerCase()) +
+              r'(?![\p{L}\p{N}_])',
+          caseSensitive: false,
+          unicode: true,
+        );
+      }
     } on FormatException {
       return null;
     }
+    return KeywordRule._(pattern, titleOnly);
   }
 
   /// Whether [text] (after an optional `title:`) is written as `/regex/`.
   static bool isRegex(String text) =>
       text.length > 2 && text.startsWith('/') && text.endsWith('/');
 
+  /// Splits typed input into rules at commas, keeping a `/pattern/` whole
+  /// even when it holds commas (`/a{1,3}/, word` is two rules).
+  static List<String> split(String input) {
+    final rules = <String>[];
+    var pending = '';
+    for (final piece in input.split(',')) {
+      pending = pending.isEmpty ? piece : '$pending,$piece';
+      final bare = pending.trim().replaceFirst(
+        RegExp(r'^title:\s*', caseSensitive: false),
+        '',
+      );
+      // An opened pattern waits for its closing slash.
+      if (bare.startsWith('/') && !isRegex(bare)) continue;
+      if (pending.trim().isNotEmpty) rules.add(pending.trim());
+      pending = '';
+    }
+    if (pending.trim().isNotEmpty) rules.add(pending.trim());
+    return rules;
+  }
+
   bool matches({required String title, required String description}) =>
-      _pattern.hasMatch(title) ||
-      (!_titleOnly && _pattern.hasMatch(description));
+      _pattern.hasMatch(_capped(title)) ||
+      (!_titleOnly && _pattern.hasMatch(_capped(description)));
+
+  static String _capped(String text) =>
+      text.length <= _maxText ? text : text.substring(0, _maxText);
 }
 
 /// Pre-compiled permanent keyword exclusion (global + per-feed), usable

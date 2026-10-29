@@ -456,6 +456,10 @@ Future<List<FeedItem>?> _persistBgCache(
         for (final sub in subscriptions)
           if (sub.excludedKeywords.isNotEmpty) sub.url: sub.excludedKeywords,
       },
+      feedOnlyKeywordsMap: {
+        for (final sub in subscriptions)
+          if (sub.onlyKeywords.isNotEmpty) sub.url: sub.onlyKeywords,
+      },
       limit: limit,
       fullTextFor: (feedUrl) => effectiveFullTextFor(
         subscriptions,

@@ -113,7 +113,7 @@ Android paylaşım menüsü (#67): `MainActivity` (`launchMode="singleTask"`, `A
 - ara ve nihai listeyi `FeedCachePolicy.mergeVisibleFeeds` ile, güncel abonelik/yer imi girdileri ve aynı tarih sıralaması üzerinden birleştirir; 304/hata/cooldown kaynaklarının mevcut makalelerini korur;
 - ara yayınlarda kalıcı cache, bildirim veya hazırlık yan etkisi başlatmaz; bunlar yenileme sonu akışında kalır;
 - reset/cache temizleme generation'ları ve dispose, eski ara yayınları geçersiz kılar;
-- global ve feed keyword filtrelerini uygular (kurallar `KeywordRule`: düz kelime tam kelime eşleşir, `/regex/` desen, `title:` yalnız başlık; feed başına `onlyKeywords` yalnız eşleşenleri bırakır; `globalReadKeywords` eşleşen makaleleri yüklenince okundu yapar);
+- global ve feed keyword filtrelerini uygular (kurallar `KeywordRule`: düz kelime tam kelime eşleşir, `/regex/` desen, `title:` yalnız başlık; feed başına `onlyKeywords` yalnız eşleşenleri bırakır; `globalReadKeywords` eşleşen makaleleri yüklenince okundu yapar, elle okunmadı yapılanlara (`readRuleExemptions`) dokunmaz; boş metinle eşleşen ya da iç içe tekrar içeren (`(a+)+` gibi geri izleme patlaması yapan) desenler reddedilir, aranan metin 1000 karakterle sınırlıdır; tam kelime sınırı Unicode harf/rakamdır);
 - ilk yüklemede bildirim göndermez (`_hasLoadedOnce`);
 - cache ve home widget verisini günceller;
 - geçici cache üyeliğini uzlaştırıp kalıcı makale hazırlığını tetikler.

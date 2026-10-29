@@ -107,4 +107,31 @@ void main() {
       ['a1', 'a2', 'b1'],
     );
   });
+
+  test('unsafe patterns are refused: empty matches, nested repeats', () {
+    for (final rule in [
+      '/.*/',
+      '/a*/',
+      '/x|/',
+      '/^/',
+      r'/(\w+\s?)+$/',
+      '/(a+)+b/',
+    ]) {
+      expect(KeywordRule.tryParse(rule), isNull, reason: rule);
+    }
+    expect(KeywordRule.tryParse(r'/^\d+ (deals|offers)$/'), isNotNull);
+  });
+
+  test('whole words work beyond ASCII', () {
+    expect(matches('çay', 'Bir çay molası'), isTrue);
+    expect(matches('çay', 'Çaykur haberleri'), isFalse);
+    expect(matches('москва', 'Новости: Москва сегодня'), isTrue);
+  });
+
+  test('typed input splits at commas but keeps a pattern whole', () {
+    expect(KeywordRule.split('crypto, nft'), ['crypto', 'nft']);
+    expect(KeywordRule.split('/a{1,3}b/, word'), ['/a{1,3}b/', 'word']);
+    expect(KeywordRule.split('/foo/, /bar/'), ['/foo/', '/bar/']);
+    expect(KeywordRule.split('title: /x,y/'), ['title: /x,y/']);
+  });
 }

@@ -89,6 +89,13 @@ void main() {
     feed.update(subs, settings, bookmarks);
     expect(read('weather'), isTrue, reason: 'applied without a refresh');
 
+    // Set back to unread by hand: no rule reads it again, not on the next
+    // pass and not after a restart.
+    await feed.toggleReadStatus(_item('ad', ''));
+    expect(read('ad'), isFalse);
+    await feed.refreshAll();
+    expect(read('ad'), isFalse);
+
     await subs.editSubscription(_feed, _feed, 'A', onlyKeywords: ['flutter']);
     feed.update(subs, settings, bookmarks);
     expect([for (final i in feed.filteredItems) i.id], ['flutter']);

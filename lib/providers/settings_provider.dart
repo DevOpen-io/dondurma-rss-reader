@@ -442,12 +442,12 @@ class SettingsProvider extends ChangeNotifier {
     return _store('globalExcludedKeywords', keywords);
   }
 
-  /// Enables or disables the built-in ad blocker for the in-app browser.
   Future<void> setGlobalReadKeywords(List<String> keywords) {
     _globalReadKeywords = keywords;
     return _store('globalReadKeywords', keywords);
   }
 
+  /// Enables or disables the built-in ad blocker for the in-app browser.
   Future<void> setAdBlockEnabled(bool value) {
     _adBlockEnabled = value;
     return _store('adBlockEnabled', value);

@@ -41,6 +41,16 @@ void main() {
     await tester.pump();
     expect(find.text('This pattern is not valid.'), findsNothing);
 
+    // Save with an invalid rule still in the field keeps the sheet open.
+    await tester.enterText(field, '/(again/');
+    await tester.pump();
+    await tester.tap(find.text('Save'));
+    await tester.pump();
+    expect(saved, isNull);
+    expect(find.text('This pattern is not valid.'), findsOneWidget);
+
+    await tester.enterText(field, '');
+    await tester.pump();
     await tester.tap(find.text('Save'));
     await tester.pump();
     expect(saved, ['title: /a{1,3}b/', 'crypto', 'nft']);
