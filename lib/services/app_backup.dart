@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:ui';
 
 import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
@@ -190,9 +191,11 @@ FeedItem _bookmark(Map<String, dynamic> json) {
 }
 
 /// Saves a backup file: the native save dialog on desktop, the share sheet
-/// on mobile (as OPML export does). Returns `true` when saved or shared,
-/// null when the user cancelled, `false` on an error.
-Future<bool?> saveBackupFile(String json) async {
+/// on mobile (as OPML export does). [shareOrigin] anchors the share sheet,
+/// which iPad presents as a popover and refuses to open without one.
+/// Returns `true` when saved or shared, null when the user cancelled,
+/// `false` on an error.
+Future<bool?> saveBackupFile(String json, {Rect? shareOrigin}) async {
   final date = DateTime.now().toIso8601String().substring(0, 10);
   final name = 'dondurma-backup-$date.json';
   try {
@@ -211,7 +214,10 @@ Future<bool?> saveBackupFile(String json) async {
     final file = File('${dir.path}/$name');
     await file.writeAsString(json, flush: true);
     final result = await SharePlus.instance.share(
-      ShareParams(files: [XFile(file.path, mimeType: 'application/json')]),
+      ShareParams(
+        files: [XFile(file.path, mimeType: 'application/json')],
+        sharePositionOrigin: shareOrigin,
+      ),
     );
     return switch (result.status) {
       ShareResultStatus.success => true,
@@ -228,7 +234,9 @@ Future<bool?> saveBackupFile(String json) async {
 /// cancel.
 Future<String?> pickBackupFile() async {
   final file = await openFile(acceptedTypeGroups: [_backupTypeGroup]);
-  return file?.readAsString();
+  // Not `readAsString`: for the bytes the Android picker returns it decodes
+  // Latin-1 whatever encoding it is given.
+  return file == null ? null : utf8.decode(await file.readAsBytes());
 }
 
 // Messengers and mail apps often label a saved .json as plain text or

@@ -733,7 +733,15 @@ class SettingsScreen extends StatelessWidget {
                     bookmarks: context.read<BookmarkProvider>(),
                     feed: context.read<FeedProvider>(),
                   );
-                  final saved = await saveBackupFile(json);
+                  // The visible settings page: an iPad popover anchor that
+                  // lies inside the screen wherever the list is scrolled.
+                  final box = context.findRenderObject() as RenderBox?;
+                  final saved = await saveBackupFile(
+                    json,
+                    shareOrigin: box == null
+                        ? null
+                        : box.localToGlobal(Offset.zero) & box.size,
+                  );
                   if (saved != null && context.mounted) {
                     showAppToast(
                       saved ? l10n.backupExported : l10n.exportFailed,
