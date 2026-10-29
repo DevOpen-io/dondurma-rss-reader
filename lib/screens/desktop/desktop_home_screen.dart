@@ -399,18 +399,17 @@ class _AppRail extends StatelessWidget {
                     ),
                     width: 44,
                     height: 28,
+                    // Same brand tint as the phone navigation bar.
                     decoration: BoxDecoration(
                       color: selected
-                          ? cs.secondaryContainer
+                          ? cs.primary.withValues(alpha: 0.12)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(14),
                     ),
                     child: Icon(
                       icon,
                       size: 19,
-                      color: selected
-                          ? cs.onSecondaryContainer
-                          : cs.onSurfaceVariant,
+                      color: selected ? cs.primary : cs.onSurfaceVariant,
                     ),
                   ),
                   const SizedBox(height: 3),

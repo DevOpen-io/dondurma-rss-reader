@@ -378,7 +378,7 @@ class _DesktopArticleTile extends StatelessWidget {
     // GlobalKey twice ("Multiple widgets used the same GlobalKey").
     return Material(
       color: selected
-          ? cs.primaryContainer.withValues(alpha: 0.4)
+          ? cs.primary.withValues(alpha: 0.12)
           : Colors.transparent,
       child: InkWell(
         hoverColor: cs.onSurface.withValues(alpha: 0.04),
