@@ -161,4 +161,20 @@ void main() {
       feed.dispose();
     },
   );
+
+  test('a copy in another folder is its own row and stays unread', () async {
+    const shared = 'https://outlet.test/story';
+    final feed = await load([
+      _item('x', feed: 'a', link: shared),
+      _item('x', category: 'World', feed: 'b', link: shared),
+      _item('w', category: 'World', feed: 'b'),
+    ]);
+    feed.selectCategory('News');
+    expect(feed.unreadInView(), hasLength(1));
+
+    await feed.markItemsAsRead(feed.unreadInView());
+
+    expect(feed.unreadCount(category: 'World'), 2);
+    feed.dispose();
+  });
 }

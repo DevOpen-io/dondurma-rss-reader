@@ -4,8 +4,8 @@ import 'feed_decisions.dart';
 
 /// Runs the full feed filtering pipeline in the documented order:
 /// runtime sheet filter → selected category → selected feed → text search →
-/// keyword exclusion → cross-feed link dedup. Pure — the caller applies
-/// read/bookmark decoration and caches the result.
+/// keyword exclusion → cross-feed link dedup ([dedupe]). Pure — the caller
+/// applies read/bookmark decoration and caches the result.
 Iterable<FeedItem> applyFeedFilters({
   required Iterable<FeedItem> items,
   required bool Function(FeedItem item) isRead,
@@ -16,6 +16,7 @@ Iterable<FeedItem> applyFeedFilters({
   required Set<String> filterCategories,
   required List<String> globalKeywords,
   required Map<String, List<String>> feedKeywordsMap,
+  bool dedupe = true,
 }) {
   Iterable<FeedItem> filtered = items;
 
@@ -60,7 +61,7 @@ Iterable<FeedItem> applyFeedFilters({
   // Cross-feed dedup: the same article reachable through two subscriptions
   // (e.g. an outlet's "News" vs "World" feed) shows once. Runs last so an
   // excluded duplicate never consumes another copy's dedup slot.
-  return deduplicateByLink(filtered);
+  return dedupe ? deduplicateByLink(filtered) : filtered;
 }
 
 /// Legacy offline-membership dedup key: the normalized absolute

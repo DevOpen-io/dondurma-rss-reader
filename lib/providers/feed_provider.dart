@@ -865,13 +865,9 @@ class FeedProvider extends ChangeNotifier {
   // Filtering pipeline (cached)
   // ---------------------------------------------------------------------------
 
-  /// The full list of items after applying all active filters (unread, category,
-  /// feed, search, keyword exclusion) and decorating with read/bookmark state.
-  ///
-  /// Result is cached and invalidated whenever filter inputs change.
-  List<FeedItem> get _filteredItems {
-    if (_filteredItemsCache != null) return _filteredItemsCache!;
-
+  /// The current view's filter pipeline over [_items]; without [dedupe]
+  /// it keeps the cross-feed copies of a link that the list shows once.
+  Iterable<FeedItem> _applyViewFilters({bool dedupe = true}) {
     final globalKeywords = settingsProvider?.globalExcludedKeywords ?? [];
     final Map<String, List<String>> feedKeywordsMap = {};
     if (subscriptionProvider != null) {
@@ -882,7 +878,7 @@ class FeedProvider extends ChangeNotifier {
       }
     }
 
-    final filtered = applyFeedFilters(
+    return applyFeedFilters(
       items: _items,
       isRead: _readState.isRead,
       // Feed-scoped views track the live parent category (moves/renames);
@@ -896,7 +892,18 @@ class FeedProvider extends ChangeNotifier {
       filterCategories: _filterCategories,
       globalKeywords: globalKeywords,
       feedKeywordsMap: feedKeywordsMap,
+      dedupe: dedupe,
     );
+  }
+
+  /// The full list of items after applying all active filters (unread, category,
+  /// feed, search, keyword exclusion) and decorating with read/bookmark state.
+  ///
+  /// Result is cached and invalidated whenever filter inputs change.
+  List<FeedItem> get _filteredItems {
+    if (_filteredItemsCache != null) return _filteredItemsCache!;
+
+    final filtered = _applyViewFilters();
 
     // Apply dynamic read/bookmark state
     _filteredItemsCache = filtered.map((item) {
@@ -1051,9 +1058,10 @@ class FeedProvider extends ChangeNotifier {
 
   /// Marks [items] as read in one operation and returns how many changed.
   /// Callers pass the list they showed the user, so articles arriving in
-  /// the meantime are not marked unseen. The list shows one copy of a link
-  /// that several feeds carry (`deduplicateByLink`); the other copies are
-  /// the same article and are marked too, so unread counts reach zero.
+  /// the meantime are not marked unseen. The current view shows one copy of
+  /// a link that several of its feeds carry (`deduplicateByLink`); the
+  /// copies it hides are marked with it. Copies outside the view (another
+  /// folder) are separate rows there and keep their own read state.
   Future<int> markItemsAsRead(Iterable<FeedItem> items) async {
     var marked = 0;
     final links = <String>{};
@@ -1063,7 +1071,7 @@ class FeedProvider extends ChangeNotifier {
       if (link != null) links.add(link);
     }
     if (links.isNotEmpty) {
-      for (final copy in _items) {
+      for (final copy in _applyViewFilters(dedupe: false)) {
         if (links.contains(usableArticleLink(copy.link)) &&
             _readState.mark(copy, read: true)) {
           marked++;

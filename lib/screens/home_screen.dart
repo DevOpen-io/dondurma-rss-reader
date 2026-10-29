@@ -459,12 +459,12 @@ class _HomeScreenState extends State<HomeScreen> {
 // list. Widgets are constructed by itemBuilder only when rows scroll into view.
 // ---------------------------------------------------------------------------
 
-/// Everything the feed tab's list renders from [FeedProvider]. Rows select
-/// their own read/bookmark/offline state, so a notification that changes
-/// none of these (sync stamps, status reloads) leaves the list alone.
 /// Feed-tab overflow entries: adding a feed and marking the view read.
 enum _FeedMenuAction { addFeed, markRead }
 
+/// Everything the feed tab's list renders from [FeedProvider]. Rows select
+/// their own read/bookmark/offline state, so a notification that changes
+/// none of these (sync stamps, status reloads) leaves the list alone.
 typedef _FeedTabInputs = ({
   FeedDateGroups groups,
   bool isLoading,

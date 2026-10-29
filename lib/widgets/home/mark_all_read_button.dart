@@ -48,6 +48,8 @@ Future<void> showMarkReadDialog(BuildContext context) async {
                 RadioListTile<_Scope>(
                   value: option,
                   enabled: lists[option]!.isNotEmpty,
+                  // Lines the radios up with the dialog title.
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12),
                   title: Text(option.label(l10n)),
                   secondary: Text('${lists[option]!.length}'),
                 ),
