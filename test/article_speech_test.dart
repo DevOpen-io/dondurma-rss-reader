@@ -13,9 +13,24 @@ class _FakeEngine implements SpeechEngine {
   Completer<void>? _current;
   var stops = 0;
 
+  /// The engine's languages, the ones it refuses, and every call in order.
+  List<String> offered = const ['en-US', 'en-GB', 'tr-TR', 'de-DE'];
+  Set<String> refused = const {};
+  final calls = <String>[];
+
+  @override
+  Future<List<String>> availableLanguages() async => offered;
+
+  @override
+  Future<bool> setLanguage(String? tag) async {
+    calls.add('language $tag');
+    return !refused.contains(tag);
+  }
+
   @override
   Future<void> speak(String text) {
     spoken.add(text);
+    calls.add('speak $text');
     return (_current = Completer<void>()).future;
   }
 
@@ -150,6 +165,83 @@ void main() {
       expect(engine.stops, greaterThan(0));
     });
 
+    const turkish =
+        '<p>Merkez Bankası faiz kararını açıkladı ve bu karar için yeni bir '
+        'açıklama yapılacak.</p>';
+
+    test('reads in the language detected from the article', () async {
+      await speech.play(_item('a'), turkish, fallbackLanguage: 'en');
+      expect(engine.calls.take(2), ['language tr-TR', 'speak Title a']);
+      expect(speech.automaticLanguage, 'tr');
+      expect(speech.language, 'tr');
+    });
+
+    test('text too short to tell reads in the app language', () async {
+      await speech.play(_item('a'), '<p>Ok.</p>', fallbackLanguage: 'en');
+      expect(engine.calls.first, 'language en-US');
+      expect(speech.automaticLanguage, 'en');
+    });
+
+    test('the feed\'s chosen language wins over detection', () async {
+      await speech.play(_item('a'), turkish, language: 'de');
+      expect(engine.calls.first, 'language de-DE');
+      expect(speech.chosenLanguage, 'de');
+      expect(speech.automaticLanguage, 'tr');
+    });
+
+    test('a language the engine lacks reads with the default voice', () async {
+      engine.offered = const ['en-US'];
+      await speech.play(_item('a'), turkish);
+      expect(engine.calls.take(2), ['language null', 'speak Title a']);
+    });
+
+    test('a refused language falls back to the default voice', () async {
+      engine.refused = {'tr-TR'};
+      await speech.play(_item('a'), turkish);
+      expect(engine.calls.take(3), [
+        'language tr-TR',
+        'language null',
+        'speak Title a',
+      ]);
+    });
+
+    test('choosing a language reads the current part again in it', () async {
+      await speech.play(_item('a'), turkish);
+      await engine.finishOne(); // Title done, the paragraph starts.
+      engine.calls.clear();
+      await speech.chooseLanguage('en');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(engine.stops, 1);
+      expect(engine.calls, ['language en-US', 'speak ${engine.spoken[1]}']);
+      expect(speech.language, 'en');
+      expect(speech.stateFor(_item('a')), SpeechState.playing);
+
+      await speech.chooseLanguage(null);
+      expect(speech.language, 'tr');
+    });
+
+    test('choosing while paused applies on resume', () async {
+      await speech.play(_item('a'), turkish);
+      await speech.pause();
+      engine.calls.clear();
+      await speech.chooseLanguage('de');
+      expect(engine.calls, isEmpty);
+      expect(speech.stateFor(_item('a')), SpeechState.paused);
+
+      await speech.play(_item('a'), turkish);
+      expect(engine.calls.first, 'language de-DE');
+    });
+
+    test('the engine\'s languages, asked once', () async {
+      var asked = 0;
+      final counting = _CountingEngine(() => asked++);
+      final speech = ArticleSpeech(engine: counting);
+      expect(await speech.languages(), ['tr-TR']);
+      expect(await speech.languages(), ['tr-TR']);
+      expect(asked, 1);
+    });
+
     test('stopIfNot keeps the article being read and stops others', () async {
       await speech.play(_item('a'), '<p>One.</p>');
       await speech.stopIfNot(_item('a'));
@@ -239,8 +331,26 @@ void main() {
 
 class _FailingEngine implements SpeechEngine {
   @override
+  Future<List<String>> availableLanguages() async => const [];
+
+  @override
+  Future<bool> setLanguage(String? tag) async => false;
+
+  @override
   Future<void> speak(String text) => Future.error(StateError('no engine'));
 
   @override
   Future<void> stop() async {}
+}
+
+class _CountingEngine extends _FailingEngine {
+  _CountingEngine(this.onAsk);
+
+  final void Function() onAsk;
+
+  @override
+  Future<List<String>> availableLanguages() async {
+    onAsk();
+    return const ['tr-TR'];
+  }
 }

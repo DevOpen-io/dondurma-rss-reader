@@ -551,6 +551,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readAloudFailed => 'Couldn\'t read the article aloud.';
 
   @override
+  String get readingLanguage => 'Reading language';
+
+  @override
+  String readingLanguageCurrent(String language) {
+    return 'Reading language: $language';
+  }
+
+  @override
+  String get readingLanguageAutomatic => 'Automatic';
+
+  @override
+  String readingLanguageDetected(String language) {
+    return 'Detected: $language';
+  }
+
+  @override
   String get openInExternalBrowser => 'Open in External Browser';
 
   @override

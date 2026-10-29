@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show PlatformDispatcher;
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_tts/flutter_tts.dart';
@@ -8,12 +9,20 @@ import 'package:html/parser.dart' show parse;
 import '../models/feed_item.dart';
 import '../utils/app_toast.dart';
 import '../utils/platform_caps.dart';
+import 'speech_language.dart';
 
 enum SpeechState { idle, playing, paused }
 
 /// The device speech engine as [ArticleSpeech] uses it: [speak] completes
 /// when the utterance ends or is stopped, and fails when the engine does.
 abstract interface class SpeechEngine {
+  /// The BCP-47 tags the engine speaks; empty when it cannot tell.
+  Future<List<String>> availableLanguages();
+
+  /// Speaks in [tag] from the next utterance on; null is the device's
+  /// default voice. False when the engine refused it.
+  Future<bool> setLanguage(String? tag);
+
   Future<void> speak(String text);
   Future<void> stop();
 }
@@ -89,6 +98,40 @@ class _FlutterTtsEngine implements SpeechEngine {
     await _tts.stop();
     _settle();
   }
+
+  // Both are parked like speak while no engine is bound; on timeout they
+  // just give up, so the speak after them fails as it would alone.
+  @override
+  Future<List<String>> availableLanguages() async {
+    try {
+      final languages = await _tts.getLanguages.timeout(_acceptTimeout);
+      return languages is List
+          ? languages.whereType<String>().toList()
+          : const [];
+    } catch (error) {
+      debugPrint('Read aloud languages failed: $error');
+      return const [];
+    }
+  }
+
+  @override
+  Future<bool> setLanguage(String? tag) async {
+    try {
+      if (tag != null) {
+        return await _tts.setLanguage(tag).timeout(_acceptTimeout) == 1;
+      }
+      // Android's default voice carries the device language; iOS and
+      // Windows keep the last language, so ask for the device's again.
+      if (PlatformCaps.isAndroid) {
+        return await _tts.clearVoice().timeout(_acceptTimeout) == 1;
+      }
+      final device = PlatformDispatcher.instance.locale.toLanguageTag();
+      return await _tts.setLanguage(device).timeout(_acceptTimeout) == 1;
+    } catch (error) {
+      debugPrint('Read aloud language $tag failed: $error');
+      return false;
+    }
+  }
 }
 
 /// Reads one article aloud with the device's own speech engine — offline,
@@ -116,6 +159,11 @@ class ArticleSpeech extends ChangeNotifier {
 
   (String, String)? _article;
   List<String> _parts = const [];
+  String? _detected;
+  String? _fallback;
+  String? _chosen;
+  String? _failureMessage;
+  List<String>? _offered;
   int _index = 0;
   SpeechState _state = SpeechState.idle;
   // Bumped by pause/stop: a reading loop of an older run ends quietly.
@@ -125,13 +173,34 @@ class ArticleSpeech extends ChangeNotifier {
   SpeechState stateFor(FeedItem item) =>
       _article == (item.feedUrl, item.id) ? _state : SpeechState.idle;
 
+  /// The language of the article being read when none is chosen: detected
+  /// from its text, else the app's.
+  String? get automaticLanguage => _detected ?? _fallback;
+
+  /// The language chosen for the article being read; null detects it.
+  String? get chosenLanguage => _chosen;
+
+  /// The language the article being read is spoken in.
+  String? get language => _chosen ?? automaticLanguage;
+
+  /// The engine's language tags, asked once it has answered with some.
+  Future<List<String>> languages() async {
+    final offered = _offered ?? await _engine.availableLanguages();
+    if (offered.isNotEmpty) _offered = offered;
+    return offered;
+  }
+
   /// Starts reading [item] (its title, then the text of [html]) or resumes
-  /// it where it was paused. When the engine fails, reading stops and
-  /// [failureMessage] is shown.
+  /// it where it was paused. It is spoken in [language] when set, else in
+  /// the language detected from its text, else in [fallbackLanguage] (the
+  /// app's). When the engine fails, reading stops and [failureMessage] is
+  /// shown.
   Future<void> play(
     FeedItem item,
     String html, {
     String? failureMessage,
+    String? language,
+    String? fallbackLanguage,
   }) async {
     final key = (item.feedUrl, item.id);
     if (_article != key) {
@@ -139,14 +208,51 @@ class ArticleSpeech extends ChangeNotifier {
       _article = key;
       _parts = speechParts(item.title, html);
       _index = 0;
+      final text = _parts.join(' ');
+      _detected = detectLanguage(
+        text.length > 2000 ? text.substring(0, 2000) : text,
+      );
+      _fallback = fallbackLanguage;
+      _chosen = language;
     } else if (_state == SpeechState.playing) {
       return;
     }
+    _failureMessage = failureMessage;
     // Reading goes on with the screen off; it ends with the app.
     _lifecycle ??= AppLifecycleListener(onDetach: () => unawaited(stop()));
     _state = SpeechState.playing;
     notifyListeners();
-    unawaited(_read(++_run, failureMessage));
+    await _start(++_run);
+  }
+
+  /// Reads the article being read in [code] from now on (null detects
+  /// it): the current part starts again in it.
+  Future<void> chooseLanguage(String? code) async {
+    final article = _article;
+    if (article == null || code == _chosen) return;
+    _chosen = code;
+    notifyListeners();
+    if (_state != SpeechState.playing) return;
+    _run++;
+    await _engine.stop();
+    if (_article != article || _state != SpeechState.playing) return;
+    await _start(++_run);
+  }
+
+  /// Sets the engine's language, then reads from the current part on; it
+  /// returns once the first part is handed to the engine.
+  Future<void> _start(int run) async {
+    final code = language;
+    final tag = code == null ? null : resolveSpeechTag(code, await languages());
+    if (run != _run) return;
+    // A language the engine lacks or refuses reads in the default voice
+    // rather than not at all.
+    if (tag == null || !await _engine.setLanguage(tag)) {
+      if (run != _run) return;
+      await _engine.setLanguage(null);
+    }
+    if (run != _run) return;
+    unawaited(_read(run, _failureMessage));
   }
 
   Future<void> _read(int run, String? failureMessage) async {

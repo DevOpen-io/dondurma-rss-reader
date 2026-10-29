@@ -27,6 +27,10 @@ class FeedSubscription {
   /// hand-edited backup) follows the app's cycle.
   static const refreshIntervals = [60, 360, 1440];
 
+  /// The language code this feed is read aloud in; null detects it per
+  /// article.
+  final String? speechLanguage;
+
   FeedSubscription({
     required this.url,
     required this.name,
@@ -37,6 +41,7 @@ class FeedSubscription {
     this.onlyKeywords = const [],
     String? notificationEpoch,
     this.refreshIntervalMinutes,
+    this.speechLanguage,
   }) : notificationEpoch = notificationEpoch ?? _newNotificationEpoch();
 
   /// Serializes this subscription to a JSON-compatible map.
@@ -52,6 +57,7 @@ class FeedSubscription {
     'notificationEpoch': notificationEpoch,
     if (refreshIntervalMinutes != null)
       'refreshIntervalMinutes': refreshIntervalMinutes,
+    if (speechLanguage != null) 'speechLanguage': speechLanguage,
   };
 
   /// Schema marker written by every tri-state-aware save.
@@ -96,6 +102,10 @@ class FeedSubscription {
         final int minutes when refreshIntervals.contains(minutes) => minutes,
         _ => null,
       },
+      speechLanguage: switch (json['speechLanguage']) {
+        final String code when code.isNotEmpty => code,
+        _ => null,
+      },
     );
   }
 
@@ -119,6 +129,7 @@ class FeedSubscription {
       onlyKeywords: onlyKeywords ?? this.onlyKeywords,
       notificationEpoch: notificationEpoch ?? this.notificationEpoch,
       refreshIntervalMinutes: refreshIntervalMinutes,
+      speechLanguage: speechLanguage,
     );
   }
 
@@ -133,6 +144,7 @@ class FeedSubscription {
       onlyKeywords: onlyKeywords,
       notificationEpoch: notificationEpoch,
       refreshIntervalMinutes: refreshIntervalMinutes,
+      speechLanguage: speechLanguage,
     );
   }
 
@@ -148,6 +160,23 @@ class FeedSubscription {
       onlyKeywords: onlyKeywords,
       notificationEpoch: notificationEpoch,
       refreshIntervalMinutes: minutes,
+      speechLanguage: speechLanguage,
+    );
+  }
+
+  /// [code] null detects the read-aloud language per article.
+  FeedSubscription copyWithSpeechLanguage(String? code) {
+    return FeedSubscription(
+      url: url,
+      name: name,
+      category: category,
+      notificationsEnabled: notificationsEnabled,
+      fullTextEnabled: fullTextEnabled,
+      excludedKeywords: excludedKeywords,
+      onlyKeywords: onlyKeywords,
+      notificationEpoch: notificationEpoch,
+      refreshIntervalMinutes: refreshIntervalMinutes,
+      speechLanguage: code,
     );
   }
 

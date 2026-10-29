@@ -1102,6 +1102,30 @@ abstract class AppLocalizations {
   /// **'Couldn\'t read the article aloud.'**
   String get readAloudFailed;
 
+  /// No description provided for @readingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading language'**
+  String get readingLanguage;
+
+  /// No description provided for @readingLanguageCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading language: {language}'**
+  String readingLanguageCurrent(String language);
+
+  /// No description provided for @readingLanguageAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get readingLanguageAutomatic;
+
+  /// No description provided for @readingLanguageDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected: {language}'**
+  String readingLanguageDetected(String language);
+
   /// No description provided for @openInExternalBrowser.
   ///
   /// In en, this message translates to:
