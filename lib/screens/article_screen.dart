@@ -238,6 +238,8 @@ class _ArticlePageState extends State<ArticlePage> {
     final String dateStr = widget.item.pubDate != null
         ? DateFormat(
             articleDatePattern(use24HourFormat(context, settings.timeFormat)),
+            // Month names in the app's language.
+            Localizations.localeOf(context).toString(),
           ).format(widget.item.pubDate!.toLocal())
         : '';
 

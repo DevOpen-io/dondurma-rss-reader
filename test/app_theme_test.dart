@@ -65,6 +65,26 @@ void main() {
     }
   });
 
+  test('tonal controls share the theme color\'s hue in every scheme', () {
+    for (final scheme in schemes) {
+      for (final theme in [
+        AppThemeBuilder.light(scheme, font),
+        AppThemeBuilder.dark(scheme, font),
+      ]) {
+        final cs = theme.colorScheme;
+        final primary = HSLColor.fromColor(cs.primary);
+        final tonal = HSLColor.fromColor(cs.secondaryContainer);
+        if (primary.saturation < 0.15) continue; // Near-grey: no hue.
+        final gap = (primary.hue - tonal.hue).abs();
+        expect(
+          gap > 180 ? 360 - gap : gap,
+          lessThan(40),
+          reason: '$scheme ${cs.brightness}',
+        );
+      }
+    }
+  });
+
   test('an accent that reads well is kept as it is', () {
     expect(
       AppThemeBuilder.readableAccent(

@@ -52,8 +52,18 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     );
   }
 
+  /// The typed address, with https:// added when only a domain and path
+  /// were typed ("wordpress.org/news").
+  String get _typedUrl {
+    final typed = _urlController.text.trim();
+    if (typed.isEmpty || typed.contains('://')) return typed;
+    return RegExp(r'^[\w-]+(\.[\w-]+)+([/?#].*)?$').hasMatch(typed)
+        ? 'https://$typed'
+        : typed;
+  }
+
   void _onUrlChanged() {
-    final val = _urlController.text.trim();
+    final val = _typedUrl;
     final uri = Uri.tryParse(val);
     setState(() {
       _urlHasInput = val.isNotEmpty;
@@ -66,7 +76,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
   String? get _suggestedName {
     if (!_urlFormatValid || _nameController.text.isNotEmpty) return null;
-    final uri = Uri.tryParse(_urlController.text.trim());
+    final uri = Uri.tryParse(_typedUrl);
     if (uri == null) return null;
     final host = uri.host.replaceFirst(RegExp(r'^www\.'), '');
     if (host.isEmpty) return null;
@@ -238,12 +248,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                           size: 20,
                         ),
                       ),
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return l10n.pleaseEnterName;
-                        }
-                        return null;
-                      },
+                      // Optional: an empty name takes the site's.
                     ),
                     const SizedBox(height: 16),
                     // Category
@@ -313,10 +318,13 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
     setState(() => _isLoading = true);
 
-    final name = _nameController.text.trim();
+    // No name typed: the site's own, as the suggestion under the field.
+    final name = _nameController.text.trim().isEmpty
+        ? (_suggestedName ?? _typedUrl)
+        : _nameController.text.trim();
     String category = _categoryController.text.trim();
     if (category.isEmpty) category = 'Uncategorized';
-    final typed = _urlController.text.trim();
+    final typed = _typedUrl;
 
     try {
       final feeds = context.read<FeedProvider>();

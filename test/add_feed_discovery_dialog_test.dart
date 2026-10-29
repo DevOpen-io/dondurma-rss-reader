@@ -112,7 +112,11 @@ void main() {
     }
   }
 
-  Future<void> submit(WidgetTester tester, String url) async {
+  Future<void> submit(
+    WidgetTester tester,
+    String url, {
+    String? name = 'Site',
+  }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.6;
     addTearDown(tester.view.reset);
@@ -150,10 +154,12 @@ void main() {
       find.widgetWithText(TextField, 'e.g. https://techcrunch.com/feed/'),
       url,
     );
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'TechCrunch, BBC News…'),
-      'Site',
-    );
+    if (name != null) {
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'TechCrunch, BBC News…'),
+        name,
+      );
+    }
     await tester.tap(find.text('Save Feed'));
     await settle(tester);
   }
@@ -166,6 +172,14 @@ void main() {
         await body(tester);
         await tester.pump(const Duration(seconds: 10));
       });
+
+  dialogTest('an address typed without https:// and without a name is '
+      'added, named after the site', (tester) async {
+    await submit(tester, 'site.test/news', name: null);
+
+    expect(feeds.added, ['https://site.test/news']);
+    expect(dialogOpen(), isFalse);
+  });
 
   dialogTest('a subreddit is added as its feed without discovery', (
     tester,

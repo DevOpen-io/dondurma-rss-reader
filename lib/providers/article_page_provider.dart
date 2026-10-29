@@ -434,6 +434,7 @@ class ArticlePageProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   String _preprocessHtml(html_dom.Element body) {
+    _removeRepeatedHeadline(body);
     _stripInlineStyles(body);
     _removeAdContent(body);
     _removeEmptyElements(body);
@@ -442,6 +443,29 @@ class ArticlePageProvider extends ChangeNotifier {
     _rewriteLocalImages(body);
 
     return body.innerHtml;
+  }
+
+  /// Drops the page's own copy of the headline: the reader already shows
+  /// the title above the text. A source suffix ("… - CNN") on either side
+  /// still matches.
+  void _removeRepeatedHeadline(html_dom.Element body) {
+    String norm(String text) => text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[‘’`´]'), "'")
+        .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+        .trim();
+    final title = norm(item.title);
+    if (title.length < 8) return;
+    final heading = body.querySelector('h1, h2');
+    if (heading == null) return;
+    final text = norm(heading.text);
+    if (text.isEmpty) return;
+    final (short, long) = text.length < title.length
+        ? (text, title)
+        : (title, text);
+    if (long.contains(short) && short.length >= long.length * 0.6) {
+      heading.remove();
+    }
   }
 
   /// Points ready media entries at their durable local files so offline

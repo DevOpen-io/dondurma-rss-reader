@@ -157,11 +157,10 @@ class AppThemeBuilder {
   /// text on a colored control is a deep or light tone of that color (never
   /// plain black on amber) and surfaces carry its hue. The chroma tones keep
   /// the brand color as vivid as the scheme defines it.
-  static const _keyColors = FlexKeyColors(
-    useKeyColors: true,
-    useSecondary: true,
-    useTertiary: true,
-  );
+  // Secondary and tertiary come from the primary hue: some schemes pair
+  // their color with an unrelated one (amber with blue), which put a blue
+  // tonal button on an amber screen.
+  static const _keyColors = FlexKeyColors(useKeyColors: true);
 
   /// Controls follow the theme color rather than the scheme's secondary, so
   /// a chosen color shows wherever something is selected or switched on.

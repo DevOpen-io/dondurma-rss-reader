@@ -163,6 +163,40 @@ void main() {
     expect(page.displayContent, contains('Story paragraph 11'));
   });
 
+  test('the page\'s own copy of the headline is not shown again above '
+      'the text', () async {
+    FullTextExtractionService.debugClearSession();
+    final story = [
+      for (var i = 0; i < 12; i++)
+        '<p>Body paragraph $i, long enough to read as the article itself '
+            'rather than the excerpt.</p>',
+    ].join();
+    final page = ArticlePageProvider(
+      item: FeedItem(
+        id: 'h',
+        siteName: 'Site',
+        title: 'Brazil’s Flavio Bolsonaro isolated',
+        description: 'Short.',
+        link: 'https://head.test/post',
+        feedUrl: 'https://head.test/feed',
+      ),
+    );
+    addTearDown(page.dispose);
+    final client = MockClient(
+      (_) async => http.Response(
+        '<html><body><article><h1> Brazil\'s Flavio  Bolsonaro isolated'
+        '</h1>$story<h2>A real subheading</h2></article></body></html>',
+        200,
+        headers: {'content-type': 'text/html; charset=utf-8'},
+      ),
+    );
+
+    await http.runWithClient(page.activateFullText, () => client);
+
+    expect(page.displayContent, isNot(contains('<h1')));
+    expect(page.displayContent, contains('A real subheading'));
+  });
+
   group('full text that only repeats the feed excerpt', () {
     const excerpt =
         'Spanish football clubs were among those to hold a minute’s '

@@ -1051,9 +1051,10 @@ class SettingsScreen extends StatelessWidget {
 
               router.go('/onboarding');
             },
+            // Destructive, like deleting a feed: the error color itself.
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.errorContainer,
-              foregroundColor: theme.colorScheme.onErrorContainer,
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
             ),
             child: Text(l10n.factoryReset),
           ),
