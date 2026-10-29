@@ -35,6 +35,7 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Bundled OFL fonts (no runtime Google Fonts fetch) with app-font and article-typeface choices; one durable offline pipeline (legacy full-text prefetch removed) (2026-10-29)
 - [x] Mark the current view read — everything or only articles older than a day/week, each with its count; same-link copies the view hides are marked too — from the feed tab overflow menu (which also holds Add feed) and the desktop list toolbar ([#1](https://github.com/DevOpen-io/dondurma-rss-reader/issues/1), 2026-10-29)
 - [x] Full-screen article image viewer: tap an inline, gallery or cover image; pinch/wheel zoom, double-tap zoom/reset, back/Escape/close ([#62](https://github.com/DevOpen-io/dondurma-rss-reader/issues/62), 2026-10-29)
+- [x] Optional mark-as-read on scroll (Settings, off by default): article rows seen on screen and scrolled past the top edge are marked read in the phone and desktop lists ([#63](https://github.com/DevOpen-io/dondurma-rss-reader/issues/63), 2026-10-29)
 
 ## Backlog
 

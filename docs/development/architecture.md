@@ -66,7 +66,7 @@ Bu tablodaki yollar depo köküne göredir.
 
 ### `settings`
 
-`flexScheme`, `themeMode`, `locale`, `offlineCacheLimit`, `cacheIntervalSeconds`, `syncBackground`, `notificationsEnabled`, `digestMode`, `quietHoursEnabled`, `quietHoursStart`, `quietHoursEnd`, `appFont`, `fontSize`, `typeface`, `lineSpacing`, `globalExcludedKeywords`, `searchHistory`, `adBlockEnabled`, `webviewDarkModeEnabled`, `browserMode`, `autoFullText`, `articleListStyle`, `hasSeenOnboarding`, `_boxesMigrated`.
+`flexScheme`, `themeMode`, `locale`, `offlineCacheLimit`, `cacheIntervalSeconds`, `syncBackground`, `notificationsEnabled`, `digestMode`, `quietHoursEnabled`, `quietHoursStart`, `quietHoursEnd`, `appFont`, `fontSize`, `typeface`, `lineSpacing`, `globalExcludedKeywords`, `searchHistory`, `adBlockEnabled`, `webviewDarkModeEnabled`, `browserMode`, `autoFullText`, `markReadOnScroll`, `articleListStyle`, `hasSeenOnboarding`, `_boxesMigrated`.
 
 Yazı tipleri `assets/fonts` altında paketlidir (OFL lisansları lisans sayfasına `registerFontLicenses()` ile eklenir); ağdan font indirilmez. `appFont` (`outfit` varsayılan, `atkinson`, `lexend`, `literata`, `system`) arayüz temasını, `typeface` makale gövdesini belirler: `system` uygulama fontunu izler, eski `serif`/`sans-serif` değerleri Literata/Atkinson'a, `mono` platform eş aralıklı fontuna eşlenir.
 

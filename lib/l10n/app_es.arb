@@ -32,6 +32,8 @@
   "markReadOlderThanDay": "Con más de un día",
   "markReadOlderThanWeek": "Con más de una semana",
   "markReadAction": "Marcar como leído",
+  "markReadOnScroll": "Marcar como leído al desplazar",
+  "markReadOnScrollDesc": "Los artículos que dejas atrás en la lista se marcan como leídos",
   "editFeed": "Editar fuente",
   "feedName": "Nombre de la fuente",
   "feedUrl": "URL de la fuente",

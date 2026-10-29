@@ -54,6 +54,7 @@ class AnchoredFeedList extends StatefulWidget {
     this.controller,
     this.physics,
     this.cacheExtent = 200,
+    this.onArticlesScrolledPast,
   });
 
   final List<Object> rowIds;
@@ -62,6 +63,12 @@ class AnchoredFeedList extends StatefulWidget {
   final ScrollController? controller;
   final ScrollPhysics? physics;
   final double cacheExtent;
+
+  /// Called after a scroll frame with the indexes of article rows the user
+  /// scrolled past: rows that were on screen and then left through the top
+  /// edge while scrolling down. Rows inserted above the screen were never
+  /// seen and are not reported; each row is reported once.
+  final void Function(List<int> indexes)? onArticlesScrolledPast;
 
   @override
   State<AnchoredFeedList> createState() => _AnchoredFeedListState();
@@ -76,6 +83,11 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
   var _indexes = <Object, int>{};
   Object? _centerId;
   double? _pendingPixels;
+  // Scrolled-past tracking: rows seen on screen and rows already reported.
+  final _seenIds = <Object>{};
+  final _passedIds = <Object>{};
+  var _scrolledDown = false;
+  var _passCheckScheduled = false;
 
   ScrollController get _controller => widget.controller ?? _ownController;
 
@@ -149,6 +161,60 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
     _rowKeys.removeWhere(
       (id, key) => !remaining.contains(id) || key.currentContext == null,
     );
+    _seenIds.retainAll(remaining);
+    _passedIds.retainAll(remaining);
+  }
+
+  bool _onScrollUpdate(ScrollUpdateNotification notification) {
+    if (widget.onArticlesScrolledPast == null || notification.depth != 0) {
+      return false;
+    }
+    if ((notification.scrollDelta ?? 0) > 0) _scrolledDown = true;
+    _schedulePassCheck();
+    return false;
+  }
+
+  // Row geometry is only current after layout, so look once per frame.
+  void _schedulePassCheck() {
+    if (_passCheckScheduled) return;
+    _passCheckScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _passCheckScheduled = false;
+      if (mounted) _checkScrolledPast();
+    });
+  }
+
+  void _checkScrolledPast() {
+    final report = widget.onArticlesScrolledPast;
+    final down = _scrolledDown;
+    _scrolledDown = false;
+    final viewport =
+        _viewportKey.currentContext?.findRenderObject() as RenderBox?;
+    if (report == null ||
+        viewport == null ||
+        !viewport.attached ||
+        !viewport.hasSize) {
+      return;
+    }
+    final passed = <int>[];
+    for (final MapEntry(key: id, value: key) in _rowKeys.entries) {
+      final index = _indexes[id];
+      if (index == null || !(widget.isArticle?.call(index) ?? true)) continue;
+      final box = key.currentContext?.findRenderObject() as RenderBox?;
+      if (box == null || !box.attached || !box.hasSize) continue;
+      final y = box.localToGlobal(Offset.zero, ancestor: viewport).dy;
+      if (!y.isFinite) continue; // Kept-alive offscreen row, see above.
+      final bottom = y + box.size.height;
+      if (bottom > 0 && y < viewport.size.height) {
+        _seenIds.add(id);
+      } else if (down &&
+          bottom <= 0 &&
+          _seenIds.contains(id) &&
+          _passedIds.add(id)) {
+        passed.add(index);
+      }
+    }
+    if (passed.isNotEmpty) report(passed..sort());
   }
 
   @override
@@ -168,6 +234,8 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
       for (var i = 0; i < widget.rowIds.length; i++) widget.rowIds[i]: i,
     };
     final split = _centerId == null ? 0 : (indexes[_centerId!] ?? 0);
+    // Records what this layout puts on screen as seen.
+    if (widget.onArticlesScrolledPast != null) _schedulePassCheck();
     final keyIndexes = {
       for (final e in _rowKeys.entries) e.value: indexes[e.key],
     };
@@ -191,41 +259,44 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
             );
             _pendingPixels = null;
           }
-          return CustomScrollView(
-            controller: _controller,
-            physics: widget.physics,
-            center: _centerKey,
-            semanticChildCount: widget.rowIds.length,
-            scrollCacheExtent: ScrollCacheExtent.pixels(widget.cacheExtent),
-            slivers: [
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => row(context, split - index - 1),
-                  childCount: split,
-                  semanticIndexCallback: (_, index) => split - index - 1,
-                  findChildIndexCallback: (key) {
-                    final index = keyIndexes[key];
-                    return index != null && index < split
-                        ? split - index - 1
-                        : null;
-                  },
+          return NotificationListener<ScrollUpdateNotification>(
+            onNotification: _onScrollUpdate,
+            child: CustomScrollView(
+              controller: _controller,
+              physics: widget.physics,
+              center: _centerKey,
+              semanticChildCount: widget.rowIds.length,
+              scrollCacheExtent: ScrollCacheExtent.pixels(widget.cacheExtent),
+              slivers: [
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => row(context, split - index - 1),
+                    childCount: split,
+                    semanticIndexCallback: (_, index) => split - index - 1,
+                    findChildIndexCallback: (key) {
+                      final index = keyIndexes[key];
+                      return index != null && index < split
+                          ? split - index - 1
+                          : null;
+                    },
+                  ),
                 ),
-              ),
-              SliverList(
-                key: _centerKey,
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) => row(context, split + index),
-                  childCount: widget.rowIds.length - split,
-                  semanticIndexCallback: (_, index) => split + index,
-                  findChildIndexCallback: (key) {
-                    final index = keyIndexes[key];
-                    return index != null && index >= split
-                        ? index - split
-                        : null;
-                  },
+                SliverList(
+                  key: _centerKey,
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => row(context, split + index),
+                    childCount: widget.rowIds.length - split,
+                    semanticIndexCallback: (_, index) => split + index,
+                    findChildIndexCallback: (key) {
+                      final index = keyIndexes[key];
+                      return index != null && index >= split
+                          ? index - split
+                          : null;
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           );
         },
       ),

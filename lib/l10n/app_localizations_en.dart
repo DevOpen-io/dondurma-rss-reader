@@ -111,6 +111,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get markReadAction => 'Mark as read';
 
   @override
+  String get markReadOnScroll => 'Mark as read on scroll';
+
+  @override
+  String get markReadOnScrollDesc =>
+      'Articles you scroll past in the list are marked as read';
+
+  @override
   String get editFeed => 'Edit Feed';
 
   @override

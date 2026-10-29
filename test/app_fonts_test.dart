@@ -97,6 +97,14 @@ void main() {
       await settings.setArticleListStyle('grid');
       expect(SettingsProvider().articleListStyle, 'list');
     });
+
+    test('mark read on scroll defaults off and persists', () async {
+      await Hive.box('settings').clear();
+      final settings = SettingsProvider();
+      expect(settings.markReadOnScroll, isFalse);
+      await settings.setMarkReadOnScroll(true);
+      expect(SettingsProvider().markReadOnScroll, isTrue);
+    });
   });
 
   test('font licenses reach the license page', () async {

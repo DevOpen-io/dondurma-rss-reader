@@ -112,6 +112,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markReadAction => 'Okundu işaretle';
 
   @override
+  String get markReadOnScroll => 'Kaydırınca okundu işaretle';
+
+  @override
+  String get markReadOnScrollDesc =>
+      'Listede kaydırıp geçtiğin makaleler okundu olur';
+
+  @override
   String get editFeed => 'Kaynağı Düzenle';
 
   @override

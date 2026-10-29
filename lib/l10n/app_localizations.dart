@@ -292,6 +292,18 @@ abstract class AppLocalizations {
   /// **'Mark as read'**
   String get markReadAction;
 
+  /// No description provided for @markReadOnScroll.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read on scroll'**
+  String get markReadOnScroll;
+
+  /// No description provided for @markReadOnScrollDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Articles you scroll past in the list are marked as read'**
+  String get markReadOnScrollDesc;
+
   /// No description provided for @editFeed.
   ///
   /// In en, this message translates to:

@@ -169,6 +169,9 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
         p.items.isNotEmpty,
       ),
     );
+    final markOnScroll = context.select<SettingsProvider, bool>(
+      (s) => s.markReadOnScroll,
+    );
     _rowIds = articleRowIds(widget.items);
     final remaining = _rowIds.toSet();
     _tileKeys.removeWhere((id, _) => !remaining.contains(id));
@@ -320,6 +323,12 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                             if (!widget.bookmarks) 'pagination-footer',
                           ],
                           isArticle: (index) => index < widget.items.length,
+                          onArticlesScrolledPast:
+                              markOnScroll && !widget.bookmarks
+                              ? (indexes) => provider.markItemsAsRead([
+                                  for (final i in indexes) widget.items[i],
+                                ])
+                              : null,
                           itemBuilder: (context, index) {
                             if (index == widget.items.length) {
                               return const HomePaginationFooter();

@@ -75,6 +75,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final flat = context.select<SettingsProvider, bool>(
       (s) => s.articleListStyle == 'list',
     );
+    final markOnScroll = context.select<SettingsProvider, bool>(
+      (s) => s.markReadOnScroll,
+    );
     final bool hasAnyItems =
         todayItems.isNotEmpty ||
         yesterdayItems.isNotEmpty ||
@@ -166,6 +169,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: _feedScroll,
                       rowIds: rowIds,
                       isArticle: (index) => entries[index] is _ItemEntry,
+                      onArticlesScrolledPast: markOnScroll
+                          ? (indexes) => provider.markItemsAsRead([
+                              for (final i in indexes)
+                                if (entries[i] case _ItemEntry(:final item))
+                                  item,
+                            ])
+                          : null,
                       physics: const BouncingScrollPhysics(
                         parent: AlwaysScrollableScrollPhysics(),
                       ),

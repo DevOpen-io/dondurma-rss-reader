@@ -113,6 +113,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get markReadAction => 'Marcar como leído';
 
   @override
+  String get markReadOnScroll => 'Marcar como leído al desplazar';
+
+  @override
+  String get markReadOnScrollDesc =>
+      'Los artículos que dejas atrás en la lista se marcan como leídos';
+
+  @override
   String get editFeed => 'Editar fuente';
 
   @override

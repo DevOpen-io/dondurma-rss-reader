@@ -421,6 +421,15 @@ class SettingsScreen extends StatelessWidget {
                 onChanged: (v) =>
                     context.read<SettingsProvider>().setAutoFullText(v),
               ),
+              const SettingsTileDivider(),
+              SettingsSwitchTile(
+                icon: Icons.done_all,
+                title: l10n.markReadOnScroll,
+                subtitle: l10n.markReadOnScrollDesc,
+                value: settings.markReadOnScroll,
+                onChanged: (v) =>
+                    context.read<SettingsProvider>().setMarkReadOnScroll(v),
+              ),
             ],
           ),
 

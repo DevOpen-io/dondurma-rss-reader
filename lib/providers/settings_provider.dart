@@ -50,6 +50,9 @@ class SettingsProvider extends ChangeNotifier {
   // Full-text extraction
   bool _autoFullText = false;
 
+  // Article-list rows scrolled past are marked read. Off by default.
+  bool _markReadOnScroll = false;
+
   // Time format: 'system', '12h', '24h'
   String _timeFormat = 'system';
 
@@ -95,6 +98,8 @@ class SettingsProvider extends ChangeNotifier {
   String get browserMode => _browserMode;
 
   bool get autoFullText => _autoFullText;
+
+  bool get markReadOnScroll => _markReadOnScroll;
 
   String get timeFormat => _timeFormat;
 
@@ -197,6 +202,7 @@ class SettingsProvider extends ChangeNotifier {
 
     // Full-text extraction
     _autoFullText = _box.get('autoFullText', defaultValue: false);
+    _markReadOnScroll = _box.get('markReadOnScroll', defaultValue: false);
 
     // Time format
     _timeFormat = _box.get('timeFormat', defaultValue: 'system');
@@ -344,6 +350,12 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> setAutoFullText(bool value) {
     _autoFullText = value;
     return _store('autoFullText', value);
+  }
+
+  /// Marks article-list rows read once they are scrolled past.
+  Future<void> setMarkReadOnScroll(bool value) {
+    _markReadOnScroll = value;
+    return _store('markReadOnScroll', value);
   }
 
   /// Sets the clock display format: `'system'`, `'12h'`, or `'24h'`.

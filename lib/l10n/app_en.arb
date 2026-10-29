@@ -49,6 +49,8 @@
   "markReadOlderThanDay": "Older than a day",
   "markReadOlderThanWeek": "Older than a week",
   "markReadAction": "Mark as read",
+  "markReadOnScroll": "Mark as read on scroll",
+  "markReadOnScrollDesc": "Articles you scroll past in the list are marked as read",
   "editFeed": "Edit Feed",
   "feedName": "Feed Name",
   "feedUrl": "Feed URL",
