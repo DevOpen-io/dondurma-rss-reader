@@ -17,6 +17,7 @@ import '../widgets/home/feed_empty_state.dart';
 import '../widgets/home/feed_list_skeleton.dart';
 import '../widgets/home/add_category_dialog.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
+import '../widgets/home/mark_all_read_button.dart';
 import '../widgets/home/offline_banner.dart';
 import '../widgets/home/refresh_progress_count.dart';
 import '../widgets/constrained_width.dart';
@@ -272,6 +273,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: _showAddFolderDialog,
             ),
           if (_selectedIndex == 0) ...[
+            const MarkAllReadButton(),
             if (!_isSearching) FilterSheetButton(active: hasActiveFilter),
             if (_isSearching)
               IconButton(

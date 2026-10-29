@@ -268,6 +268,36 @@ abstract class AppLocalizations {
   /// **'Mark All as Read'**
   String get markAllAsRead;
 
+  /// No description provided for @markReadAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All articles'**
+  String get markReadAll;
+
+  /// No description provided for @markReadOlderThanDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Older than a day'**
+  String get markReadOlderThanDay;
+
+  /// No description provided for @markReadOlderThanWeek.
+  ///
+  /// In en, this message translates to:
+  /// **'Older than a week'**
+  String get markReadOlderThanWeek;
+
+  /// No description provided for @markReadConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Mark 1 article as read?} other{Mark {count} articles as read?}}'**
+  String markReadConfirm(int count);
+
+  /// No description provided for @markReadAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark as read'**
+  String get markReadAction;
+
   /// No description provided for @editFeed.
   ///
   /// In en, this message translates to:

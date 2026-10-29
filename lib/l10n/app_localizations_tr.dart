@@ -100,6 +100,23 @@ class AppLocalizationsTr extends AppLocalizations {
   String get markAllAsRead => 'Tümünü Okundu İşaretle';
 
   @override
+  String get markReadAll => 'Tüm makaleler';
+
+  @override
+  String get markReadOlderThanDay => '1 günden eskiler';
+
+  @override
+  String get markReadOlderThanWeek => '1 haftadan eskiler';
+
+  @override
+  String markReadConfirm(int count) {
+    return '$count makale okundu işaretlensin mi?';
+  }
+
+  @override
+  String get markReadAction => 'Okundu işaretle';
+
+  @override
   String get editFeed => 'Kaynağı Düzenle';
 
   @override

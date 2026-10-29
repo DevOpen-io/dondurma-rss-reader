@@ -21,6 +21,7 @@ import '../../widgets/home/feed_empty_state.dart';
 import '../../widgets/home/feed_list_skeleton.dart';
 import '../../widgets/home/home_pagination_footer.dart';
 import '../../widgets/home/filter_bottom_sheet.dart';
+import '../../widgets/home/mark_all_read_button.dart';
 import '../../widgets/home/offline_banner.dart';
 import '../../widgets/home/refresh_progress_count.dart';
 import '../../widgets/in_app_browser.dart' show openArticleLink;
@@ -224,6 +225,7 @@ class DesktopArticleListPaneState extends State<DesktopArticleListPane> {
                   active: provider.hasActiveSheetFilter,
                   desktop: true,
                 ),
+                if (!widget.bookmarks) const MarkAllReadButton(desktop: true),
                 // Progress lives in a dedicated ValueNotifier so per-feed
                 // updates repaint this chip only — never the whole list.
                 ValueListenableBuilder<RefreshProgress>(

@@ -101,6 +101,29 @@ class AppLocalizationsEs extends AppLocalizations {
   String get markAllAsRead => 'Marcar todo como leído';
 
   @override
+  String get markReadAll => 'Todos los artículos';
+
+  @override
+  String get markReadOlderThanDay => 'Con más de un día';
+
+  @override
+  String get markReadOlderThanWeek => 'Con más de una semana';
+
+  @override
+  String markReadConfirm(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '¿Marcar $count artículos como leídos?',
+      one: '¿Marcar 1 artículo como leído?',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get markReadAction => 'Marcar como leído';
+
+  @override
   String get editFeed => 'Editar fuente';
 
   @override

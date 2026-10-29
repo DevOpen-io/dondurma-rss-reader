@@ -1026,6 +1026,40 @@ class FeedProvider extends ChangeNotifier {
     _scheduleReadStateSave();
   }
 
+  /// Unread articles in the current view (folder, feed, search and sheet
+  /// filters — the whole filtered list, not just the render window),
+  /// optionally only those published more than [olderThan] ago. Undated
+  /// articles count as old, as in the date groups.
+  List<FeedItem> unreadInView({Duration? olderThan}) {
+    final cutoff = olderThan == null
+        ? null
+        : DateTime.now().subtract(olderThan);
+    return _filteredItems
+        .where(
+          (item) =>
+              !item.isRead &&
+              (cutoff == null ||
+                  item.pubDate == null ||
+                  item.pubDate!.isBefore(cutoff)),
+        )
+        .toList();
+  }
+
+  /// Marks [items] as read in one operation and returns how many changed.
+  /// Callers pass the list they showed the user, so articles arriving in
+  /// the meantime are not marked unseen.
+  Future<int> markItemsAsRead(Iterable<FeedItem> items) async {
+    var marked = 0;
+    for (final item in items) {
+      if (_readState.mark(item, read: true)) marked++;
+    }
+    if (marked == 0) return 0;
+    _invalidateFilterCache();
+    notifyListeners();
+    _scheduleReadStateSave();
+    return marked;
+  }
+
   /// Toggles the read/unread state of this source instance.
   Future<void> toggleReadStatus(FeedItem item) async {
     _readState.mark(item, read: !_readState.isRead(item));

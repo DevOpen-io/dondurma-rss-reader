@@ -33,6 +33,7 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Proven same article from another source reuses already-extracted content as its own copy (2026-10-26)
 - [x] GitHub releases with signed APK, Windows installer, macOS DMG and Linux AppImage on every CI-green main push (2026-10-26)
 - [x] Bundled OFL fonts (no runtime Google Fonts fetch) with app-font and article-typeface choices; one durable offline pipeline (legacy full-text prefetch removed) (2026-10-29)
+- [x] Mark the current view read — everything or only articles older than a day/week, confirmed with the count — from the home app bar and the desktop list toolbar ([#1](https://github.com/DevOpen-io/dondurma-rss-reader/issues/1), 2026-10-29)
 
 ## Backlog
 
