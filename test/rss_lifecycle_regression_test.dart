@@ -751,19 +751,16 @@ void main() {
       final providers = _providers();
       await _waitForRefresh(providers.feed);
 
-      await expectLater(
-        providers.feed.addSubscriptionAndRefresh(page, 'Site', 'Test'),
-        throwsA(
-          isA<FeedFetchException>().having(
-            (e) => e.kind,
-            'kind',
-            FeedFetchErrorKind.parse,
-          ),
-        ),
-      );
+      FeedFetchException? failure;
+      try {
+        await providers.feed.addSubscriptionAndRefresh(page, 'Site', 'Test');
+      } on FeedFetchException catch (e) {
+        failure = e;
+      }
+      expect(failure?.kind, FeedFetchErrorKind.parse);
       expect(providers.subscriptions.hasFeedUrl(page), isFalse);
 
-      final found = await providers.feed.discoverFeeds(page);
+      final found = await providers.feed.discoverFeeds(failure!.page!);
       expect([for (final f in found) f.url], [server.url('/site/feed.xml')]);
       expect(
         await providers.feed.addSubscriptionAndRefresh(

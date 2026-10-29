@@ -30,12 +30,17 @@ enum FeedFetchErrorKind {
   other,
 }
 
+/// A web page fetched where a feed was expected, kept for discovery so it
+/// is not downloaded twice.
+typedef FeedPage = ({Uint8List bodyBytes, String url, String? contentType});
+
 class FeedFetchException implements Exception {
   FeedFetchException(
     this.kind,
     this.message, {
     this.retryAfter,
     this.statusCode,
+    this.page,
   });
 
   final FeedFetchErrorKind kind;
@@ -48,6 +53,10 @@ class FeedFetchException implements Exception {
   /// HTTP status for [FeedFetchErrorKind.httpStatus] failures — lets the
   /// refresher tell a rate-limit (429/503) from a dead feed (404).
   final int? statusCode;
+
+  /// The web page a [FeedFetchErrorKind.parse] failure got instead of a
+  /// feed; null for a feed that failed to parse.
+  final FeedPage? page;
 
   @override
   String toString() => message;
@@ -202,6 +211,20 @@ class FeedService {
         );
       }
 
+      // A web page instead of a feed: no isolate parse, and the page goes
+      // back to the caller for discovery.
+      if (looksLikeHtmlPage(bodyBytes, responseHeaders['content-type'])) {
+        throw FeedFetchException(
+          FeedFetchErrorKind.parse,
+          'Not a feed: the address returned a web page',
+          page: (
+            bodyBytes: bodyBytes,
+            url: currentUrl,
+            contentType: responseHeaders['content-type'],
+          ),
+        );
+      }
+
       final newEtag = responseHeaders['etag'];
       final newLastModified = responseHeaders['last-modified'];
 
@@ -312,31 +335,18 @@ class FeedService {
     );
   }
 
-  /// Feeds behind a web page the user entered instead of a feed address:
-  /// the page's `<link rel="alternate">` feeds, or else the first of
-  /// [commonFeedPaths] on its site that parses as a feed. [pace] runs
-  /// before every request (the shared host pacer). Empty when nothing is
-  /// found; a failed page request throws.
+  /// Feeds behind a web [page] the user entered instead of a feed address:
+  /// the page's `<link rel="alternate">` feeds (read in an isolate — pages
+  /// run to megabytes), or else the first of [commonFeedPaths] on its site
+  /// that parses as a feed. [pace] runs before every request (the shared
+  /// host pacer). Empty when nothing is found.
   Future<List<DiscoveredFeed>> discoverFeeds(
-    String url, {
+    FeedPage page, {
     Future<void> Function(String url)? pace,
   }) async {
-    await pace?.call(url);
-    final page = await _get(url, const {
-      'User-Agent': _userAgent,
-      'Accept': 'text/html,application/xhtml+xml;q=0.9,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.9',
-    });
-    if (page.statusCode != 200) return const [];
-    final pageUrl = Uri.parse(page.finalUrl);
-    final linked = feedLinksInHtml(
-      _decodeBody(
-        page.bodyBytes,
-        declaredCharset: _charsetFrom(page.headers['content-type']),
-      ),
-      pageUrl,
-    );
+    final linked = await compute(_feedLinksInPage, page);
     if (linked.isNotEmpty) return linked;
+    final pageUrl = Uri.parse(page.url);
     for (final path in commonFeedPaths) {
       final candidate = pageUrl.resolve(path).toString();
       await pace?.call(candidate);
@@ -349,6 +359,15 @@ class FeedService {
     }
     return const [];
   }
+
+  static List<DiscoveredFeed> _feedLinksInPage(FeedPage page) =>
+      feedLinksInHtml(
+        _decodeBody(
+          page.bodyBytes,
+          declaredCharset: _charsetFrom(page.contentType),
+        ),
+        Uri.parse(page.url),
+      );
 
   /// Whether two URLs share a scheme, host, and port — the boundary at
   /// which conditional validators may be forwarded on a redirect.

@@ -96,7 +96,7 @@ Hive kutularına ek olarak `ArticleRecordStore` ve `ObservedArticleStore`, foreg
 
 `FeedService` ortak keep-alive `http.Client`, browser User-Agent, zaman aşımı, ETag/Last-Modified ve 304 desteği kullanır. RSS/Atom gövdesi `compute(parseFeedBody, ...)` içinde ayrıştırılır. Eksik ID için kararlı fallback üretilir; feed başına öğe sayısı sınırlandırılır.
 
-Kaynak ekleme bir web sayfası adresi alırsa (ayrıştırma hatası `FeedFetchErrorKind.parse`), `FeedService.discoverFeeds` sayfanın `<link rel="alternate">` feed'lerini okur; hiç yoksa sitedeki `commonFeedPaths` sırayla denenir (istekler paylaşılan `HostPacer` ile). Reddit ve YouTube kanal/oynatma listesi adresleri `knownFeedUrl` ile istek atmadan feed adresine çevrilir (`lib/services/feed_discovery.dart`).
+Yanıt bir HTML sayfasıysa (`looksLikeHtmlPage`) `fetchFeed` ayrıştırmaya girmeden `FeedFetchErrorKind.parse` hatası verir ve sayfayı `FeedFetchException.page` ile taşır; ayrıştırılamayan gerçek feed'lerde `page` boştur ve keşif çalışmaz. Kaynak ekleme bu sayfayı `FeedService.discoverFeeds`'e verir: `<link rel="alternate">` feed'leri isolate içinde okunur; hiç yoksa sitedeki `commonFeedPaths` sırayla denenir (istekler paylaşılan `HostPacer` ile). Birden çok feed seçim listesiyle sunulur, zaten abone olunanlar seçilemez. Reddit ve YouTube kanal/oynatma listesi adresleri `knownFeedUrl` ile istek atmadan feed adresine çevrilir (`lib/services/feed_discovery.dart`).
 
 `FeedProvider.refreshAll()`, HTTP/merge işini `FeedRefresher`'a devreder:
 

@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:html/parser.dart' show parse;
 
 /// A feed address found for a page the user entered.
@@ -8,6 +11,26 @@ class DiscoveredFeed {
 
   /// The page's own label for the feed (`<link title>`), when it has one.
   final String? title;
+}
+
+/// Whether a response is a web page rather than a feed: an HTML root, or
+/// an HTML content type, with no feed root near the top. Only such pages
+/// go to discovery — a broken feed keeps its parse error.
+bool looksLikeHtmlPage(Uint8List body, String? contentType) {
+  final hasBom =
+      body.length >= 3 && body[0] == 0xEF && body[1] == 0xBB && body[2] == 0xBF;
+  final head = latin1
+      .decode(body.sublist(hasBom ? 3 : 0, body.length.clamp(0, 1024)))
+      .trimLeft()
+      .toLowerCase();
+  if (head.startsWith('{') ||
+      head.contains('<rss') ||
+      head.contains('<feed') ||
+      head.contains('<rdf:rdf')) {
+    return false;
+  }
+  return head.contains('<html') ||
+      (contentType?.toLowerCase().contains('html') ?? false);
 }
 
 /// Paths tried on a site whose page advertises no feed, in order.
@@ -40,6 +63,10 @@ String? knownFeedUrl(String input) {
       _ => null,
     };
     if (kind == null) return null;
+    // A user's multireddit has its own feed.
+    if (kind == 'user' && segments.length >= 4 && segments[2] == 'm') {
+      return 'https://www.reddit.com/user/${segments[1]}/m/${segments[3]}/.rss';
+    }
     return 'https://www.reddit.com/$kind/${segments[1]}/.rss';
   }
 
@@ -68,12 +95,19 @@ const _feedTypes = {
 List<DiscoveredFeed> feedLinksInHtml(String html, Uri pageUrl) {
   final doc = parse(html);
   final baseHref = doc.querySelector('base[href]')?.attributes['href'];
-  final base = baseHref == null ? pageUrl : pageUrl.resolve(baseHref);
+  var base = pageUrl;
+  if (baseHref != null) {
+    try {
+      base = pageUrl.resolve(baseHref.trim());
+    } on FormatException {
+      // A malformed <base> is ignored, as browsers do.
+    }
+  }
   final seen = <String>{};
   final feeds = <DiscoveredFeed>[];
   for (final link in doc.querySelectorAll('link[rel][href]')) {
     final rel = link.attributes['rel']!.toLowerCase().split(RegExp(r'\s+'));
-    final type = link.attributes['type']?.toLowerCase().trim();
+    final type = link.attributes['type']?.split(';').first.toLowerCase().trim();
     if (!rel.contains('alternate') || !_feedTypes.contains(type)) continue;
     final Uri url;
     try {

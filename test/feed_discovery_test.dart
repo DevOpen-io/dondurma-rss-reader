@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -30,6 +31,10 @@ void main() {
         knownFeedUrl('https://www.reddit.com/u/spez'),
         'https://www.reddit.com/user/spez/.rss',
       );
+      expect(
+        knownFeedUrl('https://www.reddit.com/user/spez/m/news'),
+        'https://www.reddit.com/user/spez/m/news/.rss',
+      );
     });
 
     test('rewrites YouTube channel ids and playlists', () {
@@ -53,6 +58,15 @@ void main() {
   });
 
   group('feedLinksInHtml', () {
+    test('a malformed <base> is ignored; a charset in the type is fine', () {
+      const html = '''
+<html><head><base href="http://[::1">
+<link rel="alternate" type="application/rss+xml; charset=utf-8" href="/rss">
+</head></html>''';
+      final feeds = feedLinksInHtml(html, Uri.parse('https://site.test/a/'));
+      expect([for (final f in feeds) f.url], ['https://site.test/rss']);
+    });
+
     test('reads feed alternates, resolves relative links, skips others', () {
       const html = '''
 <html><head>
@@ -92,8 +106,37 @@ void main() {
     });
   });
 
+  group('looksLikeHtmlPage', () {
+    Uint8List bytes(String s) => Uint8List.fromList(utf8.encode(s));
+    test('pages are pages, feeds are not', () {
+      expect(looksLikeHtmlPage(bytes('<!DOCTYPE html><html>'), null), isTrue);
+      expect(
+        looksLikeHtmlPage(bytes('\ufeff  <html lang="tr">'), null),
+        isTrue,
+      );
+      expect(looksLikeHtmlPage(bytes('<div>hi</div>'), 'text/html'), isTrue);
+      expect(looksLikeHtmlPage(bytes(_rss), 'text/html'), isFalse);
+      expect(looksLikeHtmlPage(bytes('<feed xmlns="x">'), null), isFalse);
+      expect(
+        looksLikeHtmlPage(bytes('{"version": "x"}'), 'text/html'),
+        isFalse,
+      );
+      expect(
+        looksLikeHtmlPage(bytes('<rss version="2.0"><channel><ti'), null),
+        isFalse,
+        reason: 'a broken feed is still a feed',
+      );
+    });
+  });
+
   group('FeedService.discoverFeeds', () {
-    test('returns the alternates of the final page after redirects', () async {
+    FeedPage page(String url, String html) => (
+      bodyBytes: Uint8List.fromList(utf8.encode(html)),
+      url: url,
+      contentType: 'text/html',
+    );
+
+    test('a web page fails fetchFeed with the final page attached', () async {
       final requests = <String>[];
       final service = FeedService(
         client: MockClient((request) async {
@@ -115,10 +158,41 @@ void main() {
         }),
       );
 
-      final feeds = await service.discoverFeeds('https://old.test/');
+      FeedFetchException? failure;
+      try {
+        await service.fetchFeed('https://old.test/', '');
+      } on FeedFetchException catch (e) {
+        failure = e;
+      }
+      expect(failure?.kind, FeedFetchErrorKind.parse);
+      expect(failure?.page?.url, 'https://new.test/blog/');
 
+      final feeds = await service.discoverFeeds(failure!.page!);
       expect([for (final f in feeds) f.url], ['https://new.test/blog/rss.xml']);
-      expect(requests, ['https://old.test/', 'https://new.test/blog/']);
+      expect(requests, [
+        'https://old.test/',
+        'https://new.test/blog/',
+      ], reason: 'the page is not downloaded again');
+    });
+
+    test('a broken feed fails without a page, so no discovery runs', () async {
+      final service = FeedService(
+        client: MockClient(
+          (_) async => http.Response(
+            '<rss version="2.0"><channel><title>Cut',
+            200,
+            headers: {'content-type': 'application/rss+xml'},
+          ),
+        ),
+      );
+      await expectLater(
+        service.fetchFeed('https://site.test/category/news/feed', ''),
+        throwsA(
+          isA<FeedFetchException>()
+              .having((e) => e.kind, 'kind', FeedFetchErrorKind.parse)
+              .having((e) => e.page, 'page', isNull),
+        ),
+      );
     });
 
     test('without alternates, tries the usual feed paths in order', () async {
@@ -128,7 +202,6 @@ void main() {
         client: MockClient((request) async {
           requests.add(request.url.path);
           return switch (request.url.path) {
-            '/' => http.Response('<html><head></head></html>', 200),
             // A soft 404: HTML with status 200 is not a feed.
             '/feed' => http.Response('<html>Not found</html>', 200),
             '/rss' => http.Response('', 404),
@@ -139,24 +212,25 @@ void main() {
       );
 
       final feeds = await service.discoverFeeds(
-        'https://site.test/',
+        page('https://site.test/blog/?ref=x', '<html><head></head></html>'),
         pace: (url) async => paced.add(url),
       );
 
       expect([for (final f in feeds) f.url], ['https://site.test/rss.xml']);
-      expect(requests, ['/', '/feed', '/rss', '/rss.xml']);
+      expect(requests, ['/feed', '/rss', '/rss.xml']);
       expect(paced, hasLength(requests.length), reason: 'every request paced');
     });
 
-    test('finds nothing on a page without feeds', () async {
+    test('finds nothing on a site without feeds', () async {
       final service = FeedService(
-        client: MockClient(
-          (request) async => request.url.path == '/'
-              ? http.Response('<html></html>', 200)
-              : http.Response('', 404),
-        ),
+        client: MockClient((_) async => http.Response('', 404)),
       );
-      expect(await service.discoverFeeds('https://site.test/'), isEmpty);
+      expect(
+        await service.discoverFeeds(
+          page('https://site.test/', '<html></html>'),
+        ),
+        isEmpty,
+      );
     });
   });
 }

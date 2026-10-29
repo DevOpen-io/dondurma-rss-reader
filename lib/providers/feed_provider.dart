@@ -1109,8 +1109,15 @@ class FeedProvider extends ChangeNotifier {
 
   /// Feeds behind a web page the user entered instead of a feed address,
   /// paced with the other requests to the same host.
-  Future<List<DiscoveredFeed>> discoverFeeds(String url) =>
-      _feedService.discoverFeeds(url, pace: _hostPacer.pace);
+  Future<List<DiscoveredFeed>> discoverFeeds(FeedPage page) async {
+    final found = await _feedService.discoverFeeds(
+      page,
+      pace: _hostPacer.pace,
+    );
+    // The add that follows fetches a feed on a host discovery just hit.
+    if (found.length == 1) await _hostPacer.pace(found.single.url);
+    return found;
+  }
 
   /// Validates, persists, and makes a subscription usable in one awaited
   /// foreground transaction. The authoritative validation response is reused

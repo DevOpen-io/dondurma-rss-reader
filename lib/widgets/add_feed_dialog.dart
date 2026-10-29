@@ -7,8 +7,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../services/feed_discovery.dart';
-import '../services/feed_service.dart'
-    show FeedFetchErrorKind, FeedFetchException;
+import '../services/feed_service.dart' show FeedFetchException;
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'adaptive_dialog.dart';
@@ -318,9 +317,11 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
       try {
         success = await feeds.addSubscriptionAndRefresh(url, name, category);
       } on FeedFetchException catch (e) {
-        // A web page, not a feed: look for the feed it advertises.
-        if (e.kind != FeedFetchErrorKind.parse) rethrow;
-        final found = await feeds.discoverFeeds(url);
+        // A web page, not a feed: look for the feed it advertises. A feed
+        // that fails to parse is not a page and keeps its error.
+        final page = e.page;
+        if (page == null) rethrow;
+        final found = await feeds.discoverFeeds(page);
         if (!context.mounted) return;
         if (found.isEmpty) rethrow;
         final chosen = found.length == 1
@@ -362,28 +363,52 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     }
   }
 
-  /// Lets the user pick one of several feeds a page advertises.
+  /// Lets the user pick one of several feeds a page advertises; feeds
+  /// already subscribed are shown but cannot be picked.
   Future<DiscoveredFeed?> _pickFeed(
     BuildContext context,
     List<DiscoveredFeed> feeds,
   ) {
+    final subscriptions = context.read<SubscriptionProvider>();
     return showDialog<DiscoveredFeed>(
       context: context,
-      builder: (dialogCtx) => SimpleDialog(
-        title: Text(AppLocalizations.of(dialogCtx).chooseFeed),
-        children: [
-          for (final feed in feeds)
-            ListTile(
-              title: Text(feed.title ?? Uri.parse(feed.url).path),
-              subtitle: Text(
-                feed.url,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              onTap: () => Navigator.of(dialogCtx).pop(feed),
+      builder: (dialogCtx) {
+        final l10n = AppLocalizations.of(dialogCtx);
+        return AlertDialog(
+          title: Text(l10n.chooseFeed),
+          scrollable: true,
+          contentPadding: const EdgeInsets.only(top: 12, bottom: 8),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              for (final feed in feeds)
+                ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                  enabled: !subscriptions.hasFeedUrl(feed.url),
+                  title: Text(feed.title ?? Uri.parse(feed.url).path),
+                  subtitle: Text(
+                    feed.url,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  trailing: subscriptions.hasFeedUrl(feed.url)
+                      ? Tooltip(
+                          message: l10n.feedAlreadyExists,
+                          child: const Icon(Icons.check),
+                        )
+                      : null,
+                  onTap: () => Navigator.of(dialogCtx).pop(feed),
+                ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(l10n.cancel),
             ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
