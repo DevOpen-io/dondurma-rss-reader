@@ -283,6 +283,33 @@ void main() {
     expect(speech.stateFor(_item('a')), SpeechState.idle);
   });
 
+  testWidgets('with no engine at all the failure comes after one wait, '
+      'not one per step', (tester) async {
+    // Languages, language and speak are all parked by flutter_tts.
+    const channel = MethodChannel('flutter_tts');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(
+      channel,
+      (call) => call.method == 'stop'
+          ? Future.value(1)
+          : Completer<Object?>().future,
+    );
+    addTearDown(() {
+      messenger.setMockMethodCallHandler(channel, null);
+    });
+
+    final speech = ArticleSpeech();
+    unawaited(
+      speech.play(_item('a'), '<p>One.</p>', fallbackLanguage: 'tr'),
+    );
+    await tester.pump();
+    expect(speech.stateFor(_item('a')), SpeechState.playing);
+    await tester.pump(const Duration(seconds: 11));
+    await tester.pump();
+    expect(speech.stateFor(_item('a')), SpeechState.idle);
+  });
+
   testWidgets('a late answer to an earlier speak leaves the next one alone', (
     tester,
   ) async {

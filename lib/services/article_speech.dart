@@ -55,6 +55,11 @@ class _FlutterTtsEngine implements SpeechEngine {
   /// which never happens; binding a working engine takes a second or two.
   static const _acceptTimeout = Duration(seconds: 10);
 
+  /// Set when a call timed out: the steps after it in the same attempt
+  /// (languages, language, speak) give up at once instead of each waiting
+  /// out its own timeout. The next attempt tries the engine afresh.
+  bool _stalled = false;
+
   void _settle([Object? error]) {
     final utterance = _utterance;
     _utterance = null;
@@ -65,6 +70,10 @@ class _FlutterTtsEngine implements SpeechEngine {
   @override
   Future<void> speak(String text) {
     _settle();
+    if (_stalled) {
+      _stalled = false;
+      return Future.error('speech engine not answering');
+    }
     final utterance = _utterance = Completer<void>();
     // A late answer to an earlier speak must not end the current one.
     bool current() => identical(_utterance, utterance);
@@ -103,12 +112,14 @@ class _FlutterTtsEngine implements SpeechEngine {
   // just give up, so the speak after them fails as it would alone.
   @override
   Future<List<String>> availableLanguages() async {
+    if (_stalled) return const [];
     try {
       final languages = await _tts.getLanguages.timeout(_acceptTimeout);
       return languages is List
           ? languages.whereType<String>().toList()
           : const [];
     } catch (error) {
+      if (error is TimeoutException) _stalled = true;
       debugPrint('Read aloud languages failed: $error');
       return const [];
     }
@@ -116,6 +127,7 @@ class _FlutterTtsEngine implements SpeechEngine {
 
   @override
   Future<bool> setLanguage(String? tag) async {
+    if (_stalled) return false;
     try {
       if (tag != null) {
         return await _tts.setLanguage(tag).timeout(_acceptTimeout) == 1;
@@ -128,6 +140,7 @@ class _FlutterTtsEngine implements SpeechEngine {
       final device = PlatformDispatcher.instance.locale.toLanguageTag();
       return await _tts.setLanguage(device).timeout(_acceptTimeout) == 1;
     } catch (error) {
+      if (error is TimeoutException) _stalled = true;
       debugPrint('Read aloud language $tag failed: $error');
       return false;
     }
