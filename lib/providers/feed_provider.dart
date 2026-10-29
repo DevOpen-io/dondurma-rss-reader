@@ -1095,6 +1095,17 @@ class FeedProvider extends ChangeNotifier {
     return marked;
   }
 
+  /// Every read mark as `(feedUrl, id)`, for a backup.
+  Set<(String, String)> get readRefs => _readState.refs;
+
+  /// Adds read marks from a backup; articles need not be loaded.
+  void restoreReadRefs(Iterable<(String, String)> refs) {
+    if (!_readState.markRefs(refs)) return;
+    _invalidateFilterCache();
+    notifyListeners();
+    _scheduleReadStateSave();
+  }
+
   /// Toggles the read/unread state of this source instance.
   Future<void> toggleReadStatus(FeedItem item) async {
     _readState.mark(item, read: !_readState.isRead(item));

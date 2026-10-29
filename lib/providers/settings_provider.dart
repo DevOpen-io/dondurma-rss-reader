@@ -219,6 +219,74 @@ class SettingsProvider extends ChangeNotifier {
   }
 
   // ---------------------------------------------------------------------------
+  // Backup
+  // ---------------------------------------------------------------------------
+
+  static bool _isString(Object? v) => v is String;
+  static bool _isBool(Object? v) => v is bool;
+  static bool _isInt(Object? v) => v is int;
+  static bool _isNum(Object? v) => v is num;
+  static bool _isStringList(Object? v) =>
+      v is List && v.every((e) => e is String);
+
+  /// Settings a backup carries, each with the shape its value must have.
+  /// Onboarding and migration markers stay with the device.
+  static final _backupKeys = <String, bool Function(Object?)>{
+    'flexScheme': _isString,
+    'themeMode': _isString,
+    'locale': _isString,
+    'offlineCacheLimit': _isInt,
+    'cacheIntervalSeconds': _isInt,
+    'syncBackground': _isBool,
+    'notificationsEnabled': _isBool,
+    'digestMode': _isString,
+    'quietHoursEnabled': _isBool,
+    'quietHoursStart': _isInt,
+    'quietHoursEnd': _isInt,
+    'appFont': _isString,
+    'fontSize': _isString,
+    'typeface': _isString,
+    'lineSpacing': _isNum,
+    'globalExcludedKeywords': _isStringList,
+    'searchHistory': _isStringList,
+    'adBlockEnabled': _isBool,
+    'webviewDarkModeEnabled': _isBool,
+    'browserMode': _isString,
+    'autoFullText': _isBool,
+    'timeFormat': _isString,
+    'desktopReadingWidth': _isString,
+    'articleListStyle': _isString,
+    'markReadOnScroll': _isBool,
+  };
+
+  /// The stored settings a backup carries.
+  Map<String, Object> backupValues() => {
+    for (final key in _backupKeys.keys)
+      if (_box.get(key) case final Object value) key: value,
+  };
+
+  /// Replaces the settings with a backup's. Keys a backup does not carry, or
+  /// carries with the wrong shape, keep their current value.
+  Future<void> restoreBackupValues(Map<String, Object?> values) async {
+    final syncBackground = _syncBackground;
+    for (final MapEntry(:key, :value) in values.entries) {
+      final valid = _backupKeys[key];
+      if (valid == null || !valid(value)) continue;
+      await _box.put(key, switch (value) {
+        final List list => list.cast<String>().toList(),
+        // JSON has no float type: a whole-number spacing decodes as int.
+        final int number when key == 'lineSpacing' => number.toDouble(),
+        _ => value!,
+      });
+    }
+    _loadSettings();
+    // The OS scheduler follows the switch, as when the user flips it.
+    if (_syncBackground != syncBackground) {
+      await setSyncBackground(_syncBackground);
+    }
+  }
+
+  // ---------------------------------------------------------------------------
   // Setters — each notifies listeners, then persists to Hive
   // ---------------------------------------------------------------------------
 

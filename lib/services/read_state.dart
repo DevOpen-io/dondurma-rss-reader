@@ -58,6 +58,17 @@ class ReadState {
   bool mark(FeedItem item, {required bool read}) =>
       read ? _refs.add(_key(item)) : _refs.remove(_key(item));
 
+  /// Every mark as `(feedUrl, id)`.
+  Set<(String, String)> get refs => Set.unmodifiable(_refs);
+
+  /// Adds marks by reference — they need not be loaded. Returns whether
+  /// anything changed.
+  bool markRefs(Iterable<(String, String)> refs) {
+    final before = _refs.length;
+    _refs.addAll(refs);
+    return _refs.length != before;
+  }
+
   /// Binds unresolved legacy ids to the instances of [items]. Every instance
   /// of an id in this batch inherits the mark — that is how they looked
   /// before the migration. Returns whether anything changed.

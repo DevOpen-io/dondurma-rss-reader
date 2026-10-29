@@ -12,6 +12,7 @@ import '../providers/bookmark_provider.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/app_backup.dart';
 import '../services/app_reset_service.dart';
 import '../services/lifecycle_gate.dart';
 import '../services/notification_service.dart';
@@ -705,6 +706,42 @@ class SettingsScreen extends StatelessWidget {
                   }
                 },
               ),
+              const SettingsTileDivider(),
+              SettingsActionTile(
+                icon: Icons.save_alt_outlined,
+                title: l10n.exportBackup,
+                subtitle: l10n.exportBackupDesc,
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+                onTap: () async {
+                  final json = exportAppBackup(
+                    settings: context.read<SettingsProvider>(),
+                    subscriptions: context.read<SubscriptionProvider>(),
+                    bookmarks: context.read<BookmarkProvider>(),
+                    feed: context.read<FeedProvider>(),
+                  );
+                  final success = await saveBackupFile(json);
+                  if (context.mounted) {
+                    showAppToast(
+                      success ? l10n.exportSuccess : l10n.exportFailed,
+                      type: success ? AppToastType.success : AppToastType.error,
+                    );
+                  }
+                },
+              ),
+              const SettingsTileDivider(),
+              SettingsActionTile(
+                icon: Icons.settings_backup_restore,
+                title: l10n.restoreBackup,
+                subtitle: l10n.restoreBackupDesc,
+                trailing: Icon(
+                  Icons.chevron_right_rounded,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+                onTap: () => _restoreBackup(context),
+              ),
             ],
           ),
 
@@ -998,6 +1035,55 @@ class SettingsScreen extends StatelessWidget {
 }
 
 /// A bundled font's name, set in that font so the picker previews it.
+/// Picks a backup file, checks it, confirms, and merges it into the app.
+Future<void> _restoreBackup(BuildContext context) async {
+  final l10n = AppLocalizations.of(context);
+  void problem(BackupProblem problem) => showAppToast(
+    problem == BackupProblem.tooNew ? l10n.backupTooNew : l10n.backupInvalid,
+    type: AppToastType.error,
+  );
+  final String? json;
+  try {
+    json = await pickBackupFile();
+    if (json != null) checkAppBackup(json);
+  } on BackupException catch (e) {
+    return problem(e.problem);
+  } catch (_) {
+    // Unreadable file (not text) or a picker failure.
+    return problem(BackupProblem.notABackup);
+  }
+  if (json == null || !context.mounted) return;
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogCtx) => AlertDialog(
+      title: Text(l10n.restoreBackup),
+      content: Text(l10n.restoreBackupConfirm),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(dialogCtx).pop(false),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(dialogCtx).pop(true),
+          child: Text(l10n.restoreAction),
+        ),
+      ],
+    ),
+  );
+  if (confirmed != true || !context.mounted) return;
+  final summary = await restoreAppBackup(
+    json,
+    settings: context.read<SettingsProvider>(),
+    subscriptions: context.read<SubscriptionProvider>(),
+    bookmarks: context.read<BookmarkProvider>(),
+    feed: context.read<FeedProvider>(),
+  );
+  showAppToast(
+    l10n.backupRestored(summary.feeds, summary.bookmarks),
+    type: AppToastType.success,
+  );
+}
+
 class _FontName extends StatelessWidget {
   final AppFont font;
   const _FontName(this.font);

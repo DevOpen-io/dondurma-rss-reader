@@ -736,6 +736,60 @@ abstract class AppLocalizations {
   /// **'Restore feeds from an OPML file'**
   String get importSubscriptionsDesc;
 
+  /// No description provided for @exportBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Export backup'**
+  String get exportBackup;
+
+  /// No description provided for @exportBackupDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeds, folders, settings, bookmarks and read marks in one file'**
+  String get exportBackupDesc;
+
+  /// No description provided for @restoreBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore backup'**
+  String get restoreBackup;
+
+  /// No description provided for @restoreBackupDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Adds a backup\'s feeds, bookmarks and read marks and uses its settings'**
+  String get restoreBackupDesc;
+
+  /// No description provided for @restoreBackupConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Feeds, folders, bookmarks and read marks from the backup are added to what you have. Your settings are replaced by the backup\'s.'**
+  String get restoreBackupConfirm;
+
+  /// No description provided for @restoreAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Restore'**
+  String get restoreAction;
+
+  /// No description provided for @backupRestored.
+  ///
+  /// In en, this message translates to:
+  /// **'Backup restored · {feeds} feeds and {bookmarks} bookmarks added'**
+  String backupRestored(int feeds, int bookmarks);
+
+  /// No description provided for @backupInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'This file is not a Dondurma backup.'**
+  String get backupInvalid;
+
+  /// No description provided for @backupTooNew.
+  ///
+  /// In en, this message translates to:
+  /// **'This backup comes from a newer version of the app. Update the app first.'**
+  String get backupTooNew;
+
   /// No description provided for @noFeedsFoundOrCancelled.
   ///
   /// In en, this message translates to:

@@ -351,6 +351,39 @@ class AppLocalizationsEn extends AppLocalizations {
   String get importSubscriptionsDesc => 'Restore feeds from an OPML file';
 
   @override
+  String get exportBackup => 'Export backup';
+
+  @override
+  String get exportBackupDesc =>
+      'Feeds, folders, settings, bookmarks and read marks in one file';
+
+  @override
+  String get restoreBackup => 'Restore backup';
+
+  @override
+  String get restoreBackupDesc =>
+      'Adds a backup\'s feeds, bookmarks and read marks and uses its settings';
+
+  @override
+  String get restoreBackupConfirm =>
+      'Feeds, folders, bookmarks and read marks from the backup are added to what you have. Your settings are replaced by the backup\'s.';
+
+  @override
+  String get restoreAction => 'Restore';
+
+  @override
+  String backupRestored(int feeds, int bookmarks) {
+    return 'Backup restored · $feeds feeds and $bookmarks bookmarks added';
+  }
+
+  @override
+  String get backupInvalid => 'This file is not a Dondurma backup.';
+
+  @override
+  String get backupTooNew =>
+      'This backup comes from a newer version of the app. Update the app first.';
+
+  @override
   String get noFeedsFoundOrCancelled =>
       'No feeds found or import was cancelled.';
 

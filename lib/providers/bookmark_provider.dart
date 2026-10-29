@@ -278,6 +278,19 @@ class BookmarkProvider extends ChangeNotifier {
   @visibleForTesting
   Future<void> persistBookmarks() => _saveBookmarkStates();
 
+  /// Adds the bookmarks from a backup that are not saved yet, each through
+  /// the normal save path so the offline pipeline prepares it again.
+  /// Returns how many were added.
+  int restoreBookmarks(Iterable<FeedItem> items) {
+    var added = 0;
+    for (final item in items) {
+      if (isBookmarked(item.id, feedUrl: item.feedUrl)) continue;
+      toggleBookmark(item);
+      added++;
+    }
+    return added;
+  }
+
   /// Removes [item] from bookmarks, awaiting persistence.
   ///
   /// Returns `false` and restores the in-memory record if the write fails so

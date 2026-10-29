@@ -166,6 +166,25 @@
   "exportFailed": "Export failed. Please try again.",
   "importSubscriptions": "Import Subscriptions (OPML)",
   "importSubscriptionsDesc": "Restore feeds from an OPML file",
+  "exportBackup": "Export backup",
+  "exportBackupDesc": "Feeds, folders, settings, bookmarks and read marks in one file",
+  "restoreBackup": "Restore backup",
+  "restoreBackupDesc": "Adds a backup's feeds, bookmarks and read marks and uses its settings",
+  "restoreBackupConfirm": "Feeds, folders, bookmarks and read marks from the backup are added to what you have. Your settings are replaced by the backup's.",
+  "restoreAction": "Restore",
+  "backupRestored": "Backup restored · {feeds} feeds and {bookmarks} bookmarks added",
+  "@backupRestored": {
+    "placeholders": {
+      "feeds": {
+        "type": "int"
+      },
+      "bookmarks": {
+        "type": "int"
+      }
+    }
+  },
+  "backupInvalid": "This file is not a Dondurma backup.",
+  "backupTooNew": "This backup comes from a newer version of the app. Update the app first.",
   "noFeedsFoundOrCancelled": "No feeds found or import was cancelled.",
   "importedFeeds": "Imported {count} new feed{count, plural, =1{} other{s}}.",
   "@importedFeeds": {

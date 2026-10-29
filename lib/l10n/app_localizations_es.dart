@@ -356,6 +356,40 @@ class AppLocalizationsEs extends AppLocalizations {
       'Restaura fuentes desde un archivo OPML';
 
   @override
+  String get exportBackup => 'Exportar copia de seguridad';
+
+  @override
+  String get exportBackupDesc =>
+      'Fuentes, carpetas, ajustes, marcadores y leídos en un solo archivo';
+
+  @override
+  String get restoreBackup => 'Restaurar copia de seguridad';
+
+  @override
+  String get restoreBackupDesc =>
+      'Añade las fuentes, marcadores y leídos de una copia y aplica sus ajustes';
+
+  @override
+  String get restoreBackupConfirm =>
+      'Las fuentes, carpetas, marcadores y leídos de la copia se añaden a lo que ya tienes. Tus ajustes se reemplazan por los de la copia.';
+
+  @override
+  String get restoreAction => 'Restaurar';
+
+  @override
+  String backupRestored(int feeds, int bookmarks) {
+    return 'Copia restaurada · $feeds fuentes y $bookmarks marcadores añadidos';
+  }
+
+  @override
+  String get backupInvalid =>
+      'Este archivo no es una copia de seguridad de Dondurma.';
+
+  @override
+  String get backupTooNew =>
+      'Esta copia es de una versión más nueva de la app. Actualiza la app primero.';
+
+  @override
   String get noFeedsFoundOrCancelled =>
       'No se encontraron fuentes o la importación se canceló.';
 

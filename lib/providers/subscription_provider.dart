@@ -133,14 +133,7 @@ class SubscriptionProvider extends ChangeNotifier {
     if (iconsData != null) {
       final Map<String, dynamic> iconsMap = jsonDecode(iconsData);
       _categoryIcons = iconsMap.map((key, storedIcon) {
-        // Emoji values persist verbatim; only numeric codePoints go through
-        // legacy icon resolution.
-        if (storedIcon != null && int.tryParse('$storedIcon') == null) {
-          return MapEntry(key.toString(), storedIcon.toString());
-        }
-        final normalizedStoredValue = _storedValueForIcon(
-          _resolveCategoryIcon(storedIcon),
-        );
+        final normalizedStoredValue = _normalizedIcon(storedIcon);
         if (storedIcon?.toString() != normalizedStoredValue) {
           iconsNeedSave = true;
         }
@@ -208,6 +201,15 @@ class SubscriptionProvider extends ChangeNotifier {
 
     // 2. Hiçbiri tutmazsa const olan varsayılan ikonu dönüyoruz (Icons.folder_outlined)
     return _defaultCategoryIcon;
+  }
+
+  /// Emoji values persist verbatim; only numeric codePoints go through
+  /// legacy icon resolution.
+  String _normalizedIcon(dynamic storedIcon) {
+    if (storedIcon != null && int.tryParse('$storedIcon') == null) {
+      return storedIcon.toString();
+    }
+    return _storedValueForIcon(_resolveCategoryIcon(storedIcon));
   }
 
   String _storedValueForIcon(IconData icon) {
@@ -538,6 +540,48 @@ class SubscriptionProvider extends ChangeNotifier {
       notifyListeners();
     }
     return added;
+  }
+
+  /// The stored folder state a backup carries.
+  ({List<String> custom, Map<String, String> icons, List<String> order})
+  get folderBackup => (
+    custom: _customCategories.toList(),
+    icons: Map.of(_categoryIcons),
+    order: List.of(_categoryOrder),
+  );
+
+  /// Merges a backup's folders: missing empty folders are added with the
+  /// backup's icon, folders that do not exist yet take the backup's icon,
+  /// and folders new to the order are appended in the backup's order.
+  /// Existing folders keep their icon and position. Call before
+  /// [importFeeds] so restored feeds land in folders with their icons.
+  Future<void> restoreFolders({
+    required Iterable<String> custom,
+    required Map<String, Object?> icons,
+    required Iterable<String> order,
+  }) async {
+    final existing = {for (final c in categories) c.toLowerCase()};
+    for (final name in custom) {
+      final trimmed = name.trim();
+      if (trimmed.isEmpty || existing.contains(trimmed.toLowerCase())) {
+        continue;
+      }
+      _customCategories.add(trimmed);
+    }
+    for (final MapEntry(:key, :value) in icons.entries) {
+      if (existing.contains(key.toLowerCase()) || value == null) continue;
+      _categoryIcons[key] = _normalizedIcon(value);
+    }
+    for (final category in order) {
+      if (!_categoryOrder.contains(category)) _categoryOrder.add(category);
+    }
+    for (final category in categories) {
+      if (!_categoryIcons.containsKey(category)) _assignDefaultIcon(category);
+    }
+    await _saveCustomCategories();
+    await _saveCategoryIcons();
+    await _saveCategoryOrder();
+    notifyListeners();
   }
 
   /// Memory half of a reset whose storage stages already ran.

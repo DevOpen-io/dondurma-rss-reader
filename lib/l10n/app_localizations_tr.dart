@@ -354,6 +354,39 @@ class AppLocalizationsTr extends AppLocalizations {
       'Bir OPML dosyasından kaynakları geri yükleyin';
 
   @override
+  String get exportBackup => 'Yedeği dışa aktar';
+
+  @override
+  String get exportBackupDesc =>
+      'Kaynaklar, klasörler, ayarlar, yer imleri ve okundu işaretleri tek dosyada';
+
+  @override
+  String get restoreBackup => 'Yedeği geri yükle';
+
+  @override
+  String get restoreBackupDesc =>
+      'Yedekteki kaynak, yer imi ve okundu işaretlerini ekler, ayarlarını uygular';
+
+  @override
+  String get restoreBackupConfirm =>
+      'Yedekteki kaynaklar, klasörler, yer imleri ve okundu işaretleri mevcut verilerinize eklenir. Ayarlarınız yedektekilerle değiştirilir.';
+
+  @override
+  String get restoreAction => 'Geri yükle';
+
+  @override
+  String backupRestored(int feeds, int bookmarks) {
+    return 'Yedek geri yüklendi · $feeds kaynak ve $bookmarks yer imi eklendi';
+  }
+
+  @override
+  String get backupInvalid => 'Bu dosya bir Dondurma yedeği değil.';
+
+  @override
+  String get backupTooNew =>
+      'Bu yedek uygulamanın daha yeni bir sürümünden. Önce uygulamayı güncelleyin.';
+
+  @override
   String get noFeedsFoundOrCancelled =>
       'Kaynak bulunamadı veya içe aktarma iptal edildi.';
 

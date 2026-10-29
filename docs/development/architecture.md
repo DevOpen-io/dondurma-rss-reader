@@ -90,6 +90,10 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 
 Yeni kalıcı alanlarda eski kayıtlar için fallback zorunlu. `FeedSubscription.fullTextEnabled` tri-state: `null` global ayarı izler, `true` zorla açar, `false` zorla kapatır. `fullTextSchema: 2` eski `false` kayıtlarını ayırır.
 
+### Yedek dosyası
+
+`lib/services/app_backup.dart` tek JSON belge yazar (`format: dondurma-backup`, `version: 1`): `SettingsProvider.backupValues()` izin listesindeki ayarlar (onboarding/migration işaretleri hariç), bildirim epoch'u çıkarılmış abonelikler, klasörler/ikonlar/sıra, yer imi `FeedItem`'ları ve `(feedUrl, id)` okundu işaretleri. Görseller ve kalıcı kayıt gövdeleri yedeğe girmez; geri yüklenen yer imleri normal kaydetme yoluyla yeniden hazırlanır. Geri yükleme önce bütün belgeyi doğrular (`BackupException`: yedek değil / daha yeni sürüm), sonra kaynak, klasör, yer imi ve okundu işaretlerini ekler, ayarları değiştirir. Geri yüklenen aboneliklere yeni bildirim epoch'u verilir; ilk çekim sessiz kalır. Yeni ayar anahtarı eklerken `_backupKeys` listesine de eklenmelidir.
+
 Hive kutularına ek olarak `ArticleRecordStore` ve `ObservedArticleStore`, foreground/Workmanager arasında lock dosyasıyla korunan ayrı JSON state dosyaları kullanır. Kalıcı medya havuzu uygulamanın documents dizinindedir. Sahiplik, hazırlık ve temizleme kuralları [çevrimdışı saklama rehberindedir](offline-storage.md).
 
 ## Feed hattı
