@@ -953,6 +953,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get semanticAddFeed => 'Yeni kaynak ekle';
 
   @override
+  String get addFeedButton => 'Kaynak ekle';
+
+  @override
   String get semanticOfflineCached => 'Çevrimdışı kullanılabilir';
 
   @override

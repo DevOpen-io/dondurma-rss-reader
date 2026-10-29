@@ -22,10 +22,16 @@ class ReadAloudButton extends StatelessWidget {
       listenable: speech,
       builder: (context, _) {
         final active = speech.stateFor(item) != SpeechState.idle;
-        return IconButton.outlined(
-          // Matches the 48dp reading-mode switch beside it.
-          style: IconButton.styleFrom(minimumSize: const Size(48, 48)),
-          icon: Icon(active ? Icons.stop_rounded : Icons.volume_up_outlined),
+        final cs = Theme.of(context).colorScheme;
+        return IconButton(
+          // Matches the 48dp reading-mode track beside it; filled with the
+          // theme color while reading.
+          style: IconButton.styleFrom(
+            minimumSize: const Size(48, 48),
+            backgroundColor: active ? cs.primary : cs.surfaceContainerHigh,
+            foregroundColor: active ? cs.onPrimary : cs.primary,
+          ),
+          icon: Icon(active ? Icons.stop_rounded : Icons.headphones_rounded),
           tooltip: active ? l10n.stopReading : l10n.readAloud,
           onPressed: () => unawaited(
             active
@@ -67,11 +73,11 @@ class ReadAloudControls extends StatelessWidget {
             color: cs.surfaceContainerHigh,
             shape: const StadiumBorder(),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+              padding: const EdgeInsets.all(4),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  IconButton(
+                  IconButton.filled(
                     icon: Icon(
                       playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                     ),
@@ -86,13 +92,16 @@ class ReadAloudControls extends StatelessWidget {
                             ),
                     ),
                   ),
+                  const SizedBox(width: 10),
                   Flexible(
                     child: Text(
                       l10n.readingAloud,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
+                  const SizedBox(width: 4),
                   IconButton(
                     icon: const Icon(Icons.stop_rounded),
                     tooltip: l10n.stopReading,

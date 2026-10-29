@@ -1804,6 +1804,12 @@ abstract class AppLocalizations {
   /// **'Add new feed'**
   String get semanticAddFeed;
 
+  /// Label of the floating button that opens Add feed on the feed and folder tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Add feed'**
+  String get addFeedButton;
+
   /// No description provided for @semanticOfflineCached.
   ///
   /// In en, this message translates to:

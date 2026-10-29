@@ -319,6 +319,7 @@
   "semanticOpenSearch": "Aramayı aç",
   "semanticCloseSearch": "Aramayı kapat",
   "semanticAddFeed": "Yeni kaynak ekle",
+  "addFeedButton": "Kaynak ekle",
   "semanticOfflineCached": "Çevrimdışı kullanılabilir",
   "debugScreen": "Hata Ayıklama Konsolu",
   "debugScreenDesc": "Dahili tanılama ve depolama metrikleri",

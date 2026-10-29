@@ -101,7 +101,8 @@ class AppThemeBuilder {
         centerTitle: false,
         scrolledUnderElevation: 0,
         elevation: 0,
-        backgroundColor: base.colorScheme.surface,
+        // Seamless with the page: the bar is part of it, not a band above.
+        backgroundColor: base.scaffoldBackgroundColor,
         surfaceTintColor: Colors.transparent,
         titleTextStyle: TextStyle(
           fontFamily: font,
@@ -144,13 +145,51 @@ class AppThemeBuilder {
     );
   }
 
+  /// Surfaces take a light wash of the theme color: cards and sheets more
+  /// than the page behind them, and more in dark mode, where a neutral grey
+  /// would read as no theme at all. Text keeps its neutral colors.
+  static const _lightBlend = 12;
+  static const _darkBlend = 22;
+
+  /// Controls follow the theme color rather than the scheme's secondary, so
+  /// a chosen color shows wherever something is selected or switched on.
+  static const _subThemes = FlexSubThemesData(
+    interactionEffects: true,
+    tintedDisabledControls: true,
+    useM2StyleDividerInM3: false,
+    segmentedButtonSchemeColor: SchemeColor.primary,
+    switchSchemeColor: SchemeColor.primary,
+    checkboxSchemeColor: SchemeColor.primary,
+    radioSchemeColor: SchemeColor.primary,
+    sliderBaseSchemeColor: SchemeColor.primary,
+    chipSchemeColor: SchemeColor.primary,
+    chipSelectedSchemeColor: SchemeColor.primaryContainer,
+    fabSchemeColor: SchemeColor.primaryContainer,
+    drawerIndicatorSchemeColor: SchemeColor.primary,
+    drawerIndicatorOpacity: 0.14,
+    popupMenuSchemeColor: SchemeColor.surfaceContainerHigh,
+    tooltipRadius: 8,
+  );
+
   static ThemeData light(FlexScheme scheme, AppFont font) => _applyOverrides(
-    FlexColorScheme.light(scheme: scheme, fontFamily: font.family).toTheme,
+    FlexColorScheme.light(
+      scheme: scheme,
+      surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+      blendLevel: _lightBlend,
+      subThemesData: _subThemes,
+      fontFamily: font.family,
+    ).toTheme,
     font.family,
   );
 
   static ThemeData dark(FlexScheme scheme, AppFont font) => _applyOverrides(
-    FlexColorScheme.dark(scheme: scheme, fontFamily: font.family).toTheme,
+    FlexColorScheme.dark(
+      scheme: scheme,
+      surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+      blendLevel: _darkBlend,
+      subThemesData: _subThemes,
+      fontFamily: font.family,
+    ).toTheme,
     font.family,
   );
 }

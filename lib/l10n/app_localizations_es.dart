@@ -963,6 +963,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get semanticAddFeed => 'Añadir nueva fuente';
 
   @override
+  String get addFeedButton => 'Añadir fuente';
+
+  @override
   String get semanticOfflineCached => 'Disponible sin conexión';
 
   @override

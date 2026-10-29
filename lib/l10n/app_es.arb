@@ -319,6 +319,7 @@
   "semanticOpenSearch": "Abrir búsqueda",
   "semanticCloseSearch": "Cerrar búsqueda",
   "semanticAddFeed": "Añadir nueva fuente",
+  "addFeedButton": "Añadir fuente",
   "semanticOfflineCached": "Disponible sin conexión",
   "debugScreen": "Consola de depuración",
   "debugScreenDesc": "Diagnóstico interno y métricas de almacenamiento",

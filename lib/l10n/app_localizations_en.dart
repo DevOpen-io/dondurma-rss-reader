@@ -951,6 +951,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get semanticAddFeed => 'Add new feed';
 
   @override
+  String get addFeedButton => 'Add feed';
+
+  @override
   String get semanticOfflineCached => 'Available offline';
 
   @override

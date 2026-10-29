@@ -449,6 +449,10 @@
   "semanticOpenSearch": "Open search",
   "semanticCloseSearch": "Close search",
   "semanticAddFeed": "Add new feed",
+  "addFeedButton": "Add feed",
+  "@addFeedButton": {
+    "description": "Label of the floating button that opens Add feed on the feed and folder tabs."
+  },
   "semanticOfflineCached": "Available offline",
   "debugScreen": "Debug Console",
   "debugScreenDesc": "Internal diagnostics and storage metrics",

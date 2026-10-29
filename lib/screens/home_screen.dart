@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:provider/provider.dart';
 import '../l10n/app_localizations.dart';
 import '../models/feed_item.dart';
@@ -19,6 +20,7 @@ import '../models/saved_search.dart';
 import '../services/shared_links.dart';
 import '../widgets/saved_searches.dart';
 import '../widgets/home/add_category_dialog.dart';
+import '../widgets/home/add_feed_button.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/mark_all_read_button.dart';
 import '../widgets/home/offline_banner.dart';
@@ -44,6 +46,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isSearching = false;
+  // The add button shows its label until the list is scrolled down.
+  bool _addLabelShown = true;
   final TextEditingController _searchController = TextEditingController();
   final _feedScroll = AnchoredScrollController();
 
@@ -99,11 +103,27 @@ class _HomeScreenState extends State<HomeScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+      // A new tab starts at its top, where the button says what it does.
+      _addLabelShown = true;
     });
   }
 
   void _showAddFeedDialog() {
     showAdaptiveSheet<void>(context, const AddFeedDialog());
+  }
+
+  /// Folds the add button to its icon while reading down a list and
+  /// unfolds it on the way back up.
+  bool _onUserScroll(UserScrollNotification notification) {
+    final shown = switch (notification.direction) {
+      ScrollDirection.reverse => false,
+      ScrollDirection.forward => true,
+      ScrollDirection.idle =>
+        notification.metrics.pixels <= notification.metrics.minScrollExtent ||
+            _addLabelShown,
+    };
+    if (shown != _addLabelShown) setState(() => _addLabelShown = shown);
+    return false;
   }
 
   void _showAddFolderDialog() {
@@ -169,7 +189,8 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    entries.add(const _WidgetEntry(SizedBox(height: 16)));
+    // Clears the add button over the end of the list.
+    entries.add(const _WidgetEntry(SizedBox(height: 88)));
     final articleIds = articleRowIds([
       ...todayItems,
       ...yesterdayItems,
@@ -352,10 +373,6 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<_FeedMenuAction>(
               itemBuilder: (_) => [
                 PopupMenuItem(
-                  value: _FeedMenuAction.addFeed,
-                  child: Text(l10n.semanticAddFeed),
-                ),
-                PopupMenuItem(
                   value: _FeedMenuAction.markRead,
                   enabled: context.read<FeedProvider>().hasUnreadInView,
                   child: Text(l10n.markAllAsRead),
@@ -372,7 +389,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
               ],
               onSelected: (action) => switch (action) {
-                _FeedMenuAction.addFeed => _showAddFeedDialog(),
                 _FeedMenuAction.markRead => showMarkReadDialog(context),
                 _FeedMenuAction.saveSearch => saveCurrentSearch(context),
               },
@@ -389,77 +405,89 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         onSavedSearch: _openSearch,
       ),
-      body: _selectedIndex == 0
-          ? Selector<FeedProvider, _FeedTabInputs>(
-              selector: (_, p) => (
-                groups: p.dateGroups,
-                isLoading: p.isLoading,
-                isOffline: p.isOffline,
-                hasItems: p.items.isNotEmpty,
-                filters: (
-                  category: p.selectedCategory,
-                  sheetFilter: p.hasActiveSheetFilter,
-                  search: p.searchQuery,
-                  unreadOnly: p.showUnreadOnly,
+      body: NotificationListener<UserScrollNotification>(
+        onNotification: _onUserScroll,
+        child: _selectedIndex == 0
+            ? Selector<FeedProvider, _FeedTabInputs>(
+                selector: (_, p) => (
+                  groups: p.dateGroups,
+                  isLoading: p.isLoading,
+                  isOffline: p.isOffline,
+                  hasItems: p.items.isNotEmpty,
+                  filters: (
+                    category: p.selectedCategory,
+                    sheetFilter: p.hasActiveSheetFilter,
+                    search: p.searchQuery,
+                    unreadOnly: p.showUnreadOnly,
+                  ),
                 ),
-              ),
-              builder: (context, inputs, _) {
-                final provider = context.read<FeedProvider>();
-                final todayItems = inputs.groups.today;
-                final yesterdayItems = inputs.groups.yesterday;
-                final olderItems = inputs.groups.older;
-                return Column(
-                  children: [
-                    // ── Search history suggestions ────────────────────────────
-                    if (_isSearching)
-                      HomeSearchHistoryPanel(
-                        searchController: _searchController,
-                        onQuerySelected: (query) {
-                          _searchController.text = query;
-                          _searchController.selection =
-                              TextSelection.fromPosition(
-                                TextPosition(offset: query.length),
-                              );
-                          provider.setSearchQuery(query);
-                        },
-                      ),
-                    Expanded(
-                      child: ConstrainedWidth(
-                        child: Stack(
-                          children: [
-                            _buildHomeBody(
-                              context,
-                              provider,
-                              todayItems,
-                              yesterdayItems,
-                              olderItems,
-                            ),
-                            // Compact pull-to-refresh progress — floats above
-                            // the list so it never shifts layout or crowds
-                            // the AppBar actions.
-                            Positioned(
-                              top: 8,
-                              left: 0,
-                              right: 0,
-                              child: _RefreshProgressPill(
-                                progress: provider.refreshProgress,
+                builder: (context, inputs, _) {
+                  final provider = context.read<FeedProvider>();
+                  final todayItems = inputs.groups.today;
+                  final yesterdayItems = inputs.groups.yesterday;
+                  final olderItems = inputs.groups.older;
+                  return Column(
+                    children: [
+                      // ── Search history suggestions ────────────────────────────
+                      if (_isSearching)
+                        HomeSearchHistoryPanel(
+                          searchController: _searchController,
+                          onQuerySelected: (query) {
+                            _searchController.text = query;
+                            _searchController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(offset: query.length),
+                                );
+                            provider.setSearchQuery(query);
+                          },
+                        ),
+                      Expanded(
+                        child: ConstrainedWidth(
+                          child: Stack(
+                            children: [
+                              _buildHomeBody(
+                                context,
+                                provider,
+                                todayItems,
+                                yesterdayItems,
+                                olderItems,
                               ),
-                            ),
-                          ],
+                              // Compact pull-to-refresh progress — floats above
+                              // the list so it never shifts layout or crowds
+                              // the AppBar actions.
+                              Positioned(
+                                top: 8,
+                                left: 0,
+                                right: 0,
+                                child: _RefreshProgressPill(
+                                  progress: provider.refreshProgress,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
+                    ],
+                  );
+                },
+              )
+            : _selectedIndex == 1
+            ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
+            : _selectedIndex == 2
+            ? const BookmarksScreen()
+            : const SettingsScreen(),
+      ),
+      // Adding a feed is the one action every new reader looks for: a
+      // labeled button on the feed and folder tabs, not a menu entry.
+      floatingActionButton:
+          (_selectedIndex == 0 || _selectedIndex == 1) && !_isSearching
+          ? AddFeedButton(
+              labelShown: _addLabelShown,
+              onPressed: _showAddFeedDialog,
             )
-          : _selectedIndex == 1
-          ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
-          : _selectedIndex == 2
-          ? const BookmarksScreen()
-          : const SettingsScreen(),
-      // Standard bar: fixed to the bottom edge, no floating chrome. Adding
-      // feeds and folders lives in the app bar of the tab it belongs to.
+          : null,
+      // Standard bar: fixed to the bottom edge. Folders are added from the
+      // folder tab's app bar.
       bottomNavigationBar: ColoredBox(
         color: Theme.of(context).colorScheme.surfaceContainer,
         child: ConstrainedWidth(
@@ -529,7 +557,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
 /// Feed-tab overflow entries: adding a feed, marking the view read and
 /// keeping the current search.
-enum _FeedMenuAction { addFeed, markRead, saveSearch }
+enum _FeedMenuAction { markRead, saveSearch }
 
 /// Everything the feed tab's list renders from [FeedProvider]. Rows select
 /// their own read/bookmark/offline state, so a notification that changes

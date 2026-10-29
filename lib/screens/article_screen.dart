@@ -275,7 +275,6 @@ class _ArticlePageState extends State<ArticlePage> {
         : l10n.estimatedReadTime(readingMinutes);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
           // ── Article content with scroll tracking ──────────────────────
@@ -451,15 +450,28 @@ class _ArticlePageState extends State<ArticlePage> {
                       children: [
                         SizedBox(height: hasHero ? 4 : 20),
 
-                        // Category · date · reading time — one quiet line.
-                        Text(
-                          [
-                            if (widget.item.category.isNotEmpty &&
-                                widget.item.category != 'Uncategorized')
-                              widget.item.category,
-                            if (dateStr.isNotEmpty) dateStr,
-                            readTimeText,
-                          ].join(' · '),
+                        // Category · date · reading time — one quiet line;
+                        // the folder name carries the theme color.
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              if (widget.item.category.isNotEmpty &&
+                                  widget.item.category != 'Uncategorized')
+                                TextSpan(
+                                  text: '${widget.item.category} · ',
+                                  style: TextStyle(
+                                    color: colorScheme.primary,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              TextSpan(
+                                text: [
+                                  if (dateStr.isNotEmpty) dateStr,
+                                  readTimeText,
+                                ].join(' · '),
+                              ),
+                            ],
+                          ),
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 13,
@@ -492,26 +504,28 @@ class _ArticlePageState extends State<ArticlePage> {
                         const SizedBox(height: 16),
 
                         // Reading mode toggle — visible affordance for new
-                        // users — and read aloud, which needs no link. The
-                        // button wraps below when the row runs out of room.
+                        // users — and read aloud, which needs no link: one
+                        // row of the same height.
                         if (widget.item.link.isNotEmpty ||
                             ArticleSpeech.supported) ...[
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                          Row(
                             children: [
                               if (widget.item.link.isNotEmpty)
-                                ArticleReadingModeToggle(
-                                  isFullText:
-                                      provider.fullTextActive &&
-                                      provider.fullTextContent != null,
-                                  isLoading: provider.isLoadingFullText,
-                                  onToggle: provider.toggleFullText,
-                                  colorScheme: colorScheme,
-                                  l10n: l10n,
+                                Expanded(
+                                  child: ArticleReadingModeToggle(
+                                    isFullText:
+                                        provider.fullTextActive &&
+                                        provider.fullTextContent != null,
+                                    isLoading: provider.isLoadingFullText,
+                                    onToggle: provider.toggleFullText,
+                                    colorScheme: colorScheme,
+                                    l10n: l10n,
+                                  ),
                                 ),
+                              if (widget.item.link.isNotEmpty &&
+                                  ArticleSpeech.supported)
+                                const SizedBox(width: 10),
                               if (ArticleSpeech.supported)
                                 ReadAloudButton(
                                   item: widget.item,
@@ -599,33 +613,12 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         const SizedBox(height: 28),
 
-                        // Open the original page — one plain button.
+                        // Open the original page — the source as one card.
                         if (widget.item.link.isNotEmpty)
-                          SizedBox(
-                            width: double.infinity,
-                            child: Tooltip(
-                              message: l10n.readOnOriginalWebpage,
-                              child: OutlinedButton.icon(
-                                onPressed: () => openArticleLink(
-                                  context,
-                                  widget.item.link,
-                                  title: widget.item.title,
-                                ),
-                                icon: const Icon(
-                                  Icons.open_in_new_rounded,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  Uri.tryParse(widget.item.link)?.host ??
-                                      l10n.openInBrowser,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(0, 48),
-                                ),
-                              ),
-                            ),
+                          _SourceCard(
+                            item: widget.item,
+                            colorScheme: colorScheme,
+                            l10n: l10n,
                           ),
 
                         // Room for the read-aloud bar over the end.
@@ -709,6 +702,110 @@ class _ArticlePageState extends State<ArticlePage> {
 /// Readable-content-first strip: scope label, then the wait reason and
 /// media count, then at most one action. A bookmarked item whose durable
 /// write failed reads "could not save" — never "ready".
+/// The article's source at the end of the page: site name and address in
+/// one tappable card that opens the original.
+class _SourceCard extends StatelessWidget {
+  final FeedItem item;
+  final ColorScheme colorScheme;
+  final AppLocalizations l10n;
+
+  const _SourceCard({
+    required this.item,
+    required this.colorScheme,
+    required this.l10n,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final host = Uri.tryParse(
+      item.link,
+    )?.host.replaceFirst(RegExp(r'^www\.'), '');
+    final site = item.siteName.trim();
+    final title = site.isNotEmpty ? site : (host ?? l10n.openInBrowser);
+    return Semantics(
+      link: true,
+      label: '${l10n.readOnOriginalWebpage}: $title',
+      excludeSemantics: true,
+      child: Material(
+        color: colorScheme.surfaceContainerLow,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(color: colorScheme.outlineVariant),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: () => openArticleLink(context, item.link, title: item.title),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 12, 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.public_rounded,
+                    size: 20,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.readOnOriginalWebpage,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      if (host != null && host.isNotEmpty && host != title)
+                        Text(
+                          host,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.arrow_outward_rounded,
+                  size: 22,
+                  color: colorScheme.primary,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ArticleStatusStrip extends StatelessWidget {
   final FeedItem item;
   final ArticlePageProvider provider;

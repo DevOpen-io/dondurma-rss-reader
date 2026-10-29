@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart' show ScrollDirection;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
@@ -211,20 +212,22 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('add actions live in the app bar of their tab', (
-      tester,
-    ) async {
+    testWidgets('adding a feed is a labeled button on the feed and folder '
+        'tabs, not a menu entry', (tester) async {
       await tester.pumpWidget(wrapHome());
       await tester.pumpAndSettle();
 
-      // The feed tab keeps add feed and mark read in its overflow menu.
+      expect(
+        find.widgetWithText(FloatingActionButton, 'Add feed'),
+        findsOneWidget,
+      );
       await tester.tap(find.byTooltip('Show menu'));
       await tester.pumpAndSettle();
       Finder menuItem(String label) => find.ancestor(
         of: find.text(label),
         matching: find.byWidgetPredicate((w) => w is PopupMenuItem),
       );
-      expect(menuItem('Add new feed'), findsOneWidget);
+      expect(menuItem('Add new feed'), findsNothing);
       expect(menuItem('Mark All as Read'), findsOneWidget);
       expect(find.byTooltip('Add Category'), findsNothing);
       await tester.tapAt(Offset.zero); // Dismiss the menu.
@@ -234,6 +237,48 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byTooltip('Add Category'), findsOneWidget);
       expect(find.byTooltip('Show menu'), findsNothing);
+      await tester.tap(find.widgetWithText(FloatingActionButton, 'Add feed'));
+      await tester.pumpAndSettle();
+      expect(find.byType(AddFeedDialog), findsOneWidget);
+      Navigator.of(tester.element(find.byType(AddFeedDialog))).pop();
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text('Bookmarks'));
+      await tester.pumpAndSettle();
+      expect(find.byType(FloatingActionButton), findsNothing);
+    });
+
+    testWidgets('the add button folds while reading down and is labeled '
+        'again on another tab', (tester) async {
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+      final body = tester.element(
+        find
+            .descendant(
+              of: find.byType(NotificationListener<UserScrollNotification>),
+              matching: find.byType(Column),
+            )
+            .first,
+      );
+      UserScrollNotification(
+        metrics: FixedScrollMetrics(
+          minScrollExtent: 0,
+          maxScrollExtent: 2000,
+          pixels: 400,
+          viewportDimension: 600,
+          axisDirection: AxisDirection.down,
+          devicePixelRatio: 1,
+        ),
+        context: body,
+        direction: ScrollDirection.reverse,
+      ).dispatch(body);
+      await tester.pumpAndSettle();
+      expect(find.text('Add feed'), findsNothing);
+      expect(find.byType(FloatingActionButton), findsOneWidget);
+
+      await tester.tap(find.text('Categories'));
+      await tester.pumpAndSettle();
+      expect(find.text('Add feed'), findsOneWidget);
     });
 
     testWidgets('a link shared to the app opens add feed with it', (

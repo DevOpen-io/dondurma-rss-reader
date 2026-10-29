@@ -67,6 +67,26 @@ void main() {
     expect(toggles, 0);
   });
 
+  testWidgets('the active mode is announced as selected', (tester) async {
+    final handle = tester.ensureSemantics();
+    final l10n = await pump(
+      tester,
+      isFullText: true,
+      isLoading: false,
+      onToggle: () {},
+    );
+    expect(
+      tester.getSemantics(find.text(l10n.modeFull)),
+      matchesSemantics(
+        label: l10n.modeFull,
+        isButton: true,
+        isSelected: true,
+        hasSelectedState: true,
+      ),
+    );
+    handle.dispose();
+  });
+
   testWidgets('each mode is a 48dp touch target', (tester) async {
     final l10n = await pump(
       tester,

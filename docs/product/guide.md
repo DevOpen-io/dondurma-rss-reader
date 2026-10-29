@@ -26,7 +26,8 @@ Calm, capable, personal. Ice-cream identity adds warmth; functionality stays ser
 
 ## Design language
 
-- Material 3, FlexColorScheme, Outfit typography by default. Fonts are bundled (OFL) — never fetched at runtime; users can switch the app font to Atkinson Hyperlegible, Lexend, Literata or the system font, and pick the article typeface separately.
+- Material 3, FlexColorScheme, Outfit typography by default. Fonts are bundled (OFL) — never fetched at runtime; users can switch the app font to Atkinson Hyperlegible, Lexend, Literata or the system font, and pick the article typeface separately. The chosen theme color washes every surface lightly (cards and sheets more than the page, more in dark mode) and drives the controls — selection, switches, chips, the add button; text stays neutral (`lib/theme/app_theme.dart`).
+- Adding a feed is a labeled floating button on the Feeds and Categories tabs; it folds to its icon while a list is scrolled down. The article view keeps one control row (summary/full pill and read aloud) and ends with a card for the original page.
 - Rounded surfaces, restrained elevation, consistent spacing, clear primary action.
 - Article rows are rounded cards by default; Settings › Article List switches the phone layout to flat rows split by hairlines.
 - No decoration without information: no tinted icon tiles, uppercase tracked micro-labels, accent bars or background blobs.
