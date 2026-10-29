@@ -275,11 +275,9 @@ class _SectionLabel extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 18, 12, 6),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.1,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.labelMedium?.copyWith(color: cs.onSurfaceVariant),
       ),
     );
   }

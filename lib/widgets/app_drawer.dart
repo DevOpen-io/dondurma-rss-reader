@@ -45,19 +45,12 @@ class AppDrawer extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
               child: Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
-                      color: cs.primaryContainer.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.asset(
-                        'assets/logo.ico',
-                        width: 30,
-                        height: 30,
-                      ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.asset(
+                      'assets/logo.ico',
+                      width: 32,
+                      height: 32,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -222,56 +215,34 @@ class AppDrawer extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(12, 18, 12, 8),
       child: Text(
         title,
-        style: tt.labelSmall?.copyWith(
-          color: cs.onSurfaceVariant.withValues(alpha: 0.7),
-          fontWeight: FontWeight.w700,
-          letterSpacing: 1.1,
-        ),
+        style: tt.labelMedium?.copyWith(color: cs.onSurfaceVariant),
       ),
     );
   }
 
-  /// Small rounded icon chip used as the leading element of drawer rows.
-  Widget _buildIconChip(
+  /// Leading icon of drawer rows.
+  Widget _buildRowIcon(
     BuildContext context, {
     required Widget icon,
     required bool isSelected,
   }) {
     final cs = Theme.of(context).colorScheme;
-    final color = isSelected ? cs.onPrimaryContainer : cs.onSurfaceVariant;
-    return Container(
-      padding: const EdgeInsets.all(7),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? cs.primaryContainer
-            : cs.surfaceContainerHigh.withValues(alpha: 0.8),
-        borderRadius: BorderRadius.circular(10),
+    return IconTheme(
+      data: IconThemeData(
+        size: 20,
+        color: isSelected ? cs.primary : cs.onSurfaceVariant,
       ),
-      child: IconTheme(
-        data: IconThemeData(size: 17, color: color),
-        child: icon,
-      ),
+      child: icon,
     );
   }
 
-  /// Rounded count pill shown at the trailing edge of rows.
-  Widget _buildCountPill(BuildContext context, int count, bool isSelected) {
+  /// Article count at the trailing edge of rows.
+  Widget _buildCount(BuildContext context, int count, bool isSelected) {
     final cs = Theme.of(context).colorScheme;
-    final tt = Theme.of(context).textTheme;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: isSelected
-            ? cs.primary.withValues(alpha: 0.14)
-            : cs.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        '$count',
-        style: tt.labelSmall?.copyWith(
-          color: isSelected ? cs.primary : cs.onSurfaceVariant,
-          fontWeight: FontWeight.w700,
-        ),
+    return Text(
+      '$count',
+      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+        color: isSelected ? cs.primary : cs.onSurfaceVariant,
       ),
     );
   }
@@ -320,9 +291,12 @@ class AppDrawer extends StatelessWidget {
                 )
               : null,
           // The 48dp options target plus M3's 8dp minimum vertical padding
-          // would grow the 56dp header; 4dp keeps it at 56.
+          // would grow the 56dp header; 4dp keeps it at 56. Leading width
+          // and gap match the plain drawer rows so titles line up.
           child: ListTileTheme.merge(
             minVerticalPadding: 4,
+            minLeadingWidth: 20,
+            horizontalTitleGap: 12,
             child: ExpansionTile(
               initiallyExpanded: provider.selectedCategory == targetCategory,
               tilePadding: const EdgeInsets.only(left: 10, right: 10),
@@ -341,11 +315,11 @@ class AppDrawer extends StatelessWidget {
               collapsedBackgroundColor: emphasis.fill(cs, selectedAlpha: 0.35),
               iconColor: cs.onSurfaceVariant,
               collapsedIconColor: cs.onSurfaceVariant.withValues(alpha: 0.6),
-              leading: _buildIconChip(
+              leading: _buildRowIcon(
                 context,
                 icon: CategoryIcon(
                   category: targetCategory,
-                  size: 17,
+                  size: 20,
                   color: emphasis.tint(
                     cs,
                     selectedColor: cs.onPrimaryContainer,
@@ -378,7 +352,7 @@ class AppDrawer extends StatelessWidget {
                           ),
                           if (count > 0) ...[
                             const SizedBox(width: 8),
-                            _buildCountPill(context, count, isCategorySelected),
+                            _buildCount(context, count, isCategorySelected),
                           ],
                         ],
                       ),
@@ -459,7 +433,7 @@ class AppDrawer extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             child: Row(
               children: [
-                _buildIconChip(
+                _buildRowIcon(
                   context,
                   icon: Icon(icon),
                   isSelected: isSelected,
@@ -482,7 +456,7 @@ class AppDrawer extends StatelessWidget {
                 ),
                 if (count != null && count > 0) ...[
                   const SizedBox(width: 8),
-                  _buildCountPill(context, count, isSelected),
+                  _buildCount(context, count, isSelected),
                 ],
               ],
             ),
@@ -505,7 +479,7 @@ class AppDrawer extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           child: Row(
             children: [
-              _buildIconChip(
+              _buildRowIcon(
                 context,
                 icon: const Icon(Icons.info_outline),
                 isSelected: false,

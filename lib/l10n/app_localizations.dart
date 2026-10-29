@@ -421,7 +421,7 @@ abstract class AppLocalizations {
   /// No description provided for @categories.
   ///
   /// In en, this message translates to:
-  /// **'CATEGORIES'**
+  /// **'Categories'**
   String get categories;
 
   /// No description provided for @allNews.
@@ -445,7 +445,7 @@ abstract class AppLocalizations {
   /// No description provided for @uncategorized.
   ///
   /// In en, this message translates to:
-  /// **'UNCATEGORIZED'**
+  /// **'Uncategorized'**
   String get uncategorized;
 
   /// No description provided for @randomBlogs.
@@ -457,7 +457,7 @@ abstract class AppLocalizations {
   /// No description provided for @discover.
   ///
   /// In en, this message translates to:
-  /// **'DISCOVER'**
+  /// **'Discover'**
   String get discover;
 
   /// No description provided for @suggestedFeeds.

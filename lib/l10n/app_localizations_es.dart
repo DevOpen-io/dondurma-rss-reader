@@ -184,7 +184,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get categories => 'CATEGORÍAS';
+  String get categories => 'Categorías';
 
   @override
   String get allNews => 'Todas las noticias';
@@ -196,13 +196,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get semanticAncestorCategory => 'Contiene la fuente seleccionada';
 
   @override
-  String get uncategorized => 'SIN CATEGORÍA';
+  String get uncategorized => 'Sin categoría';
 
   @override
   String get randomBlogs => 'Blogs variados';
 
   @override
-  String get discover => 'DESCUBRIR';
+  String get discover => 'Descubrir';
 
   @override
   String get suggestedFeeds => 'Fuentes sugeridas';

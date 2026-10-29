@@ -183,7 +183,7 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
-  String get categories => 'KATEGORİLER';
+  String get categories => 'Kategoriler';
 
   @override
   String get allNews => 'Tüm Haberler';
@@ -195,13 +195,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get semanticAncestorCategory => 'Seçili akışı içeren kategori';
 
   @override
-  String get uncategorized => 'KATEGORİSİZ';
+  String get uncategorized => 'Kategorisiz';
 
   @override
   String get randomBlogs => 'Rastgele Bloglar';
 
   @override
-  String get discover => 'KEŞFET';
+  String get discover => 'Keşfet';
 
   @override
   String get suggestedFeeds => 'Önerilen Kaynaklar';

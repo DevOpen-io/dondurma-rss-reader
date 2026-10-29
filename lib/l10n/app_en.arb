@@ -89,13 +89,13 @@
       "error": {}
     }
   },
-  "categories": "CATEGORIES",
+  "categories": "Categories",
   "allNews": "All News",
   "allArticles": "All Articles",
   "semanticAncestorCategory": "Contains the selected feed",
-  "uncategorized": "UNCATEGORIZED",
+  "uncategorized": "Uncategorized",
   "randomBlogs": "Random Blogs",
-  "discover": "DISCOVER",
+  "discover": "Discover",
   "suggestedFeeds": "Suggested Feeds",
   "whatIsRss": "What is RSS?",
   "@whatIsRss": {

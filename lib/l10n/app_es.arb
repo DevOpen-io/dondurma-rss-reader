@@ -58,13 +58,13 @@
       "error": {}
     }
   },
-  "categories": "CATEGORÍAS",
+  "categories": "Categorías",
   "allNews": "Todas las noticias",
   "allArticles": "Todos los artículos",
   "semanticAncestorCategory": "Contiene la fuente seleccionada",
-  "uncategorized": "SIN CATEGORÍA",
+  "uncategorized": "Sin categoría",
   "randomBlogs": "Blogs variados",
-  "discover": "DESCUBRIR",
+  "discover": "Descubrir",
   "suggestedFeeds": "Fuentes sugeridas",
   "whatIsRss": "¿Qué es RSS?",
   "all": "Todo",

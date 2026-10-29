@@ -58,13 +58,13 @@
       "error": {}
     }
   },
-  "categories": "KATEGORİLER",
+  "categories": "Kategoriler",
   "allNews": "Tüm Haberler",
   "allArticles": "Tüm Makaleler",
   "semanticAncestorCategory": "Seçili akışı içeren kategori",
-  "uncategorized": "KATEGORİSİZ",
+  "uncategorized": "Kategorisiz",
   "randomBlogs": "Rastgele Bloglar",
-  "discover": "KEŞFET",
+  "discover": "Keşfet",
   "suggestedFeeds": "Önerilen Kaynaklar",
   "whatIsRss": "RSS Nedir?",
   "all": "Tümü",

@@ -181,7 +181,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get categories => 'CATEGORIES';
+  String get categories => 'Categories';
 
   @override
   String get allNews => 'All News';
@@ -193,13 +193,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get semanticAncestorCategory => 'Contains the selected feed';
 
   @override
-  String get uncategorized => 'UNCATEGORIZED';
+  String get uncategorized => 'Uncategorized';
 
   @override
   String get randomBlogs => 'Random Blogs';
 
   @override
-  String get discover => 'DISCOVER';
+  String get discover => 'Discover';
 
   @override
   String get suggestedFeeds => 'Suggested Feeds';
