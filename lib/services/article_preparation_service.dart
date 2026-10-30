@@ -584,6 +584,17 @@ class ArticlePreparationService {
           // shared HostPacer — pacing here too would double the gap.
           html = await _extract(record.link);
         } catch (_) {}
+        // A page that yields no more than the RSS body is a failed
+        // extraction — never an offline "full text" equal to the excerpt.
+        if (html != null &&
+            html.isNotEmpty &&
+            !FullTextExtractionService.isMoreThanExcerpt(
+              FullTextExtractionService.plainText(html),
+              FullTextExtractionService.plainText(record.body ?? ''),
+            )) {
+          FullTextExtractionService.instance.discard(record.link);
+          html = null;
+        }
         // Parsed before the record lock: the lock is shared with the
         // background isolate, which waits at most a few seconds for it.
         final extractedImages = html == null || html.isEmpty

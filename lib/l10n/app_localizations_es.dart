@@ -558,6 +558,22 @@ class AppLocalizationsEs extends AppLocalizations {
   String get readAloudFailed => 'No se pudo leer el artículo en voz alta.';
 
   @override
+  String get readingLanguage => 'Idioma de lectura';
+
+  @override
+  String readingLanguageCurrent(String language) {
+    return 'Idioma de lectura: $language';
+  }
+
+  @override
+  String get readingLanguageAutomatic => 'Automático';
+
+  @override
+  String readingLanguageDetected(String language) {
+    return 'Detectado: $language';
+  }
+
+  @override
   String get openInExternalBrowser => 'Abrir en navegador externo';
 
   @override
@@ -733,6 +749,10 @@ class AppLocalizationsEs extends AppLocalizations {
   @override
   String get fullTextFailed =>
       'No se pudo cargar el contenido completo. Mostrando el resumen de la fuente.';
+
+  @override
+  String get feedHasFullArticle =>
+      'Esta fuente ya incluye el artículo completo.';
 
   @override
   String get fullTextToggle => 'Texto completo';
@@ -961,6 +981,9 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get semanticAddFeed => 'Añadir nueva fuente';
+
+  @override
+  String get addFeedButton => 'Añadir fuente';
 
   @override
   String get semanticOfflineCached => 'Disponible sin conexión';

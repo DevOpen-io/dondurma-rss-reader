@@ -100,6 +100,7 @@ void main() {
         category: 'Tech',
         fullTextEnabled: true,
         excludedKeywords: const ['crypto'],
+        speechLanguage: 'tr',
       ),
       FeedSubscription(url: 'https://b.test/feed', name: 'B', category: 'Tech'),
     ]);
@@ -137,6 +138,8 @@ void main() {
     );
     expect(subs.first.fullTextEnabled, isTrue);
     expect(subs.first.excludedKeywords, ['crypto']);
+    expect(subs.first.speechLanguage, 'tr');
+    expect(subs.last.speechLanguage, isNull);
     expect(second.subscriptions.categoriesOrdered, contains('Empty'));
     expect(
       second.subscriptions.folderBackup.icons['Tech'],

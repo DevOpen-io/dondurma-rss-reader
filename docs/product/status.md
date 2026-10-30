@@ -33,12 +33,13 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Proven same article from another source reuses already-extracted content as its own copy (2026-10-26)
 - [x] GitHub releases with signed APK, Windows installer, macOS DMG and Linux AppImage on every CI-green main push (2026-10-26)
 - [x] Bundled OFL fonts (no runtime Google Fonts fetch) with app-font and article-typeface choices; one durable offline pipeline (legacy full-text prefetch removed) (2026-10-29)
-- [x] Mark the current view read — everything or only articles older than a day/week, each with its count; same-link copies the view hides are marked too — from the feed tab overflow menu (which also holds Add feed) and the desktop list toolbar ([#1](https://github.com/DevOpen-io/dondurma-rss-reader/issues/1), 2026-10-29)
+- [x] Mark the current view read — everything or only articles older than a day/week, each with its count; same-link copies the view hides are marked too — from the feed tab overflow menu and the desktop list toolbar ([#1](https://github.com/DevOpen-io/dondurma-rss-reader/issues/1), 2026-10-29)
 - [x] Full-screen article image viewer: tap an inline, gallery or cover image; pinch/wheel zoom, double-tap zoom/reset, back/Escape/close; an image inside a link offers that link ([#62](https://github.com/DevOpen-io/dondurma-rss-reader/issues/62), 2026-10-29)
 - [x] Optional mark-as-read on scroll (Settings, off by default): article rows seen on screen and scrolled past the top edge are marked read in the phone and desktop lists ([#63](https://github.com/DevOpen-io/dondurma-rss-reader/issues/63), 2026-10-29)
 - [x] Feed discovery: a site, YouTube channel/handle, subreddit, Mastodon or Bluesky address resolves to its feed (page alternates, then common paths); several feeds offer a choice ([#64](https://github.com/DevOpen-io/dondurma-rss-reader/issues/64), 2026-10-29)
 - [x] Whole-app backup: one JSON file with feeds, folders, settings, bookmarks (article as saved, no images) and read marks; restore checks the file, then merges feeds/bookmarks/read marks and replaces settings ([#65](https://github.com/DevOpen-io/dondurma-rss-reader/issues/65), 2026-10-29)
 - [x] Read aloud with the device speech engine (flutter_tts; Android, iOS, macOS, Windows in code — only Android exercised, the others unverified; hidden on Linux): button beside the reading-mode switch, floating pause/resume/stop bar; one reader for the app, stops on another article or leaving it; a missing or disabled engine ends with a message, not a stuck bar ([#66](https://github.com/DevOpen-io/dondurma-rss-reader/issues/66), 2026-10-29)
+- [x] Read-aloud language: detected per article from its text (script + common words; en, tr, es, de, fr, it, pt, nl, ru, ar and other scripts), else the app language; a language pill in the bar opens a sheet of the engine's languages; the choice is kept per feed (`FeedSubscription.speechLanguage`, in backups); a language the engine lacks or refuses reads with the default voice (2026-10-30, unverified on device)
 - [x] Android share sheet: sharing a link to the app opens Add feed with it filled in (and feed discovery on save); a share before onboarding waits for the home screen. A UI-less ShareActivity brings the app up with the launcher's exact intent, so a share reuses the task the launcher started; a task left by a widget or notification can still leave a second one ([#79](https://github.com/DevOpen-io/dondurma-rss-reader/issues/79)). iOS share extension not built ([#67](https://github.com/DevOpen-io/dondurma-rss-reader/issues/67), 2026-10-29)
 - [x] Per-feed refresh interval (with the app / hourly / every 6 hours / daily) in the feed sheet: automatic foreground and background passes skip a feed until it is due, a pull to refresh fetches all; last fetch times persist per isolate like the cooldowns ([#68](https://github.com/DevOpen-io/dondurma-rss-reader/issues/68), 2026-10-29)
 - [x] Filter rules: any keyword list takes `/regex/` patterns and a `title:` prefix (title only); per-feed "Only show matching" list; a global "Mark read automatically" list applied as articles arrive and when the list changes. Unread badges leave out what the hide and only-show lists hide. Author matching is not possible (feeds' authors are not stored) ([#69](https://github.com/DevOpen-io/dondurma-rss-reader/issues/69), 2026-10-29)
@@ -57,6 +58,20 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [ ] Advanced search and match highlighting
 - [ ] Compact list, thumbnail/accent controls, navigation shortcuts
 - [ ] Detailed per-feed sync log and storage usage
+
+### UI follow-ups (usability test, 2026-10-30)
+
+- [ ] Outer Space dark: primary is near-grey; the theme swatch barely shows against the surface and the theme tone is hardly felt
+- [ ] Full text keeps page leftovers on some sites (breadcrumbs, "Trending", tag lists)
+- [ ] Hide or soften internal status labels on rows and the article ("Ready in cache", "Images 1/1")
+- [ ] A manual full-text failure shows both a toast and the inline notice
+- [ ] Google News lists the same story twice
+- [ ] Landscape phone: the bottom bar leaves room for only ~1.5 rows
+- [ ] Rename-folder field looks cramped; text fields use three different styles
+- [ ] Deleting an empty category still says "0 feeds" / "Delete All"
+- [ ] Saved-search long-press sheet has no title
+- [ ] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text
+- [ ] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
 
 ## Delivery rules
 

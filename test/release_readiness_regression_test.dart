@@ -260,7 +260,9 @@ void main() {
           id: _article().id,
           feedUrl: _article().feedUrl,
           link: _article().link,
-          body: '<p>Prepared full text</p>',
+          // Longer than the feed body — an extracted copy that only
+          // repeats the excerpt is not shown as full text.
+          body: '<p>Prepared full text</p><p>${'Story paragraph. ' * 20}</p>',
           bodyState: MediaState.ready,
           bodySource: 'extracted',
           owners: const {'tempCache'},

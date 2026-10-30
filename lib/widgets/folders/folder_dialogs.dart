@@ -39,7 +39,7 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context);
-    return AlertDialog(
+    return ActionSheet(
       title: Text(l10n.renameFolder),
       content: TextField(
         controller: _controller,
@@ -50,8 +50,11 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
         autofocus: true,
       ),
       actions: [
-        TextButton(onPressed: () => context.pop(), child: Text(l10n.cancel)),
-        ElevatedButton(
+        OutlinedButton(
+          onPressed: () => context.pop(),
+          child: Text(l10n.cancel),
+        ),
+        FilledButton(
           onPressed: () {
             final newName = _controller.text.trim();
             if (newName.isEmpty) return;
@@ -116,7 +119,7 @@ class _EmojiIconDialogState extends State<EmojiIconDialog> {
     final l10n = AppLocalizations.of(context);
     final cs = Theme.of(context).colorScheme;
     final typed = _controller.text.trim();
-    return AlertDialog(
+    return ActionSheet(
       title: Text(l10n.changeIcon),
       content: Row(
         children: [
@@ -161,11 +164,11 @@ class _EmojiIconDialogState extends State<EmojiIconDialog> {
         ],
       ),
       actions: [
-        TextButton(
+        OutlinedButton(
           onPressed: () => Navigator.of(context).pop(),
           child: Text(l10n.cancel),
         ),
-        ElevatedButton(
+        FilledButton(
           onPressed: () {
             context.read<SubscriptionProvider>().setCategoryEmoji(
               widget.category,

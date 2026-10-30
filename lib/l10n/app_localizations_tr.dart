@@ -549,6 +549,22 @@ class AppLocalizationsTr extends AppLocalizations {
   String get readAloudFailed => 'Makale sesli okunamadı.';
 
   @override
+  String get readingLanguage => 'Okuma dili';
+
+  @override
+  String readingLanguageCurrent(String language) {
+    return 'Okuma dili: $language';
+  }
+
+  @override
+  String get readingLanguageAutomatic => 'Otomatik';
+
+  @override
+  String readingLanguageDetected(String language) {
+    return 'Algılanan: $language';
+  }
+
+  @override
   String get openInExternalBrowser => 'Harici Tarayıcıda Aç';
 
   @override
@@ -722,6 +738,10 @@ class AppLocalizationsTr extends AppLocalizations {
   @override
   String get fullTextFailed =>
       'Tam içerik yüklenemedi. Akış özeti gösteriliyor.';
+
+  @override
+  String get feedHasFullArticle =>
+      'Bu kaynak makalenin tamamını zaten veriyor.';
 
   @override
   String get fullTextToggle => 'Tam Metin';
@@ -951,6 +971,9 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get semanticAddFeed => 'Yeni kaynak ekle';
+
+  @override
+  String get addFeedButton => 'Kaynak ekle';
 
   @override
   String get semanticOfflineCached => 'Çevrimdışı kullanılabilir';

@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:hive_ce/hive.dart';
+import 'package:ice_cream_rss_reader/widgets/adaptive_dialog.dart';
 import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
@@ -118,7 +119,7 @@ void main() {
     await settle(tester);
     await tester.tap(
       find.descendant(
-        of: find.byType(AlertDialog),
+        of: find.byType(ActionSheet),
         matching: find.text(l10n.factoryReset),
       ),
     );

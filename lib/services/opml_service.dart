@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:file_selector/file_selector.dart';
 import 'package:path_provider/path_provider.dart';
@@ -176,7 +177,9 @@ class OpmlService {
       final file = await openFile(acceptedTypeGroups: [typeGroup]);
       if (file == null) return [];
 
-      final content = await file.readAsString();
+      // Not `readAsString`: for the bytes the Android picker returns it
+      // decodes Latin-1 whatever encoding it is given.
+      final content = utf8.decode(await file.readAsBytes());
       return parseOpml(content);
     } catch (_) {
       return [];

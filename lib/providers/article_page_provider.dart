@@ -55,6 +55,15 @@ class ArticlePageProvider extends ChangeNotifier {
   bool _autoFullTextFailed = false;
   bool get autoFullTextFailed => _autoFullTextFailed;
 
+  /// The page gave nothing beyond the feed's body because that body is
+  /// already the whole article (blogs that publish full posts): not a
+  /// failure, and the reader says so instead of offering a retry.
+  bool _feedHasFullArticle = false;
+  bool get feedHasFullArticle => _feedHasFullArticle;
+
+  /// Visible text from which a feed body counts as a whole article.
+  static const _fullArticleLength = 1000;
+
   /// Whether the last activation was automatic (from per-feed/global default).
   bool _lastAttemptAutomatic = false;
 
@@ -254,12 +263,14 @@ class ArticlePageProvider extends ChangeNotifier {
     _fullTextActive = true;
     _fullTextFailed = false;
     _autoFullTextFailed = false;
+    _feedHasFullArticle = false;
     _fullTextContent = null;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
 
-    // Offline path: a prepared full-text copy renders instantly.
-    if (_savedBodyExtracted) {
+    // Offline path: a prepared full-text copy renders instantly — unless it
+    // is no more than the feed's excerpt; then the page is tried live.
+    if (_savedBodyExtracted && _addsToFeedBody(_savedBody!)) {
       _fullTextContent = _savedBody;
       _isLoadingFullText = false;
       notifyListeners();
@@ -269,15 +280,31 @@ class ArticlePageProvider extends ChangeNotifier {
     _isLoadingFullText = true;
     notifyListeners();
 
-    final result = await _extractionService.extractFullText(
+    var result = await _extractionService.extractFullText(
       item.link,
       forceRefresh: !automatic,
     );
 
     if (_disposed) return;
 
+    // A "full text" that only repeats the excerpt (headline + summary, a
+    // teaser page) is a failure, not a success showing the same text.
+    if (result != null && result.isNotEmpty && !_addsToFeedBody(result)) {
+      _extractionService.discard(item.link);
+      result = null;
+      _feedHasFullArticle =
+          _displayText(_feedBody).trim().length >= _fullArticleLength;
+    }
+
     _isLoadingFullText = false;
-    if (result != null && result.isNotEmpty) {
+    // The reader drew the summary while the page loaded; what it shows now
+    // is worked out again from the result.
+    _cachedDisplayContent = null;
+    _cachedReadingMinutes = null;
+    if (_feedHasFullArticle) {
+      _fullTextActive = false;
+      _fullTextContent = null;
+    } else if (result != null && result.isNotEmpty) {
       _fullTextContent = result;
       _fullTextFailed = false;
       _autoFullTextFailed = false;
@@ -296,6 +323,29 @@ class ArticlePageProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Whether [html], as the reader would show it, gives more than the
+  /// feed's own body for this item.
+  bool _addsToFeedBody(String html) =>
+      FullTextExtractionService.isMoreThanExcerpt(
+        _displayText(html),
+        _displayText(_feedBody),
+      );
+
+  String get _feedBody {
+    final current = item.content;
+    return current != null && current.trim().isNotEmpty
+        ? current
+        : item.description;
+  }
+
+  /// Visible text of [html] after the reader's own cleanup.
+  String _displayText(String html) {
+    final body = html_parser.parse(html).body;
+    if (body == null) return '';
+    _preprocessHtml(body);
+    return body.text;
+  }
+
   void deactivateFullText() {
     _lastAttemptAutomatic = false;
     _fullTextActive = false;
@@ -303,6 +353,7 @@ class ArticlePageProvider extends ChangeNotifier {
     _fullTextContent = null;
     _fullTextFailed = false;
     _autoFullTextFailed = false;
+    _feedHasFullArticle = false;
     _cachedDisplayContent = null;
     _cachedReadingMinutes = null;
     notifyListeners();
@@ -383,6 +434,7 @@ class ArticlePageProvider extends ChangeNotifier {
   // ---------------------------------------------------------------------------
 
   String _preprocessHtml(html_dom.Element body) {
+    _removeRepeatedHeadline(body);
     _stripInlineStyles(body);
     _removeAdContent(body);
     _removeEmptyElements(body);
@@ -391,6 +443,29 @@ class ArticlePageProvider extends ChangeNotifier {
     _rewriteLocalImages(body);
 
     return body.innerHtml;
+  }
+
+  /// Drops the page's own copy of the headline: the reader already shows
+  /// the title above the text. A source suffix ("… - CNN") on either side
+  /// still matches.
+  void _removeRepeatedHeadline(html_dom.Element body) {
+    String norm(String text) => text
+        .toLowerCase()
+        .replaceAll(RegExp(r'[‘’`´]'), "'")
+        .replaceAll(RegExp(r'[^\p{L}\p{N}]+', unicode: true), ' ')
+        .trim();
+    final title = norm(item.title);
+    if (title.length < 8) return;
+    final heading = body.querySelector('h1, h2');
+    if (heading == null) return;
+    final text = norm(heading.text);
+    if (text.isEmpty) return;
+    final (short, long) = text.length < title.length
+        ? (text, title)
+        : (title, text);
+    if (long.contains(short) && short.length >= long.length * 0.6) {
+      heading.remove();
+    }
   }
 
   /// Points ready media entries at their durable local files so offline
@@ -438,8 +513,10 @@ class ArticlePageProvider extends ChangeNotifier {
     caseSensitive: false,
   );
 
+  // `ad-` only at the start of a class word — inside one it is `head-`,
+  // `lead-` or ntv.com.tr's `inread-` story wrapper.
   static final _adClassPattern = RegExp(
-    r'(ad-|advert|sponsor|promo|native-ad|outbrain|taboola|'
+    r'((?<![a-z0-9])ad-|advert|sponsor|promo|native-ad|outbrain|taboola|'
     r'related-stories|rec-rail|story-rail|commerce|affiliate)',
     caseSensitive: false,
   );
@@ -456,10 +533,14 @@ class ArticlePageProvider extends ChangeNotifier {
   };
 
   void _removeAdContent(html_dom.Element parent) {
+    // A wrapper holding most of the story is never an ad, whatever its
+    // class lists (Future plc's `flw-article-sponsored-disclaimer`).
+    final storyText = FullTextExtractionService.paragraphTextLength(parent);
     for (final el in parent.querySelectorAll('*').toList()) {
       final cls = el.attributes['class'] ?? '';
       final id = el.attributes['id'] ?? '';
-      if (_adClassPattern.hasMatch(cls) || _adClassPattern.hasMatch(id)) {
+      if ((_adClassPattern.hasMatch(cls) || _adClassPattern.hasMatch(id)) &&
+          FullTextExtractionService.paragraphTextLength(el) * 2 <= storyText) {
         el.remove();
         continue;
       }

@@ -19,6 +19,7 @@ import '../models/saved_search.dart';
 import '../services/shared_links.dart';
 import '../widgets/saved_searches.dart';
 import '../widgets/home/add_category_dialog.dart';
+import '../widgets/home/add_destination.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/mark_all_read_button.dart';
 import '../widgets/home/offline_banner.dart';
@@ -316,12 +317,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
         ),
         actions: [
-          if (_selectedIndex == 1)
-            IconButton(
-              icon: const Icon(Icons.create_new_folder_outlined),
-              tooltip: l10n.addFolder,
-              onPressed: _showAddFolderDialog,
-            ),
           if (_selectedIndex == 0) ...[
             if (!_isSearching) FilterSheetButton(active: hasActiveFilter),
             if (_isSearching)
@@ -352,10 +347,6 @@ class _HomeScreenState extends State<HomeScreen> {
             PopupMenuButton<_FeedMenuAction>(
               itemBuilder: (_) => [
                 PopupMenuItem(
-                  value: _FeedMenuAction.addFeed,
-                  child: Text(l10n.semanticAddFeed),
-                ),
-                PopupMenuItem(
                   value: _FeedMenuAction.markRead,
                   enabled: context.read<FeedProvider>().hasUnreadInView,
                   child: Text(l10n.markAllAsRead),
@@ -372,7 +363,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
               ],
               onSelected: (action) => switch (action) {
-                _FeedMenuAction.addFeed => _showAddFeedDialog(),
                 _FeedMenuAction.markRead => showMarkReadDialog(context),
                 _FeedMenuAction.saveSearch => saveCurrentSearch(context),
               },
@@ -458,16 +448,22 @@ class _HomeScreenState extends State<HomeScreen> {
           : _selectedIndex == 2
           ? const BookmarksScreen()
           : const SettingsScreen(),
-      // Standard bar: fixed to the bottom edge, no floating chrome. Adding
-      // feeds and folders lives in the app bar of the tab it belongs to.
+      // Standard bar: fixed to the bottom edge. Adding is the one action
+      // every new reader looks for, so it sits in the middle of the bar on
+      // every tab: a folder on the folder tab, a feed everywhere else.
       bottomNavigationBar: ColoredBox(
         color: Theme.of(context).colorScheme.surfaceContainer,
         child: ConstrainedWidth(
           maxWidth: 480,
           child: NavigationBar(
             height: 68,
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: _onItemTapped,
+            // The add action is the bar's middle slot, not a tab.
+            selectedIndex: _selectedIndex < 2
+                ? _selectedIndex
+                : _selectedIndex + 1,
+            onDestinationSelected: (index) {
+              if (index != 2) _onItemTapped(index < 2 ? index : index - 1);
+            },
             destinations: [
               NavigationDestination(
                 icon: const Icon(Icons.list_outlined),
@@ -479,6 +475,17 @@ class _HomeScreenState extends State<HomeScreen> {
                 selectedIcon: const Icon(Icons.folder),
                 label: l10n.foldersTab,
               ),
+              _selectedIndex == 1
+                  ? AddDestination(
+                      key: const ValueKey('add-folder'),
+                      label: l10n.addFolder,
+                      onPressed: _showAddFolderDialog,
+                    )
+                  : AddDestination(
+                      key: const ValueKey('add-feed'),
+                      label: l10n.addFeedButton,
+                      onPressed: _showAddFeedDialog,
+                    ),
               NavigationDestination(
                 icon: const Icon(Icons.bookmark_border),
                 selectedIcon: const Icon(Icons.bookmark),
@@ -527,9 +534,9 @@ class _HomeScreenState extends State<HomeScreen> {
 // list. Widgets are constructed by itemBuilder only when rows scroll into view.
 // ---------------------------------------------------------------------------
 
-/// Feed-tab overflow entries: adding a feed, marking the view read and
-/// keeping the current search.
-enum _FeedMenuAction { addFeed, markRead, saveSearch }
+/// Feed-tab overflow entries: marking the view read and keeping the
+/// current search.
+enum _FeedMenuAction { markRead, saveSearch }
 
 /// Everything the feed tab's list renders from [FeedProvider]. Rows select
 /// their own read/bookmark/offline state, so a notification that changes

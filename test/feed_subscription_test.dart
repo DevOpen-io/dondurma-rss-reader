@@ -34,6 +34,48 @@ void main() {
     expect(first.toJson()['notificationEpoch'], first.notificationEpoch);
   });
 
+  test('read-aloud language: absent is automatic, kept by every copy', () {
+    final sub = FeedSubscription(
+      url: 'https://feed',
+      name: 'Feed',
+      category: 'News',
+      speechLanguage: 'tr',
+    );
+    expect(FeedSubscription.fromJson(sub.toJson()).speechLanguage, 'tr');
+    expect(sub.copyWith(name: 'x').speechLanguage, 'tr');
+    expect(sub.copyWithFullTextMode(true).speechLanguage, 'tr');
+    expect(sub.copyWithRefreshInterval(60).speechLanguage, 'tr');
+    expect(sub.copyWithSpeechLanguage(null).speechLanguage, isNull);
+    final legacy = FeedSubscription.fromJson({
+      'url': 'https://feed',
+      'name': 'Feed',
+      'category': 'News',
+    });
+    expect(legacy.speechLanguage, isNull);
+    expect(legacy.toJson(), isNot(contains('speechLanguage')));
+    final corrupt = sub.toJson()..['speechLanguage'] = 42;
+    expect(FeedSubscription.fromJson(corrupt).speechLanguage, isNull);
+  });
+
+  test('setSpeechLanguage stores the feed\'s reading language', () async {
+    final dir = Directory.systemTemp.createTempSync('subscription_speech');
+    Hive.init(dir.path);
+    await Hive.openBox('feeds');
+    addTearDown(() async {
+      await Hive.close();
+      dir.deleteSync(recursive: true);
+    });
+    final subs = SubscriptionProvider();
+    await subs.importFeeds([
+      FeedSubscription(url: 'https://feed', name: 'Feed', category: 'News'),
+    ]);
+    await subs.setSpeechLanguage('https://feed', 'tr');
+    expect(SubscriptionProvider().speechLanguageFor('https://feed'), 'tr');
+    await subs.setSpeechLanguage('https://feed', null);
+    expect(subs.speechLanguageFor('https://feed'), isNull);
+    expect(subs.speechLanguageFor('https://unknown'), isNull);
+  });
+
   test('effective full text: feed tri-state, null follows global', () async {
     final dir = Directory.systemTemp.createTempSync('subscription_ft');
     Hive.init(dir.path);

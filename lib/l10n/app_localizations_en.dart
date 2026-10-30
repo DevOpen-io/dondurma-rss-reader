@@ -551,6 +551,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get readAloudFailed => 'Couldn\'t read the article aloud.';
 
   @override
+  String get readingLanguage => 'Reading language';
+
+  @override
+  String readingLanguageCurrent(String language) {
+    return 'Reading language: $language';
+  }
+
+  @override
+  String get readingLanguageAutomatic => 'Automatic';
+
+  @override
+  String readingLanguageDetected(String language) {
+    return 'Detected: $language';
+  }
+
+  @override
   String get openInExternalBrowser => 'Open in External Browser';
 
   @override
@@ -723,6 +739,10 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get fullTextFailed =>
       'Could not load full content. Showing feed excerpt.';
+
+  @override
+  String get feedHasFullArticle =>
+      'This feed already includes the full article.';
 
   @override
   String get fullTextToggle => 'Full-Text';
@@ -949,6 +969,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get semanticAddFeed => 'Add new feed';
+
+  @override
+  String get addFeedButton => 'Add feed';
 
   @override
   String get semanticOfflineCached => 'Available offline';

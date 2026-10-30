@@ -733,7 +733,15 @@ class SettingsScreen extends StatelessWidget {
                     bookmarks: context.read<BookmarkProvider>(),
                     feed: context.read<FeedProvider>(),
                   );
-                  final saved = await saveBackupFile(json);
+                  // The visible settings page: an iPad popover anchor that
+                  // lies inside the screen wherever the list is scrolled.
+                  final box = context.findRenderObject() as RenderBox?;
+                  final saved = await saveBackupFile(
+                    json,
+                    shareOrigin: box == null
+                        ? null
+                        : box.localToGlobal(Offset.zero) & box.size,
+                  );
                   if (saved != null && context.mounted) {
                     showAppToast(
                       saved ? l10n.backupExported : l10n.exportFailed,
@@ -981,20 +989,16 @@ class SettingsScreen extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
     final theme = Theme.of(context);
 
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
+    showAdaptiveSheet<void>(
+      context,
+      Builder(
+        builder: (context) => ActionSheet(
         title: Text(l10n.factoryResetConfirmTitle),
         content: Text(l10n.factoryResetConfirmDesc),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: Text(
-              l10n.cancel,
-              style: TextStyle(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
+            child: Text(l10n.cancel),
           ),
           FilledButton.tonal(
             onPressed: () async {
@@ -1047,13 +1051,15 @@ class SettingsScreen extends StatelessWidget {
 
               router.go('/onboarding');
             },
+            // Destructive, like deleting a feed: the error color itself.
             style: FilledButton.styleFrom(
-              backgroundColor: theme.colorScheme.errorContainer,
-              foregroundColor: theme.colorScheme.onErrorContainer,
+              backgroundColor: theme.colorScheme.error,
+              foregroundColor: theme.colorScheme.onError,
             ),
             child: Text(l10n.factoryReset),
           ),
         ],
+      ),
       ),
     );
   }
@@ -1078,21 +1084,23 @@ Future<void> _restoreBackup(BuildContext context) async {
     return problem(BackupProblem.notABackup);
   }
   if (json == null || !context.mounted) return;
-  final confirmed = await showDialog<bool>(
-    context: context,
-    builder: (dialogCtx) => AlertDialog(
-      title: Text(l10n.restoreBackup),
-      content: Text(l10n.restoreBackupConfirm),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(dialogCtx).pop(false),
-          child: Text(l10n.cancel),
-        ),
-        FilledButton(
-          onPressed: () => Navigator.of(dialogCtx).pop(true),
-          child: Text(l10n.restoreAction),
-        ),
-      ],
+  final confirmed = await showAdaptiveSheet<bool>(
+    context,
+    Builder(
+      builder: (dialogCtx) => ActionSheet(
+        title: Text(l10n.restoreBackup),
+        content: Text(l10n.restoreBackupConfirm),
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(l10n.restoreAction),
+          ),
+        ],
+      ),
     ),
   );
   if (confirmed != true || !context.mounted) return;

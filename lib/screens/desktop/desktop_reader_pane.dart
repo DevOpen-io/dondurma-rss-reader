@@ -84,7 +84,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
     final current = widget.item;
     if (current == null) {
       return Material(
-        color: cs.surface,
+        color: Theme.of(context).scaffoldBackgroundColor,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -109,7 +109,7 @@ class _DesktopReaderPaneState extends State<DesktopReaderPane> {
     }
 
     return Material(
-      color: cs.surface,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: Column(
         children: [
           // ── Navigation toolbar ───────────────────────────────────────

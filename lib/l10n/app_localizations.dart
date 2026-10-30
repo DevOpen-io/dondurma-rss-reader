@@ -1102,6 +1102,30 @@ abstract class AppLocalizations {
   /// **'Couldn\'t read the article aloud.'**
   String get readAloudFailed;
 
+  /// No description provided for @readingLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading language'**
+  String get readingLanguage;
+
+  /// No description provided for @readingLanguageCurrent.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading language: {language}'**
+  String readingLanguageCurrent(String language);
+
+  /// No description provided for @readingLanguageAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic'**
+  String get readingLanguageAutomatic;
+
+  /// No description provided for @readingLanguageDetected.
+  ///
+  /// In en, this message translates to:
+  /// **'Detected: {language}'**
+  String readingLanguageDetected(String language);
+
   /// No description provided for @openInExternalBrowser.
   ///
   /// In en, this message translates to:
@@ -1383,6 +1407,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Could not load full content. Showing feed excerpt.'**
   String get fullTextFailed;
+
+  /// Shown under the reading-mode switch when the page has nothing beyond the feed body, because the feed already carries the whole article.
+  ///
+  /// In en, this message translates to:
+  /// **'This feed already includes the full article.'**
+  String get feedHasFullArticle;
 
   /// No description provided for @fullTextToggle.
   ///
@@ -1803,6 +1833,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Add new feed'**
   String get semanticAddFeed;
+
+  /// Label of the floating button that opens Add feed on the feed and folder tabs.
+  ///
+  /// In en, this message translates to:
+  /// **'Add feed'**
+  String get addFeedButton;
 
   /// No description provided for @semanticOfflineCached.
   ///

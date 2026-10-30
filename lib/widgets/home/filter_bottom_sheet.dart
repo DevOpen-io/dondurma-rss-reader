@@ -114,7 +114,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   children: [
                     for (final category in categories)
                       FilterChip(
-                        label: Text(category),
+                        label: Text(
+                          category == 'Uncategorized'
+                              ? l10n.uncategorized
+                              : category,
+                        ),
                         selected: _selectedCategories.contains(category),
                         onSelected: (selected) => setState(() {
                           if (selected) {

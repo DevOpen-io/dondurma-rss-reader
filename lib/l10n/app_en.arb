@@ -244,6 +244,24 @@
   "resumeReading": "Resume",
   "stopReading": "Stop reading",
   "readAloudFailed": "Couldn't read the article aloud.",
+  "readingLanguage": "Reading language",
+  "readingLanguageCurrent": "Reading language: {language}",
+  "@readingLanguageCurrent": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
+  "readingLanguageAutomatic": "Automatic",
+  "readingLanguageDetected": "Detected: {language}",
+  "@readingLanguageDetected": {
+    "placeholders": {
+      "language": {
+        "type": "String"
+      }
+    }
+  },
   "openInExternalBrowser": "Open in External Browser",
   "back": "Back",
   "forward": "Forward",
@@ -348,6 +366,10 @@
   "fullTextExtractionDesc": "Fetch full content from the original webpage",
   "fullTextLoading": "Loading full article…",
   "fullTextFailed": "Could not load full content. Showing feed excerpt.",
+  "feedHasFullArticle": "This feed already includes the full article.",
+  "@feedHasFullArticle": {
+    "description": "Shown under the reading-mode switch when the page has nothing beyond the feed body, because the feed already carries the whole article."
+  },
   "fullTextToggle": "Full-Text",
   "readingModeLabel": "Reading mode",
   "modeShort": "Summary",
@@ -449,6 +471,10 @@
   "semanticOpenSearch": "Open search",
   "semanticCloseSearch": "Close search",
   "semanticAddFeed": "Add new feed",
+  "addFeedButton": "Add feed",
+  "@addFeedButton": {
+    "description": "Label of the floating button that opens Add feed on the feed and folder tabs."
+  },
   "semanticOfflineCached": "Available offline",
   "debugScreen": "Debug Console",
   "debugScreenDesc": "Internal diagnostics and storage metrics",

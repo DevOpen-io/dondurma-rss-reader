@@ -24,6 +24,8 @@ import '../widgets/article/article_image_viewer.dart';
 import '../widgets/article/read_aloud.dart';
 import '../services/article_speech.dart';
 import '../widgets/article/article_reading_mode_toggle.dart';
+import '../widgets/article/article_source_card.dart';
+import '../theme/app_theme.dart';
 import '../services/image_cache_service.dart';
 import '../utils/app_toast.dart';
 import '../utils/motion.dart';
@@ -236,6 +238,8 @@ class _ArticlePageState extends State<ArticlePage> {
     final String dateStr = widget.item.pubDate != null
         ? DateFormat(
             articleDatePattern(use24HourFormat(context, settings.timeFormat)),
+            // Month names in the app's language.
+            Localizations.localeOf(context).toString(),
           ).format(widget.item.pubDate!.toLocal())
         : '';
 
@@ -275,7 +279,6 @@ class _ArticlePageState extends State<ArticlePage> {
         : l10n.estimatedReadTime(readingMinutes);
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
           // ── Article content with scroll tracking ──────────────────────
@@ -401,10 +404,9 @@ class _ArticlePageState extends State<ArticlePage> {
                                       end: Alignment.bottomCenter,
                                       colors: [
                                         Colors.transparent,
-                                        colorScheme.surface.withValues(
-                                          alpha: 0.6,
-                                        ),
-                                        colorScheme.surface,
+                                        theme.scaffoldBackgroundColor
+                                            .withValues(alpha: 0.6),
+                                        theme.scaffoldBackgroundColor,
                                       ],
                                       stops: const [0.3, 0.75, 1.0],
                                     ),
@@ -451,15 +453,32 @@ class _ArticlePageState extends State<ArticlePage> {
                       children: [
                         SizedBox(height: hasHero ? 4 : 20),
 
-                        // Category · date · reading time — one quiet line.
-                        Text(
-                          [
-                            if (widget.item.category.isNotEmpty &&
-                                widget.item.category != 'Uncategorized')
-                              widget.item.category,
-                            if (dateStr.isNotEmpty) dateStr,
-                            readTimeText,
-                          ].join(' · '),
+                        // Category · date · reading time — one quiet line;
+                        // the folder name carries the theme color.
+                        Text.rich(
+                          TextSpan(
+                            children: [
+                              if (widget.item.category.isNotEmpty &&
+                                  widget.item.category != 'Uncategorized')
+                                TextSpan(
+                                  text: '${widget.item.category} · ',
+                                  style: TextStyle(
+                                    color: AppThemeBuilder.readableAccent(
+                                      colorScheme.primary,
+                                      background: theme.scaffoldBackgroundColor,
+                                      fallback: colorScheme.onSurface,
+                                    ),
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              TextSpan(
+                                text: [
+                                  if (dateStr.isNotEmpty) dateStr,
+                                  readTimeText,
+                                ].join(' · '),
+                              ),
+                            ],
+                          ),
                           style: TextStyle(
                             color: colorScheme.onSurfaceVariant,
                             fontSize: 13,
@@ -492,31 +511,56 @@ class _ArticlePageState extends State<ArticlePage> {
                         const SizedBox(height: 16),
 
                         // Reading mode toggle — visible affordance for new
-                        // users — and read aloud, which needs no link. The
-                        // button wraps below when the row runs out of room.
+                        // users — and read aloud, which needs no link: one
+                        // row of the same height.
                         if (widget.item.link.isNotEmpty ||
                             ArticleSpeech.supported) ...[
                           const SizedBox(height: 10),
-                          Wrap(
-                            spacing: 8,
-                            runSpacing: 8,
-                            crossAxisAlignment: WrapCrossAlignment.center,
+                          Row(
                             children: [
                               if (widget.item.link.isNotEmpty)
-                                ArticleReadingModeToggle(
-                                  isFullText:
-                                      provider.fullTextActive &&
-                                      provider.fullTextContent != null,
-                                  isLoading: provider.isLoadingFullText,
-                                  onToggle: provider.toggleFullText,
-                                  colorScheme: colorScheme,
-                                  l10n: l10n,
+                                Expanded(
+                                  child: ArticleReadingModeToggle(
+                                    isFullText:
+                                        provider.fullTextActive &&
+                                        provider.fullTextContent != null,
+                                    isLoading: provider.isLoadingFullText,
+                                    onToggle: provider.toggleFullText,
+                                    colorScheme: colorScheme,
+                                    l10n: l10n,
+                                  ),
                                 ),
+                              if (widget.item.link.isNotEmpty &&
+                                  ArticleSpeech.supported)
+                                const SizedBox(width: 10),
                               if (ArticleSpeech.supported)
                                 ReadAloudButton(
                                   item: widget.item,
                                   html: () => provider.displayContent,
                                 ),
+                            ],
+                          ),
+                        ],
+                        if (widget.item.link.isNotEmpty &&
+                            provider.feedHasFullArticle) ...[
+                          const SizedBox(height: 8),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.check_circle_outline_rounded,
+                                size: 14,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              const SizedBox(width: 6),
+                              Flexible(
+                                child: Text(
+                                  l10n.feedHasFullArticle,
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -599,32 +643,14 @@ class _ArticlePageState extends State<ArticlePage> {
 
                         const SizedBox(height: 28),
 
-                        // Open the original page — one plain button.
+                        // Open the original page — the source as one card.
                         if (widget.item.link.isNotEmpty)
-                          SizedBox(
-                            width: double.infinity,
-                            child: Tooltip(
-                              message: l10n.readOnOriginalWebpage,
-                              child: OutlinedButton.icon(
-                                onPressed: () => openArticleLink(
-                                  context,
-                                  widget.item.link,
-                                  title: widget.item.title,
-                                ),
-                                icon: const Icon(
-                                  Icons.open_in_new_rounded,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  Uri.tryParse(widget.item.link)?.host ??
-                                      l10n.openInBrowser,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(0, 48),
-                                ),
-                              ),
+                          ArticleSourceCard(
+                            item: widget.item,
+                            onOpen: () => openArticleLink(
+                              context,
+                              widget.item.link,
+                              title: widget.item.title,
                             ),
                           ),
 

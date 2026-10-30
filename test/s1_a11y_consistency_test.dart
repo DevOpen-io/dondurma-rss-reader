@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:provider/provider.dart';
 
+import 'package:ice_cream_rss_reader/widgets/adaptive_dialog.dart';
 import 'package:ice_cream_rss_reader/l10n/app_localizations.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
@@ -127,7 +128,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await dragLeft(tester);
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(ActionSheet), findsOneWidget);
       expect(find.text('Remove bookmark?'), findsOneWidget);
 
       await tester.tap(find.text('Cancel'));
@@ -163,7 +164,7 @@ void main() {
       await tester.pumpAndSettle();
 
       await dragLeft(tester);
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ActionSheet), findsNothing);
       expect(bookmarks.isBookmarked(item.id), isTrue);
     });
 
@@ -181,7 +182,7 @@ void main() {
 
       await tester.drag(find.byType(FeedListItem), const Offset(-60, 0));
       await tester.pump();
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ActionSheet), findsNothing);
       expect(bookmarks.isBookmarked(item.id), isTrue);
     });
 
@@ -199,7 +200,7 @@ void main() {
 
       await tester.tap(find.byIcon(Icons.bookmark));
       await tester.pumpAndSettle();
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(ActionSheet), findsOneWidget);
 
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
@@ -277,7 +278,7 @@ void main() {
       actions[actions.keys.firstWhere((a) => a.label == 'Remove bookmark')]!();
       await tester.pumpAndSettle();
 
-      expect(find.byType(AlertDialog), findsOneWidget);
+      expect(find.byType(ActionSheet), findsOneWidget);
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(bookmarks.isBookmarked(item.id), isTrue);
@@ -323,7 +324,7 @@ void main() {
       await tester.pump();
 
       expect(feed.isRead(item), isTrue);
-      expect(find.byType(AlertDialog), findsNothing);
+      expect(find.byType(ActionSheet), findsNothing);
       // Read marks are written in a batch; start it before the test ends
       // (file I/O cannot complete inside the fake-async zone).
       unawaited(feed.flushReadStates());
