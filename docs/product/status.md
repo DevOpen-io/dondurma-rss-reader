@@ -59,6 +59,20 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [ ] Compact list, thumbnail/accent controls, navigation shortcuts
 - [ ] Detailed per-feed sync log and storage usage
 
+### UI follow-ups (usability test, 2026-10-30)
+
+- [ ] Outer Space dark: primary is near-grey; the theme swatch barely shows against the surface and the theme tone is hardly felt
+- [ ] Full text keeps page leftovers on some sites (breadcrumbs, "Trending", tag lists)
+- [ ] Hide or soften internal status labels on rows and the article ("Ready in cache", "Images 1/1")
+- [ ] A manual full-text failure shows both a toast and the inline notice
+- [ ] Google News lists the same story twice
+- [ ] Landscape phone: the bottom bar leaves room for only ~1.5 rows
+- [ ] Rename-folder field looks cramped; text fields use three different styles
+- [ ] Deleting an empty category still says "0 feeds" / "Delete All"
+- [ ] Saved-search long-press sheet has no title
+- [ ] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text
+- [ ] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
+
 ## Delivery rules
 
 - Update status with implementation.
