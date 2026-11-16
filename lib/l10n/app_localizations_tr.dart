@@ -843,13 +843,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get articleStatusRssSaved => 'RSS metni saklandı';
 
   @override
+  String get articleStatusSummaryOnlySaved => 'Yalnız kaynaktaki özet saklandı';
+
+  @override
   String get articleStatusRssCached => 'RSS metni önbellekte';
 
   @override
   String get articleStatusReadableSession => 'Bu oturumda okunabilir';
-
-  @override
-  String get articleWaitPreparing => 'Eksikler hazırlanıyor';
 
   @override
   String get articleWaitUnmetered => 'Kotasız ağ bekleniyor';

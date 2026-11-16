@@ -850,13 +850,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get articleStatusRssSaved => 'RSS text saved';
 
   @override
+  String get articleStatusSummaryOnlySaved => 'Only the feed summary is saved';
+
+  @override
   String get articleStatusRssCached => 'RSS text cached';
 
   @override
   String get articleStatusReadableSession => 'Readable in this session';
-
-  @override
-  String get articleWaitPreparing => 'Preparing missing parts';
 
   @override
   String get articleWaitUnmetered => 'Waiting for unmetered network';

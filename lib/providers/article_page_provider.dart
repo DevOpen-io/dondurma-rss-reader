@@ -52,6 +52,12 @@ class ArticlePageProvider extends ChangeNotifier {
   bool _feedHasFullArticle = false;
   bool get feedHasFullArticle => _feedHasFullArticle;
 
+  /// The durable body is the feed's own text and too short to be the whole
+  /// article (a teaser like "So good! READ MORE…"): offline the reader has
+  /// only the summary. Same length rule as [feedHasFullArticle].
+  bool _savedBodyIsFeedSummary = false;
+  bool get savedBodyIsFeedSummary => _savedBodyIsFeedSummary;
+
   /// Visible text from which a feed body counts as a whole article.
   static const _fullArticleLength = 1000;
 
@@ -146,6 +152,7 @@ class ArticlePageProvider extends ChangeNotifier {
     final previousImages = _localImages;
     _savedBody = null;
     _savedBodyExtracted = false;
+    _savedBodyIsFeedSummary = false;
     _recordStatus = null;
     _localImages = const {};
     _archivedFallback = false;
@@ -155,6 +162,9 @@ class ArticlePageProvider extends ChangeNotifier {
       if (record.body?.isNotEmpty ?? false) {
         _savedBody = record.body;
         _savedBodyExtracted = record.bodySource == 'extracted';
+        _savedBodyIsFeedSummary =
+            record.bodySource == 'rss' &&
+            _displayText(record.body!).trim().length < _fullArticleLength;
       }
       final local = <String, String>{};
       var checked = record;

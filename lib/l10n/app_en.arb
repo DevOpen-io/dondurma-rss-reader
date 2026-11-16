@@ -408,9 +408,12 @@
   "articleStatusSaveRequested": "Save requested",
   "articleStatusCouldNotSave": "Could not save",
   "articleStatusRssSaved": "RSS text saved",
+  "articleStatusSummaryOnlySaved": "Only the feed summary is saved",
+  "@articleStatusSummaryOnlySaved": {
+    "description": "Bookmark status when the saved copy is only the feed's short excerpt, not the full article"
+  },
   "articleStatusRssCached": "RSS text cached",
   "articleStatusReadableSession": "Readable in this session",
-  "articleWaitPreparing": "Preparing missing parts",
   "articleWaitUnmetered": "Waiting for unmetered network",
   "articleWaitRetryEarliest": "Retry allowed earliest at {time}",
   "@articleWaitRetryEarliest": {

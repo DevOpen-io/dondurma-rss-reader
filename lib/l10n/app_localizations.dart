@@ -1600,6 +1600,12 @@ abstract class AppLocalizations {
   /// **'RSS text saved'**
   String get articleStatusRssSaved;
 
+  /// Bookmark status when the saved copy is only the feed's short excerpt, not the full article
+  ///
+  /// In en, this message translates to:
+  /// **'Only the feed summary is saved'**
+  String get articleStatusSummaryOnlySaved;
+
   /// No description provided for @articleStatusRssCached.
   ///
   /// In en, this message translates to:
@@ -1611,12 +1617,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Readable in this session'**
   String get articleStatusReadableSession;
-
-  /// No description provided for @articleWaitPreparing.
-  ///
-  /// In en, this message translates to:
-  /// **'Preparing missing parts'**
-  String get articleWaitPreparing;
 
   /// No description provided for @articleWaitUnmetered.
   ///

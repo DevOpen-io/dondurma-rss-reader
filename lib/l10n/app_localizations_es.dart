@@ -861,13 +861,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get articleStatusRssSaved => 'Texto RSS guardado';
 
   @override
+  String get articleStatusSummaryOnlySaved =>
+      'Solo se guardó el resumen de la fuente';
+
+  @override
   String get articleStatusRssCached => 'Texto RSS en caché';
 
   @override
   String get articleStatusReadableSession => 'Se puede leer en esta sesión';
-
-  @override
-  String get articleWaitPreparing => 'Preparando partes faltantes';
 
   @override
   String get articleWaitUnmetered => 'Esperando red sin límite';
