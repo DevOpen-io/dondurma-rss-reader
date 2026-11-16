@@ -85,6 +85,44 @@ void main() {
     }
   });
 
+  // Usability test 2026-10-30: Outer Space dark read as grey, and its
+  // picker swatch hardly showed on the dark settings card.
+  test('every dark theme color is a color, not a grey', () {
+    for (final scheme in schemes) {
+      final primary = AppThemeBuilder.dark(scheme, font).colorScheme.primary;
+      expect(
+        Hct.fromInt(primary.toARGB32()).chroma,
+        greaterThanOrEqualTo(28),
+        reason: '$scheme',
+      );
+    }
+  });
+
+  test('the picker swatch is the theme color of the current brightness', () {
+    for (final scheme in schemes) {
+      for (final brightness in Brightness.values) {
+        final theme = brightness == Brightness.light
+            ? AppThemeBuilder.light(scheme, font)
+            : AppThemeBuilder.dark(scheme, font);
+        expect(
+          AppThemeBuilder.swatch(scheme, brightness),
+          theme.colorScheme.primary,
+          reason: '$scheme $brightness',
+        );
+      }
+      // On the dark settings card it stands out like a control does.
+      final card = AppThemeBuilder.dark(
+        FlexScheme.blue,
+        font,
+      ).colorScheme.surfaceContainerHigh;
+      expect(
+        _contrast(AppThemeBuilder.swatch(scheme, Brightness.dark), card),
+        greaterThanOrEqualTo(3),
+        reason: '$scheme',
+      );
+    }
+  });
+
   test('an accent that reads well is kept as it is', () {
     expect(
       AppThemeBuilder.readableAccent(

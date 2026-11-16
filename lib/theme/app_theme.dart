@@ -203,7 +203,11 @@ class AppThemeBuilder {
         : FlexColorScheme.dark(
             scheme: scheme,
             keyColors: _keyColors,
-            tones: FlexTones.chroma(Brightness.dark),
+            // A low-chroma brand color (outer space) would turn grey at
+            // the light dark-mode tone; a floor keeps it a color.
+            tones: FlexTones.chroma(
+              Brightness.dark,
+            ).copyWith(primaryMinChroma: 30),
             surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
             blendLevel: _darkBlend,
             subThemesData: _subThemes,
@@ -224,6 +228,16 @@ class AppThemeBuilder {
     }
     return _applyOverrides(theme.toTheme, font.family);
   }
+
+  static final _swatches = <(FlexScheme, Brightness), Color>{};
+
+  /// The theme color [scheme] has in [brightness], for the theme picker's
+  /// swatch: the same color the app takes on once it is chosen.
+  static Color swatch(FlexScheme scheme, Brightness brightness) =>
+      _swatches.putIfAbsent(
+        (scheme, brightness),
+        () => _build(scheme, AppFont.system, brightness).colorScheme.primary,
+      );
 
   static double _contrast(Color a, Color b) {
     final la = a.computeLuminance(), lb = b.computeLuminance();

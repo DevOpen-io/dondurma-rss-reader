@@ -27,6 +27,7 @@ import '../widgets/keyword_input_sheet.dart';
 import '../widgets/settings/settings_widgets.dart';
 import '../widgets/constrained_width.dart';
 import '../theme/app_fonts.dart';
+import '../theme/app_theme.dart';
 import 'legacy_archive_screen.dart';
 import 'privacy_policy_page.dart';
 import 'terms_of_service_page.dart';
@@ -70,8 +71,7 @@ class SettingsScreen extends StatelessWidget {
                 title: l10n.theme,
                 value: settings.flexScheme,
                 items: _kSchemes.map((s) {
-                  final color =
-                      FlexColor.schemes[s]?.light.primary ?? Colors.blue;
+                  final color = AppThemeBuilder.swatch(s, theme.brightness);
                   return DropdownMenuItem<FlexScheme>(
                     value: s,
                     child: Row(
