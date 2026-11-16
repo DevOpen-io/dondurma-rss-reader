@@ -111,7 +111,7 @@ void main() {
         await page.loadSavedCopy(records: records, media: media);
       });
 
-  Future<void> pumpArticle(
+  Future<ArticlePageProvider> pumpArticle(
     WidgetTester tester,
     FeedItem item, {
     bool preparedCover = false,
@@ -145,7 +145,10 @@ void main() {
               item: item,
               currentIndex: 0,
               totalCount: 1,
-              isActive: true,
+              // An active page reloads its saved copy from the app's own
+              // stores, which a test cannot reach; the prepared copy
+              // loaded above would be dropped.
+              isActive: !preparedCover,
             ),
           ),
         ),
@@ -154,6 +157,7 @@ void main() {
     for (var i = 0; i < 10; i++) {
       await tester.pump(const Duration(milliseconds: 100));
     }
+    return page;
   }
 
   void setSize(WidgetTester tester, Size size) {
@@ -164,6 +168,16 @@ void main() {
 
   double coverHeight(WidgetTester tester) =>
       tester.getSize(find.byType(FlexibleSpaceBar)).height;
+
+  /// Lets image loads (real async I/O) finish or fail.
+  Future<void> settleImages(WidgetTester tester) async {
+    for (var i = 0; i < 5; i++) {
+      await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 100)),
+      );
+      await tester.pump();
+    }
+  }
 
   /// The cover drawn from the prepared file, not the network.
   final preparedHero = find.byWidgetPredicate(
@@ -208,8 +222,29 @@ void main() {
         article(imageUrl: imageUrl),
         preparedCover: true,
       );
+      // A cover that loads stays.
+      await settleImages(tester);
+      await snap(tester, 'cover_${size.width.toInt()}x${size.height.toInt()}');
       expect(preparedHero, findsOneWidget);
       expect(coverHeight(tester), 280);
     });
   }
+
+  // Device test 2026-11-16: an article opened offline with an uncached
+  // cover kept a large empty grey block above the title.
+  testWidgets('a cover that cannot load collapses to the no-image header', (
+    tester,
+  ) async {
+    setSize(tester, const Size(412, 915));
+    // Not prepared: the network load fails (no network in tests).
+    await pumpArticle(tester, article(imageUrl: imageUrl));
+    await settleImages(tester);
+    await snap(tester, 'cover_failed');
+
+    expect(find.byType(FlexibleSpaceBar), findsNothing);
+    // Same header as an article without an image.
+    final failedTitleTop = titleRect(tester).top;
+    await pumpArticle(tester, article());
+    expect(titleRect(tester).top, failedTitleTop);
+  });
 }

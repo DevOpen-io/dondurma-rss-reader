@@ -181,6 +181,19 @@ class _ArticlePageState extends State<ArticlePage> {
     );
   }
 
+  /// The cover source (file path or URL) that failed to load.
+  String? _failedCover;
+
+  /// Called from an image error builder, i.e. during build: the header
+  /// switches on the next frame. Keyed by source, so a prepared file that
+  /// appears later gets its own chance.
+  void _coverFailed(String? source) {
+    if (source == null || source == _failedCover) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _failedCover = source);
+    });
+  }
+
   /// Cover height of the full-screen article. A landscape phone (360dp
   /// tall) gave a fixed 280 three quarters of the screen and pushed the
   /// title off it; landscape caps the cover at 40% of the height so the
@@ -252,14 +265,18 @@ class _ArticlePageState extends State<ArticlePage> {
 
     final fontFamily = articleFontFamily(settings.typeface, settings.appFont);
 
-    final hasHero =
+    final hasHeroUrl =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
-    final heroLocal = hasHero
+    final heroLocal = hasHeroUrl
         ? provider.localImages[widget.item.imageUrl]
         : null;
     final heroFile = heroLocal == null
         ? null
         : _trustedLocalImage(provider, heroLocal);
+    // A cover that failed to load (offline and not prepared) gives way to
+    // the no-image header instead of an empty block.
+    final heroSource = heroFile?.path ?? widget.item.imageUrl;
+    final hasHero = hasHeroUrl && heroSource != _failedCover;
 
     final int? readingMinutes = provider.contentReady
         ? provider.readingMinutes
@@ -372,9 +389,10 @@ class _ArticlePageState extends State<ArticlePage> {
                                     heroFile,
                                     fit: BoxFit.cover,
                                     cacheWidth: 900,
-                                    errorBuilder: (_, _, _) => Container(
-                                      color: colorScheme.surfaceContainerHighest,
-                                    ),
+                                    errorBuilder: (_, _, _) {
+                                      _coverFailed(heroSource);
+                                      return const SizedBox.shrink();
+                                    },
                                   )
                                 else
                                   CachedNetworkImage(
@@ -383,9 +401,10 @@ class _ArticlePageState extends State<ArticlePage> {
                                     fit: BoxFit.cover,
                                     memCacheWidth: 900,
                                     maxWidthDiskCache: 900,
-                                    errorWidget: (_, _, _) => Container(
-                                      color: colorScheme.surfaceContainerHighest,
-                                    ),
+                                    errorWidget: (_, _, _) {
+                                      _coverFailed(heroSource);
+                                      return const SizedBox.shrink();
+                                    },
                                   ),
                                 DecoratedBox(
                                   decoration: BoxDecoration(
