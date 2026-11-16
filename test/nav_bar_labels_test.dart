@@ -126,4 +126,67 @@ void main() {
       }
     }
   }
+
+  group('app bar title', () {
+    for (final width in const [360.0, 411.0]) {
+      testWidgets('Turkish "My Feeds" is whole at ${width.toInt()}dp', (
+        tester,
+      ) async {
+        tester.view.physicalSize = Size(width, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(app(const Locale('tr'), AppFont.outfit));
+        await tester.pumpAndSettle();
+        final title = find.descendant(
+          of: find.byType(AppBar),
+          matching: find.text('Kaynaklarım'),
+        );
+        expect(title, findsOneWidget);
+        final paragraph = tester.renderObject<RenderParagraph>(title);
+        expect(paragraph.didExceedMaxLines, isFalse);
+        expect(tester.takeException(), isNull);
+      });
+    }
+
+    testWidgets('a slightly long folder name shrinks a little to fit; a '
+        'very long one ends in an ellipsis', (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(app(const Locale('en'), AppFont.outfit));
+      await tester.pumpAndSettle();
+      final feed = tester.element(find.byType(HomeScreen)).read<FeedProvider>();
+      Text titleOf(String name) => tester.widget<Text>(
+        find.descendant(of: find.byType(AppBar), matching: find.text(name)),
+      );
+
+      feed.selectCategory('Technology');
+      await tester.pumpAndSettle();
+      final normal = titleOf('Technology').style!.fontSize!;
+
+      feed.selectCategory('Science Stories');
+      await tester.pumpAndSettle();
+      final shrunk = titleOf('Science Stories').style!.fontSize!;
+      expect(shrunk, lessThan(normal));
+      expect(shrunk, greaterThanOrEqualTo(normal * 0.8 - 0.01));
+      expect(
+        tester
+            .renderObject<RenderParagraph>(
+              find.descendant(
+                of: find.byType(AppBar),
+                matching: find.text('Science Stories'),
+              ),
+            )
+            .didExceedMaxLines,
+        isFalse,
+      );
+
+      const long = 'Science, Innovation and Space Exploration';
+      feed.selectCategory(long);
+      await tester.pumpAndSettle();
+      expect(titleOf(long).style!.fontSize, moreOrLessEquals(normal * 0.8));
+      expect(titleOf(long).overflow, TextOverflow.ellipsis);
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

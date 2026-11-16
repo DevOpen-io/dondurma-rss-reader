@@ -330,13 +330,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSubmitted: (value) =>
                       context.read<SettingsProvider>().addSearchQuery(value),
                 )
-              : Text(
-                  appBarTitle,
-                  key: ValueKey(appBarTitle),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              : _FittedTitle(appBarTitle, key: ValueKey(appBarTitle)),
         ),
         actions: [
           if (_selectedIndex == 0) ...[
@@ -674,6 +668,45 @@ class _HomeScreenState extends State<HomeScreen> {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+/// The app bar title, shrunk by up to a fifth when it would not fit beside
+/// the actions (long category names), then cut with an ellipsis.
+class _FittedTitle extends StatelessWidget {
+  const _FittedTitle(this.title, {super.key});
+
+  final String title;
+
+  static const _minScale = 0.8;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final style = DefaultTextStyle.of(
+          context,
+        ).style.merge(const TextStyle(fontWeight: FontWeight.bold));
+        final painter = TextPainter(
+          text: TextSpan(text: title, style: style),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+          maxLines: 1,
+        )..layout();
+        final width = painter.width;
+        painter.dispose();
+        final fits = width <= constraints.maxWidth;
+        final scale = fits
+            ? 1.0
+            : math.max(_minScale, constraints.maxWidth / width);
+        return Text(
+          title,
+          style: style.copyWith(fontSize: (style.fontSize ?? 22) * scale),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        );
+      },
     );
   }
 }

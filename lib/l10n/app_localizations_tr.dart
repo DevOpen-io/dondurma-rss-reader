@@ -27,7 +27,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsTab => 'Ayarlar';
 
   @override
-  String get myFeeds => 'Haber Kaynaklarım';
+  String get myFeeds => 'Kaynaklarım';
 
   @override
   String get searchFeeds => 'Haber kaynakları ara...';
