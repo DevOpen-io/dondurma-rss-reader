@@ -74,6 +74,20 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 ---
 
+## Commands
+
+```bash
+flutter pub get --enforce-lockfile      # deps; update pubspec.lock with any dependency change
+flutter analyze                          # CI gate
+flutter test                             # CI gate
+flutter test test/feed_backoff_test.dart # single file
+flutter test --plain-name "<test name>" test/<file>_test.dart  # single test
+flutter gen-l10n                         # after editing lib/l10n/app_{en,tr,es}.arb
+flutter build apk --debug                # local Android check; never push release tags to verify
+```
+
+CI pins Flutter via `FLUTTER_VERSION` in `.github/workflows/build-and-release.yml`. Native builds compile `native/lifecycle` C code through `hook/build.dart`, so a C toolchain (clang on Linux) is required. Most `docs/` guides are written in Turkish.
+
 ## Technical reference
 
 Shared architecture and persistence rules live in [the architecture guide](docs/development/architecture.md). Read [offline storage](docs/development/offline-storage.md) for ownership, preparation and cleanup changes; read [the release guide](docs/operations/releases.md) before build/signing/submission work.
