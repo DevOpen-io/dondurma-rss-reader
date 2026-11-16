@@ -61,17 +61,17 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 
 ### UI follow-ups (usability test, 2026-10-30)
 
-- [ ] Outer Space dark: primary is near-grey; the theme swatch barely shows against the surface and the theme tone is hardly felt
-- [ ] Full text keeps page leftovers on some sites (breadcrumbs, "Trending", tag lists)
-- [ ] Hide or soften internal status labels on rows and the article ("Ready in cache", "Images 1/1")
-- [ ] A manual full-text failure shows both a toast and the inline notice
-- [ ] Google News lists the same story twice
-- [ ] Landscape phone: the bottom bar leaves room for only ~1.5 rows
-- [ ] Rename-folder field looks cramped; text fields use three different styles
-- [ ] Deleting an empty category still says "0 feeds" / "Delete All"
-- [ ] Saved-search long-press sheet has no title
-- [ ] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text
-- [ ] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
+- [x] Outer Space dark: primary is near-grey; the theme swatch barely shows against the surface and the theme tone is hardly felt — dark themes have a primary chroma floor; swatches show the current mode's color
+- [x] Full text keeps page leftovers on some sites (breadcrumbs, "Trending", tag lists) — also share rows; unmarked or non-English labels are still kept
+- [x] Hide or soften internal status labels on rows and the article ("Ready in cache", "Images 1/1") — rows speak only for an incomplete or failed bookmark; the article counts only missing images
+- [x] A manual full-text failure shows both a toast and the inline notice — inline notice only
+- [x] Google News lists the same story twice — copies share a display key (headline without publisher + UTC day)
+- [x] Landscape phone: the bottom bar leaves room for only ~1.5 rows — below 480dp of height the tabs move to a side rail
+- [x] Rename-folder field looks cramped; text fields use three different styles — one shared filled field (`appFieldDecoration`)
+- [x] Deleting an empty category still says "0 feeds" / "Delete All"
+- [x] Saved-search long-press sheet has no title
+- [x] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text — wraps to two lines
+- [x] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
 
 ## Delivery rules
 
