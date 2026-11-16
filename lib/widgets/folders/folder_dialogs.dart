@@ -153,9 +153,18 @@ class _EmojiIconDialogState extends State<EmojiIconDialog> {
               onChanged: (_) => setState(() {}),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 26),
+              // The typed emoji is large; the hint reads as a hint.
               decoration: appFieldDecoration(
                 Theme.of(context).colorScheme,
-              ).copyWith(hintText: l10n.emojiLabel),
+              ).copyWith(
+                hintText: l10n.emojiLabel,
+                hintStyle: TextStyle(
+                  fontSize: 15,
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+                ),
+              ),
             ),
           ),
         ],

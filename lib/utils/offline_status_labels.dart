@@ -77,10 +77,10 @@ String? articleImagesDetail(AppLocalizations l10n, ArticleStatus status) =>
     ? l10n.articleImagesCount(status.readyMedia, status.totalMedia)
     : null;
 
-/// Whether the article strip names the copy's scope: always for a bookmark,
-/// otherwise only beside a detail line or the retry action it explains.
+/// Whether the article strip names the copy's scope: a cached copy only
+/// beside a detail line or the retry action it explains. A bookmark is
+/// always named, and so is an ownerless record — "readable this session"
+/// warns that nothing keeps it (#41).
 bool articleNamesScope(ArticleScope scope, {required bool hasDetail}) =>
     hasDetail ||
-    scope == ArticleScope.saveRequested ||
-    scope == ArticleScope.savedText ||
-    scope == ArticleScope.savedReady;
+    (scope != ArticleScope.cachedReady && scope != ArticleScope.cachedText);

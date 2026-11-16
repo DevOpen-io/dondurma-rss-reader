@@ -177,11 +177,7 @@ void main() {
     });
 
     test('the article names a cached copy only beside a detail or action', () {
-      for (final scope in [
-        ArticleScope.cachedReady,
-        ArticleScope.cachedText,
-        ArticleScope.none,
-      ]) {
+      for (final scope in [ArticleScope.cachedReady, ArticleScope.cachedText]) {
         expect(
           articleNamesScope(scope, hasDetail: false),
           isFalse,
@@ -193,10 +189,12 @@ void main() {
           reason: '$scope',
         );
       }
+      // A bookmark, and the session-only warning of an ownerless record.
       for (final scope in [
         ArticleScope.saveRequested,
         ArticleScope.savedText,
         ArticleScope.savedReady,
+        ArticleScope.none,
       ]) {
         expect(
           articleNamesScope(scope, hasDetail: false),
