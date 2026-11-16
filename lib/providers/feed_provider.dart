@@ -696,6 +696,13 @@ class FeedProvider extends ChangeNotifier {
     }
 
     final String? cachedItemsData = _box.get('cachedItemsJson');
+    if (FeedCachePolicy.isTrimmedLegacySnapshot(
+      snapshot: cachedItemsData,
+      wholeFeedMarker: _box.get(wholeFeedSnapshotKey),
+    )) {
+      // Fetch every feed in full once; the next save marks the snapshot.
+      await _box.delete('feedValidators');
+    }
     if (cachedItemsData != null) {
       try {
         // Decode JSON in a background isolate — large caches can be 500ms+ on
@@ -1956,7 +1963,7 @@ class FeedProvider extends ChangeNotifier {
     final int limit = settings.offlineCacheLimit;
     final items = List<FeedItem>.of(_items);
 
-    final selected = await _membership.reconcile(
+    await _membership.reconcile(
       items: items,
       isBookmarked: bookmarks.isBookmarkedRef,
       subscribedFeedUrls: subscriptions.subscriptions.map((s) => s.url),
@@ -1979,22 +1986,20 @@ class FeedProvider extends ChangeNotifier {
     // could wrongly strip a claim toggled on after enqueue.
     _preparation.sweepCleanup(isBookmarked: bookmarks.isBookmarkedRef).ignore();
     if (generation != _cacheGeneration) return;
-    // The transient snapshot = selected members plus bookmarked items
-    // (bookmarks never consume a temp slot but must stay browsable offline).
-    final itemsToCache = [
-      for (final item in items)
-        if (selected.contains(ArticleRef.of(item)) ||
-            bookmarks.isBookmarked(item.id, feedUrl: item.feedUrl))
-          item,
-    ];
-
+    // The list snapshot holds every article on screen (already bounded per
+    // feed by FeedService.maxItemsPerFeed), not just the [selected] offline
+    // members: a restart rebuilds the list from it, and a feed answering
+    // 304 next time keeps exactly what was saved here.
     // Encode JSON in a background isolate — avoids blocking scroll/animation
     // while serializing potentially hundreds of items.
-    final maps = itemsToCache.map((e) => e.toJson()).toList();
+    final maps = items.map((e) => e.toJson()).toList();
     final String encodedData = await compute(_encodeCachedItems, maps);
     // A reset landed while encoding — dropping the write preserves the wipe.
     if (generation != _cacheGeneration) return;
-    await _box.put('cachedItemsJson', encodedData);
+    await _box.putAll({
+      'cachedItemsJson': encodedData,
+      wholeFeedSnapshotKey: true,
+    });
     // Membership/ownership settled for this pass — refresh row labels.
     unawaited(_refreshArticleStatuses());
   }

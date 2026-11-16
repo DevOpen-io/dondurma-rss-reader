@@ -1342,17 +1342,127 @@ void main() {
       await _waitForRefresh(providers.feed);
 
       // Seven candidates, six slots: only the globally oldest (c2) drops.
-      expect(_persistedItems().map((item) => item.id).toList(), <String>[
-        'a1',
-        'a2',
-        'a3',
-        'b1',
-        'b2',
-        'c1',
-      ]);
+      await providers.feed.idle;
+      final records = ArticleRecordStore.forBox(Hive.box('feeds'));
+      final members = <String>[
+        for (final (url, id) in [
+          (aUrl, 'a1'),
+          (aUrl, 'a2'),
+          (aUrl, 'a3'),
+          (bUrl, 'b1'),
+          (bUrl, 'b2'),
+          (cUrl, 'c1'),
+          (cUrl, 'c2'),
+        ])
+          if ((await records.read(
+                ArticleRef(url, id),
+              ))?.owners.contains('tempCache') ??
+              false)
+            id,
+      ];
+      expect(members, <String>['a1', 'a2', 'a3', 'b1', 'b2', 'c1']);
+      // The list snapshot keeps every article on screen regardless.
+      expect(_persistedItems(), hasLength(7));
       providers.feed.dispose();
     },
   );
+
+  group('a restart never loses articles a feed still serves', () {
+    late String slowUrl;
+    late String fastUrl;
+    final slowIds = [for (var i = 0; i < 10; i++) 'slow-$i'];
+    final fastIds = [for (var i = 0; i < 5; i++) 'fast-$i'];
+
+    setUp(() async {
+      // Five fast items plus the slow feed's newest one fill the six temp
+      // slots: the slow feed keeps one offline member out of ten.
+      await Hive.box('settings').put('offlineCacheLimit', 6);
+      slowUrl = server.url('/slow-feed.xml');
+      fastUrl = server.url('/fast-feed.xml');
+      server.handlers['/slow-feed.xml'] = (request) =>
+          _respondConditional(request, _rss('Slow', slowIds, hour: 1));
+      server.handlers['/fast-feed.xml'] = (request) =>
+          _respondConditional(request, _rss('Fast', fastIds, hour: 12));
+      await _seedSubscriptions([
+        FeedSubscription(url: slowUrl, name: 'Slow', category: 'Test'),
+        FeedSubscription(url: fastUrl, name: 'Fast', category: 'Test'),
+      ]);
+    });
+
+    List<String> slowShown(FeedProvider feed) => [
+      for (final item in feed.items)
+        if (item.feedUrl == slowUrl) item.id,
+    ];
+
+    test('the cache limit trims offline members, then every feed '
+        'answers 304', () async {
+      final first = _providers();
+      await _waitForRefresh(first.feed);
+      expect(slowShown(first.feed), slowIds);
+      await first.feed.idle;
+      final records = ArticleRecordStore.forBox(Hive.box('feeds'));
+      // Offline membership is unchanged: newest six globally.
+      expect(
+        (await records.read(ArticleRef(slowUrl, 'slow-0')))?.owners,
+        contains('tempCache'),
+      );
+      expect(
+        (await records.read(ArticleRef(slowUrl, 'slow-1')))?.owners ??
+            const <String>{},
+        isNot(contains('tempCache')),
+      );
+      first.feed.dispose();
+
+      final restarted = _providers();
+      await _waitForRefresh(restarted.feed);
+      expect(server.counts['/slow-feed.xml'], 2, reason: 'one 304');
+      expect(slowShown(restarted.feed), slowIds);
+      restarted.feed.dispose();
+    });
+
+    test(
+      'a snapshot an older version trimmed is not trusted with a 304',
+      () async {
+        // What 1.6.0 left on disk: the slow feed's one offline member and
+        // validators that make the server answer 304.
+        await _seedCache([
+          for (final id in fastIds) _item(fastUrl, id),
+          _item(slowUrl, 'slow-0'),
+        ]);
+        await Hive.box('feeds').put(
+          'feedValidators',
+          jsonEncode({
+            slowUrl: {'etag': '"v1"'},
+            fastUrl: {'etag': '"v1"'},
+          }),
+        );
+        final providers = _providers();
+        await _waitForRefresh(providers.feed);
+        expect(slowShown(providers.feed), slowIds);
+        await providers.feed.idle;
+        providers.feed.dispose();
+
+        // Healed once: the next start may use 304s again.
+        final restarted = _providers();
+        await _waitForRefresh(restarted.feed);
+        expect(slowShown(restarted.feed), slowIds);
+        expect(server.counts['/slow-feed.xml'], 2);
+        restarted.feed.dispose();
+      },
+    );
+
+    test('a background pass persists whole feeds too', () async {
+      await runBgFetch();
+      final ids = _persistedItems().map((item) => item.id).toSet();
+      expect(ids, containsAll([...slowIds, ...fastIds]));
+
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/slow-feed.xml'], 2, reason: 'one 304');
+      expect(slowShown(providers.feed), slowIds);
+      providers.feed.dispose();
+    });
+  });
 
   test(
     'hasFeedUrl rejects canonical duplicates and surfaces legacy dupes',

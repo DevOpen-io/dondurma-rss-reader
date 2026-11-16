@@ -177,7 +177,14 @@ Future<void> runBgFetch() async {
     final validators = <String, dynamic>{};
     try {
       final rawValidators = feedsBox.get('feedValidators');
-      if (rawValidators is String && rawValidators.isNotEmpty) {
+      // An older version's trimmed snapshot: fetch every feed in full once.
+      final trimmedSnapshot = FeedCachePolicy.isTrimmedLegacySnapshot(
+        snapshot: feedsBox.get('cachedItemsJson'),
+        wholeFeedMarker: feedsBox.get(wholeFeedSnapshotKey),
+      );
+      if (!trimmedSnapshot &&
+          rawValidators is String &&
+          rawValidators.isNotEmpty) {
         validators.addAll(jsonDecode(rawValidators) as Map<String, dynamic>);
       }
     } catch (_) {}
@@ -445,9 +452,8 @@ Future<List<FeedItem>?> _persistBgCache(
   bool isBookmarked(ArticleRef ref) =>
       bookmarkedRefs.contains(ref) || legacyOnly.contains(ref.id);
 
-  final Set<ArticleRef> selectedRefs;
   try {
-    selectedRefs = await membership.reconcile(
+    await membership.reconcile(
       items: items,
       isBookmarked: isBookmarked,
       subscribedFeedUrls: subscriptions.map((s) => s.url),
@@ -478,14 +484,12 @@ Future<List<FeedItem>?> _persistBgCache(
     preparation.dispose();
   }
 
-  // Snapshot candidates = fresh merge plus bookmarked articles the merge
-  // dropped (unsubscribed feeds) — bookmarks ride along uncounted (#37).
+  // Snapshot = the whole fresh merge, not just the offline members, plus
+  // bookmarked articles the merge dropped (unsubscribed feeds): the next
+  // start rebuilds the list from it and a 304 keeps what was saved (#37).
   final inMerge = items.map((e) => (e.feedUrl, e.id)).toSet();
-  final selected = [
-    for (final item in items)
-      if (selectedRefs.contains(ArticleRef.of(item)) ||
-          isBookmarked(ArticleRef.of(item)))
-        item,
+  final snapshot = [
+    ...items,
     for (final item in bookmarkedItems)
       if (inMerge.add((item.feedUrl, item.id))) item,
   ];
@@ -503,9 +507,12 @@ Future<List<FeedItem>?> _persistBgCache(
       published = const <FeedItem>[];
       return;
     }
-    final maps = selected.map((e) => e.toJson()).toList();
-    await feedsBox.put('cachedItemsJson', jsonEncode(maps));
-    published = selected;
+    final maps = snapshot.map((e) => e.toJson()).toList();
+    await feedsBox.putAll({
+      'cachedItemsJson': jsonEncode(maps),
+      wholeFeedSnapshotKey: true,
+    });
+    published = snapshot;
   });
   return published;
 }
