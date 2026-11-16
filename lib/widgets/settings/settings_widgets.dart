@@ -155,20 +155,28 @@ class SettingsSwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: SettingsIcon(icon: icon),
-      title: _SettingsTileTitle(title),
-      trailing: _withInfo(
-        title,
-        subtitle,
-        Switch.adaptive(
-          value: value,
-          onChanged: onChanged,
-          activeTrackColor: theme.colorScheme.primary,
+    // The row is the switch for screen readers: one node named by the
+    // label and toggled by a tap ("Ad blocker, switch, on"), instead of a
+    // labelled row plus a nameless switch. The ⓘ button stays its own node.
+    return Semantics(
+      toggled: value,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: SettingsIcon(icon: icon),
+        title: _SettingsTileTitle(title),
+        trailing: _withInfo(
+          title,
+          subtitle,
+          ExcludeSemantics(
+            child: Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: theme.colorScheme.primary,
+            ),
+          ),
         ),
+        onTap: () => onChanged(!value),
       ),
-      onTap: () => onChanged(!value),
     );
   }
 }
