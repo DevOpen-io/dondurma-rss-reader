@@ -32,7 +32,15 @@
   "emojiLabel": "Emoji",
   "folderName": "Category Name",
   "deleteFolder": "Delete Category",
-  "deleteFolderConfirm": "Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.",
+  "deleteFolderConfirm": "Are you sure you want to delete the category \"{categoryName}\"?\n\n{feedCount, plural, =1{This will permanently remove the 1 RSS feed inside it from your subscriptions.} other{This will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.}}",
+  "deleteEmptyFolderConfirm": "Delete the empty category \"{categoryName}\"?",
+  "@deleteEmptyFolderConfirm": {
+    "placeholders": {
+      "categoryName": {
+        "type": "String"
+      }
+    }
+  },
   "@deleteFolderConfirm": {
     "placeholders": {
       "categoryName": {
@@ -69,14 +77,6 @@
   "reset": "Reset",
   "addRssFeed": "Add RSS Feed",
   "addFeedSubtitle": "Paste a site or feed address to subscribe",
-  "useSuggestedName": "Use \"{name}\" as name",
-  "@useSuggestedName": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
   "addingFeed": "Adding…",
   "feedUrlLabel": "Feed URL",
   "feedUrlHint": "e.g. https://techcrunch.com/feed/",
@@ -95,6 +95,19 @@
       "error": {}
     }
   },
+  "feedErrorNetwork": "Couldn't connect",
+  "feedErrorGone": "Feed not found",
+  "feedErrorBlocked": "The site refused access",
+  "feedErrorServer": "Server error ({code})",
+  "@feedErrorServer": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "feedErrorNotFeed": "The address is a web page, not a feed",
+  "feedErrorParse": "The feed couldn't be read",
+  "feedErrorUnknown": "Couldn't refresh",
+  "feedEmpty": "No articles in this feed",
   "categories": "Categories",
   "allNews": "All News",
   "allArticles": "All Articles",
@@ -400,9 +413,12 @@
   "articleStatusSaveRequested": "Save requested",
   "articleStatusCouldNotSave": "Could not save",
   "articleStatusRssSaved": "RSS text saved",
+  "articleStatusSummaryOnlySaved": "Only the feed summary is saved",
+  "@articleStatusSummaryOnlySaved": {
+    "description": "Bookmark status when the saved copy is only the feed's short excerpt, not the full article"
+  },
   "articleStatusRssCached": "RSS text cached",
   "articleStatusReadableSession": "Readable in this session",
-  "articleWaitPreparing": "Preparing missing parts",
   "articleWaitUnmetered": "Waiting for unmetered network",
   "articleWaitRetryEarliest": "Retry allowed earliest at {time}",
   "@articleWaitRetryEarliest": {
@@ -591,6 +607,9 @@
   "saveSearch": "Save search",
   "savedSearches": "Saved searches",
   "savedSearchName": "Name",
+  "searchSaved": "Search saved",
+  "saveToDevice": "Save to device",
+  "shareFile": "Share",
   "rename": "Rename",
   "tagHintDesktop": "Right-click a bookmark to tag it",
   "clearFilters": "Show all articles",
@@ -637,5 +656,8 @@
         "type": "int"
       }
     }
-  }
+  },
+  "swipeMarkedRead": "Marked as read",
+  "swipeMarkedUnread": "Marked as unread",
+  "feedOptions": "Feed options"
 }

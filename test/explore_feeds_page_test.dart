@@ -13,6 +13,7 @@ import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
 import 'package:ice_cream_rss_reader/screens/explore_feeds_page.dart';
+import 'package:ice_cream_rss_reader/widgets/explore_feeds/explore_feeds_widgets.dart';
 import 'package:provider/provider.dart';
 
 void main() {
@@ -78,5 +79,31 @@ void main() {
     await tester.pump();
 
     expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the filter bar names its picker in the app language', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('tr'),
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => ExploreFilterBar(
+              selectedCategory: null,
+              totalCount: 3,
+              onTap: () {},
+              colorScheme: Theme.of(context).colorScheme,
+              l10n: AppLocalizations.of(context),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Kategoriler'), findsOneWidget);
+    expect(find.text('Categories'), findsNothing);
   });
 }

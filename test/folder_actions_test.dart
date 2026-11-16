@@ -31,6 +31,9 @@ class _SpyFeedProvider extends FeedProvider {
   int refreshes = 0;
 
   @override
+  String? feedErrorFor(String url) => feedErrors[url];
+
+  @override
   Future<void> refreshAll({
     bool queueIfRunning = false,
     bool userInitiated = false,
@@ -38,6 +41,9 @@ class _SpyFeedProvider extends FeedProvider {
     refreshes++;
   }
 }
+
+/// Stored per-feed verdicts the spy provider reports; reset per test.
+var feedErrors = <String, String>{};
 
 /// Feed/folder action flows reachable from the drawer, the categories screen
 /// and the desktop sidebar: same sheets, same confirmations, same provider
@@ -96,6 +102,7 @@ void main() {
       ]),
     );
     subs = SubscriptionProvider();
+    feedErrors = {};
   });
 
   final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
@@ -174,17 +181,101 @@ void main() {
 
   // ── Categories screen ────────────────────────────────────────────────
 
+  /// The ⋮ button on a categories-screen feed row.
+  Finder feedOptions(String name) => find.descendant(
+    of: find.ancestor(
+      of: find.text(name),
+      matching: find.byWidgetPredicate(
+        (w) => w.runtimeType.toString() == '_FeedRow',
+      ),
+    ),
+    matching: find.byTooltip('Feed options'),
+  );
+
   Future<void> pumpCategories(WidgetTester tester) async {
     await tester.pumpWidget(app(const Scaffold(body: CategoriesScreen())));
     await settle(tester);
   }
 
   group('categories screen', () {
-    testWidgets('tapping a feed opens the feed action sheet', (tester) async {
+    testWidgets('a feed whose last fetch failed says why; healthy feeds '
+        'show nothing', (tester) async {
+      phoneSurface(tester);
+      // A code from this version, a raw message from an older one; Feed B1
+      // is healthy.
+      feedErrors = {
+        'https://a.example/feed': 'gone',
+        'https://a2.example/feed': 'Failed to load RSS feed (Status: 500)',
+      };
+      await pumpCategories(tester);
+
+      expect(find.text('Feed not found'), findsOneWidget);
+      expect(find.text("Couldn't refresh"), findsOneWidget);
+      expect(find.byIcon(Icons.error_outline_rounded), findsNWidgets(2));
+      expect(find.text('b.example'), findsOneWidget, reason: 'healthy row');
+
+      await tester.tap(feedOptions('Feed A1'));
+      await settle(tester);
+      expect(
+        find.descendant(
+          of: find.byType(FeedActionSheet),
+          matching: find.text('Last refresh failed: Feed not found'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a feed with no articles is noted, not called failed', (
+      tester,
+    ) async {
+      phoneSurface(tester);
+      feedErrors = {'https://a.example/feed': 'empty'};
+      await pumpCategories(tester);
+
+      expect(find.text('No articles in this feed'), findsOneWidget);
+      await tester.tap(feedOptions('Feed A1'));
+      await settle(tester);
+      expect(find.textContaining('Last refresh failed'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(FeedActionSheet),
+          matching: find.text('No articles in this feed'),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    // Tap opens the feed like the drawer does; the sheet is behind ⋮ and a
+    // long press (device test, 2026-11-16: tap opened settings).
+    testWidgets('tapping a feed shows its articles', (tester) async {
       phoneSurface(tester);
       await pumpCategories(tester);
 
       await tester.tap(find.text('Feed A1'));
+      await settle(tester);
+
+      expect(find.byType(FeedActionSheet), findsNothing);
+      expect(feedOf(tester).selectedFeedUrl, 'https://a.example/feed');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('long-pressing a feed opens its actions', (tester) async {
+      phoneSurface(tester);
+      await pumpCategories(tester);
+
+      await tester.longPress(find.text('Feed A1'));
+      await settle(tester);
+
+      expect(find.byType(FeedActionSheet), findsOneWidget);
+      expect(feedOf(tester).selectedFeedUrl, isNull);
+    });
+
+    testWidgets('the ⋮ button opens the feed action sheet', (tester) async {
+      phoneSurface(tester);
+      await pumpCategories(tester);
+
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
 
       expect(find.byType(FeedActionSheet), findsOneWidget);
@@ -199,7 +290,7 @@ void main() {
       await pumpCategories(tester);
       final before = feedOf(tester).refreshes;
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
       await tester.tap(find.text('Delete Feed'));
       await settle(tester);
@@ -226,7 +317,7 @@ void main() {
       phoneSurface(tester);
       await pumpCategories(tester);
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
       await tester.tap(find.text('Delete Feed'));
       await settle(tester);
@@ -246,7 +337,7 @@ void main() {
       final before = feedOf(tester).refreshes;
 
       // Science sorts first — the second overflow menu belongs to Tech.
-      await tester.tap(find.byIcon(Icons.more_vert).at(1));
+      await tester.tap(find.byTooltip('Show menu').at(1));
       await settle(tester);
       await tester.tap(find.text('Delete Category'));
       await settle(tester);
@@ -264,13 +355,64 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('an empty folder is deleted plainly, without a feed count', (
+      tester,
+    ) async {
+      await tester.runAsync(
+        () => Hive.box(
+          'feeds',
+        ).put('custom_categories', jsonEncode(['Empty'])),
+      );
+      subs = SubscriptionProvider();
+      phoneSurface(tester);
+      await pumpCategories(tester);
+      final before = feedOf(tester).refreshes;
+
+      // Empty sorts first.
+      await tester.tap(find.byTooltip('Show menu').first);
+      await settle(tester);
+      await tester.tap(find.text('Delete Category'));
+      await settle(tester);
+
+      expect(find.textContaining('0 RSS'), findsNothing);
+      expect(find.text('Delete All'), findsNothing);
+      expect(find.textContaining('"Empty"'), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ActionSheet),
+          matching: find.widgetWithText(FilledButton, 'Delete'),
+        ),
+      );
+      await settleWrites(tester, before + 1);
+
+      expect(subs.categories, isNot(contains('Empty')));
+      expect(subs.subscriptions, hasLength(3));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a folder with one feed names one feed', (tester) async {
+      phoneSurface(tester);
+      await pumpCategories(tester);
+
+      // Science (one feed) sorts first.
+      await tester.tap(find.byTooltip('Show menu').first);
+      await settle(tester);
+      await tester.tap(find.text('Delete Category'));
+      await settle(tester);
+
+      expect(find.textContaining('all 1 RSS feeds'), findsNothing);
+      expect(find.textContaining('1 RSS feed '), findsOneWidget);
+      expect(find.text('Delete All'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('mobile sheets use the built-in drag handle only', (
       tester,
     ) async {
       phoneSurface(tester);
       await pumpCategories(tester);
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
 
       expect(
@@ -286,7 +428,7 @@ void main() {
       desktopSurface(tester);
       await pumpCategories(tester);
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
 
       expect(

@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -254,6 +255,177 @@ void main() {
         await tester.pumpAndSettle();
         expect(add('Add feed'), findsOneWidget, reason: tab);
       }
+    });
+
+    group('landscape phone', () {
+      /// A landscape phone with its status bar, at [scale] text size.
+      void landscape(WidgetTester tester, Size size, {double scale = 1}) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        tester.view.padding = const FakeViewPadding(top: 24);
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+      }
+
+      Finder inRail(Finder f) =>
+          find.descendant(of: find.byType(NavigationRail), matching: f);
+
+      for (final size in const [Size(732, 360), Size(915, 412)]) {
+        for (final scale in const [1.0, 1.3]) {
+          testWidgets(
+            '${size.width.toInt()}x${size.height.toInt()} at ${scale}x: '
+            'every tab and the add button fit in a side rail',
+            (tester) async {
+              landscape(tester, size, scale: scale);
+              await tester.pumpWidget(wrapHome());
+              await tester.pumpAndSettle();
+
+              expect(find.byType(NavigationBar), findsNothing);
+              expect(find.byType(NavigationRail), findsOneWidget);
+              final appBarBottom = tester
+                  .getBottomLeft(find.byType(AppBar))
+                  .dy;
+              expect(
+                size.height - appBarBottom,
+                greaterThan(size.height * 0.75),
+              );
+              for (final target in [
+                find.byKey(const ValueKey('add-feed')),
+                inRail(find.byIcon(Icons.list)),
+                inRail(find.byIcon(Icons.folder_outlined)),
+                inRail(find.byIcon(Icons.bookmark_border)),
+                inRail(find.byIcon(Icons.settings_outlined)),
+              ]) {
+                expect(target, findsOneWidget);
+                expect(
+                  tester.getRect(target).bottom,
+                  lessThanOrEqualTo(size.height),
+                  reason: '$target is cut off',
+                );
+              }
+              expect(tester.takeException(), isNull);
+
+              // The add action leads the rail and still adds.
+              await tester.tap(find.byKey(const ValueKey('add-feed')));
+              await tester.pumpAndSettle();
+              expect(find.byType(AddFeedDialog), findsOneWidget);
+              Navigator.of(tester.element(find.byType(AddFeedDialog))).pop();
+              await tester.pumpAndSettle();
+
+              await tester.tap(inRail(find.byIcon(Icons.folder_outlined)));
+              await tester.pumpAndSettle();
+              expect(find.byKey(const ValueKey('add-folder')), findsOneWidget);
+              await tester.tap(inRail(find.byIcon(Icons.settings_outlined)));
+              await tester.pumpAndSettle();
+              expect(inRail(find.byIcon(Icons.settings)), findsOneWidget);
+              expect(tester.takeException(), isNull);
+            },
+          );
+        }
+      }
+
+      testWidgets('640x320: the rail scrolls instead of overflowing', (
+        tester,
+      ) async {
+        landscape(tester, const Size(640, 320), scale: 1.3);
+        await tester.pumpWidget(wrapHome());
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final settings = inRail(find.byIcon(Icons.settings_outlined));
+        await tester.ensureVisible(settings);
+        await tester.pumpAndSettle();
+        await tester.tap(settings);
+        await tester.pumpAndSettle();
+        expect(inRail(find.byIcon(Icons.settings)), findsOneWidget);
+        // The empty categories screen fits too.
+        final folders = inRail(find.byIcon(Icons.folder_outlined));
+        await tester.ensureVisible(folders);
+        await tester.pumpAndSettle();
+        await tester.tap(folders);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('the rail names the add button and counts four tabs', (
+        tester,
+      ) async {
+        landscape(tester, const Size(732, 360));
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(wrapHome());
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel(RegExp(r'of 5')), findsNothing);
+        expect(find.bySemanticsLabel(RegExp(r'Tab 4 of 4')), findsOneWidget);
+        // Named once: the tooltip adds no second "Add feed".
+        expect(find.bySemanticsLabel('Add feed'), findsOneWidget);
+        expect(
+          tester
+              .getSemantics(find.bySemanticsLabel('Add feed'))
+              .flagsCollection
+              .isButton,
+          isTrue,
+        );
+        semantics.dispose();
+      });
+
+      testWidgets('portrait phones keep the bottom bar, split screen too', (
+        tester,
+      ) async {
+        for (final size in const [Size(360, 732), Size(360, 380)]) {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+          await tester.pumpWidget(wrapHome());
+          await tester.pumpAndSettle();
+          expect(find.byType(NavigationBar), findsOneWidget, reason: '$size');
+          expect(find.byType(NavigationRail), findsNothing, reason: '$size');
+        }
+      });
+    });
+
+    testWidgets('screen readers count four tabs; the add button is not one', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel(RegExp(r'of 5')), findsNothing);
+      for (final (i, tab) in [
+        'Feeds',
+        'Categories',
+        'Bookmarks',
+        'Settings',
+      ].indexed) {
+        expect(
+          find.bySemanticsLabel(RegExp('^$tab\\nTab ${i + 1} of 4\$')),
+          findsOneWidget,
+          reason: tab,
+        );
+      }
+      final addNode = tester.getSemantics(
+        find.byKey(const ValueKey('add-feed')),
+      );
+      expect(addNode.label, 'Add feed');
+      expect(addNode.flagsCollection.isButton, isTrue);
+      expect(addNode.flagsCollection.isSelected, isNot(Tristate.isTrue));
+
+      // The selected tab still reads as selected, and moves on tap.
+      Finder barText(String text) => find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text(text),
+      );
+      expect(
+        tester.getSemantics(barText('Feeds')).flagsCollection.isSelected,
+        Tristate.isTrue,
+      );
+      await tester.tap(barText('Bookmarks'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(barText('Bookmarks')).flagsCollection.isSelected,
+        Tristate.isTrue,
+      );
+      semantics.dispose();
     });
 
     testWidgets('a link shared to the app opens add feed with it', (

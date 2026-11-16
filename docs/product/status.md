@@ -37,7 +37,7 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Full-screen article image viewer: tap an inline, gallery or cover image; pinch/wheel zoom, double-tap zoom/reset, back/Escape/close; an image inside a link offers that link ([#62](https://github.com/DevOpen-io/dondurma-rss-reader/issues/62), 2026-10-29)
 - [x] Optional mark-as-read on scroll (Settings, off by default): article rows seen on screen and scrolled past the top edge are marked read in the phone and desktop lists ([#63](https://github.com/DevOpen-io/dondurma-rss-reader/issues/63), 2026-10-29)
 - [x] Feed discovery: a site, YouTube channel/handle, subreddit, Mastodon or Bluesky address resolves to its feed (page alternates, then common paths); several feeds offer a choice ([#64](https://github.com/DevOpen-io/dondurma-rss-reader/issues/64), 2026-10-29)
-- [x] Whole-app backup: one JSON file with feeds, folders, settings, bookmarks (article as saved, no images) and read marks; restore checks the file, then merges feeds/bookmarks/read marks and replaces settings ([#65](https://github.com/DevOpen-io/dondurma-rss-reader/issues/65), 2026-10-29)
+- [x] Whole-app backup: one JSON file with feeds, folders, settings, bookmarks (article as saved, no images) and read marks; restore checks the file, then merges feeds/bookmarks/read marks and replaces settings ([#65](https://github.com/DevOpen-io/dondurma-rss-reader/issues/65), 2026-10-29). On Android, backup and OPML export ask "Save to device" (system save dialog, `MainActivity` files channel) or "Share"; iOS shares, desktop uses the native save dialog (2026-11-16, unverified on device)
 - [x] Read aloud with the device speech engine (flutter_tts; Android, iOS, macOS, Windows in code — only Android exercised, the others unverified; hidden on Linux): button beside the reading-mode switch, floating pause/resume/stop bar; one reader for the app, stops on another article or leaving it; a missing or disabled engine ends with a message, not a stuck bar ([#66](https://github.com/DevOpen-io/dondurma-rss-reader/issues/66), 2026-10-29)
 - [x] Read-aloud language: detected per article from its text (script + common words; en, tr, es, de, fr, it, pt, nl, ru, ar and other scripts), else the app language; a language pill in the bar opens a sheet of the engine's languages; the choice is kept per feed (`FeedSubscription.speechLanguage`, in backups); a language the engine lacks or refuses reads with the default voice (2026-10-30, unverified on device)
 - [x] Android share sheet: sharing a link to the app opens Add feed with it filled in (and feed discovery on save); a share before onboarding waits for the home screen. A UI-less ShareActivity brings the app up with the launcher's exact intent, so a share reuses the task the launcher started; a task left by a widget or notification can still leave a second one ([#79](https://github.com/DevOpen-io/dondurma-rss-reader/issues/79)). iOS share extension not built ([#67](https://github.com/DevOpen-io/dondurma-rss-reader/issues/67), 2026-10-29)
@@ -61,17 +61,44 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 
 ### UI follow-ups (usability test, 2026-10-30)
 
-- [ ] Outer Space dark: primary is near-grey; the theme swatch barely shows against the surface and the theme tone is hardly felt
-- [ ] Full text keeps page leftovers on some sites (breadcrumbs, "Trending", tag lists)
-- [ ] Hide or soften internal status labels on rows and the article ("Ready in cache", "Images 1/1")
-- [ ] A manual full-text failure shows both a toast and the inline notice
-- [ ] Google News lists the same story twice
-- [ ] Landscape phone: the bottom bar leaves room for only ~1.5 rows
-- [ ] Rename-folder field looks cramped; text fields use three different styles
-- [ ] Deleting an empty category still says "0 feeds" / "Delete All"
-- [ ] Saved-search long-press sheet has no title
-- [ ] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text
-- [ ] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
+- [x] Outer Space dark: primary is near-grey; the theme swatch barely shows against the surface and the theme tone is hardly felt — dark themes have a primary chroma floor; swatches show the current mode's color
+- [x] Full text keeps page leftovers on some sites (breadcrumbs, "Trending", tag lists) — also share rows; unmarked or non-English labels are still kept
+- [x] Hide or soften internal status labels on rows and the article ("Ready in cache", "Images 1/1") — rows speak only for an incomplete or failed bookmark; the article counts only missing images
+- [x] A manual full-text failure shows both a toast and the inline notice — inline notice only
+- [x] Google News lists the same story twice — copies share a display key (headline without publisher + UTC day)
+- [x] Landscape phone: the bottom bar leaves room for only ~1.5 rows — below 480dp of height the tabs move to a side rail
+- [x] Rename-folder field looks cramped; text fields use three different styles — one shared filled field (`appFieldDecoration`)
+- [x] Deleting an empty category still says "0 feeds" / "Delete All"
+- [x] Saved-search long-press sheet has no title
+- [x] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text — wraps to two lines
+- [x] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
+
+### Device test follow-ups (Android emulator, 2026-11-16)
+
+Fixed on `ui/usability-followups`:
+
+- [x] Back with the drawer open closed the app (predictive back) — the open drawer claims back and closes
+- [x] Slow feeds lost articles after a restart (snapshot kept only offline-cache members; HTTP 304 reused it) — the whole list is persisted; older trimmed snapshots heal once
+- [x] Read marks lost: the WorkManager isolate and the app's isolate wrote the same Hive box ("Recovering corrupted box") — one writer per process (`StorageOwner`), the task hands its pass to a live app
+- [x] "Saved copy ready" on a bookmark holding only the feed teaser — "Only the feed summary is saved"
+- [x] Status labels on fresh articles ("RSS text cached", "Preparing missing parts") — automatic cache is silent; bookmarks still report
+- [x] Bottom-bar labels broke in Turkish / with large text; app bar title cut ("Haber Kaynakla…")
+- [x] Empty grey cover offline; landscape cover took ~75% of the screen
+- [x] Settings info icons stole row taps; switches had no accessible name; long option values broke their row
+- [x] Swipe-to-read had no undo; categories tab: tap opened settings, feed titled with its folder
+- [x] Broken/empty feeds silent — reason shown in the categories list and feed sheet
+- [x] Discovery named feeds from the domain ("Theverge"); site taglines and "READ MORE…" in rows
+- [x] Backup/OPML export only via share — "Save to device"; Android could not pick a saved .opml to import
+- [x] Factory reset kept the language; "Categories" untranslated; refresh toast ring read as loading
+- [x] Saved search had no confirmation; tag field not focused; add-feed accepted pasted garbage; typing an address fast broke the dialog
+
+Open:
+
+- [ ] Onboarding suggests a dead feed (Beetekno, "Feed not found") — audit the suggested-feed list
+- [ ] Drawer: the "Uncategorized" group shows no count and does not expand to its feeds
+- [ ] Android widgets: both are named "Dondurma Rss Reader" in the picker, preview text is Turkish on an English device, the header count ("50") is unexplained
+- [ ] TalkBack not exercised on device (adb cannot drive its gestures); semantics verified through the accessibility tree only
+- [ ] Bot-protected sites (e.g. Apartment Therapy, 403) give no full text
 
 ## Delivery rules
 

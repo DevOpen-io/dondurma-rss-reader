@@ -253,8 +253,14 @@ abstract class AppLocalizations {
   /// No description provided for @deleteFolderConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.'**
+  /// **'Are you sure you want to delete the category \"{categoryName}\"?\n\n{feedCount, plural, =1{This will permanently remove the 1 RSS feed inside it from your subscriptions.} other{This will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.}}'**
   String deleteFolderConfirm(String categoryName, int feedCount);
+
+  /// No description provided for @deleteEmptyFolderConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the empty category \"{categoryName}\"?'**
+  String deleteEmptyFolderConfirm(String categoryName);
 
   /// No description provided for @deleteAll.
   ///
@@ -370,12 +376,6 @@ abstract class AppLocalizations {
   /// **'Paste a site or feed address to subscribe'**
   String get addFeedSubtitle;
 
-  /// No description provided for @useSuggestedName.
-  ///
-  /// In en, this message translates to:
-  /// **'Use \"{name}\" as name'**
-  String useSuggestedName(String name);
-
   /// No description provided for @addingFeed.
   ///
   /// In en, this message translates to:
@@ -453,6 +453,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last refresh failed: {error}'**
   String lastFetchFailed(Object error);
+
+  /// No description provided for @feedErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect'**
+  String get feedErrorNetwork;
+
+  /// No description provided for @feedErrorGone.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed not found'**
+  String get feedErrorGone;
+
+  /// No description provided for @feedErrorBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The site refused access'**
+  String get feedErrorBlocked;
+
+  /// No description provided for @feedErrorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error ({code})'**
+  String feedErrorServer(Object code);
+
+  /// No description provided for @feedErrorNotFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'The address is a web page, not a feed'**
+  String get feedErrorNotFeed;
+
+  /// No description provided for @feedErrorParse.
+  ///
+  /// In en, this message translates to:
+  /// **'The feed couldn\'t be read'**
+  String get feedErrorParse;
+
+  /// No description provided for @feedErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh'**
+  String get feedErrorUnknown;
+
+  /// No description provided for @feedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No articles in this feed'**
+  String get feedEmpty;
 
   /// No description provided for @categories.
   ///
@@ -1594,6 +1642,12 @@ abstract class AppLocalizations {
   /// **'RSS text saved'**
   String get articleStatusRssSaved;
 
+  /// Bookmark status when the saved copy is only the feed's short excerpt, not the full article
+  ///
+  /// In en, this message translates to:
+  /// **'Only the feed summary is saved'**
+  String get articleStatusSummaryOnlySaved;
+
   /// No description provided for @articleStatusRssCached.
   ///
   /// In en, this message translates to:
@@ -1605,12 +1659,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Readable in this session'**
   String get articleStatusReadableSession;
-
-  /// No description provided for @articleWaitPreparing.
-  ///
-  /// In en, this message translates to:
-  /// **'Preparing missing parts'**
-  String get articleWaitPreparing;
 
   /// No description provided for @articleWaitUnmetered.
   ///
@@ -2434,6 +2482,24 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get savedSearchName;
 
+  /// No description provided for @searchSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Search saved'**
+  String get searchSaved;
+
+  /// No description provided for @saveToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to device'**
+  String get saveToDevice;
+
+  /// No description provided for @shareFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareFile;
+
   /// No description provided for @rename.
   ///
   /// In en, this message translates to:
@@ -2589,6 +2655,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count}d'**
   String timeDaysShort(int count);
+
+  /// No description provided for @swipeMarkedRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as read'**
+  String get swipeMarkedRead;
+
+  /// No description provided for @swipeMarkedUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as unread'**
+  String get swipeMarkedUnread;
+
+  /// No description provided for @feedOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed options'**
+  String get feedOptions;
 }
 
 class _AppLocalizationsDelegate

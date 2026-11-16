@@ -13,6 +13,7 @@ import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'adaptive_dialog.dart';
 import 'folders/category_picker_sheet.dart';
+import 'app_field_decoration.dart';
 
 class AddFeedDialog extends StatefulWidget {
   /// An address to start from — a link shared to the app.
@@ -40,12 +41,10 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void initState() {
     super.initState();
     _urlController.addListener(_onUrlChanged);
-    _nameController.addListener(() => setState(() {}));
     final initialUrl = widget.initialUrl;
     if (initialUrl != null) {
       _urlController.text = initialUrl;
       _onUrlChanged();
-      _applySuggestion();
     }
     _urlFocusNode.addListener(
       () => setState(() => _urlFocused = _urlFocusNode.hasFocus),
@@ -64,30 +63,13 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
   void _onUrlChanged() {
     final val = _typedUrl;
-    final uri = Uri.tryParse(val);
     setState(() {
       _urlHasInput = val.isNotEmpty;
-      _urlFormatValid = val.isNotEmpty && uri != null && uri.isAbsolute;
+      _urlFormatValid = isFeedAddress(val);
       if (_urlValidationError != null && _urlFormatValid) {
         _urlValidationError = null;
       }
     });
-  }
-
-  String? get _suggestedName {
-    if (!_urlFormatValid || _nameController.text.isNotEmpty) return null;
-    final uri = Uri.tryParse(_typedUrl);
-    if (uri == null) return null;
-    final host = uri.host.replaceFirst(RegExp(r'^www\.'), '');
-    if (host.isEmpty) return null;
-    final segment = host.split('.').first;
-    if (segment.isEmpty) return null;
-    return '${segment[0].toUpperCase()}${segment.substring(1)}';
-  }
-
-  void _applySuggestion() {
-    final name = _suggestedName;
-    if (name != null) _nameController.text = name;
   }
 
   void _openCategorySheet(BuildContext context) {
@@ -124,31 +106,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     final cs = theme.colorScheme;
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
 
-    final supportFieldDecoration = InputDecoration(
-      filled: true,
-      fillColor: cs.surfaceContainerHigh,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.primary, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.error, width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.error, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
+    final supportFieldDecoration = appFieldDecoration(cs);
 
     return Form(
       key: _formKey,
@@ -215,22 +173,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                       cs: cs,
                       theme: theme,
                       validationError: _urlValidationError,
-                    ),
-                    // Name suggestion
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      child: _suggestedName != null
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: _SuggestionRow(
-                                label: l10n.useSuggestedName(_suggestedName!),
-                                onTap: _applySuggestion,
-                                cs: cs,
-                                theme: theme,
-                              ),
-                            )
-                          : const SizedBox.shrink(),
                     ),
                     const SizedBox(height: 16),
                     // Name field
@@ -318,10 +260,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
     setState(() => _isLoading = true);
 
-    // No name typed: the site's own, as the suggestion under the field.
-    final name = _nameController.text.trim().isEmpty
-        ? (_suggestedName ?? _typedUrl)
-        : _nameController.text.trim();
+    // No name typed: the provider takes the feed's own title.
+    final name = _nameController.text.trim();
     String category = _categoryController.text.trim();
     if (category.isEmpty) category = 'Uncategorized';
     final typed = _typedUrl;
@@ -355,9 +295,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
       }
       if (success) {
         if (context.mounted) {
+          final added = context
+              .read<SubscriptionProvider>()
+              .subscriptions
+              .where((s) => s.url == url)
+              .firstOrNull;
           context.pop();
           showAppToast(
-            l10n.addedSubscription(name),
+            l10n.addedSubscription(added?.name ?? (name.isEmpty ? url : name)),
             type: AppToastType.success,
           );
         }
@@ -511,26 +456,21 @@ class _UrlCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              // Swapped without a cross-fade: typing flips it faster than a
+              // fade ends, and an AnimatedSwitcher then held two children
+              // with the same key (a red error screen on device).
               if (hasInput)
-                AnimatedSwitcher(
-                  duration: motionDuration(
-                    context,
-                    const Duration(milliseconds: 180),
-                  ),
-                  child: isValid
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          key: const ValueKey('ok'),
-                          color: cs.primary,
-                          size: 16,
-                        )
-                      : Icon(
-                          Icons.error_outline_rounded,
-                          key: const ValueKey('err'),
-                          color: cs.error,
-                          size: 16,
-                        ),
-                ),
+                isValid
+                    ? Icon(
+                        Icons.check_circle_rounded,
+                        color: cs.primary,
+                        size: 16,
+                      )
+                    : Icon(
+                        Icons.error_outline_rounded,
+                        color: cs.error,
+                        size: 16,
+                      ),
             ],
           ),
           const SizedBox(height: 10),
@@ -584,50 +524,6 @@ class _FieldLabel extends StatelessWidget {
         color: cs.onSurfaceVariant,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
-      ),
-    );
-  }
-}
-
-class _SuggestionRow extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final ColorScheme cs;
-  final ThemeData theme;
-
-  const _SuggestionRow({
-    required this.label,
-    required this.onTap,
-    required this.cs,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: cs.primaryContainer.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_fix_high_rounded, size: 14, color: cs.primary),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.north_east_rounded, size: 12, color: cs.primary),
-          ],
-        ),
       ),
     );
   }

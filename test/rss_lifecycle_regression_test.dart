@@ -1,12 +1,15 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
+import 'package:ice_cream_rss_reader/models/refresh_progress.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
@@ -21,7 +24,9 @@ import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
+import 'package:ice_cream_rss_reader/services/read_state.dart';
 import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
+import 'package:ice_cream_rss_reader/services/storage_owner.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
 
@@ -734,6 +739,54 @@ void main() {
     },
   );
 
+  test('an add without a name takes the feed\'s own title', () async {
+    final url = server.url('/rss/index.xml');
+    server.handlers['/rss/index.xml'] = (request) => _respond200(
+      request,
+      _rss('The Verge | Tech news, reviews and the future of everything', [
+        'verge-article',
+      ]),
+    );
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+
+    expect(
+      await providers.feed.addSubscriptionAndRefresh(url, '', 'Test'),
+      isTrue,
+    );
+    expect(
+      providers.subscriptions.subscriptions.single.name,
+      'The Verge',
+      reason: 'the cleaned channel title, not the domain',
+    );
+    providers.feed.dispose();
+  });
+
+  test('an add without a name falls back to the domain for an untitled '
+      'feed, and a typed name always wins', () async {
+    final untitled = server.url('/untitled.xml');
+    final named = server.url('/named.xml');
+    server.handlers['/untitled.xml'] = (request) => _respond200(
+      request,
+      // No channel title and nothing else to take one from.
+      '<?xml version="1.0"?><rss version="2.0"><channel>'
+      '<link>https://example.test</link></channel></rss>',
+    );
+    server.handlers['/named.xml'] = (request) =>
+        _respond200(request, _rss('Feed Title', ['named-a']));
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+
+    await providers.feed.addSubscriptionAndRefresh(untitled, '  ', 'Test');
+    await providers.feed.addSubscriptionAndRefresh(named, 'Mine', 'Test');
+    final names = {
+      for (final s in providers.subscriptions.subscriptions) s.url: s.name,
+    };
+    expect(names[untitled], '127.0.0.1');
+    expect(names[named], 'Mine');
+    providers.feed.dispose();
+  });
+
   test(
     'a web page is not a feed: add fails with a parse error, discovery finds its feed',
     () async {
@@ -1075,6 +1128,39 @@ void main() {
     },
   );
 
+  // Device test 2026-11-16: the WorkManager isolate and the app's isolate
+  // wrote the same Hive box ("Recovering corrupted box", read marks lost).
+  test(
+    'a background pass that sees the app appear writes nothing',
+    () async {
+      final url = server.url('/owner-a.xml');
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'A', category: 'Test'),
+      ]);
+      await _seedCache([_item(url, 'a-old')]);
+      server.handlers['/owner-a.xml'] = (request) =>
+          _respond200(request, _rss('A', ['a-new']), etag: 'owner-etag');
+
+      StorageOwner.enterBackground();
+      // The app's isolate announces itself while the pass runs.
+      final app = ReceivePort();
+      ui.IsolateNameServer.registerPortWithName(
+        app.sendPort,
+        StorageOwner.uiName,
+      );
+      addTearDown(() {
+        app.close();
+        StorageOwner.debugReset();
+      });
+
+      await runBgFetch();
+
+      expect(server.counts['/owner-a.xml'], 1, reason: 'the fetch may run');
+      expect(_persistedItems().map((i) => i.id), ['a-old']);
+      expect(Hive.box('feeds').get('feedValidators'), isNull);
+    },
+  );
+
   test(
     'background partial failure merges cache instead of deleting failed feed',
     () async {
@@ -1294,17 +1380,127 @@ void main() {
       await _waitForRefresh(providers.feed);
 
       // Seven candidates, six slots: only the globally oldest (c2) drops.
-      expect(_persistedItems().map((item) => item.id).toList(), <String>[
-        'a1',
-        'a2',
-        'a3',
-        'b1',
-        'b2',
-        'c1',
-      ]);
+      await providers.feed.idle;
+      final records = ArticleRecordStore.forBox(Hive.box('feeds'));
+      final members = <String>[
+        for (final (url, id) in [
+          (aUrl, 'a1'),
+          (aUrl, 'a2'),
+          (aUrl, 'a3'),
+          (bUrl, 'b1'),
+          (bUrl, 'b2'),
+          (cUrl, 'c1'),
+          (cUrl, 'c2'),
+        ])
+          if ((await records.read(
+                ArticleRef(url, id),
+              ))?.owners.contains('tempCache') ??
+              false)
+            id,
+      ];
+      expect(members, <String>['a1', 'a2', 'a3', 'b1', 'b2', 'c1']);
+      // The list snapshot keeps every article on screen regardless.
+      expect(_persistedItems(), hasLength(7));
       providers.feed.dispose();
     },
   );
+
+  group('a restart never loses articles a feed still serves', () {
+    late String slowUrl;
+    late String fastUrl;
+    final slowIds = [for (var i = 0; i < 10; i++) 'slow-$i'];
+    final fastIds = [for (var i = 0; i < 5; i++) 'fast-$i'];
+
+    setUp(() async {
+      // Five fast items plus the slow feed's newest one fill the six temp
+      // slots: the slow feed keeps one offline member out of ten.
+      await Hive.box('settings').put('offlineCacheLimit', 6);
+      slowUrl = server.url('/slow-feed.xml');
+      fastUrl = server.url('/fast-feed.xml');
+      server.handlers['/slow-feed.xml'] = (request) =>
+          _respondConditional(request, _rss('Slow', slowIds, hour: 1));
+      server.handlers['/fast-feed.xml'] = (request) =>
+          _respondConditional(request, _rss('Fast', fastIds, hour: 12));
+      await _seedSubscriptions([
+        FeedSubscription(url: slowUrl, name: 'Slow', category: 'Test'),
+        FeedSubscription(url: fastUrl, name: 'Fast', category: 'Test'),
+      ]);
+    });
+
+    List<String> slowShown(FeedProvider feed) => [
+      for (final item in feed.items)
+        if (item.feedUrl == slowUrl) item.id,
+    ];
+
+    test('the cache limit trims offline members, then every feed '
+        'answers 304', () async {
+      final first = _providers();
+      await _waitForRefresh(first.feed);
+      expect(slowShown(first.feed), slowIds);
+      await first.feed.idle;
+      final records = ArticleRecordStore.forBox(Hive.box('feeds'));
+      // Offline membership is unchanged: newest six globally.
+      expect(
+        (await records.read(ArticleRef(slowUrl, 'slow-0')))?.owners,
+        contains('tempCache'),
+      );
+      expect(
+        (await records.read(ArticleRef(slowUrl, 'slow-1')))?.owners ??
+            const <String>{},
+        isNot(contains('tempCache')),
+      );
+      first.feed.dispose();
+
+      final restarted = _providers();
+      await _waitForRefresh(restarted.feed);
+      expect(server.counts['/slow-feed.xml'], 2, reason: 'one 304');
+      expect(slowShown(restarted.feed), slowIds);
+      restarted.feed.dispose();
+    });
+
+    test(
+      'a snapshot an older version trimmed is not trusted with a 304',
+      () async {
+        // What 1.6.0 left on disk: the slow feed's one offline member and
+        // validators that make the server answer 304.
+        await _seedCache([
+          for (final id in fastIds) _item(fastUrl, id),
+          _item(slowUrl, 'slow-0'),
+        ]);
+        await Hive.box('feeds').put(
+          'feedValidators',
+          jsonEncode({
+            slowUrl: {'etag': '"v1"'},
+            fastUrl: {'etag': '"v1"'},
+          }),
+        );
+        final providers = _providers();
+        await _waitForRefresh(providers.feed);
+        expect(slowShown(providers.feed), slowIds);
+        await providers.feed.idle;
+        providers.feed.dispose();
+
+        // Healed once: the next start may use 304s again.
+        final restarted = _providers();
+        await _waitForRefresh(restarted.feed);
+        expect(slowShown(restarted.feed), slowIds);
+        expect(server.counts['/slow-feed.xml'], 2);
+        restarted.feed.dispose();
+      },
+    );
+
+    test('a background pass persists whole feeds too', () async {
+      await runBgFetch();
+      final ids = _persistedItems().map((item) => item.id).toSet();
+      expect(ids, containsAll([...slowIds, ...fastIds]));
+
+      final providers = _providers();
+      await _waitForRefresh(providers.feed);
+      expect(server.counts['/slow-feed.xml'], 2, reason: 'one 304');
+      expect(slowShown(providers.feed), slowIds);
+      providers.feed.dispose();
+    });
+  });
 
   test(
     'hasFeedUrl rejects canonical duplicates and surfaces legacy dupes',
@@ -1446,6 +1642,101 @@ void main() {
       providers.feed.dispose();
     },
   );
+
+  test('a read mark made before the startup load finishes survives the '
+      'load, a refresh and a restart', () async {
+    final url = server.url('/early-reads.xml');
+    final ids = [for (var i = 0; i < 30; i++) 'early-$i'];
+    server.handlers['/early-reads.xml'] = (request) =>
+        _respondConditional(request, _rss('Early', ids));
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Early', category: 'Test'),
+    ]);
+    // A big snapshot keeps the compute() decode busy, plus a persisted mark
+    // and an unresolved legacy id the load binds.
+    await _seedCache([for (final id in ids) _item(url, id)]);
+    await Hive.box('feeds').put('readItemIds', ['early-29']);
+    await Hive.box('feeds').put('readItemRefs', {
+      'version': 1,
+      'refs': [ReadState.keyOf(url, 'early-28')],
+      'pendingLegacy': ['early-29'],
+    });
+
+    final providers = _providers();
+    // Opened while cachedItemsJson is still being decoded.
+    await providers.feed.markAsRead(_item(url, 'early-0'));
+    await providers.feed.markAsRead(_item(url, 'early-1'));
+    await _waitForRefresh(providers.feed);
+    await providers.feed.flushReadStates();
+    await providers.feed.idle;
+    providers.feed.dispose();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    final restarted = _providers();
+    await _waitForRefresh(restarted.feed);
+    final read = {
+      for (final item in restarted.feed.items)
+        if (restarted.feed.isRead(item)) item.id,
+    };
+    expect(read, {'early-0', 'early-1', 'early-28', 'early-29'});
+    restarted.feed.dispose();
+  });
+
+  test('an item keeps its read-mark identity through the cache round trip', () {
+    final parsed = FeedService.parseFeedBody((
+      bodyBytes: utf8.encode(_rss('Early', ['guid-1'])),
+      category: 'Test',
+      url: 'https://example.test/feed',
+      contentType: 'application/rss+xml',
+    )).single;
+    final reloaded = FeedItem.fromJson(
+      jsonDecode(jsonEncode(parsed.toJson())) as Map<String, dynamic>,
+    );
+    expect((reloaded.feedUrl, reloaded.id), (parsed.feedUrl, parsed.id));
+  });
+
+  test('a feed failure is recorded as a reason code; an empty feed is '
+      'noted without failing the pass', () async {
+    final gone = server.url('/gone-feed.xml');
+    final page = server.url('/a-page/');
+    final empty = server.url('/empty-feed.xml');
+    final healthy = server.url('/healthy-feed.xml');
+    server.handlers['/gone-feed.xml'] = (request) async {
+      request.response.statusCode = HttpStatus.notFound;
+      await request.response.close();
+    };
+    server.handlers['/a-page/'] = (request) async {
+      request.response.headers.contentType = ContentType.html;
+      request.response.write('<html><body>hi</body></html>');
+      await request.response.close();
+    };
+    server.handlers['/empty-feed.xml'] = (request) =>
+        _respond200(request, _rss('Empty', const []));
+    server.handlers['/healthy-feed.xml'] = (request) =>
+        _respond200(request, _rss('Healthy', ['h1']));
+    await _seedSubscriptions([
+      for (final url in [gone, page, empty, healthy])
+        FeedSubscription(url: url, name: url, category: 'Test'),
+    ]);
+
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    expect(providers.feed.feedErrorFor(gone), 'gone');
+    expect(providers.feed.feedErrorFor(page), 'notFeed');
+    expect(providers.feed.feedErrorFor(empty), 'empty');
+    expect(providers.feed.feedErrorFor(healthy), isNull);
+    providers.feed.dispose();
+
+    // Only the empty feed left: the pass itself succeeded.
+    await _seedSubscriptions([
+      FeedSubscription(url: empty, name: 'Empty', category: 'Test'),
+    ]);
+    final again = _providers();
+    await _waitForRefresh(again.feed);
+    expect(again.feed.feedErrorFor(empty), 'empty');
+    expect(again.feed.refreshProgress.value.phase, RefreshPhase.completed);
+    again.feed.dispose();
+  });
 
   test(
     '429 response backs the feed off — no refetch until Retry-After passes',

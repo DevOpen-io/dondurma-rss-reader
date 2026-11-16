@@ -25,7 +25,8 @@
   "emojiLabel": "Emoji",
   "folderName": "Nombre de la categoría",
   "deleteFolder": "Eliminar categoría",
-  "deleteFolderConfirm": "¿Seguro que quieres eliminar la categoría \"{categoryName}\"?\n\nEsto eliminará permanentemente las {feedCount} fuentes RSS que contiene de tus suscripciones.",
+  "deleteFolderConfirm": "¿Seguro que quieres eliminar la categoría \"{categoryName}\"?\n\n{feedCount, plural, =1{Esto eliminará permanentemente la fuente RSS que contiene de tus suscripciones.} other{Esto eliminará permanentemente las {feedCount} fuentes RSS que contiene de tus suscripciones.}}",
+  "deleteEmptyFolderConfirm": "¿Eliminar la categoría vacía \"{categoryName}\"?",
   "deleteAll": "Eliminar todo",
   "markAllAsRead": "Marcar todo como leído",
   "markReadAll": "Todos los artículos",
@@ -45,7 +46,6 @@
   "reset": "Restablecer",
   "addRssFeed": "Añadir fuente RSS",
   "addFeedSubtitle": "Pega la dirección de un sitio o de una fuente para suscribirte",
-  "useSuggestedName": "Usar \"{name}\" como nombre",
   "addingFeed": "Añadiendo…",
   "feedUrlLabel": "URL de la fuente",
   "feedUrlHint": "p. ej. https://techcrunch.com/feed/",
@@ -64,6 +64,14 @@
       "error": {}
     }
   },
+  "feedErrorNetwork": "No se pudo conectar",
+  "feedErrorGone": "Feed no encontrado",
+  "feedErrorBlocked": "El sitio denegó el acceso",
+  "feedErrorServer": "Error del servidor ({code})",
+  "feedErrorNotFeed": "La dirección es una página web, no un feed",
+  "feedErrorParse": "No se pudo leer el feed",
+  "feedErrorUnknown": "No se pudo actualizar",
+  "feedEmpty": "Este feed no tiene artículos",
   "categories": "Categorías",
   "allNews": "Todas las noticias",
   "allArticles": "Todos los artículos",
@@ -267,9 +275,9 @@
   "articleStatusSaveRequested": "Guardado solicitado",
   "articleStatusCouldNotSave": "No se pudo guardar",
   "articleStatusRssSaved": "Texto RSS guardado",
+  "articleStatusSummaryOnlySaved": "Solo se guardó el resumen de la fuente",
   "articleStatusRssCached": "Texto RSS en caché",
   "articleStatusReadableSession": "Se puede leer en esta sesión",
-  "articleWaitPreparing": "Preparando partes faltantes",
   "articleWaitUnmetered": "Esperando red sin límite",
   "articleWaitRetryEarliest": "Reintento permitido a lo más pronto a las {time}",
   "@articleWaitRetryEarliest": {
@@ -424,6 +432,9 @@
   "saveSearch": "Guardar búsqueda",
   "savedSearches": "Búsquedas guardadas",
   "savedSearchName": "Nombre",
+  "searchSaved": "Búsqueda guardada",
+  "saveToDevice": "Guardar en el dispositivo",
+  "shareFile": "Compartir",
   "rename": "Renombrar",
   "tagHintDesktop": "Haz clic derecho en un marcador para etiquetarlo",
   "clearFilters": "Mostrar todos los artículos",
@@ -449,5 +460,8 @@
   "timeNow": "ahora",
   "timeMinutesShort": "{count} min",
   "timeHoursShort": "{count} h",
-  "timeDaysShort": "{count} d"
+  "timeDaysShort": "{count} d",
+  "swipeMarkedRead": "Marcado como leído",
+  "swipeMarkedUnread": "Marcado como no leído",
+  "feedOptions": "Opciones de la fuente"
 }

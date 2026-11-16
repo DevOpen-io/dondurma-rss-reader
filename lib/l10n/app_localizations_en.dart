@@ -89,7 +89,20 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String deleteFolderConfirm(String categoryName, int feedCount) {
-    return 'Are you sure you want to delete the category \"$categoryName\"?\n\nThis will permanently remove all $feedCount RSS feeds inside it from your subscriptions.';
+    String _temp0 = intl.Intl.pluralLogic(
+      feedCount,
+      locale: localeName,
+      other:
+          'This will permanently remove all $feedCount RSS feeds inside it from your subscriptions.',
+      one:
+          'This will permanently remove the 1 RSS feed inside it from your subscriptions.',
+    );
+    return 'Are you sure you want to delete the category \"$categoryName\"?\n\n$_temp0';
+  }
+
+  @override
+  String deleteEmptyFolderConfirm(String categoryName) {
+    return 'Delete the empty category \"$categoryName\"?';
   }
 
   @override
@@ -153,11 +166,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addFeedSubtitle => 'Paste a site or feed address to subscribe';
 
   @override
-  String useSuggestedName(String name) {
-    return 'Use \"$name\" as name';
-  }
-
-  @override
   String get addingFeed => 'Adding…';
 
   @override
@@ -198,6 +206,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String lastFetchFailed(Object error) {
     return 'Last refresh failed: $error';
   }
+
+  @override
+  String get feedErrorNetwork => 'Couldn\'t connect';
+
+  @override
+  String get feedErrorGone => 'Feed not found';
+
+  @override
+  String get feedErrorBlocked => 'The site refused access';
+
+  @override
+  String feedErrorServer(Object code) {
+    return 'Server error ($code)';
+  }
+
+  @override
+  String get feedErrorNotFeed => 'The address is a web page, not a feed';
+
+  @override
+  String get feedErrorParse => 'The feed couldn\'t be read';
+
+  @override
+  String get feedErrorUnknown => 'Couldn\'t refresh';
+
+  @override
+  String get feedEmpty => 'No articles in this feed';
 
   @override
   String get categories => 'Categories';
@@ -837,13 +871,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get articleStatusRssSaved => 'RSS text saved';
 
   @override
+  String get articleStatusSummaryOnlySaved => 'Only the feed summary is saved';
+
+  @override
   String get articleStatusRssCached => 'RSS text cached';
 
   @override
   String get articleStatusReadableSession => 'Readable in this session';
-
-  @override
-  String get articleWaitPreparing => 'Preparing missing parts';
 
   @override
   String get articleWaitUnmetered => 'Waiting for unmetered network';
@@ -1289,6 +1323,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedSearchName => 'Name';
 
   @override
+  String get searchSaved => 'Search saved';
+
+  @override
+  String get saveToDevice => 'Save to device';
+
+  @override
+  String get shareFile => 'Share';
+
+  @override
   String get rename => 'Rename';
 
   @override
@@ -1373,4 +1416,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String timeDaysShort(int count) {
     return '${count}d';
   }
+
+  @override
+  String get swipeMarkedRead => 'Marked as read';
+
+  @override
+  String get swipeMarkedUnread => 'Marked as unread';
+
+  @override
+  String get feedOptions => 'Feed options';
 }

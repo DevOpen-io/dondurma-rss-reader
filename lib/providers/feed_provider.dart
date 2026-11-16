@@ -696,6 +696,16 @@ class FeedProvider extends ChangeNotifier {
     }
 
     final String? cachedItemsData = _box.get('cachedItemsJson');
+    if (_box.containsKey('feedValidators') &&
+        FeedCachePolicy.isTrimmedLegacySnapshot(
+          snapshot: cachedItemsData,
+          wholeFeedMarker: _box.get(wholeFeedSnapshotKey),
+        )) {
+      // Fetch every feed in full once; the next save marks the snapshot.
+      // Not awaited: the in-memory view drops the key at once, and the
+      // load must not wait on disk I/O.
+      unawaited(_box.delete('feedValidators'));
+    }
     if (cachedItemsData != null) {
       try {
         // Decode JSON in a background isolate — large caches can be 500ms+ on
@@ -881,7 +891,12 @@ class FeedProvider extends ChangeNotifier {
   /// are written, successes clear, and feeds in [unproven] (connectivity-only
   /// failures during a fully offline pass) keep whatever they had — a network
   /// outage neither indicts nor acquits a feed. Removed feeds are pruned.
-  void _updateFeedErrors(Map<String, String> passErrors, Set<String> unproven) {
+  /// Feeds in [empty] answered with no articles and read [emptyFeedCode].
+  void _updateFeedErrors(
+    Map<String, String> passErrors,
+    Set<String> unproven, {
+    Set<String> empty = const {},
+  }) {
     final urls =
         subscriptionProvider?.subscriptions.map((s) => s.url).toSet() ??
         const <String>{};
@@ -889,6 +904,8 @@ class FeedProvider extends ChangeNotifier {
     for (final url in urls) {
       if (passErrors.containsKey(url)) {
         next[url] = passErrors[url]!;
+      } else if (empty.contains(url)) {
+        next[url] = emptyFeedCode;
       } else if (unproven.contains(url) && _feedErrors.containsKey(url)) {
         next[url] = _feedErrors[url]!;
       }
@@ -1368,7 +1385,11 @@ class FeedProvider extends ChangeNotifier {
       // provider-owned snapshot so that delayed update does not start a second,
       // all-feed refresh for a transaction already owned here.
       _knownSubscriptionUrls = Set.unmodifiable({...previousKnownUrls, url});
-      final added = await subscriptions.addFeed(url, name, category);
+      final added = await subscriptions.addFeed(
+        url,
+        name.trim().isNotEmpty ? name.trim() : _nameFromFeed(url, prefetched),
+        category,
+      );
       if (!added) {
         _knownSubscriptionUrls = previousKnownUrls;
         return false;
@@ -1398,6 +1419,15 @@ class FeedProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// A subscription added without a name takes the feed's own (already
+  /// cleaned) title; a feed without one, the address's host.
+  static String _nameFromFeed(String url, FeedFetchResult result) {
+    final title = result.items.firstOrNull?.siteName.trim() ?? '';
+    if (title.isNotEmpty && title != 'Unknown Site') return title;
+    final host = Uri.tryParse(url)?.host.replaceFirst(RegExp(r'^www\.'), '');
+    return host == null || host.isEmpty ? url : host;
   }
 
   Future<void> _applyNewSubscriptionResult(
@@ -1442,9 +1472,15 @@ class FeedProvider extends ChangeNotifier {
     );
 
     _isOffline = false;
-    // A successful add proves the feed is healthy — drop any stale error a
-    // delete-and-re-add cycle left behind.
-    if (_feedErrors.remove(subscription.url) != null) {
+    // A successful add proves the feed is reachable — drop any stale error a
+    // delete-and-re-add cycle left behind; note a feed with no articles.
+    final verdict = result.items.isEmpty ? emptyFeedCode : null;
+    if (_feedErrors[subscription.url] != verdict) {
+      if (verdict == null) {
+        _feedErrors.remove(subscription.url);
+      } else {
+        _feedErrors[subscription.url] = verdict;
+      }
       _box.put('feedErrors', _feedErrors);
     }
     _invalidateFilterCache();
@@ -1687,7 +1723,11 @@ class FeedProvider extends ChangeNotifier {
     _saveFeedValidators(result.validators);
     _saveFeedRedirects(result.redirects);
     _saveFeedBackoff();
-    _updateFeedErrors(result.feedErrors, result.unprovenUrls);
+    _updateFeedErrors(
+      result.feedErrors,
+      result.unprovenUrls,
+      empty: result.emptyUrls,
+    );
     // Reconcile against live subscriptions/bookmarks and any articles added
     // during this pass, not the stale inputs captured before HTTP started.
     _items = mergeCurrent();
@@ -1943,7 +1983,7 @@ class FeedProvider extends ChangeNotifier {
     final int limit = settings.offlineCacheLimit;
     final items = List<FeedItem>.of(_items);
 
-    final selected = await _membership.reconcile(
+    await _membership.reconcile(
       items: items,
       isBookmarked: bookmarks.isBookmarkedRef,
       subscribedFeedUrls: subscriptions.subscriptions.map((s) => s.url),
@@ -1966,22 +2006,20 @@ class FeedProvider extends ChangeNotifier {
     // could wrongly strip a claim toggled on after enqueue.
     _preparation.sweepCleanup(isBookmarked: bookmarks.isBookmarkedRef).ignore();
     if (generation != _cacheGeneration) return;
-    // The transient snapshot = selected members plus bookmarked items
-    // (bookmarks never consume a temp slot but must stay browsable offline).
-    final itemsToCache = [
-      for (final item in items)
-        if (selected.contains(ArticleRef.of(item)) ||
-            bookmarks.isBookmarked(item.id, feedUrl: item.feedUrl))
-          item,
-    ];
-
+    // The list snapshot holds every article on screen (already bounded per
+    // feed by FeedService.maxItemsPerFeed), not just the [selected] offline
+    // members: a restart rebuilds the list from it, and a feed answering
+    // 304 next time keeps exactly what was saved here.
     // Encode JSON in a background isolate — avoids blocking scroll/animation
     // while serializing potentially hundreds of items.
-    final maps = itemsToCache.map((e) => e.toJson()).toList();
+    final maps = items.map((e) => e.toJson()).toList();
     final String encodedData = await compute(_encodeCachedItems, maps);
     // A reset landed while encoding — dropping the write preserves the wipe.
     if (generation != _cacheGeneration) return;
-    await _box.put('cachedItemsJson', encodedData);
+    await _box.putAll({
+      'cachedItemsJson': encodedData,
+      wholeFeedSnapshotKey: true,
+    });
     // Membership/ownership settled for this pass — refresh row labels.
     unawaited(_refreshArticleStatuses());
   }

@@ -13,6 +13,54 @@ const _rss =
     '</channel></rss>';
 
 void main() {
+  group('isFeedAddress', () {
+    test('accepts the addresses add-feed and discovery handle', () {
+      for (final url in [
+        'https://theverge.com',
+        'https://www.ntv.com.tr/gundem.rss',
+        'https://site.test/news',
+        'http://example.com:8080/feed.xml',
+        'https://www.youtube.com/@veritasium',
+        'https://www.youtube.com/channel/UCabc_123-x/videos',
+        'https://www.reddit.com/r/FlutterDev/',
+        'https://mastodon.social/@Gargron',
+        'https://bsky.app/profile/jay.bsky.team',
+        'https://xn--bcher-kva.example/feed',
+        'https://bücher.example/feed',
+        'http://localhost:8080/feed',
+        'http://192.168.1.10/rss',
+        'https://feeds.example.com/?url=https://other.example/feed',
+        // Self-hosted readers on a home network (FreshRSS, RSS-Bridge).
+        'http://nas:8080/feed',
+        'http://freshrss/i/?a=rss',
+        'https://example',
+        'http://[::1]:8080/feed',
+        'http://[fd00::12]/rss',
+        'https://my_host.lan/feed',
+      ]) {
+        expect(isFeedAddress(url), isTrue, reason: url);
+      }
+    });
+
+    test('rejects pasted garbage', () {
+      for (final url in [
+        'https://www.ntv.com.https://www.ntv.com.tr/gundem.rssr/gundem.rss'
+            '.com/rss/index.xml',
+        'https://www.ntv.com.tr/https://ntv.com.tr/rss',
+        'https://exa mple.com/feed',
+        'https://-example.com/feed',
+        'https://example.c0m/feed',
+        'https://example..com/feed',
+        'ftp://example.com/feed',
+        'mailto:me@example.com',
+        'not a url',
+        '',
+      ]) {
+        expect(isFeedAddress(url), isFalse, reason: url);
+      }
+    });
+  });
+
   group('knownFeedUrl', () {
     test('rewrites subreddits and Reddit users', () {
       expect(

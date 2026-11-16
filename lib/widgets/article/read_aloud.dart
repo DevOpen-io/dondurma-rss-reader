@@ -105,12 +105,17 @@ class ReadAloudControls extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 10),
+                  // Narrow screens with large text wrap the label onto a
+                  // second line instead of cutting it ("Reading al…").
                   Flexible(
                     child: Text(
                       l10n.readingAloud,
-                      maxLines: 1,
+                      maxLines: 2,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        height: 1.15,
+                      ),
                     ),
                   ),
                   _LanguagePill(item: item),

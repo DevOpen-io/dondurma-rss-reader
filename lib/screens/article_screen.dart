@@ -27,7 +27,6 @@ import '../widgets/article/article_reading_mode_toggle.dart';
 import '../widgets/article/article_source_card.dart';
 import '../theme/app_theme.dart';
 import '../services/image_cache_service.dart';
-import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import '../utils/offline_status_labels.dart';
 import '../utils/share_actions.dart';
@@ -151,7 +150,6 @@ class _ArticlePageState extends State<ArticlePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _articlePageProvider = context.read<ArticlePageProvider>();
-      _articlePageProvider!.addListener(_onProviderChanged);
       Future<void>.delayed(_articleTransitionSettleDelay, () {
         if (!mounted) return;
         _articlePageProvider?.setContentReady();
@@ -183,21 +181,26 @@ class _ArticlePageState extends State<ArticlePage> {
     );
   }
 
-  @override
-  void dispose() {
-    _articlePageProvider?.removeListener(_onProviderChanged);
-    super.dispose();
+  /// The cover source (file path or URL) that failed to load.
+  String? _failedCover;
+
+  /// Called from an image error builder, i.e. during build: the header
+  /// switches on the next frame. Keyed by source, so a prepared file that
+  /// appears later gets its own chance.
+  void _coverFailed(String? source) {
+    if (source == null || source == _failedCover) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _failedCover = source);
+    });
   }
 
-  void _onProviderChanged() {
-    final provider = context.read<ArticlePageProvider>();
-    // Only show an error toast for manual full-text attempts.
-    // Auto-attempt failures are shown as a subtle inline notice.
-    if (mounted && provider.consumeFullTextFailure()) {
-      final l10n = AppLocalizations.of(context);
-      showAppToast(l10n.fullTextFailed, type: AppToastType.error);
-    }
-  }
+  /// Cover height of the full-screen article. A landscape phone (360dp
+  /// tall) gave a fixed 280 three quarters of the screen and pushed the
+  /// title off it; landscape caps the cover at 40% of the height so the
+  /// title and first lines show. Portrait keeps 280.
+  static double _coverHeight(Size viewport) => viewport.width > viewport.height
+      ? math.min(280.0, viewport.height * 0.4)
+      : 280.0;
 
   /// One body widget per reading-settings combination: an identical
   /// instance lets page rebuilds skip the HTML subtree; [_ArticleHtml]
@@ -262,14 +265,18 @@ class _ArticlePageState extends State<ArticlePage> {
 
     final fontFamily = articleFontFamily(settings.typeface, settings.appFont);
 
-    final hasHero =
+    final hasHeroUrl =
         widget.item.imageUrl != null && widget.item.imageUrl!.isNotEmpty;
-    final heroLocal = hasHero
+    final heroLocal = hasHeroUrl
         ? provider.localImages[widget.item.imageUrl]
         : null;
     final heroFile = heroLocal == null
         ? null
         : _trustedLocalImage(provider, heroLocal);
+    // A cover that failed to load (offline and not prepared) gives way to
+    // the no-image header instead of an empty block.
+    final heroSource = heroFile?.path ?? widget.item.imageUrl;
+    final hasHero = hasHeroUrl && heroSource != _failedCover;
 
     final int? readingMinutes = provider.contentReady
         ? provider.readingMinutes
@@ -302,7 +309,7 @@ class _ArticlePageState extends State<ArticlePage> {
                                 240.0,
                                 400.0,
                               )
-                            : 280.0)
+                            : _coverHeight(MediaQuery.sizeOf(context)))
                       : 0,
                   pinned: !widget.embedded,
                   stretch: true,
@@ -382,9 +389,10 @@ class _ArticlePageState extends State<ArticlePage> {
                                     heroFile,
                                     fit: BoxFit.cover,
                                     cacheWidth: 900,
-                                    errorBuilder: (_, _, _) => Container(
-                                      color: colorScheme.surfaceContainerHighest,
-                                    ),
+                                    errorBuilder: (_, _, _) {
+                                      _coverFailed(heroSource);
+                                      return const SizedBox.shrink();
+                                    },
                                   )
                                 else
                                   CachedNetworkImage(
@@ -393,9 +401,10 @@ class _ArticlePageState extends State<ArticlePage> {
                                     fit: BoxFit.cover,
                                     memCacheWidth: 900,
                                     maxWidthDiskCache: 900,
-                                    errorWidget: (_, _, _) => Container(
-                                      color: colorScheme.surfaceContainerHighest,
-                                    ),
+                                    errorWidget: (_, _, _) {
+                                      _coverFailed(heroSource);
+                                      return const SizedBox.shrink();
+                                    },
                                   ),
                                 DecoratedBox(
                                   decoration: BoxDecoration(
@@ -733,8 +742,9 @@ class _ArticlePageState extends State<ArticlePage> {
 // =============================================================================
 
 /// Readable-content-first strip: scope label, then the wait reason and
-/// media count, then at most one action. A bookmarked item whose durable
-/// write failed reads "could not save" — never "ready".
+/// missing-image count, then at most one action. A bookmarked item whose
+/// durable write failed reads "could not save" — never "ready". A cached
+/// copy says nothing (see [articleStripSpeaks]).
 class _ArticleStatusStrip extends StatelessWidget {
   final FeedItem item;
   final ArticlePageProvider provider;
@@ -797,14 +807,14 @@ class _ArticleStatusStrip extends StatelessWidget {
       l10n,
       status,
       noneLabel: l10n.articleStatusReadableSession,
+      summaryOnly: provider.savedBodyIsFeedSummary,
     )!;
     final wait = status.waitFor(
       unmeteredNow: unmetered,
       now: DateTime.now().toUtc(),
     );
     final details = <String>[
-      if (status.totalMedia > 0)
-        l10n.articleImagesCount(status.readyMedia, status.totalMedia),
+      ?articleImagesDetail(l10n, status),
       ?offlineWaitLabel(l10n, status, wait),
     ];
 
@@ -813,6 +823,7 @@ class _ArticleStatusStrip extends StatelessWidget {
     // reachable (#41: no dead retry affordance). An ownerless record (pre-
     // tombstone) has no claim to prepare for — nothing to retry.
     final showRetry = status.hasActionable && status.scope != ArticleScope.none;
+    final namesScope = articleStripSpeaks(status);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -839,48 +850,49 @@ class _ArticleStatusStrip extends StatelessWidget {
               ),
             ],
           ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      scope,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (showRetry)
-                    TextButton(
-                      onPressed: () => unawaited(_retryMissing(context)),
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(48, 48),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
+        if (namesScope)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
                       child: Text(
-                        l10n.articleRetryMissing,
-                        style: const TextStyle(fontSize: 12),
+                        scope,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                ],
-              ),
-              if (details.isNotEmpty)
-                Text(
-                  details.join(' · '),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                    if (showRetry)
+                      TextButton(
+                        onPressed: () => unawaited(_retryMissing(context)),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: Text(
+                          l10n.articleRetryMissing,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
+                if (details.isNotEmpty)
+                  Text(
+                    details.join(' · '),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

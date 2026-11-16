@@ -6,6 +6,7 @@ import '../models/feed_item.dart';
 import '../providers/bookmark_provider.dart';
 import '../utils/platform_caps.dart';
 import 'adaptive_dialog.dart';
+import 'app_field_decoration.dart';
 
 /// Edits one bookmark's tags (#71): current tags to remove, tags used on
 /// other bookmarks to add with a tap, and a field for a new one.
@@ -96,10 +97,15 @@ class _BookmarkTagsSheetState extends State<BookmarkTagsSheet> {
           const SizedBox(height: 8),
           TextField(
             controller: _controller,
+            // Typing a new tag is the sheet's main job.
+            autofocus: true,
             textInputAction: TextInputAction.done,
-            decoration: InputDecoration(
+            style: const TextStyle(fontSize: 15),
+            decoration: appFieldDecoration(
+              Theme.of(context).colorScheme,
+            ).copyWith(
               hintText: l10n.addTagHint,
-              prefixIcon: const Icon(Icons.label_outline),
+              prefixIcon: const Icon(Icons.label_outline, size: 20),
             ),
             onSubmitted: (value) {
               _add(value);

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/subscription_provider.dart';
+import '../app_field_decoration.dart';
 
 class AddCategoryDialog extends StatefulWidget {
   const AddCategoryDialog({super.key, this.persist = true});
@@ -107,9 +108,7 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                 textInputAction: TextInputAction.done,
                 onFieldSubmitted: (_) => _submit(),
                 style: const TextStyle(fontSize: 15),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: cs.surfaceContainerHigh,
+                decoration: appFieldDecoration(cs).copyWith(
                   hintText: l10n.folderNameHint,
                   prefixIcon: Icon(
                     Icons.folder_outlined,
@@ -117,30 +116,6 @@ class _AddCategoryDialogState extends State<AddCategoryDialog> {
                     size: 20,
                   ),
                   errorText: _serverError,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cs.primary, width: 2),
-                  ),
-                  errorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cs.error, width: 1.5),
-                  ),
-                  focusedErrorBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: cs.error, width: 2),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
                 ),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {

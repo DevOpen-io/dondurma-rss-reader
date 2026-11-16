@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -23,6 +25,7 @@ import '../widgets/home/add_destination.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/mark_all_read_button.dart';
 import '../widgets/home/offline_banner.dart';
+import '../widgets/home/pull_to_refresh.dart';
 import '../widgets/home/refresh_progress_count.dart';
 import '../widgets/constrained_width.dart';
 import '../widgets/adaptive_dialog.dart';
@@ -45,6 +48,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isSearching = false;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  // Android's predictive back reaches the app only while it claims back;
+  // an open drawer must, or the system closes the app.
+  bool _drawerOpen = false;
   final TextEditingController _searchController = TextEditingController();
   final _feedScroll = AnchoredScrollController();
 
@@ -187,16 +194,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
     ];
 
-    return RefreshIndicator(
-      // The pull gesture stays, but its own spinner is hidden — the
-      // floating progress pill (completed / total) is the single global
-      // refresh indicator for this screen.
-      color: Colors.transparent,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      onRefresh: () async {
-        await provider.refreshAll(userInitiated: true);
-      },
+    // The circle only answers the pull; once the refresh runs, the
+    // floating pill (completed / total) is the screen's one progress.
+    return PullToRefresh(
+      onRefresh: () => provider.refreshAll(userInitiated: true),
       child: provider.isLoading && provider.items.isEmpty
           ? const FeedListSkeleton()
           : Column(
@@ -264,6 +265,13 @@ class _HomeScreenState extends State<HomeScreen> {
           return l10n.settingsTab;
         case 0:
         default:
+          // A single feed is titled with its own name, not its folder's.
+          final feedUrl = p.selectedFeedUrl;
+          if (feedUrl != null) {
+            for (final sub in p.subscriptionProvider?.subscriptions ?? []) {
+              if (sub.url == feedUrl) return sub.name;
+            }
+          }
           return p.selectedCategory ?? l10n.myFeeds;
       }
     });
@@ -276,7 +284,28 @@ class _HomeScreenState extends State<HomeScreen> {
     // not inherited by other scrollables; other tabs keep the route's.
     final routeScroll = PrimaryScrollController.maybeOf(context);
     final feedTab = _selectedIndex == 0 || routeScroll == null;
+    // A landscape phone has no height to spare for a bottom bar: the tabs
+    // and the add action move to a rail beside the content. A portrait
+    // window in split screen keeps the bar.
+    final size = MediaQuery.sizeOf(context);
+    final useRail = size.height < 480 && size.width > size.height;
+    AddDestination addDestination({bool showLabel = true}) =>
+        _selectedIndex == 1
+        ? AddDestination(
+            key: const ValueKey('add-folder'),
+            label: l10n.addFolder,
+            onPressed: _showAddFolderDialog,
+            showLabel: showLabel,
+          )
+        : AddDestination(
+            key: const ValueKey('add-feed'),
+            label: l10n.addFeedButton,
+            onPressed: _showAddFeedDialog,
+            showLabel: showLabel,
+          );
     final scaffold = Scaffold(
+      key: _scaffoldKey,
+      onDrawerChanged: (open) => setState(() => _drawerOpen = open),
       appBar: AppBar(
         title: AnimatedSwitcher(
           duration: motionDuration(context, const Duration(milliseconds: 300)),
@@ -308,13 +337,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onSubmitted: (value) =>
                       context.read<SettingsProvider>().addSearchQuery(value),
                 )
-              : Text(
-                  appBarTitle,
-                  key: ValueKey(appBarTitle),
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
+              : _FittedTitle(appBarTitle, key: ValueKey(appBarTitle)),
         ),
         actions: [
           if (_selectedIndex == 0) ...[
@@ -379,127 +402,129 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         onSavedSearch: _openSearch,
       ),
-      body: _selectedIndex == 0
-          ? Selector<FeedProvider, _FeedTabInputs>(
-              selector: (_, p) => (
-                groups: p.dateGroups,
-                isLoading: p.isLoading,
-                isOffline: p.isOffline,
-                hasItems: p.items.isNotEmpty,
-                filters: (
-                  category: p.selectedCategory,
-                  sheetFilter: p.hasActiveSheetFilter,
-                  search: p.searchQuery,
-                  unreadOnly: p.showUnreadOnly,
+      body: _besideRail(
+        useRail ? addDestination(showLabel: false) : null,
+        _selectedIndex == 0
+            ? Selector<FeedProvider, _FeedTabInputs>(
+                selector: (_, p) => (
+                  groups: p.dateGroups,
+                  isLoading: p.isLoading,
+                  isOffline: p.isOffline,
+                  hasItems: p.items.isNotEmpty,
+                  filters: (
+                    category: p.selectedCategory,
+                    sheetFilter: p.hasActiveSheetFilter,
+                    search: p.searchQuery,
+                    unreadOnly: p.showUnreadOnly,
+                  ),
                 ),
-              ),
-              builder: (context, inputs, _) {
-                final provider = context.read<FeedProvider>();
-                final todayItems = inputs.groups.today;
-                final yesterdayItems = inputs.groups.yesterday;
-                final olderItems = inputs.groups.older;
-                return Column(
-                  children: [
-                    // ── Search history suggestions ────────────────────────────
-                    if (_isSearching)
-                      HomeSearchHistoryPanel(
-                        searchController: _searchController,
-                        onQuerySelected: (query) {
-                          _searchController.text = query;
-                          _searchController.selection =
-                              TextSelection.fromPosition(
-                                TextPosition(offset: query.length),
-                              );
-                          provider.setSearchQuery(query);
-                        },
-                      ),
-                    Expanded(
-                      child: ConstrainedWidth(
-                        child: Stack(
-                          children: [
-                            _buildHomeBody(
-                              context,
-                              provider,
-                              todayItems,
-                              yesterdayItems,
-                              olderItems,
-                            ),
-                            // Compact pull-to-refresh progress — floats above
-                            // the list so it never shifts layout or crowds
-                            // the AppBar actions.
-                            Positioned(
-                              top: 8,
-                              left: 0,
-                              right: 0,
-                              child: _RefreshProgressPill(
-                                progress: provider.refreshProgress,
+                builder: (context, inputs, _) {
+                  final provider = context.read<FeedProvider>();
+                  final todayItems = inputs.groups.today;
+                  final yesterdayItems = inputs.groups.yesterday;
+                  final olderItems = inputs.groups.older;
+                  return Column(
+                    children: [
+                      // ── Search history suggestions ────────────────────────────
+                      if (_isSearching)
+                        HomeSearchHistoryPanel(
+                          searchController: _searchController,
+                          onQuerySelected: (query) {
+                            _searchController.text = query;
+                            _searchController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(offset: query.length),
+                                );
+                            provider.setSearchQuery(query);
+                          },
+                        ),
+                      Expanded(
+                        child: ConstrainedWidth(
+                          child: Stack(
+                            children: [
+                              _buildHomeBody(
+                                context,
+                                provider,
+                                todayItems,
+                                yesterdayItems,
+                                olderItems,
                               ),
-                            ),
-                          ],
+                              // Compact pull-to-refresh progress — floats above
+                              // the list so it never shifts layout or crowds
+                              // the AppBar actions.
+                              Positioned(
+                                top: 8,
+                                left: 0,
+                                right: 0,
+                                child: _RefreshProgressPill(
+                                  progress: provider.refreshProgress,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            )
-          : _selectedIndex == 1
-          ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
-          : _selectedIndex == 2
-          ? const BookmarksScreen()
-          : const SettingsScreen(),
+                    ],
+                  );
+                },
+              )
+            : _selectedIndex == 1
+            ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
+            : _selectedIndex == 2
+            ? const BookmarksScreen()
+            : const SettingsScreen(),
+      ),
       // Standard bar: fixed to the bottom edge. Adding is the one action
       // every new reader looks for, so it sits in the middle of the bar on
       // every tab: a folder on the folder tab, a feed everywhere else.
-      bottomNavigationBar: ColoredBox(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        child: ConstrainedWidth(
-          maxWidth: 480,
-          child: NavigationBar(
-            height: 68,
-            // The add action is the bar's middle slot, not a tab.
-            selectedIndex: _selectedIndex < 2
-                ? _selectedIndex
-                : _selectedIndex + 1,
-            onDestinationSelected: (index) {
-              if (index != 2) _onItemTapped(index < 2 ? index : index - 1);
-            },
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.list_outlined),
-                selectedIcon: const Icon(Icons.list),
-                label: l10n.feedsTab,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.folder_outlined),
-                selectedIcon: const Icon(Icons.folder),
-                label: l10n.foldersTab,
-              ),
-              _selectedIndex == 1
-                  ? AddDestination(
-                      key: const ValueKey('add-folder'),
-                      label: l10n.addFolder,
-                      onPressed: _showAddFolderDialog,
-                    )
-                  : AddDestination(
-                      key: const ValueKey('add-feed'),
-                      label: l10n.addFeedButton,
-                      onPressed: _showAddFeedDialog,
+      bottomNavigationBar: useRail
+          ? null
+          : ColoredBox(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              child: ConstrainedWidth(
+                maxWidth: 480,
+                child: NavigationBar(
+                  height: 68,
+                  labelTextStyle: _fittedTabLabels(context, [
+                    l10n.feedsTab,
+                    l10n.foldersTab,
+                    l10n.bookmarksTab,
+                    l10n.settingsTab,
+                  ]),
+                  // The add action is the bar's middle slot, not a tab.
+                  selectedIndex: _selectedIndex < 2
+                      ? _selectedIndex
+                      : _selectedIndex + 1,
+                  onDestinationSelected: (index) {
+                    if (index != 2) {
+                      _onItemTapped(index < 2 ? index : index - 1);
+                    }
+                  },
+                  destinations: [
+                    _tab(0, Icons.list_outlined, Icons.list, l10n.feedsTab),
+                    _tab(
+                      1,
+                      Icons.folder_outlined,
+                      Icons.folder,
+                      l10n.foldersTab,
                     ),
-              NavigationDestination(
-                icon: const Icon(Icons.bookmark_border),
-                selectedIcon: const Icon(Icons.bookmark),
-                label: l10n.bookmarksTab,
+                    addDestination(),
+                    _tab(
+                      2,
+                      Icons.bookmark_border,
+                      Icons.bookmark,
+                      l10n.bookmarksTab,
+                    ),
+                    _tab(
+                      3,
+                      Icons.settings_outlined,
+                      Icons.settings,
+                      l10n.settingsTab,
+                    ),
+                  ],
+                ),
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings),
-                label: l10n.settingsTab,
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
     return PrimaryScrollController(
       controller: feedTab ? _feedScroll : routeScroll,
@@ -510,7 +535,132 @@ class _HomeScreenState extends State<HomeScreen> {
               TargetPlatform.iOS,
               TargetPlatform.fuchsia,
             },
-      child: scaffold,
+      child: PopScope(
+        canPop: !_drawerOpen,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _scaffoldKey.currentState?.closeDrawer();
+        },
+        child: scaffold,
+      ),
+    );
+  }
+
+  /// [content] beside the navigation rail, led by [add]; [content] alone
+  /// when there is no rail.
+  Widget _besideRail(Widget? add, Widget content) {
+    if (add == null) return content;
+    final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        // Scrolls on the shortest screens instead of overflowing.
+        LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: NavigationRail(
+                  backgroundColor: cs.surfaceContainer,
+                  // Four labelled tabs and the add button do not fit the
+                  // height of a 360dp landscape phone; the selected tab
+                  // keeps its name, the others their icons and tooltips.
+                  labelType: NavigationRailLabelType.selected,
+                  leading: SizedBox(width: 80, height: 48, child: add),
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onItemTapped,
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.list_outlined),
+                      selectedIcon: const Icon(Icons.list),
+                      label: Text(l10n.feedsTab),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.folder_outlined),
+                      selectedIcon: const Icon(Icons.folder),
+                      label: Text(l10n.foldersTab),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.bookmark_border),
+                      selectedIcon: const Icon(Icons.bookmark),
+                      label: Text(l10n.bookmarksTab),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.settings_outlined),
+                      selectedIcon: const Icon(Icons.settings),
+                      label: Text(l10n.settingsTab),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(child: content),
+      ],
+    );
+  }
+
+  /// Tab label style shrunk just enough that the longest label stays on one
+  /// line in its slot: long words ("Yer İşaretleri") and large system text
+  /// otherwise wrap or break mid-word. All tabs share the one size.
+  WidgetStateProperty<TextStyle?> _fittedTabLabels(
+    BuildContext context,
+    List<String> labels,
+  ) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final themed = NavigationBarTheme.of(context).labelTextStyle;
+    TextStyle base(Set<WidgetState> states) {
+      final style =
+          themed?.resolve(states) ??
+          theme.textTheme.labelMedium!.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? cs.onSurface
+                : cs.onSurfaceVariant,
+          );
+      return style;
+    }
+
+    // Five equal slots in a bar capped at 480dp, less the label's margin.
+    final barWidth = math.min(MediaQuery.sizeOf(context).width, 480.0);
+    final room = barWidth / 5 - 8;
+    final scaler = MediaQuery.textScalerOf(context);
+    var widest = 0.0;
+    for (final label in labels) {
+      // Measured in the selected (boldest) style.
+      final painter = TextPainter(
+        text: TextSpan(text: label, style: base({WidgetState.selected})),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      widest = math.max(widest, painter.width);
+      painter.dispose();
+    }
+    final factor = widest <= room ? 1.0 : room / widest;
+    return WidgetStateProperty.resolveWith((states) {
+      final style = base(states);
+      if (factor == 1.0) return style;
+      return style.copyWith(fontSize: (style.fontSize ?? 12) * factor);
+    });
+  }
+
+  /// A bottom-bar tab. The bar counts the add button as a destination, so
+  /// it would announce "Tab 4 of 5"; screen readers hear the real count.
+  Widget _tab(int index, IconData icon, IconData selectedIcon, String label) {
+    final position = MaterialLocalizations.of(
+      context,
+    ).tabLabel(tabIndex: index + 1, tabCount: 4);
+    return Semantics(
+      label: '$label\n$position',
+      button: true,
+      onTap: () => _onItemTapped(index),
+      excludeSemantics: true,
+      child: NavigationDestination(
+        icon: Icon(icon),
+        selectedIcon: Icon(selectedIcon),
+        label: label,
+      ),
     );
   }
 
@@ -525,6 +675,45 @@ class _HomeScreenState extends State<HomeScreen> {
           fontWeight: FontWeight.w600,
         ),
       ),
+    );
+  }
+}
+
+/// The app bar title, shrunk by up to a fifth when it would not fit beside
+/// the actions (long category names), then cut with an ellipsis.
+class _FittedTitle extends StatelessWidget {
+  const _FittedTitle(this.title, {super.key});
+
+  final String title;
+
+  static const _minScale = 0.8;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final style = DefaultTextStyle.of(
+          context,
+        ).style.merge(const TextStyle(fontWeight: FontWeight.bold));
+        final painter = TextPainter(
+          text: TextSpan(text: title, style: style),
+          textDirection: Directionality.of(context),
+          textScaler: MediaQuery.textScalerOf(context),
+          maxLines: 1,
+        )..layout();
+        final width = painter.width;
+        painter.dispose();
+        final fits = width <= constraints.maxWidth;
+        final scale = fits
+            ? 1.0
+            : math.max(_minScale, constraints.maxWidth / width);
+        return Text(
+          title,
+          style: style.copyWith(fontSize: (style.fontSize ?? 22) * scale),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        );
+      },
     );
   }
 }

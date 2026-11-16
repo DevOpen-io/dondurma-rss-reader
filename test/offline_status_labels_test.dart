@@ -86,6 +86,34 @@ void main() {
       );
     });
 
+    // Device test 2026-11-16: a bookmark whose site blocks extraction kept
+    // only the feed's one-line teaser yet read "Saved copy ready".
+    test('a bookmark holding only the feed summary says so', () {
+      expect(
+        offlineScopeLabel(
+          l10n,
+          status(bodySource: 'rss'),
+          noneLabel: null,
+          summaryOnly: true,
+        ),
+        l10n.articleStatusSummaryOnlySaved,
+      );
+      expect(
+        offlineScopeLabel(
+          l10n,
+          status(bodySource: 'rss', bodyDue: true),
+          noneLabel: null,
+          summaryOnly: true,
+        ),
+        l10n.articleStatusSummaryOnlySaved,
+      );
+      // A long feed body is the whole article: the copy is ready.
+      expect(
+        offlineScopeLabel(l10n, status(bodySource: 'rss'), noneLabel: null),
+        l10n.articleStatusSavedCopyReady,
+      );
+    });
+
     test('an ownerless record uses the caller label', () {
       final ownerless = status(owners: const {});
       expect(ownerless.scope, ArticleScope.none);
@@ -115,11 +143,14 @@ void main() {
         offlineWaitLabel(l10n, s, ArticleWait.unmetered),
         l10n.articleWaitUnmetered,
       );
-      expect(
-        offlineWaitLabel(l10n, s, ArticleWait.preparing),
-        l10n.articleWaitPreparing,
-      );
       expect(offlineWaitLabel(l10n, s, ArticleWait.none), isNull);
+    });
+
+    // Device test 2026-11-16: "Preparing missing parts" flashed under the
+    // title of most fresh articles. It is transient and asks nothing of
+    // the reader.
+    test('transient preparation is never shown', () {
+      expect(offlineWaitLabel(l10n, status(), ArticleWait.preparing), isNull);
     });
 
     test('server wait shows the server-stamped time only', () {
@@ -148,6 +179,57 @@ void main() {
         l10n.articleWaitRetryEarliest(hm),
       );
       expect(offlineWaitLabel(l10n, status(), ArticleWait.retry), isNull);
+    });
+  });
+
+  // Usability test 2026-10-30: cache housekeeping read as jargon on rows
+  // and above articles. Only what the reader asked for, or what is
+  // missing, is named.
+  group('when a status is named', () {
+    test('rows name a bookmark only while its copy is incomplete', () {
+      expect(rowNamesScope(ArticleScope.saveRequested), isTrue);
+      expect(rowNamesScope(ArticleScope.savedText), isTrue);
+      expect(rowNamesScope(ArticleScope.savedReady), isFalse);
+      expect(rowNamesScope(ArticleScope.cachedReady), isFalse);
+      expect(rowNamesScope(ArticleScope.cachedText), isFalse);
+      expect(rowNamesScope(ArticleScope.none), isFalse);
+    });
+
+    test('the article counts images only while some are missing', () {
+      expect(
+        articleImagesDetail(l10n, status(readyMedia: 1, totalMedia: 1)),
+        isNull,
+      );
+      expect(articleImagesDetail(l10n, status()), isNull);
+      expect(
+        articleImagesDetail(l10n, status(readyMedia: 1, totalMedia: 3)),
+        l10n.articleImagesCount(1, 3),
+      );
+    });
+
+    // Device test 2026-11-16: a fresh article showed "RSS text cached",
+    // "Retry missing parts" and "Images 0/1" while its image was on screen.
+    test('a cached copy is silent in the article', () {
+      // Automatic cache housekeeping: no scope, no count, no wait, no retry
+      // — also while the cached record has no body yet.
+      for (final s in [
+        status(owners: {'tempCache'}),
+        status(owners: {'tempCache'}, bodyDue: true, totalMedia: 1),
+        status(owners: {'tempCache'}, hasBody: false, totalMedia: 1),
+      ]) {
+        expect(articleStripSpeaks(s), isFalse, reason: '${s.scope}');
+      }
+      // A bookmark tells the truth about its copy, and an ownerless record
+      // warns that only this session holds it (#41).
+      for (final s in [
+        status(hasBody: false),
+        status(bodyDue: true),
+        status(),
+        status(owners: {'bookmark', 'tempCache'}, bodyDue: true),
+        status(owners: const {}),
+      ]) {
+        expect(articleStripSpeaks(s), isTrue, reason: '${s.scope}');
+      }
     });
   });
 }

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
@@ -129,6 +130,14 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
         ? (_controller.position.pixels - _controller.position.minScrollExtent)
               .clamp(0.0, double.infinity)
         : 0.0;
+    // Pulled or springing back past the head (a pull-to-refresh lands
+    // mid-bounce): the head stays that far down in the new layout.
+    final overscroll = _controller.hasClients
+        ? math.max(
+            0.0,
+            _controller.position.minScrollExtent - _controller.position.pixels,
+          )
+        : 0.0;
     if (_controller.hasClients &&
         viewport != null &&
         viewport.attached &&
@@ -164,7 +173,11 @@ class _AnchoredFeedListState extends State<AnchoredFeedList> {
     _centerId = anchor ?? widget.rowIds.firstOrNull;
     // At the top show the new head. If every visible article disappeared,
     // retain the previous distance from the head; layout clamps it to bounds.
-    _pendingPixels = anchorY == null ? distanceFromTop : -anchorY;
+    _pendingPixels = anchorY != null
+        ? -anchorY
+        : overscroll > 0
+        ? -overscroll
+        : distanceFromTop;
     // Disposed offscreen rows get a fresh key when rebuilt; dropping them
     // keeps the map bounded by mounted rows instead of rows ever seen.
     _rowKeys.removeWhere(

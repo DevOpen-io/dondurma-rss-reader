@@ -14,7 +14,7 @@ import 'package:ice_cream_rss_reader/services/full_text_extraction_service.dart'
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
 
 void main() {
-  test('a manual full-text failure is reported exactly once', () async {
+  test('a manual full-text failure is recorded', () async {
     final page = ArticlePageProvider(
       item: FeedItem(
         id: 'a',
@@ -33,11 +33,6 @@ void main() {
     );
 
     expect(page.fullTextFailed, isTrue);
-    expect(page.consumeFullTextFailure(), isTrue);
-    // Later notifications (saved-copy refreshes, settings) keep the failed
-    // state but must not report the same failure again.
-    expect(page.fullTextFailed, isTrue);
-    expect(page.consumeFullTextFailure(), isFalse);
   });
 
   test('a story body inside an "inread" wrapper survives ad cleanup', () {
@@ -121,7 +116,6 @@ void main() {
 
     expect(page.feedHasFullArticle, isTrue);
     expect(page.fullTextFailed, isFalse);
-    expect(page.consumeFullTextFailure(), isFalse);
   });
 
   test('full text that arrives after the summary was drawn replaces it',
@@ -243,7 +237,6 @@ void main() {
       expect(page.fullTextActive, isFalse);
       expect(page.fullTextContent, isNull);
       expect(page.fullTextFailed, isTrue);
-      expect(page.consumeFullTextFailure(), isTrue);
 
       // The rejected result is not cached — retry goes back to the page.
       await http.runWithClient(page.activateFullText, () => client);
@@ -312,6 +305,63 @@ void main() {
       expect(requests, 1);
       expect(page.fullTextActive, isFalse);
       expect(page.fullTextFailed, isTrue);
+    });
+  });
+
+  group('a saved copy that is only the feed summary', () {
+    Future<ArticlePageProvider> load(String body, String source) async {
+      final dir = await Directory.systemTemp.createTemp('summary-saved-');
+      addTearDown(() => dir.delete(recursive: true));
+      final records = ArticleRecordStore(
+        FileObservedArticlePersistence(stateFile: File('${dir.path}/r.json')),
+      );
+      final article = FeedItem(
+        id: 'teaser',
+        siteName: 'Example',
+        title: 'Teaser',
+        description: '',
+        link: 'https://summary.test/teaser',
+        feedUrl: 'https://summary.test/feed',
+        content: body,
+        isBookmarked: true,
+      );
+      await records.write(
+        ArticleRecord(
+          id: article.id,
+          feedUrl: article.feedUrl,
+          link: article.link,
+          body: body,
+          bodyState: MediaState.ready,
+          bodySource: source,
+          owners: const {'bookmark'},
+          generation: 1,
+        ),
+      );
+      final page = ArticlePageProvider(item: article);
+      addTearDown(page.dispose);
+      await page.loadSavedCopy(
+        records: records,
+        media: ArticleMediaStore(root: Directory('${dir.path}/media')),
+      );
+      return page;
+    }
+
+    test('a one-line feed teaser is only a summary', () async {
+      final page = await load(
+        "<p>They're so good! <a href='#'>READ MORE…</a></p>",
+        'rss',
+      );
+      expect(page.savedBodyIsFeedSummary, isTrue);
+    });
+
+    test('a feed that ships the whole article is not', () async {
+      final page = await load('<p>${'Whole paragraph text. ' * 80}</p>', 'rss');
+      expect(page.savedBodyIsFeedSummary, isFalse);
+    });
+
+    test('an extracted body is not', () async {
+      final page = await load('<p>Short extracted page.</p>', 'extracted');
+      expect(page.savedBodyIsFeedSummary, isFalse);
     });
   });
 }

@@ -20,6 +20,7 @@ import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
 import 'full_text_extraction_service.dart';
 import 'app_lifecycle_gate.dart';
+import 'storage_owner.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -33,6 +34,10 @@ const String _bgTaskName = 'rss_bg_fetch';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // The app is alive in this process: it runs the pass on its own boxes.
+    // Opening them here too would corrupt them.
+    if (await StorageOwner.handOffToUi()) return true;
+    StorageOwner.enterBackground();
     try {
       await Hive.initFlutter();
       await Future.wait([
@@ -45,6 +50,8 @@ void callbackDispatcher() {
       await runBgFetch();
     } catch (e) {
       debugPrint('[WM] task error: $e');
+    } finally {
+      StorageOwner.leaveBackground();
     }
     // Always report success — a failed fetch shouldn't trigger WorkManager's
     // exponential backoff retry; the next periodic run will try again.
@@ -81,8 +88,12 @@ Future<void> runBgFetch() async {
       debugPrint('[BG] reset pending — skipping this pass');
       return;
     }
-    Future<bool> publish(Future<void> Function() action) =>
-        publishInEra(gate, ticket, action);
+    // The app opened mid-pass: it owns the boxes now, this pass writes
+    // nothing more.
+    Future<bool> publish(Future<void> Function() action) async {
+      if (StorageOwner.uiAppeared) return false;
+      return publishInEra(gate, ticket, action);
+    }
 
     await Hive.initFlutter();
     await Future.wait([
@@ -177,7 +188,14 @@ Future<void> runBgFetch() async {
     final validators = <String, dynamic>{};
     try {
       final rawValidators = feedsBox.get('feedValidators');
-      if (rawValidators is String && rawValidators.isNotEmpty) {
+      // An older version's trimmed snapshot: fetch every feed in full once.
+      final trimmedSnapshot = FeedCachePolicy.isTrimmedLegacySnapshot(
+        snapshot: feedsBox.get('cachedItemsJson'),
+        wholeFeedMarker: feedsBox.get(wholeFeedSnapshotKey),
+      );
+      if (!trimmedSnapshot &&
+          rawValidators is String &&
+          rawValidators.isNotEmpty) {
         validators.addAll(jsonDecode(rawValidators) as Map<String, dynamic>);
       }
     } catch (_) {}
@@ -445,9 +463,8 @@ Future<List<FeedItem>?> _persistBgCache(
   bool isBookmarked(ArticleRef ref) =>
       bookmarkedRefs.contains(ref) || legacyOnly.contains(ref.id);
 
-  final Set<ArticleRef> selectedRefs;
   try {
-    selectedRefs = await membership.reconcile(
+    await membership.reconcile(
       items: items,
       isBookmarked: isBookmarked,
       subscribedFeedUrls: subscriptions.map((s) => s.url),
@@ -478,14 +495,12 @@ Future<List<FeedItem>?> _persistBgCache(
     preparation.dispose();
   }
 
-  // Snapshot candidates = fresh merge plus bookmarked articles the merge
-  // dropped (unsubscribed feeds) — bookmarks ride along uncounted (#37).
+  // Snapshot = the whole fresh merge, not just the offline members, plus
+  // bookmarked articles the merge dropped (unsubscribed feeds): the next
+  // start rebuilds the list from it and a 304 keeps what was saved (#37).
   final inMerge = items.map((e) => (e.feedUrl, e.id)).toSet();
-  final selected = [
-    for (final item in items)
-      if (selectedRefs.contains(ArticleRef.of(item)) ||
-          isBookmarked(ArticleRef.of(item)))
-        item,
+  final snapshot = [
+    ...items,
     for (final item in bookmarkedItems)
       if (inMerge.add((item.feedUrl, item.id))) item,
   ];
@@ -503,9 +518,12 @@ Future<List<FeedItem>?> _persistBgCache(
       published = const <FeedItem>[];
       return;
     }
-    final maps = selected.map((e) => e.toJson()).toList();
-    await feedsBox.put('cachedItemsJson', jsonEncode(maps));
-    published = selected;
+    final maps = snapshot.map((e) => e.toJson()).toList();
+    await feedsBox.putAll({
+      'cachedItemsJson': jsonEncode(maps),
+      wholeFeedSnapshotKey: true,
+    });
+    published = snapshot;
   });
   return published;
 }

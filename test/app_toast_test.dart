@@ -112,16 +112,33 @@ void main() {
     expect(actionCount, 0);
   });
 
-  testWidgets('progress ring drains over toast lifetime', (tester) async {
+  // A ring beside "6 sources refreshed" read as a refresh still running
+  // (device test, 2026-11-16). Only a toast with an action shows how long
+  // is left to take it.
+  testWidgets('a toast without an action shows no ring', (tester) async {
     await pumpHost(tester);
-    controller.show('Saving', type: AppToastType.success);
+    controller.show('RSS updated', type: AppToastType.success);
+    await tester.pump();
+    expect(find.text('RSS updated'), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    controller.dismiss();
+    await tester.pump();
+  });
+
+  testWidgets('an action toast ring drains over its lifetime', (tester) async {
+    await pumpHost(tester);
+    controller.show(
+      'Marked as read',
+      type: AppToastType.success,
+      action: AppToastAction(label: 'Undo', onPressed: () {}),
+    );
     await tester.pump();
 
     CircularProgressIndicator indicator() =>
         tester.widget(find.byKey(const ValueKey('app_toast_progress')));
 
     expect(indicator().value, closeTo(1, 0.01));
-    await tester.pump(const Duration(milliseconds: 1500));
+    await tester.pump(const Duration(seconds: 3));
     expect(indicator().value, closeTo(0.5, 0.05));
     controller.dismiss();
     await tester.pump();
@@ -153,7 +170,11 @@ void main() {
     tester,
   ) async {
     await pumpHost(tester, disableAnimations: true);
-    controller.show('No motion', type: AppToastType.success);
+    controller.show(
+      'No motion',
+      type: AppToastType.success,
+      action: AppToastAction(label: 'Undo', onPressed: () {}),
+    );
     await tester.pump();
 
     final indicator = tester.widget<CircularProgressIndicator>(
@@ -161,7 +182,7 @@ void main() {
     );
     expect(indicator.value, 1);
 
-    await tester.pump(const Duration(seconds: 3));
+    await tester.pump(const Duration(seconds: 6));
     expect(find.text('No motion'), findsNothing);
   });
 }

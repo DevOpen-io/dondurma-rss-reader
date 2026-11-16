@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../services/feed_refresh.dart';
 import '../../utils/motion.dart';
+import 'feed_health.dart';
 
 class FeedActionSheet extends StatelessWidget {
   const FeedActionSheet({
@@ -98,10 +100,17 @@ class FeedActionSheet extends StatelessWidget {
                         icon: Icons.copy_rounded,
                         text: l10n.duplicateSubscription,
                       ),
-                    if (feedError != null)
+                    if (feedError == emptyFeedCode)
+                      _WarningRow(
+                        icon: Icons.info_outline_rounded,
+                        text: feedHealthText(l10n, feedError!),
+                      )
+                    else if (feedError != null)
                       _WarningRow(
                         icon: Icons.error_outline_rounded,
-                        text: l10n.lastFetchFailed(feedError),
+                        text: l10n.lastFetchFailed(
+                          feedHealthText(l10n, feedError),
+                        ),
                       ),
                   ],
                 ),
@@ -115,24 +124,43 @@ class FeedActionSheet extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    leading: Icon(
-                      sub.notificationsEnabled
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_off_outlined,
-                      size: 20,
-                      color: sub.notificationsEnabled
-                          ? cs.primary
-                          : cs.onSurfaceVariant,
-                    ),
-                    title: Text(l10n.feedNotifications, style: tt.bodyMedium),
-                    trailing: Switch(
-                      value: sub.notificationsEnabled,
-                      onChanged: (_) => context
-                          .read<SubscriptionProvider>()
-                          .toggleFeedNotifications(sub.url),
+                  // One switch node named by the row for screen readers;
+                  // a tap anywhere on the row toggles it. The transparent
+                  // Material paints the ripple above the tinted container.
+                  Semantics(
+                    toggled: sub.notificationsEnabled,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        leading: Icon(
+                          sub.notificationsEnabled
+                              ? Icons.notifications_active_outlined
+                              : Icons.notifications_off_outlined,
+                          size: 20,
+                          color: sub.notificationsEnabled
+                              ? cs.primary
+                              : cs.onSurfaceVariant,
+                        ),
+                        title: Text(
+                          l10n.feedNotifications,
+                          style: tt.bodyMedium,
+                        ),
+                        trailing: ExcludeSemantics(
+                          child: Switch(
+                            value: sub.notificationsEnabled,
+                            onChanged: (_) => context
+                                .read<SubscriptionProvider>()
+                                .toggleFeedNotifications(sub.url),
+                          ),
+                        ),
+                        onTap: () => context
+                            .read<SubscriptionProvider>()
+                            .toggleFeedNotifications(sub.url),
+                      ),
                     ),
                   ),
                   Divider(

@@ -7,16 +7,21 @@ class AddDestination extends StatelessWidget {
   final String label;
   final VoidCallback onPressed;
 
+  /// Shows [label] under the button; the side rail of a landscape phone has
+  /// no height for it and names it in a tooltip instead.
+  final bool showLabel;
+
   const AddDestination({
     super.key,
     required this.label,
     required this.onPressed,
+    this.showLabel = true,
   });
 
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    return Semantics(
+    final button = Semantics(
       button: true,
       label: label,
       excludeSemantics: true,
@@ -43,27 +48,37 @@ class AddDestination extends StatelessWidget {
               ),
               child: Icon(Icons.add_rounded, color: cs.onPrimary, size: 24),
             ),
-            const SizedBox(height: 4),
-            // The bar's labels share a fixed height; large system text is
-            // clamped as theirs is.
-            MediaQuery.withClampedTextScaling(
-              maxScaleFactor: 1.2,
-              // A longer name ("Add category") shrinks to fit its slot.
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  label,
-                  maxLines: 1,
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: cs.primary,
-                    fontWeight: FontWeight.w700,
+            if (showLabel) ...[
+              const SizedBox(height: 4),
+              // The bar's labels share a fixed height; large system text is
+              // clamped as theirs is.
+              MediaQuery.withClampedTextScaling(
+                maxScaleFactor: 1.2,
+                // A longer name ("Add category") shrinks to fit its slot,
+                // keeping the tabs' margin so it never meets their labels.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ],
         ),
       ),
     );
+    // The button already carries the label for screen readers.
+    return showLabel
+        ? button
+        : Tooltip(message: label, excludeFromSemantics: true, child: button);
   }
 }

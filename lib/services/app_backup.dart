@@ -13,6 +13,7 @@ import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import '../providers/subscription_provider.dart';
 import '../utils/platform_caps.dart';
+import 'device_files.dart';
 
 /// The JSON document of a whole-app backup (#65): subscriptions with their
 /// folders, settings, bookmarks with the article as saved, and read marks.
@@ -192,13 +193,21 @@ FeedItem _bookmark(Map<String, dynamic> json) {
 }
 
 /// Saves a backup file: the native save dialog on desktop, the share sheet
-/// on mobile (as OPML export does). [shareOrigin] anchors the share sheet,
+/// on mobile (as OPML export does), or with [toDevice] the Android system
+/// save dialog. [shareOrigin] anchors the share sheet,
 /// which iPad presents as a popover and refuses to open without one.
 /// Returns `true` when saved or shared, null when the user cancelled,
 /// `false` on an error.
-Future<bool?> saveBackupFile(String json, {Rect? shareOrigin}) async {
+Future<bool?> saveBackupFile(
+  String json, {
+  Rect? shareOrigin,
+  bool toDevice = false,
+}) async {
   final date = DateTime.now().toIso8601String().substring(0, 10);
   final name = 'dondurma-backup-$date.json';
+  if (toDevice) {
+    return DeviceFiles.save(name, 'application/json', utf8.encode(json));
+  }
   try {
     if (!PlatformCaps.supportsShareSheet) {
       final location = await getSaveLocation(

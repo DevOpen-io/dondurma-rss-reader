@@ -41,6 +41,39 @@ const commonFeedPaths = [
   '/index.xml',
 ];
 
+/// Whether [url] can be a feed or page address: http(s), a host made of
+/// valid labels with a letter TLD (or localhost / an IPv4 address), and no
+/// second address pasted into it ("https://a.com.https://a.com/rss").
+/// A query or fragment may carry another URL.
+bool isFeedAddress(String url) {
+  final uri = Uri.tryParse(url.trim());
+  if (uri == null || !uri.isAbsolute) return false;
+  if (uri.scheme != 'http' && uri.scheme != 'https') return false;
+  final beforeQuery = url.split(RegExp('[?#]')).first;
+  if ('://'.allMatches(beforeQuery).length != 1) return false;
+
+  final host = uri.host.toLowerCase();
+  if (host.isEmpty) return false;
+  // IPv6 literal ("[::1]"): Uri has already validated it.
+  if (host.contains(':')) return true;
+  if (RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(host)) {
+    return host.split('.').every((n) => int.parse(n) <= 255);
+  }
+  // Letters, digits, hyphens and underscores (any script: Uri keeps IDN
+  // hosts as typed, percent-encoded), never a hyphen at a label's edge.
+  final label = RegExp(
+    r'^[\p{L}\p{N}_](?:[\p{L}\p{N}_-]*[\p{L}\p{N}_])?$',
+    unicode: true,
+  );
+  final decoded = host.split('.').map(Uri.decodeComponent).toList();
+  if (!decoded.every(label.hasMatch)) return false;
+  // A single name ("localhost", "nas", "freshrss") is a machine on the
+  // reader's own network: self-hosted readers serve feeds from there.
+  if (decoded.length == 1) return true;
+  final tld = decoded.last;
+  return RegExp(r'^(\p{L}{2,}|xn--[a-z0-9-]+)$', unicode: true).hasMatch(tld);
+}
+
 /// Feed address of a well-known page that needs no request: subreddits and
 /// Reddit users (whose pages advertise no feed), YouTube channel ids and
 /// playlists. Null for everything else — YouTube handles, Mastodon and

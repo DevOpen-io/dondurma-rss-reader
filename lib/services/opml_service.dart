@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart';
 import '../models/feed_subscription.dart';
 import '../utils/platform_caps.dart';
+import 'device_files.dart';
 
 /// Service responsible for exporting and importing feed subscriptions
 /// using the OPML (Outline Processor Markup Language) format.
@@ -13,6 +14,22 @@ import '../utils/platform_caps.dart';
 /// OPML is the standard interchange format for RSS feed lists. This service
 /// supports both nested (category folders) and flat OPML structures.
 class OpmlService {
+  /// Files offered by the import picker. Android picks by MIME type, maps
+  /// no type to "opml", and labels a saved .opml as bytes, so the types
+  /// are listed; the content is checked on import anyway.
+  static const importTypeGroup = XTypeGroup(
+    label: 'OPML',
+    extensions: ['opml', 'xml'],
+    mimeTypes: [
+      'text/x-opml',
+      'text/xml',
+      'application/xml',
+      'application/octet-stream',
+      'text/plain',
+    ],
+    uniformTypeIdentifiers: ['public.xml', 'public.data'],
+  );
+
   /// Generates an OPML 2.0 XML string from a list of [FeedSubscription]s.
   ///
   /// Feeds are grouped by their [FeedSubscription.category] as OPML outline
@@ -130,11 +147,24 @@ class OpmlService {
   /// Exports [subscriptions] as an OPML file.
   ///
   /// Mobile shares via the system sheet; desktop uses the native save dialog
-  /// so the user picks the destination. Returns `true` on success or user
-  /// cancellation, `false` if an error occurred.
-  Future<bool> exportOpml(List<FeedSubscription> subscriptions) async {
+  /// so the user picks the destination; [toDevice] uses the Android system
+  /// save dialog instead of sharing. Returns `true` on success or user
+  /// cancellation, `false` if an error occurred — except a cancelled
+  /// [toDevice] save, which is null.
+  Future<bool?> exportOpml(
+    List<FeedSubscription> subscriptions, {
+    bool toDevice = false,
+  }) async {
     try {
       final opmlContent = generateOpml(subscriptions);
+
+      if (toDevice) {
+        return await DeviceFiles.save(
+          'dondurma_subscriptions.opml',
+          'text/x-opml',
+          utf8.encode(opmlContent),
+        );
+      }
 
       if (!PlatformCaps.supportsShareSheet) {
         const typeGroup = XTypeGroup(label: 'OPML', extensions: ['opml']);
@@ -173,8 +203,7 @@ class OpmlService {
   /// Returns an empty list if the user cancels or the file is invalid.
   Future<List<FeedSubscription>> importOpml() async {
     try {
-      const typeGroup = XTypeGroup(label: 'OPML', extensions: ['opml', 'xml']);
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+      final file = await openFile(acceptedTypeGroups: [importTypeGroup]);
       if (file == null) return [];
 
       // Not `readAsString`: for the bytes the Android picker returns it

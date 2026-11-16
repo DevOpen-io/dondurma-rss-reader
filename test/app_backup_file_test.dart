@@ -5,6 +5,7 @@ import 'package:file_selector_platform_interface/file_selector_platform_interfac
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
 import 'package:ice_cream_rss_reader/services/app_backup.dart';
 import 'package:ice_cream_rss_reader/services/opml_service.dart';
 
@@ -125,5 +126,65 @@ void main() {
     expect(sent, containsPair('originY', 100.0));
     expect(sent, containsPair('originWidth', 400.0));
     expect(sent, containsPair('originHeight', 60.0));
+  });
+
+  // Android: the system "save as" dialog (Storage Access Framework) through
+  // the app's own channel; the share sheet stays the other option.
+  group('save to device on Android', () {
+    const files = MethodChannel('io.devopen.dondurma/files');
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    late List<MethodCall> calls;
+    Object? Function() reply = () => true;
+
+    setUp(() {
+      debugDefaultTargetPlatformOverride = TargetPlatform.android;
+      calls = [];
+      reply = () => true;
+      messenger.setMockMethodCallHandler(files, (call) async {
+        calls.add(call);
+        return reply();
+      });
+    });
+    tearDown(() => messenger.setMockMethodCallHandler(files, null));
+
+    test('a backup goes to the file the user picks', () async {
+      expect(await saveBackupFile('{"ü":1}', toDevice: true), isTrue);
+
+      final args = calls.single.arguments as Map<Object?, Object?>;
+      expect(calls.single.method, 'saveFile');
+      expect(
+        args['name'],
+        matches(RegExp(r'^dondurma-backup-\d{4}-\d{2}-\d{2}\.json$')),
+      );
+      expect(args['mimeType'], 'application/json');
+      expect(utf8.decode(args['bytes'] as Uint8List), '{"ü":1}');
+    });
+
+    test('a cancelled save is null, a failed one false', () async {
+      reply = () => null;
+      expect(await saveBackupFile('{}', toDevice: true), isNull);
+      reply = () => throw PlatformException(code: 'unavailable');
+      expect(await saveBackupFile('{}', toDevice: true), isFalse);
+    });
+
+    test('OPML export saves the subscriptions file', () async {
+      final subs = [
+        FeedSubscription(
+          url: 'https://h.test/rss',
+          name: 'Haber Türk',
+          category: 'Gündem',
+        ),
+      ];
+      expect(await OpmlService().exportOpml(subs, toDevice: true), isTrue);
+
+      final args = calls.single.arguments as Map<Object?, Object?>;
+      expect(args['name'], 'dondurma_subscriptions.opml');
+      expect(args['mimeType'], 'text/x-opml');
+      expect(utf8.decode(args['bytes'] as Uint8List), contains('Haber Türk'));
+
+      reply = () => null;
+      expect(await OpmlService().exportOpml(subs, toDevice: true), isNull);
+    });
   });
 }

@@ -491,6 +491,192 @@ void main() {
     });
   });
 
+  group('page leftovers', () {
+    String? extract(String page) =>
+        FullTextExtractionService.extractArticleHtml(
+          Uint8List.fromList(utf8.encode(page)),
+        );
+    String page(String article) =>
+        '<html><body><div class="site"><article class="post">$article'
+        '</article></div></body></html>';
+    final story =
+        '<h1>Chipmakers race to cool data centers</h1>'
+        '<p>${'Engineers are rebuilding server halls around liquid '
+                'cooling as power budgets climb. ' * 6}</p>'
+        '<figure><img src="https://example.com/rack.jpg" alt="Rack">'
+        '<figcaption>A liquid-cooled rack in Oregon.</figcaption></figure>'
+        '<h2>What changes for operators</h2>'
+        '<p>${'Operators must retrain staff and redesign the plumbing '
+                'that feeds every aisle of machines. ' * 6}</p>'
+        '<ul><li>Pumps replace most of the fans in each rack.</li>'
+        '<li>Water loops run under the raised floor.</li>'
+        '<li>Heat is sold to nearby district heating grids.</li></ul>'
+        '<p>${'Analysts expect the shift to finish within five years '
+                'across the largest providers. ' * 6}</p>';
+    void expectStory(String? html) {
+      expect(html, isNotNull);
+      expect(html, contains('Chipmakers race to cool data centers'));
+      expect(html, contains('liquid cooling as power budgets climb'));
+      expect(html, contains('What changes for operators'));
+      expect(html, contains('Pumps replace most of the fans'));
+      expect(html, contains('Heat is sold to nearby district heating'));
+      expect(html, contains('<figure>'));
+      expect(html, contains('A liquid-cooled rack in Oregon.'));
+      expect(html, contains('finish within five years'));
+    }
+
+    test('breadcrumb trails are dropped', () {
+      final html = extract(
+        page(
+          '<ol aria-label="Breadcrumb"><li><a href="/">Home</a></li>'
+          '<li><a href="/tech">Technology</a></li>'
+          '<li><a href="/tech/hw">Hardware</a></li></ol>'
+          '<div itemscope itemtype="https://schema.org/BreadcrumbList">'
+          '<span itemprop="itemListElement"><a href="/">Start</a></span> › '
+          '<span itemprop="itemListElement"><a href="/news">Newsroom</a>'
+          '</span></div>'
+          '$story',
+        ),
+      );
+      expectStory(html);
+      expect(html, isNot(contains('Hardware')));
+      expect(html, isNot(contains('Newsroom')));
+    });
+
+    test('trending and related link lists inside the article are dropped', () {
+      final html = extract(
+        page(
+          '$story'
+          '<div class="box"><h3>Trending</h3><ul>'
+          '<li><a href="/a">Phone makers cut prices again</a></li>'
+          '<li><a href="/b">Rocket startup lands its booster</a></li>'
+          '<li><a href="/c">City bans scooters downtown</a></li></ul></div>'
+          '<h2>You may also like</h2><ol>'
+          '<li><a href="/d">Solar farms on old mines</a></li>'
+          '<li><a href="/e">The quiet return of vinyl</a></li></ol>'
+          '<h4>Read more:</h4><ul>'
+          '<li><a href="/f">Why routers still crash</a></li></ul>'
+          '<div class="most-popular-list"><a href="/g">Celebrity chef '
+          'opens bakery</a><a href="/h">Markets slip on rate fears</a></div>',
+        ),
+      );
+      expectStory(html);
+      for (final leftover in [
+        'Trending',
+        'Phone makers cut prices',
+        'You may also like',
+        'quiet return of vinyl',
+        'Read more',
+        'Why routers still crash',
+        'Celebrity chef',
+      ]) {
+        expect(html, isNot(contains(leftover)), reason: leftover);
+      }
+    });
+
+    test('tag rows at the end of the article are dropped', () {
+      final html = extract(
+        page(
+          '$story'
+          '<p><strong>Tags:</strong> <a href="/t/cooling">cooling</a>, '
+          '<a href="/t/datacenters">datacenters</a></p>'
+          '<div class="entry-meta">Filed in <a rel="tag" href="/c/infra">'
+          'Infrastructure</a> <a rel="category tag" href="/c/energy">'
+          'Energy policy</a></div>'
+          '<ul class="article-topics"><li><a href="/topic/hvac">HVAC'
+          '</a></li><li><a href="/topic/water">Water use</a></li></ul>',
+        ),
+      );
+      expectStory(html);
+      for (final leftover in [
+        'Tags:',
+        '/t/datacenters',
+        'Infrastructure',
+        'Energy policy',
+        'HVAC',
+        'Water use',
+      ]) {
+        expect(html, isNot(contains(leftover)), reason: leftover);
+      }
+    });
+
+    test('share-button rows are dropped', () {
+      final html = extract(
+        page(
+          '<div class="post-actions">'
+          '<a href="https://www.facebook.com/sharer/sharer.php?u=x">'
+          'Facebook</a>'
+          '<a href="https://twitter.com/intent/tweet?url=x">Post on X</a>'
+          '<a href="https://www.linkedin.com/shareArticle?url=x">'
+          'LinkedIn</a>'
+          '<a href="mailto:?subject=Chipmakers">Email</a></div>'
+          '$story',
+        ),
+      );
+      expectStory(html);
+      expect(html, isNot(contains('Facebook')));
+      expect(html, isNot(contains('Post on X')));
+      expect(html, isNot(contains('LinkedIn')));
+    });
+
+    test('a story container with trending/topic post classes stays', () {
+      // WordPress post_class slugs land on the story element itself.
+      final html = extract(
+        '<html><body><article class="post type-post category-trending '
+        'tag-popular-science">'
+        '<p>${'A short post about chip cooling in the desert. ' * 3}</p>'
+        '<p>${'It still deserves to be read in full by everyone. ' * 3}</p>'
+        '</article><div id="comments">'
+        '<p>${'I disagree with every word of this post, honestly. ' * 8}</p>'
+        '</div></body></html>',
+      );
+      expect(html, contains('chip cooling in the desert'));
+      expect(html, contains('deserves to be read in full'));
+    });
+
+    test('media beside a share row and labelled figures stay', () {
+      final html = extract(
+        page(
+          '<div class="hero"><figure><img src="https://example.com/a.jpg" '
+          'alt="Hall"><figcaption>The new hall.</figcaption></figure>'
+          '<div><a href="https://twitter.com/intent/tweet?url=x">Tweet</a>'
+          '<a href="https://www.facebook.com/sharer/sharer.php?u=x">'
+          'Facebook</a></div></div>'
+          '<table aria-label="Market share by vendor"><tr><td>Vendor A'
+          '</td><td>41%</td></tr></table>'
+          '$story',
+        ),
+      );
+      expectStory(html);
+      expect(html, contains('The new hall.'));
+      expect(html, contains('Vendor A'));
+      expect(html, isNot(contains('Tweet')));
+    });
+
+    test('prose about trends and plain lists under such headings stay', () {
+      final html = extract(
+        page(
+          '$story'
+          '<h2>Trending</h2>'
+          '<p>${'Liquid cooling is trending among hyperscalers because '
+                  'air simply cannot move enough heat. ' * 4}</p>'
+          '<h3>Related</h3><ul>'
+          '<li>Older halls can be retrofitted one row at a time.</li>'
+          '<li>See <a href="/report">the full report</a> for the method '
+          'we used to estimate savings.</li></ul>'
+          '<p>Readers can <a href="mailto:tips@example.com">email us</a> '
+          'with tips about cooling projects.</p>',
+        ),
+      );
+      expectStory(html);
+      expect(html, contains('Liquid cooling is trending among'));
+      expect(html, contains('<h2>Trending</h2>'));
+      expect(html, contains('retrofitted one row at a time'));
+      expect(html, contains('the full report'));
+      expect(html, contains('email us'));
+    });
+  });
+
   group('Google News article links', () {
     // news.google.com/rss/articles/... answers with a JS redirect stub;
     // the publisher URL comes from Google's batchexecute endpoint.

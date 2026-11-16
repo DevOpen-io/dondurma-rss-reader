@@ -5,7 +5,10 @@ import '../l10n/app_localizations.dart';
 import '../models/saved_search.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
+import '../utils/app_toast.dart';
 import 'adaptive_dialog.dart';
+import 'folders/feed_action_sheet.dart' show FolderActionTile;
+import 'app_field_decoration.dart';
 
 /// Asks for a name and keeps the current search — query, scope and
 /// filters — as a saved search (#71).
@@ -20,14 +23,19 @@ Future<void> _askName(
   required bool isNew,
 }) async {
   final settings = context.read<SettingsProvider>();
+  final l10n = AppLocalizations.of(context);
   final name = await showAdaptiveSheet<String>(
     context,
     _SearchNameDialog(initialName: search.name, isNew: isNew),
   );
   if (name == null) return;
-  await settings.saveSearch(
+  final saving = settings.saveSearch(
     search.rename(name.trim().isEmpty ? search.query : name.trim()),
   );
+  // A new search lands in a list the user may not be looking at. The
+  // provider holds it as soon as saveSearch returns; the disk write follows.
+  if (isNew) showAppToast(l10n.searchSaved, type: AppToastType.success);
+  await saving;
 }
 
 class _SearchNameDialog extends StatefulWidget {
@@ -57,7 +65,11 @@ class _SearchNameDialogState extends State<_SearchNameDialog> {
       content: TextField(
         controller: _controller,
         autofocus: true,
-        decoration: InputDecoration(labelText: l10n.savedSearchName),
+        style: const TextStyle(fontSize: 15),
+        decoration: appFieldDecoration(Theme.of(context).colorScheme).copyWith(
+          hintText: l10n.savedSearchName,
+          prefixIcon: const Icon(Icons.saved_search, size: 20),
+        ),
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: [
@@ -116,32 +128,89 @@ class SavedSearchList extends StatelessWidget {
     );
   }
 
+  /// Titled with the search it acts on, laid out like the folder sheet.
   void _showActions(BuildContext context, SavedSearch search) {
     final l10n = AppLocalizations.of(context);
     showAdaptiveSheet<void>(
       context,
       Builder(
-        builder: (sheetCtx) => Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.edit_outlined),
-              title: Text(l10n.rename),
-              onTap: () {
-                Navigator.of(sheetCtx).pop();
-                _askName(context, search, isNew: false);
-              },
+        builder: (sheetCtx) {
+          final cs = Theme.of(sheetCtx).colorScheme;
+          final tt = Theme.of(sheetCtx).textTheme;
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: cs.primaryContainer.withValues(alpha: 0.5),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          Icons.saved_search,
+                          size: 20,
+                          color: cs.onPrimaryContainer,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          search.name,
+                          style: tt.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: cs.surfaceContainerHigh,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        FolderActionTile(
+                          icon: Icons.edit_outlined,
+                          label: l10n.rename,
+                          onTap: () {
+                            Navigator.of(sheetCtx).pop();
+                            _askName(context, search, isNew: false);
+                          },
+                        ),
+                        Divider(
+                          height: 1,
+                          indent: 16,
+                          color: cs.outline.withValues(alpha: 0.2),
+                        ),
+                        FolderActionTile(
+                          icon: Icons.delete_outline,
+                          label: l10n.delete,
+                          color: cs.error,
+                          onTap: () {
+                            Navigator.of(sheetCtx).pop();
+                            context.read<SettingsProvider>().removeSavedSearch(
+                              search,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.delete_outline),
-              title: Text(l10n.delete),
-              onTap: () {
-                Navigator.of(sheetCtx).pop();
-                context.read<SettingsProvider>().removeSavedSearch(search);
-              },
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

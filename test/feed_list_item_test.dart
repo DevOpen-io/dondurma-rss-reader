@@ -11,6 +11,7 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/subscription_provider.dart';
+import 'package:ice_cream_rss_reader/utils/app_toast.dart';
 import 'package:ice_cream_rss_reader/widgets/category_icon.dart';
 import 'package:ice_cream_rss_reader/widgets/feed_list_item.dart';
 
@@ -106,6 +107,33 @@ void main() {
 
     await gesture.up();
     await tester.pumpAndSettle();
+  });
+
+  // A swipe in the unread view makes the row vanish at once; the toast's
+  // undo is the way back (device test, 2026-11-16).
+  testWidgets('swiping a row read offers undo, and undo makes it unread', (
+    tester,
+  ) async {
+    appToastController.dismiss();
+    final item = buildItem();
+    await tester.pumpWidget(wrap(item));
+    await tester.pumpAndSettle();
+    final feed = tester
+        .element(find.byType(FeedListItem))
+        .read<FeedProvider>();
+    expect(feed.isRead(item), isFalse);
+
+    await tester.drag(find.byType(FeedListItem), const Offset(300, 0));
+    await tester.pumpAndSettle();
+    expect(feed.isRead(item), isTrue);
+    final toast = appToastController.current;
+    expect(toast?.message, 'Marked as read');
+    expect(toast?.action?.label, 'Undo');
+
+    toast!.action!.onPressed();
+    await tester.pumpAndSettle();
+    expect(feed.isRead(item), isFalse);
+    appToastController.dismiss();
   });
 
   testWidgets('Uncategorized items show no category segment', (tester) async {

@@ -91,7 +91,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String deleteFolderConfirm(String categoryName, int feedCount) {
-    return '¿Seguro que quieres eliminar la categoría \"$categoryName\"?\n\nEsto eliminará permanentemente las $feedCount fuentes RSS que contiene de tus suscripciones.';
+    String _temp0 = intl.Intl.pluralLogic(
+      feedCount,
+      locale: localeName,
+      other:
+          'Esto eliminará permanentemente las $feedCount fuentes RSS que contiene de tus suscripciones.',
+      one:
+          'Esto eliminará permanentemente la fuente RSS que contiene de tus suscripciones.',
+    );
+    return '¿Seguro que quieres eliminar la categoría \"$categoryName\"?\n\n$_temp0';
+  }
+
+  @override
+  String deleteEmptyFolderConfirm(String categoryName) {
+    return '¿Eliminar la categoría vacía \"$categoryName\"?';
   }
 
   @override
@@ -156,11 +169,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Pega la dirección de un sitio o de una fuente para suscribirte';
 
   @override
-  String useSuggestedName(String name) {
-    return 'Usar \"$name\" como nombre';
-  }
-
-  @override
   String get addingFeed => 'Añadiendo…';
 
   @override
@@ -201,6 +209,32 @@ class AppLocalizationsEs extends AppLocalizations {
   String lastFetchFailed(Object error) {
     return 'La última actualización falló: $error';
   }
+
+  @override
+  String get feedErrorNetwork => 'No se pudo conectar';
+
+  @override
+  String get feedErrorGone => 'Feed no encontrado';
+
+  @override
+  String get feedErrorBlocked => 'El sitio denegó el acceso';
+
+  @override
+  String feedErrorServer(Object code) {
+    return 'Error del servidor ($code)';
+  }
+
+  @override
+  String get feedErrorNotFeed => 'La dirección es una página web, no un feed';
+
+  @override
+  String get feedErrorParse => 'No se pudo leer el feed';
+
+  @override
+  String get feedErrorUnknown => 'No se pudo actualizar';
+
+  @override
+  String get feedEmpty => 'Este feed no tiene artículos';
 
   @override
   String get categories => 'Categorías';
@@ -848,13 +882,14 @@ class AppLocalizationsEs extends AppLocalizations {
   String get articleStatusRssSaved => 'Texto RSS guardado';
 
   @override
+  String get articleStatusSummaryOnlySaved =>
+      'Solo se guardó el resumen de la fuente';
+
+  @override
   String get articleStatusRssCached => 'Texto RSS en caché';
 
   @override
   String get articleStatusReadableSession => 'Se puede leer en esta sesión';
-
-  @override
-  String get articleWaitPreparing => 'Preparando partes faltantes';
 
   @override
   String get articleWaitUnmetered => 'Esperando red sin límite';
@@ -1307,6 +1342,15 @@ class AppLocalizationsEs extends AppLocalizations {
   String get savedSearchName => 'Nombre';
 
   @override
+  String get searchSaved => 'Búsqueda guardada';
+
+  @override
+  String get saveToDevice => 'Guardar en el dispositivo';
+
+  @override
+  String get shareFile => 'Compartir';
+
+  @override
   String get rename => 'Renombrar';
 
   @override
@@ -1392,4 +1436,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String timeDaysShort(int count) {
     return '$count d';
   }
+
+  @override
+  String get swipeMarkedRead => 'Marcado como leído';
+
+  @override
+  String get swipeMarkedUnread => 'Marcado como no leído';
+
+  @override
+  String get feedOptions => 'Opciones de la fuente';
 }

@@ -307,30 +307,37 @@ class _AppToastCard extends StatelessWidget {
                       child: Text(toast.action!.label),
                     ),
                   ],
-                  const SizedBox(width: 10),
-                  SizedBox.square(
-                    dimension: 20,
-                    child: reduceMotion
-                        ? CircularProgressIndicator(
-                            key: const ValueKey('app_toast_progress'),
-                            value: 1,
-                            strokeWidth: 2.4,
-                            color: foreground,
-                            backgroundColor: foreground.withValues(alpha: 0.2),
-                          )
-                        : AnimatedBuilder(
-                            animation: progress,
-                            builder: (context, _) => CircularProgressIndicator(
+                  // Time left to take the action. A plain message has no
+                  // ring: beside "refreshed" it read as still loading.
+                  if (toast.action != null) ...[
+                    const SizedBox(width: 10),
+                    SizedBox.square(
+                      dimension: 20,
+                      child: reduceMotion
+                          ? CircularProgressIndicator(
                               key: const ValueKey('app_toast_progress'),
-                              value: 1 - progress.value,
+                              value: 1,
                               strokeWidth: 2.4,
                               color: foreground,
                               backgroundColor: foreground.withValues(
                                 alpha: 0.2,
                               ),
+                            )
+                          : AnimatedBuilder(
+                              animation: progress,
+                              builder: (context, _) =>
+                                  CircularProgressIndicator(
+                                    key: const ValueKey('app_toast_progress'),
+                                    value: 1 - progress.value,
+                                    strokeWidth: 2.4,
+                                    color: foreground,
+                                    backgroundColor: foreground.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                  ),
                             ),
-                          ),
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:ui' show AppExitResponse;
 
 import 'package:flex_color_scheme/flex_color_scheme.dart' show FlexScheme;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:hive_ce_flutter/hive_flutter.dart';
@@ -31,6 +32,7 @@ import 'services/shared_links.dart';
 import 'services/widget_update_service.dart';
 import 'models/feed_item.dart';
 import 'utils/app_toast.dart';
+import 'services/storage_owner.dart';
 import 'utils/host_pacer.dart';
 import 'utils/platform_caps.dart';
 import 'package:window_manager/window_manager.dart' show windowManager;
@@ -62,6 +64,9 @@ void main() async {
   if (PlatformCaps.supportsHomeWidget) {
     WidgetUpdateService.initialize();
   }
+  // One Hive writer per process: a background task that holds the boxes
+  // finishes first, later ones hand their pass to this isolate.
+  if (!kIsWeb) await StorageOwner.claimForUi();
   await Hive.initFlutter();
   await Hive.openBox('settings');
   await Hive.openBox('feeds');
@@ -294,6 +299,10 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    // A WorkManager pass while the app lives runs here, on this isolate's
+    // boxes, as an automatic refresh (notifications included).
+    final feed = context.read<FeedProvider>();
+    StorageOwner.onBackgroundTick = feed.refreshAll;
   }
 
   @override
@@ -312,8 +321,14 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.detached && !kIsWeb) {
+      StorageOwner.releaseUi();
+    }
     final feed = context.read<FeedProvider>();
     if (state == AppLifecycleState.resumed) {
+      // Announce again: a detached that did not end the isolate must not
+      // leave background tasks writing beside it.
+      if (!kIsWeb) unawaited(StorageOwner.claimForUi(maxWait: Duration.zero));
       // Back in the foreground (launcher or notification tap): restart the
       // auto-refresh timer and pull fresh feeds so the user sees current news
       // instead of the stale cache. The refresh is throttled in the provider.

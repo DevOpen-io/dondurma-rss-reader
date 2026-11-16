@@ -27,7 +27,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsTab => 'Ayarlar';
 
   @override
-  String get myFeeds => 'Haber Kaynaklarım';
+  String get myFeeds => 'Kaynaklarım';
 
   @override
   String get searchFeeds => 'Haber kaynakları ara...';
@@ -94,6 +94,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String deleteEmptyFolderConfirm(String categoryName) {
+    return 'Boş \"$categoryName\" kategorisi silinsin mi?';
+  }
+
+  @override
   String get deleteAll => 'Tümünü Sil';
 
   @override
@@ -155,11 +160,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Abone olmak için site ya da kaynak (RSS) adresini yapıştırın';
 
   @override
-  String useSuggestedName(String name) {
-    return '\"$name\" adını kullan';
-  }
-
-  @override
   String get addingFeed => 'Ekleniyor…';
 
   @override
@@ -200,6 +200,32 @@ class AppLocalizationsTr extends AppLocalizations {
   String lastFetchFailed(Object error) {
     return 'Son yenileme başarısız: $error';
   }
+
+  @override
+  String get feedErrorNetwork => 'Bağlanılamadı';
+
+  @override
+  String get feedErrorGone => 'Kaynak bulunamadı';
+
+  @override
+  String get feedErrorBlocked => 'Site erişimi reddetti';
+
+  @override
+  String feedErrorServer(Object code) {
+    return 'Sunucu hatası ($code)';
+  }
+
+  @override
+  String get feedErrorNotFeed => 'Adres bir web sayfası, kaynak değil';
+
+  @override
+  String get feedErrorParse => 'Kaynak okunamadı';
+
+  @override
+  String get feedErrorUnknown => 'Yenilenemedi';
+
+  @override
+  String get feedEmpty => 'Bu kaynakta makale yok';
 
   @override
   String get categories => 'Kategoriler';
@@ -838,13 +864,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String get articleStatusRssSaved => 'RSS metni saklandı';
 
   @override
+  String get articleStatusSummaryOnlySaved => 'Yalnız kaynaktaki özet saklandı';
+
+  @override
   String get articleStatusRssCached => 'RSS metni önbellekte';
 
   @override
   String get articleStatusReadableSession => 'Bu oturumda okunabilir';
-
-  @override
-  String get articleWaitPreparing => 'Eksikler hazırlanıyor';
 
   @override
   String get articleWaitUnmetered => 'Kotasız ağ bekleniyor';
@@ -1293,6 +1319,15 @@ class AppLocalizationsTr extends AppLocalizations {
   String get savedSearchName => 'Ad';
 
   @override
+  String get searchSaved => 'Arama kaydedildi';
+
+  @override
+  String get saveToDevice => 'Cihaza kaydet';
+
+  @override
+  String get shareFile => 'Paylaş';
+
+  @override
   String get rename => 'Yeniden adlandır';
 
   @override
@@ -1377,4 +1412,13 @@ class AppLocalizationsTr extends AppLocalizations {
   String timeDaysShort(int count) {
     return '$count g';
   }
+
+  @override
+  String get swipeMarkedRead => 'Okundu olarak işaretlendi';
+
+  @override
+  String get swipeMarkedUnread => 'Okunmadı olarak işaretlendi';
+
+  @override
+  String get feedOptions => 'Kaynak seçenekleri';
 }
