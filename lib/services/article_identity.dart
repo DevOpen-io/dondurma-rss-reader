@@ -91,7 +91,30 @@ class ArticleIdentity {
         trimmed.endsWith('"')) {
       return trimmed.substring(1, trimmed.length - 1).trim();
     }
-    return trimmed;
+    return _dropTagline(trimmed);
+  }
+
+  /// First `|` or spaced dash (`-`, `–`, `—`) in a site title.
+  static final _taglineSeparator = RegExp(r'\s*\|\s*|\s+[-–—]\s+');
+
+  /// "Apartment Therapy| Saving the world, one room at a time" → "Apartment
+  /// Therapy". Only a short name (≤ 5 words, ≤ 40 chars) followed by a
+  /// sentence-like tail (≥ 4 words) counts: section feeds such as "BBC News
+  /// - World" or "The Verge - All Posts" keep their full title.
+  static String _dropTagline(String title) {
+    final sep = _taglineSeparator.firstMatch(title);
+    if (sep == null) return title;
+    final name = title.substring(0, sep.start).trim();
+    final tail = title.substring(sep.end).trim();
+    int words(String s) => s.split(RegExp(r'\s+')).length;
+    if (name.isEmpty ||
+        name.length > 40 ||
+        words(name) > 5 ||
+        tail.isEmpty ||
+        words(tail) < 4) {
+      return title;
+    }
+    return name;
   }
 
   static String _normalizeUrl(String value) {

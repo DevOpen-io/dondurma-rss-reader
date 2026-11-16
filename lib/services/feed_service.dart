@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import '../models/feed_item.dart';
 import 'feed_date_groups.dart';
 import '../utils/retry_after.dart';
+import '../utils/feed_text.dart';
 import 'article_identity.dart';
 import 'feed_discovery.dart';
 
@@ -956,9 +957,9 @@ class FeedService {
   static _ParsedContent _parseContent(String htmlString) {
     if (htmlString.isEmpty) return const _ParsedContent('', []);
     final document = parse(htmlString);
-    final text = (document.body?.text ?? '')
-        .replaceAll(RegExp(r'\s+'), ' ')
-        .trim();
+    final text = cleanExcerpt(
+      (document.body?.text ?? '').replaceAll(RegExp(r'\s+'), ' ').trim(),
+    );
     final images = document
         .getElementsByTagName('img')
         .map((img) => img.attributes['src'])
