@@ -91,4 +91,21 @@ void main() {
     expect(watch.elapsed, lessThan(const Duration(seconds: 2)));
     StorageOwner.leaveBackground();
   });
+
+  // A task killed mid-pass (WorkManager stop, time limit) never removes its
+  // name; the app must not wait on it at every launch.
+  test('a task that died without letting go delays the app briefly', () async {
+    final dead = ReceivePort()..close();
+    IsolateNameServer.registerPortWithName(
+      dead.sendPort,
+      StorageOwner.backgroundName,
+    );
+    final watch = Stopwatch()..start();
+    await StorageOwner.claimForUi(maxWait: const Duration(seconds: 10));
+    expect(watch.elapsed, lessThan(const Duration(seconds: 3)));
+    expect(
+      IsolateNameServer.lookupPortByName(StorageOwner.backgroundName),
+      isNull,
+    );
+  });
 }

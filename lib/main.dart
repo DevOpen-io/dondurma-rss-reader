@@ -326,6 +326,9 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     }
     final feed = context.read<FeedProvider>();
     if (state == AppLifecycleState.resumed) {
+      // Announce again: a detached that did not end the isolate must not
+      // leave background tasks writing beside it.
+      if (!kIsWeb) unawaited(StorageOwner.claimForUi(maxWait: Duration.zero));
       // Back in the foreground (launcher or notification tap): restart the
       // auto-refresh timer and pull fresh feeds so the user sees current news
       // instead of the stale cache. The refresh is throttled in the provider.

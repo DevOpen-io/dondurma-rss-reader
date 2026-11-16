@@ -34,10 +34,33 @@ abstract final class StorageOwner {
     final port = _uiPort ??= ReceivePort()..listen(_onUiMessage);
     IsolateNameServer.removePortNameMapping(uiName);
     IsolateNameServer.registerPortWithName(port.sendPort, uiName);
+    // A task killed mid-pass never removes its name: ask it first, and
+    // drop a name nobody answers for.
+    final task = IsolateNameServer.lookupPortByName(backgroundName);
+    if (task == null) return;
+    if (!await _answers(task)) {
+      IsolateNameServer.removePortNameMapping(backgroundName);
+      return;
+    }
     final deadline = DateTime.now().add(maxWait);
     while (IsolateNameServer.lookupPortByName(backgroundName) != null &&
         DateTime.now().isBefore(deadline)) {
       await Future<void>.delayed(const Duration(milliseconds: 100));
+    }
+  }
+
+  /// Whether the isolate behind [port] is alive: it answers a reply port.
+  static Future<bool> _answers(
+    SendPort port, {
+    Duration timeout = const Duration(seconds: 1),
+  }) async {
+    final reply = ReceivePort();
+    try {
+      port.send(reply.sendPort);
+      return await reply.first.timeout(timeout, onTimeout: () => false) !=
+          false;
+    } finally {
+      reply.close();
     }
   }
 
@@ -90,7 +113,11 @@ abstract final class StorageOwner {
 
   /// Marks a background pass that holds the boxes.
   static void enterBackground() {
-    final port = _backgroundPort ??= ReceivePort();
+    // Answers the app's "still there?" while the pass holds the boxes.
+    final port = _backgroundPort ??= ReceivePort()
+      ..listen((message) {
+        if (message is SendPort) message.send('alive');
+      });
     IsolateNameServer.removePortNameMapping(backgroundName);
     IsolateNameServer.registerPortWithName(port.sendPort, backgroundName);
   }
