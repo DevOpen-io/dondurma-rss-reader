@@ -175,6 +175,26 @@ class _FeedListItemState extends State<FeedListItem>
     _drag.value = extent;
   }
 
+  /// Swiping read can make the row vanish (unread view), so the toast
+  /// offers the way back. The row may be gone by then: the provider and
+  /// item are captured now.
+  void _toggleReadWithUndo() {
+    final feed = context.read<FeedProvider>();
+    final l10n = AppLocalizations.of(context);
+    final item = widget.item;
+    final nowRead = !item.isRead;
+    unawaited(feed.toggleReadStatus(item));
+    showAppToast(
+      nowRead ? l10n.swipeMarkedRead : l10n.swipeMarkedUnread,
+      action: AppToastAction(
+        label: l10n.undo,
+        // Flips what the row now shows back to what it showed.
+        onPressed: () =>
+            unawaited(feed.toggleReadStatus(item.copyWith(isRead: nowRead))),
+      ),
+    );
+  }
+
   void _onHorizontalDragEnd(DragEndDetails details) {
     if (_controller.isAnimating) return;
     final width = context.size?.width ?? MediaQuery.sizeOf(context).width;
@@ -183,7 +203,7 @@ class _FeedListItemState extends State<FeedListItem>
     final extent = _drag.value;
 
     if (extent > 0 && (extent > threshold || velocity > 1500)) {
-      unawaited(context.read<FeedProvider>().toggleReadStatus(widget.item));
+      _toggleReadWithUndo();
     } else if (extent < 0 && (extent < -threshold || velocity < -1500)) {
       unawaited(confirmBookmarkToggle(context, widget.item));
     }

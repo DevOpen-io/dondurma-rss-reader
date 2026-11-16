@@ -450,5 +450,7 @@
   "timeNow": "ahora",
   "timeMinutesShort": "{count} min",
   "timeHoursShort": "{count} h",
-  "timeDaysShort": "{count} d"
+  "timeDaysShort": "{count} d",
+  "swipeMarkedRead": "Marcado como leído",
+  "swipeMarkedUnread": "Marcado como no leído"
 }

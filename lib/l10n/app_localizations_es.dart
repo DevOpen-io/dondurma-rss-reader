@@ -1405,4 +1405,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String timeDaysShort(int count) {
     return '$count d';
   }
+
+  @override
+  String get swipeMarkedRead => 'Marcado como leído';
+
+  @override
+  String get swipeMarkedUnread => 'Marcado como no leído';
 }

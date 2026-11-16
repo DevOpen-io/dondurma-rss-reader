@@ -1386,4 +1386,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String timeDaysShort(int count) {
     return '${count}d';
   }
+
+  @override
+  String get swipeMarkedRead => 'Marked as read';
+
+  @override
+  String get swipeMarkedUnread => 'Marked as unread';
 }

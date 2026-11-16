@@ -1382,4 +1382,10 @@ class AppLocalizationsTr extends AppLocalizations {
   String timeDaysShort(int count) {
     return '$count g';
   }
+
+  @override
+  String get swipeMarkedRead => 'Okundu olarak işaretlendi';
+
+  @override
+  String get swipeMarkedUnread => 'Okunmadı olarak işaretlendi';
 }

@@ -2595,6 +2595,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{count}d'**
   String timeDaysShort(int count);
+
+  /// No description provided for @swipeMarkedRead.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as read'**
+  String get swipeMarkedRead;
+
+  /// No description provided for @swipeMarkedUnread.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked as unread'**
+  String get swipeMarkedUnread;
 }
 
 class _AppLocalizationsDelegate
