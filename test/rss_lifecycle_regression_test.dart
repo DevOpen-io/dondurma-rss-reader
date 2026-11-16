@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:isolate';
+import 'dart:ui' as ui;
 
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -24,6 +26,7 @@ import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
 import 'package:ice_cream_rss_reader/services/read_state.dart';
 import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
+import 'package:ice_cream_rss_reader/services/storage_owner.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
 
@@ -1122,6 +1125,39 @@ void main() {
       expect(ids, containsAll(<String>['a-new', 'b-old', 'c-old']));
       expect(ids, isNot(contains('a-old')));
       providers.feed.dispose();
+    },
+  );
+
+  // Device test 2026-11-16: the WorkManager isolate and the app's isolate
+  // wrote the same Hive box ("Recovering corrupted box", read marks lost).
+  test(
+    'a background pass that sees the app appear writes nothing',
+    () async {
+      final url = server.url('/owner-a.xml');
+      await _seedSubscriptions([
+        FeedSubscription(url: url, name: 'A', category: 'Test'),
+      ]);
+      await _seedCache([_item(url, 'a-old')]);
+      server.handlers['/owner-a.xml'] = (request) =>
+          _respond200(request, _rss('A', ['a-new']), etag: 'owner-etag');
+
+      StorageOwner.enterBackground();
+      // The app's isolate announces itself while the pass runs.
+      final app = ReceivePort();
+      ui.IsolateNameServer.registerPortWithName(
+        app.sendPort,
+        StorageOwner.uiName,
+      );
+      addTearDown(() {
+        app.close();
+        StorageOwner.debugReset();
+      });
+
+      await runBgFetch();
+
+      expect(server.counts['/owner-a.xml'], 1, reason: 'the fetch may run');
+      expect(_persistedItems().map((i) => i.id), ['a-old']);
+      expect(Hive.box('feeds').get('feedValidators'), isNull);
     },
   );
 

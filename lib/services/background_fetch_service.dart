@@ -20,6 +20,7 @@ import '../utils/async_semaphore.dart';
 import '../utils/host_pacer.dart';
 import 'full_text_extraction_service.dart';
 import 'app_lifecycle_gate.dart';
+import 'storage_owner.dart';
 import 'notification_delivery_policy.dart';
 import 'notification_service.dart';
 import 'observed_article_store.dart';
@@ -33,6 +34,10 @@ const String _bgTaskName = 'rss_bg_fetch';
 @pragma('vm:entry-point')
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    // The app is alive in this process: it runs the pass on its own boxes.
+    // Opening them here too would corrupt them.
+    if (await StorageOwner.handOffToUi()) return true;
+    StorageOwner.enterBackground();
     try {
       await Hive.initFlutter();
       await Future.wait([
@@ -45,6 +50,8 @@ void callbackDispatcher() {
       await runBgFetch();
     } catch (e) {
       debugPrint('[WM] task error: $e');
+    } finally {
+      StorageOwner.leaveBackground();
     }
     // Always report success — a failed fetch shouldn't trigger WorkManager's
     // exponential backoff retry; the next periodic run will try again.
@@ -81,8 +88,12 @@ Future<void> runBgFetch() async {
       debugPrint('[BG] reset pending — skipping this pass');
       return;
     }
-    Future<bool> publish(Future<void> Function() action) =>
-        publishInEra(gate, ticket, action);
+    // The app opened mid-pass: it owns the boxes now, this pass writes
+    // nothing more.
+    Future<bool> publish(Future<void> Function() action) async {
+      if (StorageOwner.uiAppeared) return false;
+      return publishInEra(gate, ticket, action);
+    }
 
     await Hive.initFlutter();
     await Future.wait([
