@@ -257,6 +257,75 @@ void main() {
       }
     });
 
+    group('landscape phone', () {
+      for (final size in const [
+        Size(732, 360),
+        Size(915, 412),
+        Size(640, 320),
+      ]) {
+        testWidgets(
+          '${size.width.toInt()}x${size.height.toInt()}: tabs move to '
+          'a side rail so the list keeps the height',
+          (tester) async {
+            tester.view.physicalSize = size;
+            tester.view.devicePixelRatio = 1.0;
+            addTearDown(tester.view.reset);
+
+            await tester.pumpWidget(wrapHome());
+            await tester.pumpAndSettle();
+
+            expect(find.byType(NavigationBar), findsNothing);
+            expect(find.byType(NavigationRail), findsOneWidget);
+            final appBarBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
+            expect(size.height - appBarBottom, greaterThan(size.height * 0.75));
+            expect(tester.takeException(), isNull);
+
+            // The add action leads the rail and still adds.
+            await tester.tap(find.widgetWithText(AddDestination, 'Add feed'));
+            await tester.pumpAndSettle();
+            expect(find.byType(AddFeedDialog), findsOneWidget);
+            Navigator.of(tester.element(find.byType(AddFeedDialog))).pop();
+            await tester.pumpAndSettle();
+
+            await tester.tap(
+              find.descendant(
+                of: find.byType(NavigationRail),
+                matching: find.text('Categories'),
+              ),
+            );
+            await tester.pumpAndSettle();
+            expect(
+              find.widgetWithText(AddDestination, 'Add Category'),
+              findsOneWidget,
+            );
+            expect(tester.takeException(), isNull);
+          },
+        );
+      }
+
+      testWidgets('rail counts four tabs for screen readers', (tester) async {
+        tester.view.physicalSize = const Size(732, 360);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        final semantics = tester.ensureSemantics();
+        await tester.pumpWidget(wrapHome());
+        await tester.pumpAndSettle();
+        expect(find.bySemanticsLabel(RegExp(r'of 5')), findsNothing);
+        expect(find.bySemanticsLabel(RegExp(r'Tab 4 of 4')), findsOneWidget);
+        semantics.dispose();
+      });
+
+      testWidgets('portrait phones keep the bottom bar', (tester) async {
+        tester.view.physicalSize = const Size(360, 732);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+        await tester.pumpWidget(wrapHome());
+        await tester.pumpAndSettle();
+        expect(find.byType(NavigationBar), findsOneWidget);
+        expect(find.byType(NavigationRail), findsNothing);
+      });
+    });
+
     testWidgets('screen readers count four tabs; the add button is not one', (
       tester,
     ) async {
@@ -265,8 +334,12 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.bySemanticsLabel(RegExp(r'of 5')), findsNothing);
-      for (final (i, tab) in ['Feeds', 'Categories', 'Bookmarks', 'Settings']
-          .indexed) {
+      for (final (i, tab) in [
+        'Feeds',
+        'Categories',
+        'Bookmarks',
+        'Settings',
+      ].indexed) {
         expect(
           find.bySemanticsLabel(RegExp('^$tab\\nTab ${i + 1} of 4\$')),
           findsOneWidget,

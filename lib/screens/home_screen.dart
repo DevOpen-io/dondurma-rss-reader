@@ -276,6 +276,20 @@ class _HomeScreenState extends State<HomeScreen> {
     // not inherited by other scrollables; other tabs keep the route's.
     final routeScroll = PrimaryScrollController.maybeOf(context);
     final feedTab = _selectedIndex == 0 || routeScroll == null;
+    // A landscape phone has no height to spare for a bottom bar: the tabs
+    // and the add action move to a rail beside the content.
+    final useRail = MediaQuery.sizeOf(context).height < 480;
+    final addDestination = _selectedIndex == 1
+        ? AddDestination(
+            key: const ValueKey('add-folder'),
+            label: l10n.addFolder,
+            onPressed: _showAddFolderDialog,
+          )
+        : AddDestination(
+            key: const ValueKey('add-feed'),
+            label: l10n.addFeedButton,
+            onPressed: _showAddFeedDialog,
+          );
     final scaffold = Scaffold(
       appBar: AppBar(
         title: AnimatedSwitcher(
@@ -379,126 +393,123 @@ class _HomeScreenState extends State<HomeScreen> {
         },
         onSavedSearch: _openSearch,
       ),
-      body: _selectedIndex == 0
-          ? Selector<FeedProvider, _FeedTabInputs>(
-              selector: (_, p) => (
-                groups: p.dateGroups,
-                isLoading: p.isLoading,
-                isOffline: p.isOffline,
-                hasItems: p.items.isNotEmpty,
-                filters: (
-                  category: p.selectedCategory,
-                  sheetFilter: p.hasActiveSheetFilter,
-                  search: p.searchQuery,
-                  unreadOnly: p.showUnreadOnly,
+      body: _besideRail(
+        useRail ? addDestination : null,
+        _selectedIndex == 0
+            ? Selector<FeedProvider, _FeedTabInputs>(
+                selector: (_, p) => (
+                  groups: p.dateGroups,
+                  isLoading: p.isLoading,
+                  isOffline: p.isOffline,
+                  hasItems: p.items.isNotEmpty,
+                  filters: (
+                    category: p.selectedCategory,
+                    sheetFilter: p.hasActiveSheetFilter,
+                    search: p.searchQuery,
+                    unreadOnly: p.showUnreadOnly,
+                  ),
                 ),
-              ),
-              builder: (context, inputs, _) {
-                final provider = context.read<FeedProvider>();
-                final todayItems = inputs.groups.today;
-                final yesterdayItems = inputs.groups.yesterday;
-                final olderItems = inputs.groups.older;
-                return Column(
-                  children: [
-                    // ── Search history suggestions ────────────────────────────
-                    if (_isSearching)
-                      HomeSearchHistoryPanel(
-                        searchController: _searchController,
-                        onQuerySelected: (query) {
-                          _searchController.text = query;
-                          _searchController.selection =
-                              TextSelection.fromPosition(
-                                TextPosition(offset: query.length),
-                              );
-                          provider.setSearchQuery(query);
-                        },
-                      ),
-                    Expanded(
-                      child: ConstrainedWidth(
-                        child: Stack(
-                          children: [
-                            _buildHomeBody(
-                              context,
-                              provider,
-                              todayItems,
-                              yesterdayItems,
-                              olderItems,
-                            ),
-                            // Compact pull-to-refresh progress — floats above
-                            // the list so it never shifts layout or crowds
-                            // the AppBar actions.
-                            Positioned(
-                              top: 8,
-                              left: 0,
-                              right: 0,
-                              child: _RefreshProgressPill(
-                                progress: provider.refreshProgress,
+                builder: (context, inputs, _) {
+                  final provider = context.read<FeedProvider>();
+                  final todayItems = inputs.groups.today;
+                  final yesterdayItems = inputs.groups.yesterday;
+                  final olderItems = inputs.groups.older;
+                  return Column(
+                    children: [
+                      // ── Search history suggestions ────────────────────────────
+                      if (_isSearching)
+                        HomeSearchHistoryPanel(
+                          searchController: _searchController,
+                          onQuerySelected: (query) {
+                            _searchController.text = query;
+                            _searchController.selection =
+                                TextSelection.fromPosition(
+                                  TextPosition(offset: query.length),
+                                );
+                            provider.setSearchQuery(query);
+                          },
+                        ),
+                      Expanded(
+                        child: ConstrainedWidth(
+                          child: Stack(
+                            children: [
+                              _buildHomeBody(
+                                context,
+                                provider,
+                                todayItems,
+                                yesterdayItems,
+                                olderItems,
                               ),
-                            ),
-                          ],
+                              // Compact pull-to-refresh progress — floats above
+                              // the list so it never shifts layout or crowds
+                              // the AppBar actions.
+                              Positioned(
+                                top: 8,
+                                left: 0,
+                                right: 0,
+                                child: _RefreshProgressPill(
+                                  progress: provider.refreshProgress,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              },
-            )
-          : _selectedIndex == 1
-          ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
-          : _selectedIndex == 2
-          ? const BookmarksScreen()
-          : const SettingsScreen(),
+                    ],
+                  );
+                },
+              )
+            : _selectedIndex == 1
+            ? CategoriesScreen(onFeedSelected: () => _onItemTapped(0))
+            : _selectedIndex == 2
+            ? const BookmarksScreen()
+            : const SettingsScreen(),
+      ),
       // Standard bar: fixed to the bottom edge. Adding is the one action
       // every new reader looks for, so it sits in the middle of the bar on
       // every tab: a folder on the folder tab, a feed everywhere else.
-      bottomNavigationBar: ColoredBox(
-        color: Theme.of(context).colorScheme.surfaceContainer,
-        child: ConstrainedWidth(
-          maxWidth: 480,
-          child: NavigationBar(
-            height: 68,
-            // The add action is the bar's middle slot, not a tab.
-            selectedIndex: _selectedIndex < 2
-                ? _selectedIndex
-                : _selectedIndex + 1,
-            onDestinationSelected: (index) {
-              if (index != 2) _onItemTapped(index < 2 ? index : index - 1);
-            },
-            destinations: [
-              _tab(0, Icons.list_outlined, Icons.list, l10n.feedsTab),
-              _tab(
-                1,
-                Icons.folder_outlined,
-                Icons.folder,
-                l10n.foldersTab,
-              ),
-              _selectedIndex == 1
-                  ? AddDestination(
-                      key: const ValueKey('add-folder'),
-                      label: l10n.addFolder,
-                      onPressed: _showAddFolderDialog,
-                    )
-                  : AddDestination(
-                      key: const ValueKey('add-feed'),
-                      label: l10n.addFeedButton,
-                      onPressed: _showAddFeedDialog,
+      bottomNavigationBar: useRail
+          ? null
+          : ColoredBox(
+              color: Theme.of(context).colorScheme.surfaceContainer,
+              child: ConstrainedWidth(
+                maxWidth: 480,
+                child: NavigationBar(
+                  height: 68,
+                  // The add action is the bar's middle slot, not a tab.
+                  selectedIndex: _selectedIndex < 2
+                      ? _selectedIndex
+                      : _selectedIndex + 1,
+                  onDestinationSelected: (index) {
+                    if (index != 2) {
+                      _onItemTapped(index < 2 ? index : index - 1);
+                    }
+                  },
+                  destinations: [
+                    _tab(0, Icons.list_outlined, Icons.list, l10n.feedsTab),
+                    _tab(
+                      1,
+                      Icons.folder_outlined,
+                      Icons.folder,
+                      l10n.foldersTab,
                     ),
-              _tab(
-                2,
-                Icons.bookmark_border,
-                Icons.bookmark,
-                l10n.bookmarksTab,
+                    addDestination,
+                    _tab(
+                      2,
+                      Icons.bookmark_border,
+                      Icons.bookmark,
+                      l10n.bookmarksTab,
+                    ),
+                    _tab(
+                      3,
+                      Icons.settings_outlined,
+                      Icons.settings,
+                      l10n.settingsTab,
+                    ),
+                  ],
+                ),
               ),
-              _tab(
-                3,
-                Icons.settings_outlined,
-                Icons.settings,
-                l10n.settingsTab,
-              ),
-            ],
-          ),
-        ),
-      ),
+            ),
     );
     return PrimaryScrollController(
       controller: feedTab ? _feedScroll : routeScroll,
@@ -510,6 +521,61 @@ class _HomeScreenState extends State<HomeScreen> {
               TargetPlatform.fuchsia,
             },
       child: scaffold,
+    );
+  }
+
+  /// [content] beside the navigation rail, led by [add]; [content] alone
+  /// when there is no rail.
+  Widget _besideRail(Widget? add, Widget content) {
+    if (add == null) return content;
+    final l10n = AppLocalizations.of(context);
+    final cs = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        // Scrolls on the shortest screens instead of overflowing.
+        LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: NavigationRail(
+                  backgroundColor: cs.surfaceContainer,
+                  labelType: NavigationRailLabelType.all,
+                  leading: Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: SizedBox(width: 80, height: 56, child: add),
+                  ),
+                  selectedIndex: _selectedIndex,
+                  onDestinationSelected: _onItemTapped,
+                  destinations: [
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.list_outlined),
+                      selectedIcon: const Icon(Icons.list),
+                      label: Text(l10n.feedsTab),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.folder_outlined),
+                      selectedIcon: const Icon(Icons.folder),
+                      label: Text(l10n.foldersTab),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.bookmark_border),
+                      selectedIcon: const Icon(Icons.bookmark),
+                      label: Text(l10n.bookmarksTab),
+                    ),
+                    NavigationRailDestination(
+                      icon: const Icon(Icons.settings_outlined),
+                      selectedIcon: const Icon(Icons.settings),
+                      label: Text(l10n.settingsTab),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+        Expanded(child: content),
+      ],
     );
   }
 
