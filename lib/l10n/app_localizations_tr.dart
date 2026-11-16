@@ -94,6 +94,11 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String deleteEmptyFolderConfirm(String categoryName) {
+    return 'Boş \"$categoryName\" kategorisi silinsin mi?';
+  }
+
+  @override
   String get deleteAll => 'Tümünü Sil';
 
   @override

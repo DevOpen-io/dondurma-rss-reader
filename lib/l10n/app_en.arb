@@ -32,7 +32,15 @@
   "emojiLabel": "Emoji",
   "folderName": "Category Name",
   "deleteFolder": "Delete Category",
-  "deleteFolderConfirm": "Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.",
+  "deleteFolderConfirm": "Are you sure you want to delete the category \"{categoryName}\"?\n\n{feedCount, plural, =1{This will permanently remove the 1 RSS feed inside it from your subscriptions.} other{This will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.}}",
+  "deleteEmptyFolderConfirm": "Delete the empty category \"{categoryName}\"?",
+  "@deleteEmptyFolderConfirm": {
+    "placeholders": {
+      "categoryName": {
+        "type": "String"
+      }
+    }
+  },
   "@deleteFolderConfirm": {
     "placeholders": {
       "categoryName": {

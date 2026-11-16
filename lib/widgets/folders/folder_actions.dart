@@ -93,7 +93,8 @@ void confirmDeleteFeed(BuildContext context, FeedSubscription sub) {
   );
 }
 
-/// Deleting a folder deletes every feed in it — the confirm label says so.
+/// Deleting a folder deletes every feed in it — the confirm label says so;
+/// an empty folder is just deleted.
 void confirmDeleteCategory(
   BuildContext context,
   String category,
@@ -104,8 +105,10 @@ void confirmDeleteCategory(
   _confirmDelete(
     context,
     title: l10n.deleteFolder,
-    message: l10n.deleteFolderConfirm(category, feedCount),
-    confirmLabel: l10n.deleteAll,
+    message: feedCount == 0
+        ? l10n.deleteEmptyFolderConfirm(category)
+        : l10n.deleteFolderConfirm(category, feedCount),
+    confirmLabel: feedCount > 1 ? l10n.deleteAll : l10n.delete,
     delete: () => subs.removeCategory(category),
   );
 }

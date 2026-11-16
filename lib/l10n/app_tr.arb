@@ -26,6 +26,7 @@
   "folderName": "Kategori Adı",
   "deleteFolder": "Kategoriyi Sil",
   "deleteFolderConfirm": "\"{categoryName}\" kategorisini silmek istediğinizden emin misiniz?\n\nBu işlem, içindeki {feedCount} RSS kaynağını kalıcı olarak aboneliklerinizden kaldıracak.",
+  "deleteEmptyFolderConfirm": "Boş \"{categoryName}\" kategorisi silinsin mi?",
   "deleteAll": "Tümünü Sil",
   "markAllAsRead": "Tümünü Okundu İşaretle",
   "markReadAll": "Tüm makaleler",

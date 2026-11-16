@@ -91,7 +91,20 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String deleteFolderConfirm(String categoryName, int feedCount) {
-    return '¿Seguro que quieres eliminar la categoría \"$categoryName\"?\n\nEsto eliminará permanentemente las $feedCount fuentes RSS que contiene de tus suscripciones.';
+    String _temp0 = intl.Intl.pluralLogic(
+      feedCount,
+      locale: localeName,
+      other:
+          'Esto eliminará permanentemente las $feedCount fuentes RSS que contiene de tus suscripciones.',
+      one:
+          'Esto eliminará permanentemente la fuente RSS que contiene de tus suscripciones.',
+    );
+    return '¿Seguro que quieres eliminar la categoría \"$categoryName\"?\n\n$_temp0';
+  }
+
+  @override
+  String deleteEmptyFolderConfirm(String categoryName) {
+    return '¿Eliminar la categoría vacía \"$categoryName\"?';
   }
 
   @override

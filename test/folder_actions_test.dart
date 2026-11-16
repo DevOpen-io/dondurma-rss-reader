@@ -264,6 +264,57 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
+    testWidgets('an empty folder is deleted plainly, without a feed count', (
+      tester,
+    ) async {
+      await tester.runAsync(
+        () => Hive.box(
+          'feeds',
+        ).put('custom_categories', jsonEncode(['Empty'])),
+      );
+      subs = SubscriptionProvider();
+      phoneSurface(tester);
+      await pumpCategories(tester);
+      final before = feedOf(tester).refreshes;
+
+      // Empty sorts first.
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await settle(tester);
+      await tester.tap(find.text('Delete Category'));
+      await settle(tester);
+
+      expect(find.textContaining('0 RSS'), findsNothing);
+      expect(find.text('Delete All'), findsNothing);
+      expect(find.textContaining('"Empty"'), findsOneWidget);
+      await tester.tap(
+        find.descendant(
+          of: find.byType(ActionSheet),
+          matching: find.widgetWithText(FilledButton, 'Delete'),
+        ),
+      );
+      await settleWrites(tester, before + 1);
+
+      expect(subs.categories, isNot(contains('Empty')));
+      expect(subs.subscriptions, hasLength(3));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a folder with one feed names one feed', (tester) async {
+      phoneSurface(tester);
+      await pumpCategories(tester);
+
+      // Science (one feed) sorts first.
+      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await settle(tester);
+      await tester.tap(find.text('Delete Category'));
+      await settle(tester);
+
+      expect(find.textContaining('all 1 RSS feeds'), findsNothing);
+      expect(find.textContaining('1 RSS feed '), findsOneWidget);
+      expect(find.text('Delete All'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+
     testWidgets('mobile sheets use the built-in drag handle only', (
       tester,
     ) async {

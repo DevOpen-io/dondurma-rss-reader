@@ -253,8 +253,14 @@ abstract class AppLocalizations {
   /// No description provided for @deleteFolderConfirm.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete the category \"{categoryName}\"?\n\nThis will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.'**
+  /// **'Are you sure you want to delete the category \"{categoryName}\"?\n\n{feedCount, plural, =1{This will permanently remove the 1 RSS feed inside it from your subscriptions.} other{This will permanently remove all {feedCount} RSS feeds inside it from your subscriptions.}}'**
   String deleteFolderConfirm(String categoryName, int feedCount);
+
+  /// No description provided for @deleteEmptyFolderConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete the empty category \"{categoryName}\"?'**
+  String deleteEmptyFolderConfirm(String categoryName);
 
   /// No description provided for @deleteAll.
   ///
