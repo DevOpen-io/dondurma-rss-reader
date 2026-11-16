@@ -7,6 +7,7 @@ import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
 import 'adaptive_dialog.dart';
 import 'folders/feed_action_sheet.dart' show FolderActionTile;
+import 'app_field_decoration.dart';
 
 /// Asks for a name and keeps the current search — query, scope and
 /// filters — as a saved search (#71).
@@ -58,7 +59,11 @@ class _SearchNameDialogState extends State<_SearchNameDialog> {
       content: TextField(
         controller: _controller,
         autofocus: true,
-        decoration: InputDecoration(labelText: l10n.savedSearchName),
+        style: const TextStyle(fontSize: 15),
+        decoration: appFieldDecoration(Theme.of(context).colorScheme).copyWith(
+          hintText: l10n.savedSearchName,
+          prefixIcon: const Icon(Icons.saved_search, size: 20),
+        ),
         onSubmitted: (value) => Navigator.of(context).pop(value),
       ),
       actions: [

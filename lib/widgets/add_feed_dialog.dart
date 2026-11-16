@@ -13,6 +13,7 @@ import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import 'adaptive_dialog.dart';
 import 'folders/category_picker_sheet.dart';
+import 'app_field_decoration.dart';
 
 class AddFeedDialog extends StatefulWidget {
   /// An address to start from — a link shared to the app.
@@ -124,31 +125,7 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
     final cs = theme.colorScheme;
     final keyboardHeight = MediaQuery.viewInsetsOf(context).bottom;
 
-    final supportFieldDecoration = InputDecoration(
-      filled: true,
-      fillColor: cs.surfaceContainerHigh,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.primary, width: 2),
-      ),
-      errorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.error, width: 1.5),
-      ),
-      focusedErrorBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.error, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
+    final supportFieldDecoration = appFieldDecoration(cs);
 
     return Form(
       key: _formKey,

@@ -12,6 +12,7 @@ import '../../providers/subscription_provider.dart';
 import '../../utils/app_toast.dart';
 import '../../widgets/keyword_input_sheet.dart';
 import '../category_icon.dart';
+import '../app_field_decoration.dart';
 
 class EditCategoryDialog extends StatefulWidget {
   const EditCategoryDialog({super.key, required this.currentCategory});
@@ -43,9 +44,10 @@ class _EditCategoryDialogState extends State<EditCategoryDialog> {
       title: Text(l10n.renameFolder),
       content: TextField(
         controller: _controller,
-        decoration: InputDecoration(
-          labelText: l10n.folderName,
-          border: const OutlineInputBorder(),
+        style: const TextStyle(fontSize: 15),
+        decoration: appFieldDecoration(Theme.of(context).colorScheme).copyWith(
+          hintText: l10n.folderName,
+          prefixIcon: const Icon(Icons.folder_outlined, size: 20),
         ),
         autofocus: true,
       ),
@@ -151,14 +153,9 @@ class _EmojiIconDialogState extends State<EmojiIconDialog> {
               onChanged: (_) => setState(() {}),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 26),
-              decoration: InputDecoration(
-                labelText: l10n.emojiLabel,
-                border: const OutlineInputBorder(),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 16,
-                ),
-              ),
+              decoration: appFieldDecoration(
+                Theme.of(context).colorScheme,
+              ).copyWith(hintText: l10n.emojiLabel),
             ),
           ),
         ],
@@ -220,23 +217,7 @@ class _EditSubscriptionDialogState extends State<EditSubscriptionDialog> {
     final cs = theme.colorScheme;
     final tt = theme.textTheme;
 
-    final fieldDecoration = InputDecoration(
-      filled: true,
-      fillColor: cs.surfaceContainerHigh,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide.none,
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(color: cs.primary, width: 2),
-      ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    );
+    final fieldDecoration = appFieldDecoration(cs);
 
     return Padding(
       // max(keyboard, nav bar) — edge-to-edge bottom inset, see filter sheet.
