@@ -73,6 +73,33 @@ Source comparison: 2026-10-26. Checked items describe implementation in the repo
 - [x] Read-aloud label truncates ("Reading al…") at 320dp with 1.3× text — wraps to two lines
 - [x] Screen readers announce the nav bar as "Tab 4 of 5" (the middle add button counts as a tab)
 
+### Device test follow-ups (Android emulator, 2026-11-16)
+
+Fixed on `ui/usability-followups`:
+
+- [x] Back with the drawer open closed the app (predictive back) — the open drawer claims back and closes
+- [x] Slow feeds lost articles after a restart (snapshot kept only offline-cache members; HTTP 304 reused it) — the whole list is persisted; older trimmed snapshots heal once
+- [x] Read marks lost: the WorkManager isolate and the app's isolate wrote the same Hive box ("Recovering corrupted box") — one writer per process (`StorageOwner`), the task hands its pass to a live app
+- [x] "Saved copy ready" on a bookmark holding only the feed teaser — "Only the feed summary is saved"
+- [x] Status labels on fresh articles ("RSS text cached", "Preparing missing parts") — automatic cache is silent; bookmarks still report
+- [x] Bottom-bar labels broke in Turkish / with large text; app bar title cut ("Haber Kaynakla…")
+- [x] Empty grey cover offline; landscape cover took ~75% of the screen
+- [x] Settings info icons stole row taps; switches had no accessible name; long option values broke their row
+- [x] Swipe-to-read had no undo; categories tab: tap opened settings, feed titled with its folder
+- [x] Broken/empty feeds silent — reason shown in the categories list and feed sheet
+- [x] Discovery named feeds from the domain ("Theverge"); site taglines and "READ MORE…" in rows
+- [x] Backup/OPML export only via share — "Save to device"; Android could not pick a saved .opml to import
+- [x] Factory reset kept the language; "Categories" untranslated; refresh toast ring read as loading
+- [x] Saved search had no confirmation; tag field not focused; add-feed accepted pasted garbage; typing an address fast broke the dialog
+
+Open:
+
+- [ ] Onboarding suggests a dead feed (Beetekno, "Feed not found") — audit the suggested-feed list
+- [ ] Drawer: the "Uncategorized" group shows no count and does not expand to its feeds
+- [ ] Android widgets: both are named "Dondurma Rss Reader" in the picker, preview text is Turkish on an English device, the header count ("50") is unexplained
+- [ ] TalkBack not exercised on device (adb cannot drive its gestures); semantics verified through the accessibility tree only
+- [ ] Bot-protected sites (e.g. Apartment Therapy, 403) give no full text
+
 ## Delivery rules
 
 - Update status with implementation.
