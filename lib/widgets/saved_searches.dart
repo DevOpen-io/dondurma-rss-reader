@@ -5,6 +5,7 @@ import '../l10n/app_localizations.dart';
 import '../models/saved_search.dart';
 import '../providers/feed_provider.dart';
 import '../providers/settings_provider.dart';
+import '../utils/app_toast.dart';
 import 'adaptive_dialog.dart';
 
 /// Asks for a name and keeps the current search — query, scope and
@@ -20,14 +21,19 @@ Future<void> _askName(
   required bool isNew,
 }) async {
   final settings = context.read<SettingsProvider>();
+  final l10n = AppLocalizations.of(context);
   final name = await showAdaptiveSheet<String>(
     context,
     _SearchNameDialog(initialName: search.name, isNew: isNew),
   );
   if (name == null) return;
-  await settings.saveSearch(
+  final saving = settings.saveSearch(
     search.rename(name.trim().isEmpty ? search.query : name.trim()),
   );
+  // A new search lands in a list the user may not be looking at. The
+  // provider holds it as soon as saveSearch returns; the disk write follows.
+  if (isNew) showAppToast(l10n.searchSaved, type: AppToastType.success);
+  await saving;
 }
 
 class _SearchNameDialog extends StatefulWidget {

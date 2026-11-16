@@ -1307,6 +1307,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get savedSearchName => 'Nombre';
 
   @override
+  String get searchSaved => 'Búsqueda guardada';
+
+  @override
   String get rename => 'Renombrar';
 
   @override

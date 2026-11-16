@@ -1289,6 +1289,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get savedSearchName => 'Name';
 
   @override
+  String get searchSaved => 'Search saved';
+
+  @override
   String get rename => 'Rename';
 
   @override

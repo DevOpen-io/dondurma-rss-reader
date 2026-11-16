@@ -2434,6 +2434,12 @@ abstract class AppLocalizations {
   /// **'Name'**
   String get savedSearchName;
 
+  /// No description provided for @searchSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Search saved'**
+  String get searchSaved;
+
   /// No description provided for @rename.
   ///
   /// In en, this message translates to:

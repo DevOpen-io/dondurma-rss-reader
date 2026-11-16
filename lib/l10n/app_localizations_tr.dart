@@ -1293,6 +1293,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get savedSearchName => 'Ad';
 
   @override
+  String get searchSaved => 'Arama kaydedildi';
+
+  @override
   String get rename => 'Yeniden adlandır';
 
   @override
