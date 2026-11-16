@@ -98,10 +98,33 @@ Iterable<FeedItem> deduplicateByLink(Iterable<FeedItem> items) sync* {
   }
 }
 
-/// What makes two rows the same article: the usable link, else the source
-/// instance.
+/// What makes two rows the same article: the Google News story, else the
+/// usable link, else the source instance.
 Object articleKey(FeedItem item) =>
-    usableArticleLink(item.link) ?? (item.feedUrl, item.id);
+    _googleNewsStoryKey(item) ??
+    usableArticleLink(item.link) ??
+    (item.feedUrl, item.id);
+
+/// Google News lists one story syndicated by several outlets as separate
+/// items: each has its own `news.google.com/rss/articles/<id>` link, and the
+/// titles differ only in the " - Publisher" suffix. Such copies share this
+/// key: the headline without that suffix and the UTC day of publication, so
+/// a recurring headline ("Stock market today") on another day stays apart.
+/// Display-level only; durable identity stays [ArticleRef].
+(String, int, int, int)? _googleNewsStoryKey(FeedItem item) {
+  final date = item.pubDate?.toUtc();
+  if (date == null) return null;
+  final uri = Uri.tryParse(item.link);
+  if (uri == null || uri.host.toLowerCase() != 'news.google.com') return null;
+  final title = item.title;
+  final cut = title.lastIndexOf(' - ');
+  final headline = (cut > 0 ? title.substring(0, cut) : title)
+      .replaceAll(RegExp(r'\s+'), ' ')
+      .trim()
+      .toLowerCase();
+  if (headline.isEmpty) return null;
+  return (headline, date.year, date.month, date.day);
+}
 
 /// One keyword rule as typed (#69): a whole word or phrase, `/regex/` for
 /// a regular expression, either after `title:` to look at the title only.

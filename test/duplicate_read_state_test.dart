@@ -138,6 +138,42 @@ void main() {
     feed.dispose();
   });
 
+  test('a Google News story syndicated twice is one row; reading it reads '
+      'the hidden copy', () async {
+    const feedUrl = 'https://news.google.com/rss/search?q=bitcoin';
+    final at = DateTime.utc(2026, 11, 16, 1, 51);
+    FeedItem copy(String id, String publisher, DateTime date) => FeedItem(
+      id: id,
+      siteName: '"bitcoin" - Google News',
+      title: 'Galaxy Digital Says Buy Bitcoin - $publisher',
+      description: '',
+      category: 'News',
+      feedUrl: feedUrl,
+      link: 'https://news.google.com/rss/articles/$id?oc=5',
+      pubDate: date,
+    );
+    await Hive.box('feeds').put(
+      'cachedItemsJson',
+      jsonEncode([
+        copy('CBMi1', 'Yahoo Finance', at).toJson(),
+        copy(
+          'CBMi2',
+          'The Motley Fool',
+          at.subtract(const Duration(minutes: 40)),
+        ).toJson(),
+      ]),
+    );
+    final feed = await load();
+    expect(feed.filteredItems, hasLength(1));
+    expect(feed.unreadCount(), 1);
+
+    await feed.markAsRead(feed.filteredItems.single);
+    expect(feed.unreadCount(), 0);
+    feed.applySheetFilter(readFilter: 'unread', categories: {});
+    expect(feed.filteredItems, isEmpty);
+    feed.dispose();
+  });
+
   test('a bookmark row toggles what it shows, its own copy', () async {
     final feed = await load();
     feed.selectCategory('News');
