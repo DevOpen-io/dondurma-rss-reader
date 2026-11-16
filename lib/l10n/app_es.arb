@@ -46,7 +46,6 @@
   "reset": "Restablecer",
   "addRssFeed": "Añadir fuente RSS",
   "addFeedSubtitle": "Pega la dirección de un sitio o de una fuente para suscribirte",
-  "useSuggestedName": "Usar \"{name}\" como nombre",
   "addingFeed": "Añadiendo…",
   "feedUrlLabel": "URL de la fuente",
   "feedUrlHint": "p. ej. https://techcrunch.com/feed/",
@@ -65,6 +64,14 @@
       "error": {}
     }
   },
+  "feedErrorNetwork": "No se pudo conectar",
+  "feedErrorGone": "Feed no encontrado",
+  "feedErrorBlocked": "El sitio denegó el acceso",
+  "feedErrorServer": "Error del servidor ({code})",
+  "feedErrorNotFeed": "La dirección es una página web, no un feed",
+  "feedErrorParse": "No se pudo leer el feed",
+  "feedErrorUnknown": "No se pudo actualizar",
+  "feedEmpty": "Este feed no tiene artículos",
   "categories": "Categorías",
   "allNews": "Todas las noticias",
   "allArticles": "Todos los artículos",

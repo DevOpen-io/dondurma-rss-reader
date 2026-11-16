@@ -31,6 +31,9 @@ class _SpyFeedProvider extends FeedProvider {
   int refreshes = 0;
 
   @override
+  String? feedErrorFor(String url) => feedErrors[url];
+
+  @override
   Future<void> refreshAll({
     bool queueIfRunning = false,
     bool userInitiated = false,
@@ -38,6 +41,9 @@ class _SpyFeedProvider extends FeedProvider {
     refreshes++;
   }
 }
+
+/// Stored per-feed verdicts the spy provider reports; reset per test.
+var feedErrors = <String, String>{};
 
 /// Feed/folder action flows reachable from the drawer, the categories screen
 /// and the desktop sidebar: same sheets, same confirmations, same provider
@@ -96,6 +102,7 @@ void main() {
       ]),
     );
     subs = SubscriptionProvider();
+    feedErrors = {};
   });
 
   final desktop = TargetPlatformVariant.only(TargetPlatform.linux);
@@ -191,6 +198,54 @@ void main() {
   }
 
   group('categories screen', () {
+    testWidgets('a feed whose last fetch failed says why; healthy feeds '
+        'show nothing', (tester) async {
+      phoneSurface(tester);
+      // A code from this version, a raw message from an older one; Feed B1
+      // is healthy.
+      feedErrors = {
+        'https://a.example/feed': 'gone',
+        'https://a2.example/feed': 'Failed to load RSS feed (Status: 500)',
+      };
+      await pumpCategories(tester);
+
+      expect(find.text('Feed not found'), findsOneWidget);
+      expect(find.text("Couldn't refresh"), findsOneWidget);
+      expect(find.byIcon(Icons.error_outline_rounded), findsNWidgets(2));
+      expect(find.text('b.example'), findsOneWidget, reason: 'healthy row');
+
+      await tester.tap(feedOptions('Feed A1'));
+      await settle(tester);
+      expect(
+        find.descendant(
+          of: find.byType(FeedActionSheet),
+          matching: find.text('Last refresh failed: Feed not found'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('a feed with no articles is noted, not called failed', (
+      tester,
+    ) async {
+      phoneSurface(tester);
+      feedErrors = {'https://a.example/feed': 'empty'};
+      await pumpCategories(tester);
+
+      expect(find.text('No articles in this feed'), findsOneWidget);
+      await tester.tap(feedOptions('Feed A1'));
+      await settle(tester);
+      expect(find.textContaining('Last refresh failed'), findsNothing);
+      expect(
+        find.descendant(
+          of: find.byType(FeedActionSheet),
+          matching: find.text('No articles in this feed'),
+        ),
+        findsOneWidget,
+      );
+    });
+
     // Tap opens the feed like the drawer does; the sheet is behind ⋮ and a
     // long press (device test, 2026-11-16: tap opened settings).
     testWidgets('tapping a feed shows its articles', (tester) async {

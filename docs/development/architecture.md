@@ -76,9 +76,11 @@ Varsayılanlar: 50 cache öğesi, 1800 saniye yenileme (kayıt yok/0), arka plan
 
 - `subscriptions`: JSON `FeedSubscription` listesi
 - `custom_categories`, `category_icons`, `category_order`
-- `cachedItemsJson`
+- `cachedItemsJson`: listedeki bütün makaleler (feed başına `FeedService.maxItemsPerFeed` ile sınırlı), yeniden başlatmada liste bundan kurulur; çevrimdışı cache üyeliği ayrıdır (`tempCache` sahibi, `offlineCacheLimit`). Ön plan ve arka plan aynı biçimde yazar
+- `cachedItemsWholeFeeds`: snapshot'ın bütün feed'leri tuttuğunu işaretler. Yoksa snapshot eski sürümün yalnız cache üyelerini tutan halidir; `feedValidators` bir kez silinir ki 304 kırpılmış feed'i öyle bırakmasın
 - `readItemRefs`: kaynak bazlı okundu işaretleri (`(feedUrl, id)` typed key) ve henüz bağlanmamış legacy ID'ler; `readItemIds` yalnız migration girdisidir, yeniden yazılmaz. Kullanıcı işaretleri bellekte anında uygulanır, diske 1 sn sessizlikten sonra tek yazımla gider; uygulama ön plandan çıkınca ve provider kapanırken bekleyen yazım hemen yapılır
 - `feedValidators`: URL bazlı ETag/Last-Modified
+- `feedErrors`: feed başına son çekimin kısa neden kodu (`network`, `gone`, `blocked`, `http:<durum>`, `http`, `notFeed`, `parse`, `other`) ya da yanıt veren ama makalesi olmayan feed için `empty` (hata sayılmaz, yenileme sonucunu değiştirmez). Kategoriler ekranı ve feed eylem sayfası bunu yerelleştirilmiş metinle gösterir; eski sürümlerin ham mesajları genel "yenilenemedi" olarak okunur
 - `feedRedirects`: abonelik URL'sinden öğrenilen son URL'ye eşleme
 - `feedBackoffUntil`, `feedBackoffUntil.bg`: ön plan ve arka plan yazarlarının ayrı cooldown snapshot'ları
 - `feedFetchedAt`, `feedFetchedAt.bg`: feed başına son başarılı çekim zamanı (aynı yuva sözleşmesi); `FeedSubscription.refreshIntervalMinutes` dolu olan feed'ler otomatik geçişlerde süre dolana kadar atlanır, kullanıcı yenilemesi hepsini çeker (#68)

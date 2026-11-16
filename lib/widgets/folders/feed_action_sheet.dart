@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../l10n/app_localizations.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/subscription_provider.dart';
+import '../../services/feed_refresh.dart';
 import '../../utils/motion.dart';
+import 'feed_health.dart';
 
 class FeedActionSheet extends StatelessWidget {
   const FeedActionSheet({
@@ -98,10 +100,17 @@ class FeedActionSheet extends StatelessWidget {
                         icon: Icons.copy_rounded,
                         text: l10n.duplicateSubscription,
                       ),
-                    if (feedError != null)
+                    if (feedError == emptyFeedCode)
+                      _WarningRow(
+                        icon: Icons.info_outline_rounded,
+                        text: feedHealthText(l10n, feedError!),
+                      )
+                    else if (feedError != null)
                       _WarningRow(
                         icon: Icons.error_outline_rounded,
-                        text: l10n.lastFetchFailed(feedError),
+                        text: l10n.lastFetchFailed(
+                          feedHealthText(l10n, feedError),
+                        ),
                       ),
                   ],
                 ),

@@ -1,8 +1,20 @@
 import '../models/feed_item.dart';
 import 'feed_date_groups.dart';
 
+/// Set to true beside `cachedItemsJson` by every writer that persists whole
+/// feeds. Before it, the snapshot held only the offline cache members, so a
+/// low-frequency feed came back trimmed and an HTTP 304 kept it that way.
+const String wholeFeedSnapshotKey = 'cachedItemsWholeFeeds';
+
 /// Pure helpers for merging and bounding the durable article cache.
 class FeedCachePolicy {
+  /// A snapshot written before [wholeFeedSnapshotKey] may hold a fraction of
+  /// a feed: its validators must not turn the next fetch into a 304.
+  static bool isTrimmedLegacySnapshot({
+    required Object? snapshot,
+    required Object? wholeFeedMarker,
+  }) => snapshot != null && wholeFeedMarker != true;
+
   /// Shared foreground preview/final merge. Pending, failed and 304 feeds
   /// retain their snapshot; only fresh bodies replace a feed's articles.
   /// Subscription and bookmark inputs are evaluated by the caller at apply time.

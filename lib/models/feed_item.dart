@@ -1,6 +1,7 @@
 import 'package:html/parser.dart' show parse;
 
 import '../services/article_identity.dart';
+import '../utils/feed_text.dart';
 
 /// Represents a single article/entry from an RSS or Atom feed.
 ///
@@ -97,7 +98,7 @@ class FeedItem {
         _decodeHtml(json['siteName'] as String? ?? 'Unknown'),
       ),
       title: _decodeHtml(json['title'] as String? ?? 'No Title'),
-      description: json['description'] as String? ?? '',
+      description: cleanExcerpt(json['description'] as String? ?? ''),
       isBookmarked: json['isBookmarked'] as bool? ?? false,
       isRead: json['isRead'] as bool? ?? false,
       link: json['link'] as String? ?? '',
