@@ -195,7 +195,7 @@ class FullTextExtractionService {
 
   /// `aria-label`s of breadcrumb, share and tag regions.
   static final _nonContentLabelPattern = RegExp(
-    r'(breadcrumb|share|sharing|tags)',
+    r'^(breadcrumbs?|share\b.*|sharing\b.*|tags)$',
     caseSensitive: false,
   );
 
@@ -635,14 +635,17 @@ class FullTextExtractionService {
       final idAttr = el.attributes['id'] ?? '';
       if (!_nonContentClassPattern.hasMatch(classAttr) &&
           !_nonContentClassPattern.hasMatch(idAttr) &&
-          !_nonContentTokenPattern.hasMatch(classAttr) &&
-          !_nonContentTokenPattern.hasMatch(idAttr) &&
-          !_nonContentLabelPattern.hasMatch(
-            el.attributes['aria-label'] ?? '',
-          ) &&
-          !(el.attributes['itemtype'] ?? '').contains('BreadcrumbList') &&
-          el.attributes['role'] != 'navigation') {
-        continue;
+          !(el.attributes['itemtype'] ?? '').contains('BreadcrumbList')) {
+        // Generic signals also name story containers (WordPress
+        // `category-trending`), so they only count on link blocks.
+        final generic =
+            _nonContentTokenPattern.hasMatch(classAttr) ||
+            _nonContentTokenPattern.hasMatch(idAttr) ||
+            _nonContentLabelPattern.hasMatch(
+              (el.attributes['aria-label'] ?? '').trim(),
+            ) ||
+            el.attributes['role'] == 'navigation';
+        if (!generic || !_isLinkDense(el)) continue;
       }
       // Comment threads are never the story, however long (slashdot.org
       // stories have no <p>; one thread holds most paragraphs).
@@ -712,7 +715,9 @@ class FullTextExtractionService {
       el != null && !const {'body', 'article', 'main'}.contains(el.localName);
       el = el.parent
     ) {
-      if (!el.getElementsByTagName('a').every(isRowLink) || !_isLinkRow(el)) {
+      if (!el.getElementsByTagName('a').every(isRowLink) ||
+          !_isLinkRow(el) ||
+          _hasMedia(el)) {
         break;
       }
       row = el;
@@ -726,6 +731,24 @@ class FullTextExtractionService {
   static int _linkTextLength(Element el) => el
       .getElementsByTagName('a')
       .fold(0, (sum, a) => sum + a.text.replaceAll(_whitespace, '').length);
+
+  /// Whether [el] holds a figure, video or image outside its links.
+  static bool _hasMedia(Element el) => el
+      .querySelectorAll('figure, picture, video, img')
+      .any((m) => m.localName != 'img' || !_insideLink(m, el));
+
+  static bool _insideLink(Element node, Element root) {
+    for (var p = node.parent; p != null && p != root; p = p.parent) {
+      if (p.localName == 'a') return true;
+    }
+    return false;
+  }
+
+  /// Whether at least half of [el]'s text is link text.
+  static bool _isLinkDense(Element el) {
+    final text = el.text.replaceAll(_whitespace, '').length;
+    return text > 0 && _linkTextLength(el) * 2 >= text;
+  }
 
   /// Links with at most a short label beside them ("Tags:", "Filed in").
   static bool _isLinkRow(Element el) =>

@@ -619,6 +619,40 @@ void main() {
       expect(html, isNot(contains('LinkedIn')));
     });
 
+    test('a story container with trending/topic post classes stays', () {
+      // WordPress post_class slugs land on the story element itself.
+      final html = extract(
+        '<html><body><article class="post type-post category-trending '
+        'tag-popular-science">'
+        '<p>${'A short post about chip cooling in the desert. ' * 3}</p>'
+        '<p>${'It still deserves to be read in full by everyone. ' * 3}</p>'
+        '</article><div id="comments">'
+        '<p>${'I disagree with every word of this post, honestly. ' * 8}</p>'
+        '</div></body></html>',
+      );
+      expect(html, contains('chip cooling in the desert'));
+      expect(html, contains('deserves to be read in full'));
+    });
+
+    test('media beside a share row and labelled figures stay', () {
+      final html = extract(
+        page(
+          '<div class="hero"><figure><img src="https://example.com/a.jpg" '
+          'alt="Hall"><figcaption>The new hall.</figcaption></figure>'
+          '<div><a href="https://twitter.com/intent/tweet?url=x">Tweet</a>'
+          '<a href="https://www.facebook.com/sharer/sharer.php?u=x">'
+          'Facebook</a></div></div>'
+          '<table aria-label="Market share by vendor"><tr><td>Vendor A'
+          '</td><td>41%</td></tr></table>'
+          '$story',
+        ),
+      );
+      expectStory(html);
+      expect(html, contains('The new hall.'));
+      expect(html, contains('Vendor A'));
+      expect(html, isNot(contains('Tweet')));
+    });
+
     test('prose about trends and plain lists under such headings stay', () {
       final html = extract(
         page(
