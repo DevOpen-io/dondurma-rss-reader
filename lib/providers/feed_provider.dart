@@ -696,12 +696,15 @@ class FeedProvider extends ChangeNotifier {
     }
 
     final String? cachedItemsData = _box.get('cachedItemsJson');
-    if (FeedCachePolicy.isTrimmedLegacySnapshot(
-      snapshot: cachedItemsData,
-      wholeFeedMarker: _box.get(wholeFeedSnapshotKey),
-    )) {
+    if (_box.containsKey('feedValidators') &&
+        FeedCachePolicy.isTrimmedLegacySnapshot(
+          snapshot: cachedItemsData,
+          wholeFeedMarker: _box.get(wholeFeedSnapshotKey),
+        )) {
       // Fetch every feed in full once; the next save marks the snapshot.
-      await _box.delete('feedValidators');
+      // Not awaited: the in-memory view drops the key at once, and the
+      // load must not wait on disk I/O.
+      unawaited(_box.delete('feedValidators'));
     }
     if (cachedItemsData != null) {
       try {
