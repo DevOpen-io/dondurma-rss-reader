@@ -45,7 +45,6 @@
   "reset": "Sıfırla",
   "addRssFeed": "RSS Kaynağı Ekle",
   "addFeedSubtitle": "Abone olmak için site ya da kaynak (RSS) adresini yapıştırın",
-  "useSuggestedName": "\"{name}\" adını kullan",
   "addingFeed": "Ekleniyor…",
   "feedUrlLabel": "Kaynak URL'si",
   "feedUrlHint": "örn. https://techcrunch.com/feed/",

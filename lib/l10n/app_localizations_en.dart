@@ -153,11 +153,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addFeedSubtitle => 'Paste a site or feed address to subscribe';
 
   @override
-  String useSuggestedName(String name) {
-    return 'Use \"$name\" as name';
-  }
-
-  @override
   String get addingFeed => 'Adding…';
 
   @override

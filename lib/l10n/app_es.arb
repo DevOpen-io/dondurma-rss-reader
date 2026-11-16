@@ -45,7 +45,6 @@
   "reset": "Restablecer",
   "addRssFeed": "Añadir fuente RSS",
   "addFeedSubtitle": "Pega la dirección de un sitio o de una fuente para suscribirte",
-  "useSuggestedName": "Usar \"{name}\" como nombre",
   "addingFeed": "Añadiendo…",
   "feedUrlLabel": "URL de la fuente",
   "feedUrlHint": "p. ej. https://techcrunch.com/feed/",

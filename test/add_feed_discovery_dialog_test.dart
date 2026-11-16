@@ -27,6 +27,7 @@ final FeedPage _page = (
 /// address is in [pages] (a web page) or [broken] (a feed that fails).
 class _FakeFeeds extends FeedProvider {
   final added = <String>[];
+  final names = <String>[];
   final discovered = <FeedPage>[];
   Set<String> pages = {};
   Set<String> broken = {};
@@ -39,6 +40,7 @@ class _FakeFeeds extends FeedProvider {
     String category,
   ) async {
     added.add(url);
+    names.add(name);
     if (pages.contains(url)) {
       throw FeedFetchException(FeedFetchErrorKind.parse, 'page', page: _page);
     }
@@ -116,6 +118,7 @@ void main() {
     WidgetTester tester,
     String url, {
     String? name = 'Site',
+    String? initialUrl,
   }) async {
     tester.view.physicalSize = const Size(1080, 2400);
     tester.view.devicePixelRatio = 2.6;
@@ -136,8 +139,10 @@ void main() {
                 builder: (_, _) => Scaffold(
                   body: Builder(
                     builder: (ctx) => TextButton(
-                      onPressed: () =>
-                          showAdaptiveSheet<void>(ctx, const AddFeedDialog()),
+                      onPressed: () => showAdaptiveSheet<void>(
+                        ctx,
+                        AddFeedDialog(initialUrl: initialUrl),
+                      ),
                       child: const Text('open'),
                     ),
                   ),
@@ -150,10 +155,12 @@ void main() {
     );
     await tester.tap(find.text('open'));
     await settle(tester);
-    await tester.enterText(
-      find.widgetWithText(TextField, 'e.g. https://techcrunch.com/feed/'),
-      url,
-    );
+    if (initialUrl == null) {
+      await tester.enterText(
+        find.widgetWithText(TextField, 'e.g. https://techcrunch.com/feed/'),
+        url,
+      );
+    }
     if (name != null) {
       await tester.enterText(
         find.widgetWithText(TextFormField, 'TechCrunch, BBC News…'),
@@ -179,6 +186,25 @@ void main() {
 
     expect(feeds.added, ['https://site.test/news']);
     expect(dialogOpen(), isFalse);
+  });
+
+  dialogTest('an empty name is left to the feed: no domain suggestion, '
+      'none sent', (tester) async {
+    await submit(tester, 'https://www.theverge.com/rss/index.xml', name: null);
+
+    expect(find.textContaining('as name'), findsNothing);
+    expect(feeds.names, ['']);
+  });
+
+  dialogTest('a shared link does not prefill a domain name', (tester) async {
+    await submit(
+      tester,
+      'https://www.theverge.com/rss/index.xml',
+      name: null,
+      initialUrl: 'https://www.theverge.com/rss/index.xml',
+    );
+
+    expect(feeds.names, ['']);
   });
 
   dialogTest('a subreddit is added as its feed without discovery', (

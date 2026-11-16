@@ -1368,7 +1368,11 @@ class FeedProvider extends ChangeNotifier {
       // provider-owned snapshot so that delayed update does not start a second,
       // all-feed refresh for a transaction already owned here.
       _knownSubscriptionUrls = Set.unmodifiable({...previousKnownUrls, url});
-      final added = await subscriptions.addFeed(url, name, category);
+      final added = await subscriptions.addFeed(
+        url,
+        name.trim().isNotEmpty ? name.trim() : _nameFromFeed(url, prefetched),
+        category,
+      );
       if (!added) {
         _knownSubscriptionUrls = previousKnownUrls;
         return false;
@@ -1398,6 +1402,15 @@ class FeedProvider extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  /// A subscription added without a name takes the feed's own (already
+  /// cleaned) title; a feed without one, the address's host.
+  static String _nameFromFeed(String url, FeedFetchResult result) {
+    final title = result.items.firstOrNull?.siteName.trim() ?? '';
+    if (title.isNotEmpty && title != 'Unknown Site') return title;
+    final host = Uri.tryParse(url)?.host.replaceFirst(RegExp(r'^www\.'), '');
+    return host == null || host.isEmpty ? url : host;
   }
 
   Future<void> _applyNewSubscriptionResult(

@@ -156,11 +156,6 @@ class AppLocalizationsEs extends AppLocalizations {
       'Pega la dirección de un sitio o de una fuente para suscribirte';
 
   @override
-  String useSuggestedName(String name) {
-    return 'Usar \"$name\" como nombre';
-  }
-
-  @override
   String get addingFeed => 'Añadiendo…';
 
   @override

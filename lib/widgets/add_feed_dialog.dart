@@ -40,12 +40,10 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
   void initState() {
     super.initState();
     _urlController.addListener(_onUrlChanged);
-    _nameController.addListener(() => setState(() {}));
     final initialUrl = widget.initialUrl;
     if (initialUrl != null) {
       _urlController.text = initialUrl;
       _onUrlChanged();
-      _applySuggestion();
     }
     _urlFocusNode.addListener(
       () => setState(() => _urlFocused = _urlFocusNode.hasFocus),
@@ -72,22 +70,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
         _urlValidationError = null;
       }
     });
-  }
-
-  String? get _suggestedName {
-    if (!_urlFormatValid || _nameController.text.isNotEmpty) return null;
-    final uri = Uri.tryParse(_typedUrl);
-    if (uri == null) return null;
-    final host = uri.host.replaceFirst(RegExp(r'^www\.'), '');
-    if (host.isEmpty) return null;
-    final segment = host.split('.').first;
-    if (segment.isEmpty) return null;
-    return '${segment[0].toUpperCase()}${segment.substring(1)}';
-  }
-
-  void _applySuggestion() {
-    final name = _suggestedName;
-    if (name != null) _nameController.text = name;
   }
 
   void _openCategorySheet(BuildContext context) {
@@ -216,22 +198,6 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
                       theme: theme,
                       validationError: _urlValidationError,
                     ),
-                    // Name suggestion
-                    AnimatedSize(
-                      duration: const Duration(milliseconds: 220),
-                      curve: Curves.easeOutCubic,
-                      child: _suggestedName != null
-                          ? Padding(
-                              padding: const EdgeInsets.only(top: 10),
-                              child: _SuggestionRow(
-                                label: l10n.useSuggestedName(_suggestedName!),
-                                onTap: _applySuggestion,
-                                cs: cs,
-                                theme: theme,
-                              ),
-                            )
-                          : const SizedBox.shrink(),
-                    ),
                     const SizedBox(height: 16),
                     // Name field
                     _FieldLabel(l10n.siteNameLabel, theme, cs),
@@ -318,10 +284,8 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
     setState(() => _isLoading = true);
 
-    // No name typed: the site's own, as the suggestion under the field.
-    final name = _nameController.text.trim().isEmpty
-        ? (_suggestedName ?? _typedUrl)
-        : _nameController.text.trim();
+    // No name typed: the provider takes the feed's own title.
+    final name = _nameController.text.trim();
     String category = _categoryController.text.trim();
     if (category.isEmpty) category = 'Uncategorized';
     final typed = _typedUrl;
@@ -355,9 +319,14 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
       }
       if (success) {
         if (context.mounted) {
+          final added = context
+              .read<SubscriptionProvider>()
+              .subscriptions
+              .where((s) => s.url == url)
+              .firstOrNull;
           context.pop();
           showAppToast(
-            l10n.addedSubscription(name),
+            l10n.addedSubscription(added?.name ?? (name.isEmpty ? url : name)),
             type: AppToastType.success,
           );
         }
@@ -584,50 +553,6 @@ class _FieldLabel extends StatelessWidget {
         color: cs.onSurfaceVariant,
         fontWeight: FontWeight.w600,
         letterSpacing: 0.1,
-      ),
-    );
-  }
-}
-
-class _SuggestionRow extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final ColorScheme cs;
-  final ThemeData theme;
-
-  const _SuggestionRow({
-    required this.label,
-    required this.onTap,
-    required this.cs,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(
-          color: cs.primaryContainer.withValues(alpha: 0.55),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.auto_fix_high_rounded, size: 14, color: cs.primary),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: cs.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(width: 4),
-            Icon(Icons.north_east_rounded, size: 12, color: cs.primary),
-          ],
-        ),
       ),
     );
   }

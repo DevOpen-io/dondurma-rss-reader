@@ -155,11 +155,6 @@ class AppLocalizationsTr extends AppLocalizations {
       'Abone olmak için site ya da kaynak (RSS) adresini yapıştırın';
 
   @override
-  String useSuggestedName(String name) {
-    return '\"$name\" adını kullan';
-  }
-
-  @override
   String get addingFeed => 'Ekleniyor…';
 
   @override

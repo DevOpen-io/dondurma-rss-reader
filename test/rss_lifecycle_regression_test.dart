@@ -734,6 +734,54 @@ void main() {
     },
   );
 
+  test('an add without a name takes the feed\'s own title', () async {
+    final url = server.url('/rss/index.xml');
+    server.handlers['/rss/index.xml'] = (request) => _respond200(
+      request,
+      _rss('The Verge | Tech news, reviews and the future of everything', [
+        'verge-article',
+      ]),
+    );
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+
+    expect(
+      await providers.feed.addSubscriptionAndRefresh(url, '', 'Test'),
+      isTrue,
+    );
+    expect(
+      providers.subscriptions.subscriptions.single.name,
+      'The Verge',
+      reason: 'the cleaned channel title, not the domain',
+    );
+    providers.feed.dispose();
+  });
+
+  test('an add without a name falls back to the domain for an untitled '
+      'feed, and a typed name always wins', () async {
+    final untitled = server.url('/untitled.xml');
+    final named = server.url('/named.xml');
+    server.handlers['/untitled.xml'] = (request) => _respond200(
+      request,
+      // No channel title and nothing else to take one from.
+      '<?xml version="1.0"?><rss version="2.0"><channel>'
+      '<link>https://example.test</link></channel></rss>',
+    );
+    server.handlers['/named.xml'] = (request) =>
+        _respond200(request, _rss('Feed Title', ['named-a']));
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+
+    await providers.feed.addSubscriptionAndRefresh(untitled, '  ', 'Test');
+    await providers.feed.addSubscriptionAndRefresh(named, 'Mine', 'Test');
+    final names = {
+      for (final s in providers.subscriptions.subscriptions) s.url: s.name,
+    };
+    expect(names[untitled], '127.0.0.1');
+    expect(names[named], 'Mine');
+    providers.feed.dispose();
+  });
+
   test(
     'a web page is not a feed: add fails with a parse error, discovery finds its feed',
     () async {

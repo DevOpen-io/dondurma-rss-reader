@@ -370,12 +370,6 @@ abstract class AppLocalizations {
   /// **'Paste a site or feed address to subscribe'**
   String get addFeedSubtitle;
 
-  /// No description provided for @useSuggestedName.
-  ///
-  /// In en, this message translates to:
-  /// **'Use \"{name}\" as name'**
-  String useSuggestedName(String name);
-
   /// No description provided for @addingFeed.
   ///
   /// In en, this message translates to:
