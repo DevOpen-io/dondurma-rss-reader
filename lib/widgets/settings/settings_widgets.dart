@@ -209,28 +209,47 @@ class SettingsSelectionTile<T> extends StatelessWidget {
         ? theme.colorScheme.onSurfaceVariant
         : theme.colorScheme.onSurface.withValues(alpha: 0.4);
 
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: SettingsIcon(icon: icon),
-      title: Text(title, style: const TextStyle(fontSize: 15)),
-      trailing: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          DefaultTextStyle(
-            style: TextStyle(
-              fontSize: 13.5,
-              color: labelColor,
-              fontWeight: FontWeight.w500,
-            ),
-            child: Flexible(child: selected.child),
+    // The value gets at most half the row: a long one ("Sistem
+    // varsayılanı") took all of it and the row could not lay out. Longer
+    // values shrink to fit.
+    return LayoutBuilder(
+      builder: (context, constraints) => ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: SettingsIcon(icon: icon),
+        title: Text(title, style: const TextStyle(fontSize: 15)),
+        trailing: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: constraints.maxWidth / 2),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: AlignmentDirectional.centerEnd,
+                  // Merged, so the value keeps the app font.
+                  child: DefaultTextStyle.merge(
+                    style: TextStyle(
+                      fontSize: 13.5,
+                      color: labelColor,
+                      fontWeight: FontWeight.w500,
+                    ),
+                    child: selected.child,
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(left: 4),
+                child: Icon(
+                  Icons.expand_more_rounded,
+                  size: 18,
+                  color: labelColor,
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 4),
-            child: Icon(Icons.expand_more_rounded, size: 18, color: labelColor),
-          ),
-        ],
+        ),
+        onTap: enabled ? () => _showOptions(context) : null,
       ),
-      onTap: enabled ? () => _showOptions(context) : null,
     );
   }
 
