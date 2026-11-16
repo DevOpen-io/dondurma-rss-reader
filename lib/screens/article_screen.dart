@@ -715,8 +715,9 @@ class _ArticlePageState extends State<ArticlePage> {
 // =============================================================================
 
 /// Readable-content-first strip: scope label, then the wait reason and
-/// media count, then at most one action. A bookmarked item whose durable
-/// write failed reads "could not save" — never "ready".
+/// missing-image count, then at most one action. A bookmarked item whose
+/// durable write failed reads "could not save" — never "ready". A complete
+/// cached copy says nothing (see [articleNamesScope]).
 class _ArticleStatusStrip extends StatelessWidget {
   final FeedItem item;
   final ArticlePageProvider provider;
@@ -785,8 +786,7 @@ class _ArticleStatusStrip extends StatelessWidget {
       now: DateTime.now().toUtc(),
     );
     final details = <String>[
-      if (status.totalMedia > 0)
-        l10n.articleImagesCount(status.readyMedia, status.totalMedia),
+      ?articleImagesDetail(l10n, status),
       ?offlineWaitLabel(l10n, status, wait),
     ];
 
@@ -795,6 +795,10 @@ class _ArticleStatusStrip extends StatelessWidget {
     // reachable (#41: no dead retry affordance). An ownerless record (pre-
     // tombstone) has no claim to prepare for — nothing to retry.
     final showRetry = status.hasActionable && status.scope != ArticleScope.none;
+    final namesScope = articleNamesScope(
+      status.scope,
+      hasDetail: details.isNotEmpty || showRetry,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -821,48 +825,49 @@ class _ArticleStatusStrip extends StatelessWidget {
               ),
             ],
           ),
-        Padding(
-          padding: const EdgeInsets.only(top: 6),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      scope,
-                      style: TextStyle(
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ),
-                  if (showRetry)
-                    TextButton(
-                      onPressed: () => unawaited(_retryMissing(context)),
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size(48, 48),
-                        padding: const EdgeInsets.symmetric(horizontal: 8),
-                      ),
+        if (namesScope)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
                       child: Text(
-                        l10n.articleRetryMissing,
-                        style: const TextStyle(fontSize: 12),
+                        scope,
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
-                ],
-              ),
-              if (details.isNotEmpty)
-                Text(
-                  details.join(' · '),
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                    if (showRetry)
+                      TextButton(
+                        onPressed: () => unawaited(_retryMissing(context)),
+                        style: TextButton.styleFrom(
+                          minimumSize: const Size(48, 48),
+                          padding: const EdgeInsets.symmetric(horizontal: 8),
+                        ),
+                        child: Text(
+                          l10n.articleRetryMissing,
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ),
+                  ],
                 ),
-            ],
+                if (details.isNotEmpty)
+                  Text(
+                    details.join(' · '),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+              ],
+            ),
           ),
-        ),
       ],
     );
   }

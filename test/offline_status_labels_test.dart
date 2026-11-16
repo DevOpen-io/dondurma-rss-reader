@@ -150,4 +150,60 @@ void main() {
       expect(offlineWaitLabel(l10n, status(), ArticleWait.retry), isNull);
     });
   });
+
+  // Usability test 2026-10-30: cache housekeeping read as jargon on rows
+  // and above articles. Only what the reader asked for, or what is
+  // missing, is named.
+  group('when a status is named', () {
+    test('rows name a bookmark only while its copy is incomplete', () {
+      expect(rowNamesScope(ArticleScope.saveRequested), isTrue);
+      expect(rowNamesScope(ArticleScope.savedText), isTrue);
+      expect(rowNamesScope(ArticleScope.savedReady), isFalse);
+      expect(rowNamesScope(ArticleScope.cachedReady), isFalse);
+      expect(rowNamesScope(ArticleScope.cachedText), isFalse);
+      expect(rowNamesScope(ArticleScope.none), isFalse);
+    });
+
+    test('the article counts images only while some are missing', () {
+      expect(
+        articleImagesDetail(l10n, status(readyMedia: 1, totalMedia: 1)),
+        isNull,
+      );
+      expect(articleImagesDetail(l10n, status()), isNull);
+      expect(
+        articleImagesDetail(l10n, status(readyMedia: 1, totalMedia: 3)),
+        l10n.articleImagesCount(1, 3),
+      );
+    });
+
+    test('the article names a cached copy only beside a detail or action', () {
+      for (final scope in [
+        ArticleScope.cachedReady,
+        ArticleScope.cachedText,
+        ArticleScope.none,
+      ]) {
+        expect(
+          articleNamesScope(scope, hasDetail: false),
+          isFalse,
+          reason: '$scope',
+        );
+        expect(
+          articleNamesScope(scope, hasDetail: true),
+          isTrue,
+          reason: '$scope',
+        );
+      }
+      for (final scope in [
+        ArticleScope.saveRequested,
+        ArticleScope.savedText,
+        ArticleScope.savedReady,
+      ]) {
+        expect(
+          articleNamesScope(scope, hasDetail: false),
+          isTrue,
+          reason: '$scope',
+        );
+      }
+    });
+  });
 }

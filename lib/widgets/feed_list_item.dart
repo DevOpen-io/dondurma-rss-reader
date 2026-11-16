@@ -595,16 +595,17 @@ String? _statusLabel(
   if (status == null) {
     return isBookmarked && statusLoaded ? l10n.articleStatusCouldNotSave : null;
   }
+  if (!rowNamesScope(status.scope)) return null;
   return offlineScopeLabel(l10n, status, noneLabel: null);
 }
 
-/// Optional second reason line — why preparation is still incomplete.
+/// Optional second reason line — why a bookmark's copy is still incomplete.
 String? _waitLabel(
   AppLocalizations l10n,
   ArticleStatus? status,
   bool unmetered,
 ) {
-  if (status == null) return null;
+  if (status == null || !rowNamesScope(status.scope)) return null;
   final wait = status.waitFor(
     unmeteredNow: unmetered,
     now: DateTime.now().toUtc(),

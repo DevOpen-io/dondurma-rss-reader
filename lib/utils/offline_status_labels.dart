@@ -60,3 +60,27 @@ String? offlineWaitLabel(
       return null;
   }
 }
+
+// Usability test 2026-10-30: cache housekeeping ("Ready in cache",
+// "Images 1/1") read as internal jargon. Labels below stay honest (#41) but
+// only speak when the reader asked for the copy or something is missing.
+
+/// Whether a list row names the article's offline scope. Caching is
+/// automatic, so cached copies say nothing; a bookmark speaks up only while
+/// its copy is incomplete — a finished one is what the bookmark promises.
+bool rowNamesScope(ArticleScope scope) =>
+    scope == ArticleScope.saveRequested || scope == ArticleScope.savedText;
+
+/// The article's image count, only while some images are still missing.
+String? articleImagesDetail(AppLocalizations l10n, ArticleStatus status) =>
+    status.readyMedia < status.totalMedia
+    ? l10n.articleImagesCount(status.readyMedia, status.totalMedia)
+    : null;
+
+/// Whether the article strip names the copy's scope: always for a bookmark,
+/// otherwise only beside a detail line or the retry action it explains.
+bool articleNamesScope(ArticleScope scope, {required bool hasDetail}) =>
+    hasDetail ||
+    scope == ArticleScope.saveRequested ||
+    scope == ArticleScope.savedText ||
+    scope == ArticleScope.savedReady;
