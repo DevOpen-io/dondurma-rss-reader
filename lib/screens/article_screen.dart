@@ -181,6 +181,14 @@ class _ArticlePageState extends State<ArticlePage> {
     );
   }
 
+  /// Cover height of the full-screen article. A landscape phone (360dp
+  /// tall) gave a fixed 280 three quarters of the screen and pushed the
+  /// title off it; landscape caps the cover at 40% of the height so the
+  /// title and first lines show. Portrait keeps 280.
+  static double _coverHeight(Size viewport) => viewport.width > viewport.height
+      ? math.min(280.0, viewport.height * 0.4)
+      : 280.0;
+
   /// One body widget per reading-settings combination: an identical
   /// instance lets page rebuilds skip the HTML subtree; [_ArticleHtml]
   /// rebuilds itself when the content changes.
@@ -284,7 +292,7 @@ class _ArticlePageState extends State<ArticlePage> {
                                 240.0,
                                 400.0,
                               )
-                            : 280.0)
+                            : _coverHeight(MediaQuery.sizeOf(context)))
                       : 0,
                   pinned: !widget.embedded,
                   stretch: true,
