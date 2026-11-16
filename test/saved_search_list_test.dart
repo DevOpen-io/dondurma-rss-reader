@@ -58,6 +58,15 @@ void main() {
 
     await tester.longPress(find.text('Flutter news'));
     await tester.pumpAndSettle();
+    // The sheet is titled with the search it acts on.
+    expect(
+      find.descendant(
+        of: find.byType(BottomSheet),
+        matching: find.text('Flutter news'),
+      ),
+      findsOneWidget,
+    );
+    expect(find.byType(BottomSheet), findsOneWidget);
     await tester.tap(find.text('Delete'));
     await tester.pumpAndSettle();
     expect(settings.savedSearches, isEmpty);
