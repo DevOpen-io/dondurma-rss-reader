@@ -46,6 +46,10 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   bool _isSearching = false;
+  final _scaffoldKey = GlobalKey<ScaffoldState>();
+  // Android's predictive back reaches the app only while it claims back;
+  // an open drawer must, or the system closes the app.
+  bool _drawerOpen = false;
   final TextEditingController _searchController = TextEditingController();
   final _feedScroll = AnchoredScrollController();
 
@@ -291,6 +295,8 @@ class _HomeScreenState extends State<HomeScreen> {
             showLabel: showLabel,
           );
     final scaffold = Scaffold(
+      key: _scaffoldKey,
+      onDrawerChanged: (open) => setState(() => _drawerOpen = open),
       appBar: AppBar(
         title: AnimatedSwitcher(
           duration: motionDuration(context, const Duration(milliseconds: 300)),
@@ -520,7 +526,13 @@ class _HomeScreenState extends State<HomeScreen> {
               TargetPlatform.iOS,
               TargetPlatform.fuchsia,
             },
-      child: scaffold,
+      child: PopScope(
+        canPop: !_drawerOpen,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _scaffoldKey.currentState?.closeDrawer();
+        },
+        child: scaffold,
+      ),
     );
   }
 
