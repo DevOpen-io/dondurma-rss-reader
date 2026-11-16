@@ -185,6 +185,43 @@ class FullTextExtractionService {
     caseSensitive: false,
   );
 
+  /// Whole class/id tokens of page furniture too generic for a substring
+  /// match: tag/topic rows and trending/popular link boxes.
+  static final _nonContentTokenPattern = RegExp(
+    r'(^|[\s_-])(tags|tag-?list|topics|topic-?list|trending|popular|'
+    r'most-read|recommended|read-more|more-stories)([\s_-]|$)',
+    caseSensitive: false,
+  );
+
+  /// `aria-label`s of breadcrumb, share and tag regions.
+  static final _nonContentLabelPattern = RegExp(
+    r'(breadcrumb|share|sharing|tags)',
+    caseSensitive: false,
+  );
+
+  /// Headings that introduce a list of links to other pages.
+  static final _linkListHeading = RegExp(
+    r'^(trending( now)?|popular( now)?|most (read|popular|viewed)|'
+    r'related( (articles|stories|posts|content|reading))?|'
+    r'read (more|also|next)|more stories|recommended( for you)?|'
+    r"you (may|might) also like|also read|don'?t miss|tags|topics)\s*:?$",
+    caseSensitive: false,
+  );
+
+  /// Label opening an inline tag row: "Tags: a, b".
+  static final _tagRowLabel = RegExp(
+    r'^(tags|topics|filed under)\s*:',
+    caseSensitive: false,
+  );
+
+  /// Share-intent link targets of social share buttons.
+  static final _shareUrlPattern = RegExp(
+    r'(^mailto:\?|facebook\.com/sharer|(twitter|x)\.com/intent/|'
+    r'linkedin\.com/share|reddit\.com/submit|pinterest\.com/pin/create|'
+    r'api\.whatsapp\.com/send|wa\.me/\?|t\.me/share|bsky\.app/intent/)',
+    caseSensitive: false,
+  );
+
   static final _commentPattern = RegExp(
     r'(comment|disqus)',
     caseSensitive: false,
@@ -597,7 +634,14 @@ class FullTextExtractionService {
       final classAttr = el.attributes['class'] ?? '';
       final idAttr = el.attributes['id'] ?? '';
       if (!_nonContentClassPattern.hasMatch(classAttr) &&
-          !_nonContentClassPattern.hasMatch(idAttr)) {
+          !_nonContentClassPattern.hasMatch(idAttr) &&
+          !_nonContentTokenPattern.hasMatch(classAttr) &&
+          !_nonContentTokenPattern.hasMatch(idAttr) &&
+          !_nonContentLabelPattern.hasMatch(
+            el.attributes['aria-label'] ?? '',
+          ) &&
+          !(el.attributes['itemtype'] ?? '').contains('BreadcrumbList') &&
+          el.attributes['role'] != 'navigation') {
         continue;
       }
       // Comment threads are never the story, however long (slashdot.org
@@ -608,6 +652,8 @@ class FullTextExtractionService {
         el.remove();
       }
     }
+
+    _removeLinkLeftovers(document);
 
     // Remove hidden elements
     for (final el
@@ -622,6 +668,77 @@ class FullTextExtractionService {
             .toList()) {
       el.remove();
     }
+  }
+
+  /// Removes unmarked link furniture inside the story: tag and share rows,
+  /// and "Trending"/"Read more"-style headings over a list of links.
+  static void _removeLinkLeftovers(Document document) {
+    for (final a in document.querySelectorAll('a[href]').toList()) {
+      if (_isTagLink(a)) {
+        _removeLinkRow(a, _isTagLink);
+      } else if (_isShareLink(a)) {
+        _removeLinkRow(a, _isShareLink);
+      }
+    }
+    for (final el in document.querySelectorAll('p, div, ul, ol').toList()) {
+      if (_tagRowLabel.hasMatch(_collapsedText(el)) && _isLinkRow(el)) {
+        el.remove();
+      }
+    }
+    for (final heading
+        in document.querySelectorAll('h1, h2, h3, h4, h5, h6').toList()) {
+      final list = heading.nextElementSibling;
+      if (list != null &&
+          _linkListHeading.hasMatch(_collapsedText(heading)) &&
+          _isLinkList(list)) {
+        heading.remove();
+        list.remove();
+      }
+    }
+  }
+
+  static bool _isTagLink(Element a) =>
+      (a.attributes['rel'] ?? '').split(_whitespace).contains('tag');
+
+  static bool _isShareLink(Element a) =>
+      _shareUrlPattern.hasMatch(a.attributes['href'] ?? '');
+
+  /// Removes the widest block around [link] holding only links accepted by
+  /// [isRowLink] plus a short label; a link inside prose stays.
+  static void _removeLinkRow(Element link, bool Function(Element) isRowLink) {
+    Element? row;
+    for (
+      var el = link.parent;
+      el != null && !const {'body', 'article', 'main'}.contains(el.localName);
+      el = el.parent
+    ) {
+      if (!el.getElementsByTagName('a').every(isRowLink) || !_isLinkRow(el)) {
+        break;
+      }
+      row = el;
+    }
+    row?.remove();
+  }
+
+  static String _collapsedText(Element el) =>
+      el.text.replaceAll(_whitespace, ' ').trim();
+
+  static int _linkTextLength(Element el) => el
+      .getElementsByTagName('a')
+      .fold(0, (sum, a) => sum + a.text.replaceAll(_whitespace, '').length);
+
+  /// Links with at most a short label beside them ("Tags:", "Filed in").
+  static bool _isLinkRow(Element el) =>
+      el.getElementsByTagName('a').isNotEmpty &&
+      el.text.replaceAll(_whitespace, '').length - _linkTextLength(el) <= 40;
+
+  /// A list whose text is nearly all links, every item holding one.
+  static bool _isLinkList(Element el) {
+    final text = el.text.replaceAll(_whitespace, '').length;
+    if (text == 0 || el.getElementsByTagName('a').isEmpty) return false;
+    final items = el.children.where((c) => c.localName == 'li');
+    return items.every((li) => li.getElementsByTagName('a').isNotEmpty) &&
+        _linkTextLength(el) >= text * 0.8;
   }
 
   /// Picks the candidate with the highest text density from a list.
