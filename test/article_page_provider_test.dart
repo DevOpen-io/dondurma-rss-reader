@@ -14,7 +14,7 @@ import 'package:ice_cream_rss_reader/services/full_text_extraction_service.dart'
 import 'package:ice_cream_rss_reader/services/observed_article_persistence_io.dart';
 
 void main() {
-  test('a manual full-text failure is reported exactly once', () async {
+  test('a manual full-text failure is recorded', () async {
     final page = ArticlePageProvider(
       item: FeedItem(
         id: 'a',
@@ -33,11 +33,6 @@ void main() {
     );
 
     expect(page.fullTextFailed, isTrue);
-    expect(page.consumeFullTextFailure(), isTrue);
-    // Later notifications (saved-copy refreshes, settings) keep the failed
-    // state but must not report the same failure again.
-    expect(page.fullTextFailed, isTrue);
-    expect(page.consumeFullTextFailure(), isFalse);
   });
 
   test('a story body inside an "inread" wrapper survives ad cleanup', () {
@@ -121,7 +116,6 @@ void main() {
 
     expect(page.feedHasFullArticle, isTrue);
     expect(page.fullTextFailed, isFalse);
-    expect(page.consumeFullTextFailure(), isFalse);
   });
 
   test('full text that arrives after the summary was drawn replaces it',
@@ -243,7 +237,6 @@ void main() {
       expect(page.fullTextActive, isFalse);
       expect(page.fullTextContent, isNull);
       expect(page.fullTextFailed, isTrue);
-      expect(page.consumeFullTextFailure(), isTrue);
 
       // The rejected result is not cached — retry goes back to the page.
       await http.runWithClient(page.activateFullText, () => client);

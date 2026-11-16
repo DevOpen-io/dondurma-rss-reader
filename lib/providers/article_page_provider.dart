@@ -41,15 +41,6 @@ class ArticlePageProvider extends ChangeNotifier {
   /// Whether the extraction was attempted and failed (manual trigger).
   bool _fullTextFailed = false;
   bool get fullTextFailed => _fullTextFailed;
-  bool _fullTextFailureUnreported = false;
-
-  /// True once per manual full-text failure, so a listener reports it once
-  /// although later notifications keep [fullTextFailed] set.
-  bool consumeFullTextFailure() {
-    final unreported = _fullTextFailureUnreported;
-    _fullTextFailureUnreported = false;
-    return unreported;
-  }
 
   /// Whether an auto-triggered extraction failed (shown as subtle notice, not snackbar).
   bool _autoFullTextFailed = false;
@@ -316,7 +307,6 @@ class ArticlePageProvider extends ChangeNotifier {
         _fullTextFailed = false;
       } else {
         _fullTextFailed = true;
-        _fullTextFailureUnreported = true;
         _autoFullTextFailed = false;
       }
     }

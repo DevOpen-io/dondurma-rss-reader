@@ -27,7 +27,6 @@ import '../widgets/article/article_reading_mode_toggle.dart';
 import '../widgets/article/article_source_card.dart';
 import '../theme/app_theme.dart';
 import '../services/image_cache_service.dart';
-import '../utils/app_toast.dart';
 import '../utils/motion.dart';
 import '../utils/offline_status_labels.dart';
 import '../utils/share_actions.dart';
@@ -151,7 +150,6 @@ class _ArticlePageState extends State<ArticlePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       _articlePageProvider = context.read<ArticlePageProvider>();
-      _articlePageProvider!.addListener(_onProviderChanged);
       Future<void>.delayed(_articleTransitionSettleDelay, () {
         if (!mounted) return;
         _articlePageProvider?.setContentReady();
@@ -181,22 +179,6 @@ class _ArticlePageState extends State<ArticlePage> {
       context.read<SubscriptionProvider>(),
       context.read<SettingsProvider>(),
     );
-  }
-
-  @override
-  void dispose() {
-    _articlePageProvider?.removeListener(_onProviderChanged);
-    super.dispose();
-  }
-
-  void _onProviderChanged() {
-    final provider = context.read<ArticlePageProvider>();
-    // Only show an error toast for manual full-text attempts.
-    // Auto-attempt failures are shown as a subtle inline notice.
-    if (mounted && provider.consumeFullTextFailure()) {
-      final l10n = AppLocalizations.of(context);
-      showAppToast(l10n.fullTextFailed, type: AppToastType.error);
-    }
   }
 
   /// One body widget per reading-settings combination: an identical
