@@ -10,6 +10,7 @@ import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
+import 'package:ice_cream_rss_reader/utils/app_toast.dart';
 import 'package:ice_cream_rss_reader/widgets/bookmark_tags.dart';
 import 'package:ice_cream_rss_reader/widgets/saved_searches.dart';
 
@@ -92,6 +93,40 @@ void main() {
     });
   }
 
+  testWidgets('the new-tag field is focused when the sheet opens', (
+    tester,
+  ) async {
+    final bookmarks = BookmarkProvider()..toggleBookmark(_item('f'));
+    await tester.pumpWidget(
+      app(
+        Builder(
+          builder: (context) => Scaffold(
+            body: Center(
+              child: TextButton(
+                onPressed: () => BookmarkTagsSheet.show(context, _item('f')),
+                child: const Text('open'),
+              ),
+            ),
+          ),
+        ),
+        providers: [
+          ChangeNotifierProvider<BookmarkProvider>.value(value: bookmarks),
+        ],
+      ),
+    );
+    await tester.tap(find.text('open'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+
+    final field = tester.widget<EditableText>(
+      find.descendant(
+        of: find.byType(BookmarkTagsSheet),
+        matching: find.byType(EditableText),
+      ),
+    );
+    expect(field.focusNode.hasFocus, isTrue);
+  });
+
   testWidgets('saving a search names it without a disposed controller', (
     tester,
   ) async {
@@ -126,6 +161,8 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(settings.savedSearches.single.name, 'Flutter haberleri');
     expect(settings.savedSearches.single.query, 'flutter');
+    // The confirmation toast's timer outlives the tree here.
+    appToastController.dismiss();
     await tester.runAsync(() async => feed.dispose());
   });
 }

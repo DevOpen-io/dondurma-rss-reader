@@ -96,6 +96,8 @@ class _BookmarkTagsSheetState extends State<BookmarkTagsSheet> {
           const SizedBox(height: 8),
           TextField(
             controller: _controller,
+            // Typing a new tag is the sheet's main job.
+            autofocus: true,
             textInputAction: TextInputAction.done,
             decoration: InputDecoration(
               hintText: l10n.addTagHint,
