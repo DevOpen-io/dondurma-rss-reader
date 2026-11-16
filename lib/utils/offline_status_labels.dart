@@ -23,7 +23,7 @@ String? offlineScopeLabel(
   return switch (status.scope) {
     ArticleScope.savedReady || ArticleScope.savedText when summaryOnly =>
       l10n.articleStatusSummaryOnlySaved,
-    ArticleScope.savedReady =>l10n.articleStatusSavedCopyReady,
+    ArticleScope.savedReady => l10n.articleStatusSavedCopyReady,
     ArticleScope.savedText =>
       rss ? l10n.articleStatusRssSaved : l10n.articleStatusTextSaved,
     ArticleScope.saveRequested => l10n.articleStatusSaveRequested,
