@@ -307,4 +307,61 @@ void main() {
       expect(page.fullTextFailed, isTrue);
     });
   });
+
+  group('a saved copy that is only the feed summary', () {
+    Future<ArticlePageProvider> load(String body, String source) async {
+      final dir = await Directory.systemTemp.createTemp('summary-saved-');
+      addTearDown(() => dir.delete(recursive: true));
+      final records = ArticleRecordStore(
+        FileObservedArticlePersistence(stateFile: File('${dir.path}/r.json')),
+      );
+      final article = FeedItem(
+        id: 'teaser',
+        siteName: 'Example',
+        title: 'Teaser',
+        description: '',
+        link: 'https://summary.test/teaser',
+        feedUrl: 'https://summary.test/feed',
+        content: body,
+        isBookmarked: true,
+      );
+      await records.write(
+        ArticleRecord(
+          id: article.id,
+          feedUrl: article.feedUrl,
+          link: article.link,
+          body: body,
+          bodyState: MediaState.ready,
+          bodySource: source,
+          owners: const {'bookmark'},
+          generation: 1,
+        ),
+      );
+      final page = ArticlePageProvider(item: article);
+      addTearDown(page.dispose);
+      await page.loadSavedCopy(
+        records: records,
+        media: ArticleMediaStore(root: Directory('${dir.path}/media')),
+      );
+      return page;
+    }
+
+    test('a one-line feed teaser is only a summary', () async {
+      final page = await load(
+        "<p>They're so good! <a href='#'>READ MORE…</a></p>",
+        'rss',
+      );
+      expect(page.savedBodyIsFeedSummary, isTrue);
+    });
+
+    test('a feed that ships the whole article is not', () async {
+      final page = await load('<p>${'Whole paragraph text. ' * 80}</p>', 'rss');
+      expect(page.savedBodyIsFeedSummary, isFalse);
+    });
+
+    test('an extracted body is not', () async {
+      final page = await load('<p>Short extracted page.</p>', 'extracted');
+      expect(page.savedBodyIsFeedSummary, isFalse);
+    });
+  });
 }

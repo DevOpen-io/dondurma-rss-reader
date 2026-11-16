@@ -9,14 +9,21 @@ import '../services/article_status.dart';
 /// An ownerless record ([ArticleScope.none]) claims nothing: the row shows
 /// no label, the open article says it is readable this session — so the
 /// caller supplies [noneLabel].
+///
+/// [summaryOnly]: the stored body is only the feed's short excerpt (see
+/// `ArticlePageProvider.savedBodyIsFeedSummary`). A bookmark then says so —
+/// "ready" would promise an article that cannot be read offline.
 String? offlineScopeLabel(
   AppLocalizations l10n,
   ArticleStatus status, {
   required String? noneLabel,
+  bool summaryOnly = false,
 }) {
   final rss = status.bodySource == 'rss';
   return switch (status.scope) {
-    ArticleScope.savedReady => l10n.articleStatusSavedCopyReady,
+    ArticleScope.savedReady || ArticleScope.savedText when summaryOnly =>
+      l10n.articleStatusSummaryOnlySaved,
+    ArticleScope.savedReady =>l10n.articleStatusSavedCopyReady,
     ArticleScope.savedText =>
       rss ? l10n.articleStatusRssSaved : l10n.articleStatusTextSaved,
     ArticleScope.saveRequested => l10n.articleStatusSaveRequested,

@@ -86,6 +86,34 @@ void main() {
       );
     });
 
+    // Device test 2026-11-16: a bookmark whose site blocks extraction kept
+    // only the feed's one-line teaser yet read "Saved copy ready".
+    test('a bookmark holding only the feed summary says so', () {
+      expect(
+        offlineScopeLabel(
+          l10n,
+          status(bodySource: 'rss'),
+          noneLabel: null,
+          summaryOnly: true,
+        ),
+        l10n.articleStatusSummaryOnlySaved,
+      );
+      expect(
+        offlineScopeLabel(
+          l10n,
+          status(bodySource: 'rss', bodyDue: true),
+          noneLabel: null,
+          summaryOnly: true,
+        ),
+        l10n.articleStatusSummaryOnlySaved,
+      );
+      // A long feed body is the whole article: the copy is ready.
+      expect(
+        offlineScopeLabel(l10n, status(bodySource: 'rss'), noneLabel: null),
+        l10n.articleStatusSavedCopyReady,
+      );
+    });
+
     test('an ownerless record uses the caller label', () {
       final ownerless = status(owners: const {});
       expect(ownerless.scope, ArticleScope.none);

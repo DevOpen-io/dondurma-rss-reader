@@ -1600,6 +1600,12 @@ abstract class AppLocalizations {
   /// **'RSS text saved'**
   String get articleStatusRssSaved;
 
+  /// Bookmark status when the saved copy is only the feed's short excerpt, not the full article
+  ///
+  /// In en, this message translates to:
+  /// **'Only the feed summary is saved'**
+  String get articleStatusSummaryOnlySaved;
+
   /// No description provided for @articleStatusRssCached.
   ///
   /// In en, this message translates to:

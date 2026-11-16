@@ -780,6 +780,7 @@ class _ArticleStatusStrip extends StatelessWidget {
       l10n,
       status,
       noneLabel: l10n.articleStatusReadableSession,
+      summaryOnly: provider.savedBodyIsFeedSummary,
     )!;
     final wait = status.waitFor(
       unmeteredNow: unmetered,

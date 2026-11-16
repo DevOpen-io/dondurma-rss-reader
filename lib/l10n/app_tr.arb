@@ -268,6 +268,7 @@
   "articleStatusSaveRequested": "Saklama isteği",
   "articleStatusCouldNotSave": "Kaydedilemedi",
   "articleStatusRssSaved": "RSS metni saklandı",
+  "articleStatusSummaryOnlySaved": "Yalnız akıştaki özet saklandı",
   "articleStatusRssCached": "RSS metni önbellekte",
   "articleStatusReadableSession": "Bu oturumda okunabilir",
   "articleWaitPreparing": "Eksikler hazırlanıyor",

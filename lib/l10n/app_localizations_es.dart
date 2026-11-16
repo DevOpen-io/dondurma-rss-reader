@@ -861,6 +861,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get articleStatusRssSaved => 'Texto RSS guardado';
 
   @override
+  String get articleStatusSummaryOnlySaved =>
+      'Solo se guardó el resumen del feed';
+
+  @override
   String get articleStatusRssCached => 'Texto RSS en caché';
 
   @override

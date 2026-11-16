@@ -268,6 +268,7 @@
   "articleStatusSaveRequested": "Guardado solicitado",
   "articleStatusCouldNotSave": "No se pudo guardar",
   "articleStatusRssSaved": "Texto RSS guardado",
+  "articleStatusSummaryOnlySaved": "Solo se guardó el resumen del feed",
   "articleStatusRssCached": "Texto RSS en caché",
   "articleStatusReadableSession": "Se puede leer en esta sesión",
   "articleWaitPreparing": "Preparando partes faltantes",

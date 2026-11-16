@@ -843,6 +843,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get articleStatusRssSaved => 'RSS metni saklandı';
 
   @override
+  String get articleStatusSummaryOnlySaved => 'Yalnız akıştaki özet saklandı';
+
+  @override
   String get articleStatusRssCached => 'RSS metni önbellekte';
 
   @override
