@@ -465,15 +465,12 @@ class _HomeScreenState extends State<HomeScreen> {
               if (index != 2) _onItemTapped(index < 2 ? index : index - 1);
             },
             destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.list_outlined),
-                selectedIcon: const Icon(Icons.list),
-                label: l10n.feedsTab,
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.folder_outlined),
-                selectedIcon: const Icon(Icons.folder),
-                label: l10n.foldersTab,
+              _tab(0, Icons.list_outlined, Icons.list, l10n.feedsTab),
+              _tab(
+                1,
+                Icons.folder_outlined,
+                Icons.folder,
+                l10n.foldersTab,
               ),
               _selectedIndex == 1
                   ? AddDestination(
@@ -486,15 +483,17 @@ class _HomeScreenState extends State<HomeScreen> {
                       label: l10n.addFeedButton,
                       onPressed: _showAddFeedDialog,
                     ),
-              NavigationDestination(
-                icon: const Icon(Icons.bookmark_border),
-                selectedIcon: const Icon(Icons.bookmark),
-                label: l10n.bookmarksTab,
+              _tab(
+                2,
+                Icons.bookmark_border,
+                Icons.bookmark,
+                l10n.bookmarksTab,
               ),
-              NavigationDestination(
-                icon: const Icon(Icons.settings_outlined),
-                selectedIcon: const Icon(Icons.settings),
-                label: l10n.settingsTab,
+              _tab(
+                3,
+                Icons.settings_outlined,
+                Icons.settings,
+                l10n.settingsTab,
               ),
             ],
           ),
@@ -511,6 +510,25 @@ class _HomeScreenState extends State<HomeScreen> {
               TargetPlatform.fuchsia,
             },
       child: scaffold,
+    );
+  }
+
+  /// A bottom-bar tab. The bar counts the add button as a destination, so
+  /// it would announce "Tab 4 of 5"; screen readers hear the real count.
+  Widget _tab(int index, IconData icon, IconData selectedIcon, String label) {
+    final position = MaterialLocalizations.of(
+      context,
+    ).tabLabel(tabIndex: index + 1, tabCount: 4);
+    return Semantics(
+      label: '$label\n$position',
+      button: true,
+      onTap: () => _onItemTapped(index),
+      excludeSemantics: true,
+      child: NavigationDestination(
+        icon: Icon(icon),
+        selectedIcon: Icon(selectedIcon),
+        label: label,
+      ),
     );
   }
 

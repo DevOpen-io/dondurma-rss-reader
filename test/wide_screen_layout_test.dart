@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' show Tristate;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -254,6 +255,47 @@ void main() {
         await tester.pumpAndSettle();
         expect(add('Add feed'), findsOneWidget, reason: tab);
       }
+    });
+
+    testWidgets('screen readers count four tabs; the add button is not one', (
+      tester,
+    ) async {
+      final semantics = tester.ensureSemantics();
+      await tester.pumpWidget(wrapHome());
+      await tester.pumpAndSettle();
+
+      expect(find.bySemanticsLabel(RegExp(r'of 5')), findsNothing);
+      for (final (i, tab) in ['Feeds', 'Categories', 'Bookmarks', 'Settings']
+          .indexed) {
+        expect(
+          find.bySemanticsLabel(RegExp('^$tab\\nTab ${i + 1} of 4\$')),
+          findsOneWidget,
+          reason: tab,
+        );
+      }
+      final addNode = tester.getSemantics(
+        find.byKey(const ValueKey('add-feed')),
+      );
+      expect(addNode.label, 'Add feed');
+      expect(addNode.flagsCollection.isButton, isTrue);
+      expect(addNode.flagsCollection.isSelected, isNot(Tristate.isTrue));
+
+      // The selected tab still reads as selected, and moves on tap.
+      Finder barText(String text) => find.descendant(
+        of: find.byType(NavigationBar),
+        matching: find.text(text),
+      );
+      expect(
+        tester.getSemantics(barText('Feeds')).flagsCollection.isSelected,
+        Tristate.isTrue,
+      );
+      await tester.tap(barText('Bookmarks'));
+      await tester.pumpAndSettle();
+      expect(
+        tester.getSemantics(barText('Bookmarks')).flagsCollection.isSelected,
+        Tristate.isTrue,
+      );
+      semantics.dispose();
     });
 
     testWidgets('a link shared to the app opens add feed with it', (
