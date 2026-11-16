@@ -54,15 +54,19 @@ class AddDestination extends StatelessWidget {
               // clamped as theirs is.
               MediaQuery.withClampedTextScaling(
                 maxScaleFactor: 1.2,
-                // A longer name ("Add category") shrinks to fit its slot.
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    label,
-                    maxLines: 1,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: cs.primary,
-                      fontWeight: FontWeight.w700,
+                // A longer name ("Add category") shrinks to fit its slot,
+                // keeping the tabs' margin so it never meets their labels.
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      label,
+                      maxLines: 1,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: cs.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
                   ),
                 ),

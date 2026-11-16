@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -482,6 +484,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 maxWidth: 480,
                 child: NavigationBar(
                   height: 68,
+                  labelTextStyle: _fittedTabLabels(context, [
+                    l10n.feedsTab,
+                    l10n.foldersTab,
+                    l10n.bookmarksTab,
+                    l10n.settingsTab,
+                  ]),
                   // The add action is the bar's middle slot, not a tab.
                   selectedIndex: _selectedIndex < 2
                       ? _selectedIndex
@@ -589,6 +597,51 @@ class _HomeScreenState extends State<HomeScreen> {
         Expanded(child: content),
       ],
     );
+  }
+
+  /// Tab label style shrunk just enough that the longest label stays on one
+  /// line in its slot: long words ("Yer İşaretleri") and large system text
+  /// otherwise wrap or break mid-word. All tabs share the one size.
+  WidgetStateProperty<TextStyle?> _fittedTabLabels(
+    BuildContext context,
+    List<String> labels,
+  ) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final themed = NavigationBarTheme.of(context).labelTextStyle;
+    TextStyle base(Set<WidgetState> states) {
+      final style =
+          themed?.resolve(states) ??
+          theme.textTheme.labelMedium!.copyWith(
+            color: states.contains(WidgetState.selected)
+                ? cs.onSurface
+                : cs.onSurfaceVariant,
+          );
+      return style;
+    }
+
+    // Five equal slots in a bar capped at 480dp, less the label's margin.
+    final barWidth = math.min(MediaQuery.sizeOf(context).width, 480.0);
+    final room = barWidth / 5 - 8;
+    final scaler = MediaQuery.textScalerOf(context);
+    var widest = 0.0;
+    for (final label in labels) {
+      // Measured in the selected (boldest) style.
+      final painter = TextPainter(
+        text: TextSpan(text: label, style: base({WidgetState.selected})),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+        maxLines: 1,
+      )..layout();
+      widest = math.max(widest, painter.width);
+      painter.dispose();
+    }
+    final factor = widest <= room ? 1.0 : room / widest;
+    return WidgetStateProperty.resolveWith((states) {
+      final style = base(states);
+      if (factor == 1.0) return style;
+      return style.copyWith(fontSize: (style.fontSize ?? 12) * factor);
+    });
   }
 
   /// A bottom-bar tab. The bar counts the add button as a destination, so
