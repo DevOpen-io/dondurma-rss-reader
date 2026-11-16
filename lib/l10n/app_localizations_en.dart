@@ -859,9 +859,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get articleStatusReadableSession => 'Readable in this session';
 
   @override
-  String get articleWaitPreparing => 'Preparing missing parts';
-
-  @override
   String get articleWaitUnmetered => 'Waiting for unmetered network';
 
   @override

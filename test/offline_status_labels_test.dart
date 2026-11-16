@@ -143,11 +143,14 @@ void main() {
         offlineWaitLabel(l10n, s, ArticleWait.unmetered),
         l10n.articleWaitUnmetered,
       );
-      expect(
-        offlineWaitLabel(l10n, s, ArticleWait.preparing),
-        l10n.articleWaitPreparing,
-      );
       expect(offlineWaitLabel(l10n, s, ArticleWait.none), isNull);
+    });
+
+    // Device test 2026-11-16: "Preparing missing parts" flashed under the
+    // title of most fresh articles. It is transient and asks nothing of
+    // the reader.
+    test('transient preparation is never shown', () {
+      expect(offlineWaitLabel(l10n, status(), ArticleWait.preparing), isNull);
     });
 
     test('server wait shows the server-stamped time only', () {
@@ -204,31 +207,22 @@ void main() {
       );
     });
 
-    test('the article names a cached copy only beside a detail or action', () {
+    // Device test 2026-11-16: a fresh article showed "RSS text cached",
+    // "Retry missing parts" and "Images 0/1" while its image was on screen.
+    test('a cached copy is silent in the article', () {
+      // Automatic cache housekeeping: no scope, no count, no wait, no retry.
       for (final scope in [ArticleScope.cachedReady, ArticleScope.cachedText]) {
-        expect(
-          articleNamesScope(scope, hasDetail: false),
-          isFalse,
-          reason: '$scope',
-        );
-        expect(
-          articleNamesScope(scope, hasDetail: true),
-          isTrue,
-          reason: '$scope',
-        );
+        expect(articleStripSpeaks(scope), isFalse, reason: '$scope');
       }
-      // A bookmark, and the session-only warning of an ownerless record.
+      // A bookmark tells the truth about its copy, and an ownerless record
+      // warns that only this session holds it (#41).
       for (final scope in [
         ArticleScope.saveRequested,
         ArticleScope.savedText,
         ArticleScope.savedReady,
         ArticleScope.none,
       ]) {
-        expect(
-          articleNamesScope(scope, hasDetail: false),
-          isTrue,
-          reason: '$scope',
-        );
+        expect(articleStripSpeaks(scope), isTrue, reason: '$scope');
       }
     });
   });

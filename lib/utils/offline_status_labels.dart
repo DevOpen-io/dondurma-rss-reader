@@ -61,8 +61,8 @@ String? offlineWaitLabel(
       return at == null ? null : earliest(at);
     case ArticleWait.unmetered:
       return l10n.articleWaitUnmetered;
+    // Transient: work is running right now and asks nothing of the reader.
     case ArticleWait.preparing:
-      return l10n.articleWaitPreparing;
     case ArticleWait.none:
       return null;
   }
@@ -84,10 +84,15 @@ String? articleImagesDetail(AppLocalizations l10n, ArticleStatus status) =>
     ? l10n.articleImagesCount(status.readyMedia, status.totalMedia)
     : null;
 
-/// Whether the article strip names the copy's scope: a cached copy only
-/// beside a detail line or the retry action it explains. A bookmark is
-/// always named, and so is an ownerless record — "readable this session"
-/// warns that nothing keeps it (#41).
-bool articleNamesScope(ArticleScope scope, {required bool hasDetail}) =>
-    hasDetail ||
-    (scope != ArticleScope.cachedReady && scope != ArticleScope.cachedText);
+/// Whether the article strip says anything about the stored copy.
+///
+/// Device test 2026-11-16: fresh articles showed "RSS text cached", a
+/// retry button and "Images 0/1" while the image was on screen. A copy
+/// held only by the temporary cache is automatic housekeeping the reader
+/// never asked for — while online the page loads live, and bookmarking is
+/// how to keep an article — so it shows no scope, count, wait reason or
+/// retry. A bookmark always tells the truth about its copy, and an
+/// ownerless record warns "readable this session" (#41). The archived-copy
+/// notice and "could not save" are separate and unaffected.
+bool articleStripSpeaks(ArticleScope scope) =>
+    scope != ArticleScope.cachedReady && scope != ArticleScope.cachedText;

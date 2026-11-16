@@ -1618,12 +1618,6 @@ abstract class AppLocalizations {
   /// **'Readable in this session'**
   String get articleStatusReadableSession;
 
-  /// No description provided for @articleWaitPreparing.
-  ///
-  /// In en, this message translates to:
-  /// **'Preparing missing parts'**
-  String get articleWaitPreparing;
-
   /// No description provided for @articleWaitUnmetered.
   ///
   /// In en, this message translates to:

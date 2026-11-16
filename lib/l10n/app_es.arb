@@ -271,7 +271,6 @@
   "articleStatusSummaryOnlySaved": "Solo se guardó el resumen del feed",
   "articleStatusRssCached": "Texto RSS en caché",
   "articleStatusReadableSession": "Se puede leer en esta sesión",
-  "articleWaitPreparing": "Preparando partes faltantes",
   "articleWaitUnmetered": "Esperando red sin límite",
   "articleWaitRetryEarliest": "Reintento permitido a lo más pronto a las {time}",
   "@articleWaitRetryEarliest": {

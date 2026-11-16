@@ -852,9 +852,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get articleStatusReadableSession => 'Bu oturumda okunabilir';
 
   @override
-  String get articleWaitPreparing => 'Eksikler hazırlanıyor';
-
-  @override
   String get articleWaitUnmetered => 'Kotasız ağ bekleniyor';
 
   @override

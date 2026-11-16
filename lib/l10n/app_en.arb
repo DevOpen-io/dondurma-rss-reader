@@ -414,7 +414,6 @@
   },
   "articleStatusRssCached": "RSS text cached",
   "articleStatusReadableSession": "Readable in this session",
-  "articleWaitPreparing": "Preparing missing parts",
   "articleWaitUnmetered": "Waiting for unmetered network",
   "articleWaitRetryEarliest": "Retry allowed earliest at {time}",
   "@articleWaitRetryEarliest": {

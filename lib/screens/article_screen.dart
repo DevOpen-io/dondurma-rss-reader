@@ -716,8 +716,8 @@ class _ArticlePageState extends State<ArticlePage> {
 
 /// Readable-content-first strip: scope label, then the wait reason and
 /// missing-image count, then at most one action. A bookmarked item whose
-/// durable write failed reads "could not save" — never "ready". A complete
-/// cached copy says nothing (see [articleNamesScope]).
+/// durable write failed reads "could not save" — never "ready". A cached
+/// copy says nothing (see [articleStripSpeaks]).
 class _ArticleStatusStrip extends StatelessWidget {
   final FeedItem item;
   final ArticlePageProvider provider;
@@ -796,10 +796,7 @@ class _ArticleStatusStrip extends StatelessWidget {
     // reachable (#41: no dead retry affordance). An ownerless record (pre-
     // tombstone) has no claim to prepare for — nothing to retry.
     final showRetry = status.hasActionable && status.scope != ArticleScope.none;
-    final namesScope = articleNamesScope(
-      status.scope,
-      hasDetail: details.isNotEmpty || showRetry,
-    );
+    final namesScope = articleStripSpeaks(status.scope);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
