@@ -54,6 +54,6 @@ Generation, tombstone ve persisted epoch kontrolleri eski async işlerin silinen
 
 ## UI durumu ve testler
 
-[ArticleStatus](../../lib/services/article_status.dart) okunabilir gövdeyi, tamamlanmış medyayı, sahipliği ve bekleme nedenini kalıcı kayıttan türetir. Metnin okunabilir olması tüm görsellerin hazır olmasıyla aynı şey değildir; UI bu ayrımı saklama/önbellek etiketlerine yansıtır.
+[ArticleStatus](../../lib/services/article_status.dart) okunabilir gövdeyi, tamamlanmış medyayı, sahipliği ve bekleme nedenini kalıcı kayıttan türetir. Metnin okunabilir olması tüm görsellerin hazır olmasıyla aynı şey değildir; UI bu ayrımı saklama/önbellek etiketlerine yansıtır. Etiketler yalnız okuru ilgilendirdiğinde görünür ([offline_status_labels](../../lib/utils/offline_status_labels.dart)): liste satırı yalnız eksik ya da kaydedilemeyen yer imini söyler; makale görsel sayısını yalnız eksik görsel varken, önbellek kapsamını yalnız bir bekleme nedeni ya da yeniden deneme eylemiyle birlikte gösterir. Yer imi kapsamı ve sahipsiz kaydın "bu oturumda okunabilir" uyarısı her zaman görünür.
 
 İlgili regresyonlar: [saklama](../../test/s2_storage_foundation_test.dart), [hazırlık](../../test/s3_preparation_engine_test.dart), [cache seçimi](../../test/s4_temp_cache_selection_test.dart), [temizleme](../../test/s5_cleanup_lifecycle_test.dart), [makale durumu](../../test/s6_article_status_test.dart) ve [RSS yaşam döngüsü](../../test/rss_lifecycle_regression_test.dart).
