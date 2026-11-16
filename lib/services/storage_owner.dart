@@ -103,6 +103,7 @@ abstract final class StorageOwner {
         IsolateNameServer.removePortNameMapping(uiName);
         return false;
       }
+      debugPrint('[storage] background pass handed to the app');
       await replies.moveNext().timeout(passTimeout, onTimeout: () => false);
       return true;
     } finally {
@@ -113,6 +114,7 @@ abstract final class StorageOwner {
 
   /// Marks a background pass that holds the boxes.
   static void enterBackground() {
+    debugPrint('[storage] background pass runs in the task');
     // Answers the app's "still there?" while the pass holds the boxes.
     final port = _backgroundPort ??= ReceivePort()
       ..listen((message) {
