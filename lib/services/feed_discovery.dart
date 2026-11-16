@@ -53,20 +53,23 @@ bool isFeedAddress(String url) {
   if ('://'.allMatches(beforeQuery).length != 1) return false;
 
   final host = uri.host.toLowerCase();
-  if (host == 'localhost') return true;
+  if (host.isEmpty) return false;
+  // IPv6 literal ("[::1]"): Uri has already validated it.
+  if (host.contains(':')) return true;
   if (RegExp(r'^\d{1,3}(\.\d{1,3}){3}$').hasMatch(host)) {
     return host.split('.').every((n) => int.parse(n) <= 255);
   }
-  final labels = host.split('.');
-  if (labels.length < 2) return false;
-  // Letters, digits and hyphens (any script: Uri keeps IDN hosts as typed,
-  // percent-encoded), never at a label's edge.
+  // Letters, digits, hyphens and underscores (any script: Uri keeps IDN
+  // hosts as typed, percent-encoded), never a hyphen at a label's edge.
   final label = RegExp(
-    r'^[\p{L}\p{N}](?:[\p{L}\p{N}-]*[\p{L}\p{N}])?$',
+    r'^[\p{L}\p{N}_](?:[\p{L}\p{N}_-]*[\p{L}\p{N}_])?$',
     unicode: true,
   );
-  final decoded = labels.map(Uri.decodeComponent);
+  final decoded = host.split('.').map(Uri.decodeComponent).toList();
   if (!decoded.every(label.hasMatch)) return false;
+  // A single name ("localhost", "nas", "freshrss") is a machine on the
+  // reader's own network: self-hosted readers serve feeds from there.
+  if (decoded.length == 1) return true;
   final tld = decoded.last;
   return RegExp(r'^(\p{L}{2,}|xn--[a-z0-9-]+)$', unicode: true).hasMatch(tld);
 }

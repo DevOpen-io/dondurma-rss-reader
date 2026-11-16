@@ -30,6 +30,13 @@ void main() {
         'http://localhost:8080/feed',
         'http://192.168.1.10/rss',
         'https://feeds.example.com/?url=https://other.example/feed',
+        // Self-hosted readers on a home network (FreshRSS, RSS-Bridge).
+        'http://nas:8080/feed',
+        'http://freshrss/i/?a=rss',
+        'https://example',
+        'http://[::1]:8080/feed',
+        'http://[fd00::12]/rss',
+        'https://my_host.lan/feed',
       ]) {
         expect(isFeedAddress(url), isTrue, reason: url);
       }
@@ -40,7 +47,6 @@ void main() {
         'https://www.ntv.com.https://www.ntv.com.tr/gundem.rssr/gundem.rss'
             '.com/rss/index.xml',
         'https://www.ntv.com.tr/https://ntv.com.tr/rss',
-        'https://example',
         'https://exa mple.com/feed',
         'https://-example.com/feed',
         'https://example.c0m/feed',
