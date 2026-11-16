@@ -44,6 +44,11 @@ abstract final class PlatformCaps {
   /// link instead.
   static bool get supportsShareSheet => isMobile;
 
+  /// Exports can be saved through the system "save as" dialog (Storage
+  /// Access Framework, `MainActivity`'s files channel) besides the share
+  /// sheet. iOS offers Save to Files inside its share sheet.
+  static bool get supportsSaveToDevice => isAndroid;
+
   /// Runtime permission prompts exist on Android 13+ and iOS/macOS. Linux
   /// and Windows notifications do not use a runtime prompt — asking there
   /// would be a no-op anyway, so only mobile + macOS request.

@@ -2440,6 +2440,18 @@ abstract class AppLocalizations {
   /// **'Search saved'**
   String get searchSaved;
 
+  /// No description provided for @saveToDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'Save to device'**
+  String get saveToDevice;
+
+  /// No description provided for @shareFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get shareFile;
+
   /// No description provided for @rename.
   ///
   /// In en, this message translates to:

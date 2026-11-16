@@ -592,6 +592,8 @@
   "savedSearches": "Saved searches",
   "savedSearchName": "Name",
   "searchSaved": "Search saved",
+  "saveToDevice": "Save to device",
+  "shareFile": "Share",
   "rename": "Rename",
   "tagHintDesktop": "Right-click a bookmark to tag it",
   "clearFilters": "Show all articles",

@@ -1296,6 +1296,12 @@ class AppLocalizationsTr extends AppLocalizations {
   String get searchSaved => 'Arama kaydedildi';
 
   @override
+  String get saveToDevice => 'Cihaza kaydet';
+
+  @override
+  String get shareFile => 'Paylaş';
+
+  @override
   String get rename => 'Yeniden adlandır';
 
   @override

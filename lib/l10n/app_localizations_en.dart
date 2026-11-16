@@ -1292,6 +1292,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchSaved => 'Search saved';
 
   @override
+  String get saveToDevice => 'Save to device';
+
+  @override
+  String get shareFile => 'Share';
+
+  @override
   String get rename => 'Rename';
 
   @override

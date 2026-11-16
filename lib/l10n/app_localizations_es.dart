@@ -1310,6 +1310,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchSaved => 'Búsqueda guardada';
 
   @override
+  String get saveToDevice => 'Guardar en el dispositivo';
+
+  @override
+  String get shareFile => 'Compartir';
+
+  @override
   String get rename => 'Renombrar';
 
   @override

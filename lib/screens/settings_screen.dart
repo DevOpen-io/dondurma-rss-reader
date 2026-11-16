@@ -672,8 +672,16 @@ class SettingsScreen extends StatelessWidget {
                     }
                     return;
                   }
-                  final success = await OpmlService().exportOpml(subscriptions);
-                  if (context.mounted) {
+                  final toDevice = await _askSaveToDevice(
+                    context,
+                    l10n.exportSubscriptions,
+                  );
+                  if (toDevice == null) return;
+                  final success = await OpmlService().exportOpml(
+                    subscriptions,
+                    toDevice: toDevice,
+                  );
+                  if (success != null && context.mounted) {
                     showAppToast(
                       success ? l10n.exportSuccess : l10n.exportFailed,
                       type: success ? AppToastType.success : AppToastType.error,
@@ -727,6 +735,11 @@ class SettingsScreen extends StatelessWidget {
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
                 onTap: () async {
+                  final toDevice = await _askSaveToDevice(
+                    context,
+                    l10n.exportBackup,
+                  );
+                  if (toDevice == null || !context.mounted) return;
                   final json = exportAppBackup(
                     settings: context.read<SettingsProvider>(),
                     subscriptions: context.read<SubscriptionProvider>(),
@@ -741,6 +754,7 @@ class SettingsScreen extends StatelessWidget {
                     shareOrigin: box == null
                         ? null
                         : box.localToGlobal(Offset.zero) & box.size,
+                    toDevice: toDevice,
                   );
                   if (saved != null && context.mounted) {
                     showAppToast(
@@ -981,6 +995,49 @@ class SettingsScreen extends StatelessWidget {
         initialKeywords: settingsProvider.globalReadKeywords,
         onSave: settingsProvider.setGlobalReadKeywords,
         onReset: () => settingsProvider.setGlobalReadKeywords([]),
+      ),
+    );
+  }
+
+  /// Where an export goes on Android: true saves it through the system
+  /// "save as" dialog, false shares it, null means the sheet was dismissed.
+  /// Elsewhere there is one way (share sheet or native save dialog): false.
+  Future<bool?> _askSaveToDevice(BuildContext context, String title) async {
+    if (!PlatformCaps.supportsSaveToDevice) return false;
+    final l10n = AppLocalizations.of(context);
+    return showAdaptiveSheet<bool>(
+      context,
+      Builder(
+        builder: (sheetContext) => SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(24, 4, 24, 8),
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: const Icon(Icons.save_alt_outlined),
+                title: Text(l10n.saveToDevice),
+                onTap: () => Navigator.of(sheetContext).pop(true),
+              ),
+              ListTile(
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
+                leading: const Icon(Icons.share_outlined),
+                title: Text(l10n.shareFile),
+                onTap: () => Navigator.of(sheetContext).pop(false),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

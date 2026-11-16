@@ -6,6 +6,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:xml/xml.dart';
 import '../models/feed_subscription.dart';
 import '../utils/platform_caps.dart';
+import 'device_files.dart';
 
 /// Service responsible for exporting and importing feed subscriptions
 /// using the OPML (Outline Processor Markup Language) format.
@@ -130,11 +131,24 @@ class OpmlService {
   /// Exports [subscriptions] as an OPML file.
   ///
   /// Mobile shares via the system sheet; desktop uses the native save dialog
-  /// so the user picks the destination. Returns `true` on success or user
-  /// cancellation, `false` if an error occurred.
-  Future<bool> exportOpml(List<FeedSubscription> subscriptions) async {
+  /// so the user picks the destination; [toDevice] uses the Android system
+  /// save dialog instead of sharing. Returns `true` on success or user
+  /// cancellation, `false` if an error occurred — except a cancelled
+  /// [toDevice] save, which is null.
+  Future<bool?> exportOpml(
+    List<FeedSubscription> subscriptions, {
+    bool toDevice = false,
+  }) async {
     try {
       final opmlContent = generateOpml(subscriptions);
+
+      if (toDevice) {
+        return await DeviceFiles.save(
+          'dondurma_subscriptions.opml',
+          'text/x-opml',
+          utf8.encode(opmlContent),
+        );
+      }
 
       if (!PlatformCaps.supportsShareSheet) {
         const typeGroup = XTypeGroup(label: 'OPML', extensions: ['opml']);
