@@ -22,6 +22,7 @@ import 'package:ice_cream_rss_reader/services/feed_backoff.dart';
 import 'package:ice_cream_rss_reader/services/feed_refresh.dart';
 import 'package:ice_cream_rss_reader/services/feed_service.dart';
 import 'package:ice_cream_rss_reader/services/observed_article_store.dart';
+import 'package:ice_cream_rss_reader/services/read_state.dart';
 import 'package:ice_cream_rss_reader/utils/host_pacer.dart';
 
 typedef RequestHandler = FutureOr<void> Function(HttpRequest request);
@@ -1605,6 +1606,58 @@ void main() {
       providers.feed.dispose();
     },
   );
+
+  test('a read mark made before the startup load finishes survives the '
+      'load, a refresh and a restart', () async {
+    final url = server.url('/early-reads.xml');
+    final ids = [for (var i = 0; i < 30; i++) 'early-$i'];
+    server.handlers['/early-reads.xml'] = (request) =>
+        _respondConditional(request, _rss('Early', ids));
+    await _seedSubscriptions([
+      FeedSubscription(url: url, name: 'Early', category: 'Test'),
+    ]);
+    // A big snapshot keeps the compute() decode busy, plus a persisted mark
+    // and an unresolved legacy id the load binds.
+    await _seedCache([for (final id in ids) _item(url, id)]);
+    await Hive.box('feeds').put('readItemIds', ['early-29']);
+    await Hive.box('feeds').put('readItemRefs', {
+      'version': 1,
+      'refs': [ReadState.keyOf(url, 'early-28')],
+      'pendingLegacy': ['early-29'],
+    });
+
+    final providers = _providers();
+    // Opened while cachedItemsJson is still being decoded.
+    await providers.feed.markAsRead(_item(url, 'early-0'));
+    await providers.feed.markAsRead(_item(url, 'early-1'));
+    await _waitForRefresh(providers.feed);
+    await providers.feed.flushReadStates();
+    await providers.feed.idle;
+    providers.feed.dispose();
+    await Future<void>.delayed(const Duration(milliseconds: 50));
+
+    final restarted = _providers();
+    await _waitForRefresh(restarted.feed);
+    final read = {
+      for (final item in restarted.feed.items)
+        if (restarted.feed.isRead(item)) item.id,
+    };
+    expect(read, {'early-0', 'early-1', 'early-28', 'early-29'});
+    restarted.feed.dispose();
+  });
+
+  test('an item keeps its read-mark identity through the cache round trip', () {
+    final parsed = FeedService.parseFeedBody((
+      bodyBytes: utf8.encode(_rss('Early', ['guid-1'])),
+      category: 'Test',
+      url: 'https://example.test/feed',
+      contentType: 'application/rss+xml',
+    )).single;
+    final reloaded = FeedItem.fromJson(
+      jsonDecode(jsonEncode(parsed.toJson())) as Map<String, dynamic>,
+    );
+    expect((reloaded.feedUrl, reloaded.id), (parsed.feedUrl, parsed.id));
+  });
 
   test('a feed failure is recorded as a reason code; an empty feed is '
       'noted without failing the pass', () async {
