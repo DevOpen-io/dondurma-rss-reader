@@ -268,7 +268,7 @@
   "articleStatusSaveRequested": "Saklama isteği",
   "articleStatusCouldNotSave": "Kaydedilemedi",
   "articleStatusRssSaved": "RSS metni saklandı",
-  "articleStatusSummaryOnlySaved": "Yalnız akıştaki özet saklandı",
+  "articleStatusSummaryOnlySaved": "Yalnız kaynaktaki özet saklandı",
   "articleStatusRssCached": "RSS metni önbellekte",
   "articleStatusReadableSession": "Bu oturumda okunabilir",
   "articleWaitUnmetered": "Kotasız ağ bekleniyor",
