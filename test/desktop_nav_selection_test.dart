@@ -21,6 +21,7 @@ import 'package:ice_cream_rss_reader/screens/desktop/desktop_sidebar.dart';
 import 'package:ice_cream_rss_reader/screens/home_screen.dart';
 import 'package:ice_cream_rss_reader/utils/platform_caps.dart';
 import 'package:ice_cream_rss_reader/widgets/feed_list_item.dart';
+import 'package:ice_cream_rss_reader/widgets/home/pull_to_refresh.dart';
 
 /// Navigation hierarchy regressions:
 /// - a selected feed's parent category gets the ancestor-active indicator
@@ -363,13 +364,10 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Pull-to-refresh gesture stays, but the indicator widget itself is
-    // transparent — the pill is the only visible global spinner.
-    final indicator = tester.widget<RefreshIndicator>(
-      find.byType(RefreshIndicator),
-    );
-    expect(indicator.color, Colors.transparent);
-    expect(indicator.backgroundColor, Colors.transparent);
+    // The pull circle shows only while pulling; the pill is the only
+    // spinner while a refresh runs.
+    expect(find.byType(PullToRefresh), findsOneWidget);
+    expect(find.byType(RefreshIndicator), findsNothing);
 
     final ctx = tester.element(find.byType(HomeScreen));
     ctx.read<FeedProvider>().refreshProgress.value = RefreshProgress(

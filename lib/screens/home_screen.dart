@@ -23,6 +23,7 @@ import '../widgets/home/add_destination.dart';
 import '../widgets/home/filter_bottom_sheet.dart';
 import '../widgets/home/mark_all_read_button.dart';
 import '../widgets/home/offline_banner.dart';
+import '../widgets/home/pull_to_refresh.dart';
 import '../widgets/home/refresh_progress_count.dart';
 import '../widgets/constrained_width.dart';
 import '../widgets/adaptive_dialog.dart';
@@ -187,16 +188,10 @@ class _HomeScreenState extends State<HomeScreen> {
         },
     ];
 
-    return RefreshIndicator(
-      // The pull gesture stays, but its own spinner is hidden — the
-      // floating progress pill (completed / total) is the single global
-      // refresh indicator for this screen.
-      color: Colors.transparent,
-      backgroundColor: Colors.transparent,
-      elevation: 0,
-      onRefresh: () async {
-        await provider.refreshAll(userInitiated: true);
-      },
+    // The circle only answers the pull; once the refresh runs, the
+    // floating pill (completed / total) is the screen's one progress.
+    return PullToRefresh(
+      onRefresh: () => provider.refreshAll(userInitiated: true),
       child: provider.isLoading && provider.items.isEmpty
           ? const FeedListSkeleton()
           : Column(
