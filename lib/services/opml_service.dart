@@ -14,6 +14,22 @@ import 'device_files.dart';
 /// OPML is the standard interchange format for RSS feed lists. This service
 /// supports both nested (category folders) and flat OPML structures.
 class OpmlService {
+  /// Files offered by the import picker. Android picks by MIME type, maps
+  /// no type to "opml", and labels a saved .opml as bytes, so the types
+  /// are listed; the content is checked on import anyway.
+  static const importTypeGroup = XTypeGroup(
+    label: 'OPML',
+    extensions: ['opml', 'xml'],
+    mimeTypes: [
+      'text/x-opml',
+      'text/xml',
+      'application/xml',
+      'application/octet-stream',
+      'text/plain',
+    ],
+    uniformTypeIdentifiers: ['public.xml', 'public.data'],
+  );
+
   /// Generates an OPML 2.0 XML string from a list of [FeedSubscription]s.
   ///
   /// Feeds are grouped by their [FeedSubscription.category] as OPML outline
@@ -187,8 +203,7 @@ class OpmlService {
   /// Returns an empty list if the user cancels or the file is invalid.
   Future<List<FeedSubscription>> importOpml() async {
     try {
-      const typeGroup = XTypeGroup(label: 'OPML', extensions: ['opml', 'xml']);
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+      final file = await openFile(acceptedTypeGroups: [importTypeGroup]);
       if (file == null) return [];
 
       // Not `readAsString`: for the bytes the Android picker returns it

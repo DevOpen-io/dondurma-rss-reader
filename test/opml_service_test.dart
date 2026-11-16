@@ -88,4 +88,21 @@ void main() {
       expect(back.first.category, 'Tech');
     });
   });
+
+  // Device test 2026-11-16: Android lists a saved .opml as bytes
+  // (application/octet-stream), and "opml" maps to no MIME type, so the
+  // picker would not let a reader choose the file the app had just saved.
+  test('the import picker accepts .opml files as Android labels them', () {
+    final group = OpmlService.importTypeGroup;
+    expect(group.extensions, containsAll(['opml', 'xml']));
+    expect(
+      group.mimeTypes,
+      containsAll([
+        'application/octet-stream',
+        'text/x-opml',
+        'text/xml',
+        'application/xml',
+      ]),
+    );
+  });
 }
