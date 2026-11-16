@@ -1411,4 +1411,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get swipeMarkedUnread => 'Marcado como no leído';
+
+  @override
+  String get feedOptions => 'Opciones de la fuente';
 }

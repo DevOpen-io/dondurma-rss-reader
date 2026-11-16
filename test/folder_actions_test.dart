@@ -174,17 +174,53 @@ void main() {
 
   // ── Categories screen ────────────────────────────────────────────────
 
+  /// The ⋮ button on a categories-screen feed row.
+  Finder feedOptions(String name) => find.descendant(
+    of: find.ancestor(
+      of: find.text(name),
+      matching: find.byWidgetPredicate(
+        (w) => w.runtimeType.toString() == '_FeedRow',
+      ),
+    ),
+    matching: find.byTooltip('Feed options'),
+  );
+
   Future<void> pumpCategories(WidgetTester tester) async {
     await tester.pumpWidget(app(const Scaffold(body: CategoriesScreen())));
     await settle(tester);
   }
 
   group('categories screen', () {
-    testWidgets('tapping a feed opens the feed action sheet', (tester) async {
+    // Tap opens the feed like the drawer does; the sheet is behind ⋮ and a
+    // long press (device test, 2026-11-16: tap opened settings).
+    testWidgets('tapping a feed shows its articles', (tester) async {
       phoneSurface(tester);
       await pumpCategories(tester);
 
       await tester.tap(find.text('Feed A1'));
+      await settle(tester);
+
+      expect(find.byType(FeedActionSheet), findsNothing);
+      expect(feedOf(tester).selectedFeedUrl, 'https://a.example/feed');
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('long-pressing a feed opens its actions', (tester) async {
+      phoneSurface(tester);
+      await pumpCategories(tester);
+
+      await tester.longPress(find.text('Feed A1'));
+      await settle(tester);
+
+      expect(find.byType(FeedActionSheet), findsOneWidget);
+      expect(feedOf(tester).selectedFeedUrl, isNull);
+    });
+
+    testWidgets('the ⋮ button opens the feed action sheet', (tester) async {
+      phoneSurface(tester);
+      await pumpCategories(tester);
+
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
 
       expect(find.byType(FeedActionSheet), findsOneWidget);
@@ -199,7 +235,7 @@ void main() {
       await pumpCategories(tester);
       final before = feedOf(tester).refreshes;
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
       await tester.tap(find.text('Delete Feed'));
       await settle(tester);
@@ -226,7 +262,7 @@ void main() {
       phoneSurface(tester);
       await pumpCategories(tester);
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
       await tester.tap(find.text('Delete Feed'));
       await settle(tester);
@@ -246,7 +282,7 @@ void main() {
       final before = feedOf(tester).refreshes;
 
       // Science sorts first — the second overflow menu belongs to Tech.
-      await tester.tap(find.byIcon(Icons.more_vert).at(1));
+      await tester.tap(find.byTooltip('Show menu').at(1));
       await settle(tester);
       await tester.tap(find.text('Delete Category'));
       await settle(tester);
@@ -278,7 +314,7 @@ void main() {
       final before = feedOf(tester).refreshes;
 
       // Empty sorts first.
-      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await tester.tap(find.byTooltip('Show menu').first);
       await settle(tester);
       await tester.tap(find.text('Delete Category'));
       await settle(tester);
@@ -304,7 +340,7 @@ void main() {
       await pumpCategories(tester);
 
       // Science (one feed) sorts first.
-      await tester.tap(find.byIcon(Icons.more_vert).first);
+      await tester.tap(find.byTooltip('Show menu').first);
       await settle(tester);
       await tester.tap(find.text('Delete Category'));
       await settle(tester);
@@ -321,7 +357,7 @@ void main() {
       phoneSurface(tester);
       await pumpCategories(tester);
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
 
       expect(
@@ -337,7 +373,7 @@ void main() {
       desktopSurface(tester);
       await pumpCategories(tester);
 
-      await tester.tap(find.text('Feed A1'));
+      await tester.tap(feedOptions('Feed A1'));
       await settle(tester);
 
       expect(

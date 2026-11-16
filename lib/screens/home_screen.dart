@@ -265,6 +265,13 @@ class _HomeScreenState extends State<HomeScreen> {
           return l10n.settingsTab;
         case 0:
         default:
+          // A single feed is titled with its own name, not its folder's.
+          final feedUrl = p.selectedFeedUrl;
+          if (feedUrl != null) {
+            for (final sub in p.subscriptionProvider?.subscriptions ?? []) {
+              if (sub.url == feedUrl) return sub.name;
+            }
+          }
           return p.selectedCategory ?? l10n.myFeeds;
       }
     });

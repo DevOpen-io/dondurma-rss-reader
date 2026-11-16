@@ -2607,6 +2607,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Marked as unread'**
   String get swipeMarkedUnread;
+
+  /// No description provided for @feedOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed options'**
+  String get feedOptions;
 }
 
 class _AppLocalizationsDelegate

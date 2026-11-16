@@ -1388,4 +1388,7 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get swipeMarkedUnread => 'Okunmadı olarak işaretlendi';
+
+  @override
+  String get feedOptions => 'Kaynak seçenekleri';
 }

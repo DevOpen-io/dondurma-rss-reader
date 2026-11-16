@@ -647,5 +647,6 @@
     }
   },
   "swipeMarkedRead": "Marked as read",
-  "swipeMarkedUnread": "Marked as unread"
+  "swipeMarkedUnread": "Marked as unread",
+  "feedOptions": "Feed options"
 }

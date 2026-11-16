@@ -452,5 +452,6 @@
   "timeHoursShort": "{count} h",
   "timeDaysShort": "{count} d",
   "swipeMarkedRead": "Marcado como leído",
-  "swipeMarkedUnread": "Marcado como no leído"
+  "swipeMarkedUnread": "Marcado como no leído",
+  "feedOptions": "Opciones de la fuente"
 }

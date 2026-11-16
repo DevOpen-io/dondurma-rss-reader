@@ -1392,4 +1392,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get swipeMarkedUnread => 'Marked as unread';
+
+  @override
+  String get feedOptions => 'Feed options';
 }

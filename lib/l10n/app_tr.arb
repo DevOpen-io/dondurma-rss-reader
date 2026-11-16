@@ -452,5 +452,6 @@
   "timeHoursShort": "{count} sa",
   "timeDaysShort": "{count} g",
   "swipeMarkedRead": "Okundu olarak işaretlendi",
-  "swipeMarkedUnread": "Okunmadı olarak işaretlendi"
+  "swipeMarkedUnread": "Okunmadı olarak işaretlendi",
+  "feedOptions": "Kaynak seçenekleri"
 }

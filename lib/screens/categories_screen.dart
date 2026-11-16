@@ -257,8 +257,11 @@ class _FeedRow extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
 
+    // Tap opens the feed, as in the drawer; its settings sit behind ⋮ and
+    // a long press.
     return InkWell(
-      onTap: onTap,
+      onTap: onNavigate,
+      onLongPress: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
         child: Row(
@@ -304,18 +307,13 @@ class _FeedRow extends StatelessWidget {
                     color: cs.onSurfaceVariant,
                   ),
                 ],
-                const SizedBox(width: 4),
-                InkWell(
-                  borderRadius: BorderRadius.circular(20),
-                  onTap: onNavigate,
-                  child: Padding(
-                    // 16px icon + 16px padding = 48dp minimum touch target.
-                    padding: const EdgeInsets.all(16.0),
-                    child: Icon(
-                      Icons.chevron_right_rounded,
-                      size: 16,
-                      color: cs.onSurface.withValues(alpha: 0.5),
-                    ),
+                IconButton(
+                  tooltip: AppLocalizations.of(context).feedOptions,
+                  onPressed: onTap,
+                  icon: Icon(
+                    Icons.more_vert,
+                    size: 20,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
               ],

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flex_color_scheme/flex_color_scheme.dart';
@@ -147,6 +148,36 @@ void main() {
         expect(tester.takeException(), isNull);
       });
     }
+
+    // A feed opened from the categories tab was titled with its folder.
+    testWidgets('a selected feed titles the screen with its own name', (
+      tester,
+    ) async {
+      await tester.pumpWidget(app(const Locale('en'), AppFont.outfit));
+      await tester.pumpAndSettle();
+      final home = tester.element(find.byType(HomeScreen));
+      // Not awaited: the list updates at once, the Hive write would hang
+      // in the fake-async zone.
+      unawaited(
+        home.read<SubscriptionProvider>().addFeed(
+          'https://px.example/feed',
+          '500px',
+          'Lifestyle',
+        ),
+      );
+      final feed = home.read<FeedProvider>();
+      feed.selectFeed('https://px.example/feed');
+      await tester.pump();
+      Finder title(String t) =>
+          find.descendant(of: find.byType(AppBar), matching: find.text(t));
+      expect(title('500px'), findsOneWidget);
+      expect(title('Lifestyle'), findsNothing);
+
+      feed.selectFeed(null);
+      feed.selectCategory('Lifestyle');
+      await tester.pump();
+      expect(title('Lifestyle'), findsOneWidget);
+    });
 
     testWidgets('a slightly long folder name shrinks a little to fit; a '
         'very long one ends in an ellipsis', (tester) async {
