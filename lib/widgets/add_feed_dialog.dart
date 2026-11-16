@@ -64,10 +64,9 @@ class _AddFeedDialogState extends State<AddFeedDialog> {
 
   void _onUrlChanged() {
     final val = _typedUrl;
-    final uri = Uri.tryParse(val);
     setState(() {
       _urlHasInput = val.isNotEmpty;
-      _urlFormatValid = val.isNotEmpty && uri != null && uri.isAbsolute;
+      _urlFormatValid = isFeedAddress(val);
       if (_urlValidationError != null && _urlFormatValid) {
         _urlValidationError = null;
       }
