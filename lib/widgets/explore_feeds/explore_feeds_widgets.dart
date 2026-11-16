@@ -142,7 +142,7 @@ class ExploreFilterBar extends StatelessWidget {
             ),
             const Spacer(),
             Text(
-              'Categories',
+              l10n.categories,
               style: TextStyle(
                 fontSize: 12,
                 color: colorScheme.primary,

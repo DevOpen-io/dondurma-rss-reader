@@ -70,34 +70,48 @@ class SettingsTileDivider extends StatelessWidget {
   }
 }
 
-/// Settings title row: label + optional ⓘ button that opens the
-/// description in a dialog instead of printing it under the label.
-class _SettingsTileLabel extends StatelessWidget {
+class _SettingsTileTitle extends StatelessWidget {
   final String title;
-  final String? info;
 
-  const _SettingsTileLabel(this.title, this.info);
+  const _SettingsTileTitle(this.title);
+
+  @override
+  Widget build(BuildContext context) =>
+      Text(title, style: const TextStyle(fontSize: 15));
+}
+
+/// [trailing] preceded by the ⓘ button when the setting has a description.
+Widget? _withInfo(String title, String? info, Widget? trailing) {
+  if (info == null) return trailing;
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    children: [_SettingsInfoButton(title, info), ?trailing],
+  );
+}
+
+/// ⓘ button that opens a setting's description in a sheet instead of
+/// printing it under the label. It sits at the row's end, beside the
+/// trailing control, so the label and the rest of the row stay the row's
+/// own tap target whatever the label's length.
+class _SettingsInfoButton extends StatelessWidget {
+  final String title;
+  final String info;
+
+  const _SettingsInfoButton(this.title, this.info);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Flexible(child: Text(title, style: const TextStyle(fontSize: 15))),
-        if (info != null)
-          // The tooltip doubles as the semantics label; default constraints
-          // keep a 48dp target on touch platforms.
-          IconButton(
-            onPressed: () => _showInfoDialog(context),
-            tooltip: AppLocalizations.of(context).semanticSettingInfo(title),
-            iconSize: 15,
-            icon: Icon(
-              Icons.info_outline_rounded,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-            ),
-          ),
-      ],
+    // The tooltip doubles as the semantics label; default constraints
+    // keep a 48dp target on touch platforms.
+    return IconButton(
+      onPressed: () => _showInfoDialog(context),
+      tooltip: AppLocalizations.of(context).semanticSettingInfo(title),
+      iconSize: 15,
+      icon: Icon(
+        Icons.info_outline_rounded,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+      ),
     );
   }
 
@@ -107,7 +121,7 @@ class _SettingsTileLabel extends StatelessWidget {
       Builder(
         builder: (dialogContext) => ActionSheet(
           title: Text(title),
-          content: Text(info!),
+          content: Text(info),
           actions: [
             FilledButton.tonal(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -141,14 +155,27 @@ class SettingsSwitchTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-      leading: SettingsIcon(icon: icon),
-      title: _SettingsTileLabel(title, subtitle),
-      trailing: Switch.adaptive(
-        value: value,
-        onChanged: onChanged,
-        activeTrackColor: theme.colorScheme.primary,
+    // The row is the switch for screen readers: one node named by the
+    // label and toggled by a tap ("Ad blocker, switch, on"), instead of a
+    // labelled row plus a nameless switch. The ⓘ button stays its own node.
+    return Semantics(
+      toggled: value,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        leading: SettingsIcon(icon: icon),
+        title: _SettingsTileTitle(title),
+        trailing: _withInfo(
+          title,
+          subtitle,
+          ExcludeSemantics(
+            child: Switch.adaptive(
+              value: value,
+              onChanged: onChanged,
+              activeTrackColor: theme.colorScheme.primary,
+            ),
+          ),
+        ),
+        onTap: () => onChanged(!value),
       ),
     );
   }
@@ -298,8 +325,8 @@ class SettingsActionTile extends StatelessWidget {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 16),
       leading: SettingsIcon(icon: icon, color: iconColor),
-      title: _SettingsTileLabel(title, subtitle),
-      trailing: trailing,
+      title: _SettingsTileTitle(title),
+      trailing: _withInfo(title, subtitle, trailing),
       onTap: onTap,
     );
   }
@@ -343,7 +370,8 @@ class SettingsQuietHoursTile extends StatelessWidget {
         children: [
           SettingsIcon(icon: icon),
           const SizedBox(width: 16),
-          Expanded(child: _SettingsTileLabel(title, subtitle)),
+          Expanded(child: _SettingsTileTitle(title)),
+          if (subtitle != null) _SettingsInfoButton(title, subtitle!),
           const SizedBox(width: 8),
           Row(
             mainAxisSize: MainAxisSize.min,

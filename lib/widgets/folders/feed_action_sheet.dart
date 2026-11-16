@@ -115,24 +115,43 @@ class FeedActionSheet extends StatelessWidget {
               ),
               child: Column(
                 children: [
-                  ListTile(
-                    dense: true,
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-                    leading: Icon(
-                      sub.notificationsEnabled
-                          ? Icons.notifications_active_outlined
-                          : Icons.notifications_off_outlined,
-                      size: 20,
-                      color: sub.notificationsEnabled
-                          ? cs.primary
-                          : cs.onSurfaceVariant,
-                    ),
-                    title: Text(l10n.feedNotifications, style: tt.bodyMedium),
-                    trailing: Switch(
-                      value: sub.notificationsEnabled,
-                      onChanged: (_) => context
-                          .read<SubscriptionProvider>()
-                          .toggleFeedNotifications(sub.url),
+                  // One switch node named by the row for screen readers;
+                  // a tap anywhere on the row toggles it. The transparent
+                  // Material paints the ripple above the tinted container.
+                  Semantics(
+                    toggled: sub.notificationsEnabled,
+                    child: Material(
+                      type: MaterialType.transparency,
+                      child: ListTile(
+                        dense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                        ),
+                        leading: Icon(
+                          sub.notificationsEnabled
+                              ? Icons.notifications_active_outlined
+                              : Icons.notifications_off_outlined,
+                          size: 20,
+                          color: sub.notificationsEnabled
+                              ? cs.primary
+                              : cs.onSurfaceVariant,
+                        ),
+                        title: Text(
+                          l10n.feedNotifications,
+                          style: tt.bodyMedium,
+                        ),
+                        trailing: ExcludeSemantics(
+                          child: Switch(
+                            value: sub.notificationsEnabled,
+                            onChanged: (_) => context
+                                .read<SubscriptionProvider>()
+                                .toggleFeedNotifications(sub.url),
+                          ),
+                        ),
+                        onTap: () => context
+                            .read<SubscriptionProvider>()
+                            .toggleFeedNotifications(sub.url),
+                      ),
                     ),
                   ),
                   Divider(

@@ -267,4 +267,18 @@ void main() {
     expect(dialogOpen(), isTrue);
     expect(find.textContaining("Couldn't find a feed"), findsWidgets);
   });
+
+  dialogTest('pasted garbage is not marked valid and is not added', (
+    tester,
+  ) async {
+    await submit(
+      tester,
+      'https://www.ntv.com.https://www.ntv.com.tr/gundem.rssr/gundem.rss'
+      '.com/rss/index.xml',
+    );
+
+    expect(find.byIcon(Icons.check_circle_rounded), findsNothing);
+    expect(feeds.added, isEmpty);
+    expect(dialogOpen(), isTrue);
+  });
 }
