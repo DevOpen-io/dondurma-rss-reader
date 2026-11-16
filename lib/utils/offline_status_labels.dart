@@ -91,8 +91,9 @@ String? articleImagesDetail(AppLocalizations l10n, ArticleStatus status) =>
 /// held only by the temporary cache is automatic housekeeping the reader
 /// never asked for — while online the page loads live, and bookmarking is
 /// how to keep an article — so it shows no scope, count, wait reason or
-/// retry. A bookmark always tells the truth about its copy, and an
-/// ownerless record warns "readable this session" (#41). The archived-copy
-/// notice and "could not save" are separate and unaffected.
-bool articleStripSpeaks(ArticleScope scope) =>
-    scope != ArticleScope.cachedReady && scope != ArticleScope.cachedText;
+/// retry — also while the cached record has no body yet (scope `none`).
+/// A bookmark always tells the truth about its copy, and an ownerless
+/// record warns "readable this session" (#41). The archived-copy notice and
+/// "could not save" are separate and unaffected.
+bool articleStripSpeaks(ArticleStatus status) =>
+    status.hasBookmark || !status.hasTempCache;

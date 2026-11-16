@@ -823,7 +823,7 @@ class _ArticleStatusStrip extends StatelessWidget {
     // reachable (#41: no dead retry affordance). An ownerless record (pre-
     // tombstone) has no claim to prepare for — nothing to retry.
     final showRetry = status.hasActionable && status.scope != ArticleScope.none;
-    final namesScope = articleStripSpeaks(status.scope);
+    final namesScope = articleStripSpeaks(status);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

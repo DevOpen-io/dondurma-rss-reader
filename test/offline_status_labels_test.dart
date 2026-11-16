@@ -210,19 +210,25 @@ void main() {
     // Device test 2026-11-16: a fresh article showed "RSS text cached",
     // "Retry missing parts" and "Images 0/1" while its image was on screen.
     test('a cached copy is silent in the article', () {
-      // Automatic cache housekeeping: no scope, no count, no wait, no retry.
-      for (final scope in [ArticleScope.cachedReady, ArticleScope.cachedText]) {
-        expect(articleStripSpeaks(scope), isFalse, reason: '$scope');
+      // Automatic cache housekeeping: no scope, no count, no wait, no retry
+      // — also while the cached record has no body yet.
+      for (final s in [
+        status(owners: {'tempCache'}),
+        status(owners: {'tempCache'}, bodyDue: true, totalMedia: 1),
+        status(owners: {'tempCache'}, hasBody: false, totalMedia: 1),
+      ]) {
+        expect(articleStripSpeaks(s), isFalse, reason: '${s.scope}');
       }
       // A bookmark tells the truth about its copy, and an ownerless record
       // warns that only this session holds it (#41).
-      for (final scope in [
-        ArticleScope.saveRequested,
-        ArticleScope.savedText,
-        ArticleScope.savedReady,
-        ArticleScope.none,
+      for (final s in [
+        status(hasBody: false),
+        status(bodyDue: true),
+        status(),
+        status(owners: {'bookmark', 'tempCache'}, bodyDue: true),
+        status(owners: const {}),
       ]) {
-        expect(articleStripSpeaks(scope), isTrue, reason: '$scope');
+        expect(articleStripSpeaks(s), isTrue, reason: '${s.scope}');
       }
     });
   });
