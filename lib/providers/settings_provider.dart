@@ -133,6 +133,18 @@ class SettingsProvider extends ChangeNotifier {
     _loadSettings();
   }
 
+  /// The first device language the app supports, else English.
+  static Locale _deviceLocale() {
+    final supported = {
+      for (final l in supportedAppLanguages) l.locale.languageCode: l.locale,
+    };
+    for (final device in WidgetsBinding.instance.platformDispatcher.locales) {
+      final match = supported[device.languageCode];
+      if (match != null) return match;
+    }
+    return const Locale('en');
+  }
+
   /// Loads all settings synchronously from the Hive box.
   ///
   /// Hive boxes are memory-mapped, so [Box.get] is a synchronous read.
@@ -159,15 +171,10 @@ class SettingsProvider extends ChangeNotifier {
       orElse: () => ThemeMode.system,
     );
 
-    // Locale
+    // Locale: the chosen language, else the device's (also after a reset,
+    // which clears the choice).
     final savedLocale = _box.get('locale');
-    if (savedLocale != null) {
-      try {
-        _locale = Locale(savedLocale);
-      } catch (_) {
-        _locale = const Locale('en');
-      }
-    }
+    _locale = savedLocale is String ? Locale(savedLocale) : _deviceLocale();
 
     // Notification settings
     _notificationsEnabled = _box.get(
