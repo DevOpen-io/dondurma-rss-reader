@@ -258,71 +258,128 @@ void main() {
     });
 
     group('landscape phone', () {
-      for (final size in const [
-        Size(732, 360),
-        Size(915, 412),
-        Size(640, 320),
-      ]) {
-        testWidgets(
-          '${size.width.toInt()}x${size.height.toInt()}: tabs move to '
-          'a side rail so the list keeps the height',
-          (tester) async {
-            tester.view.physicalSize = size;
-            tester.view.devicePixelRatio = 1.0;
-            addTearDown(tester.view.reset);
-
-            await tester.pumpWidget(wrapHome());
-            await tester.pumpAndSettle();
-
-            expect(find.byType(NavigationBar), findsNothing);
-            expect(find.byType(NavigationRail), findsOneWidget);
-            final appBarBottom = tester.getBottomLeft(find.byType(AppBar)).dy;
-            expect(size.height - appBarBottom, greaterThan(size.height * 0.75));
-            expect(tester.takeException(), isNull);
-
-            // The add action leads the rail and still adds.
-            await tester.tap(find.widgetWithText(AddDestination, 'Add feed'));
-            await tester.pumpAndSettle();
-            expect(find.byType(AddFeedDialog), findsOneWidget);
-            Navigator.of(tester.element(find.byType(AddFeedDialog))).pop();
-            await tester.pumpAndSettle();
-
-            await tester.tap(
-              find.descendant(
-                of: find.byType(NavigationRail),
-                matching: find.text('Categories'),
-              ),
-            );
-            await tester.pumpAndSettle();
-            expect(
-              find.widgetWithText(AddDestination, 'Add Category'),
-              findsOneWidget,
-            );
-            expect(tester.takeException(), isNull);
-          },
-        );
+      /// A landscape phone with its status bar, at [scale] text size.
+      void landscape(WidgetTester tester, Size size, {double scale = 1}) {
+        tester.view.physicalSize = size;
+        tester.view.devicePixelRatio = 1.0;
+        tester.view.padding = const FakeViewPadding(top: 24);
+        tester.platformDispatcher.textScaleFactorTestValue = scale;
+        addTearDown(tester.view.reset);
+        addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
       }
 
-      testWidgets('rail counts four tabs for screen readers', (tester) async {
-        tester.view.physicalSize = const Size(732, 360);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
+      Finder inRail(Finder f) =>
+          find.descendant(of: find.byType(NavigationRail), matching: f);
+
+      for (final size in const [Size(732, 360), Size(915, 412)]) {
+        for (final scale in const [1.0, 1.3]) {
+          testWidgets(
+            '${size.width.toInt()}x${size.height.toInt()} at ${scale}x: '
+            'every tab and the add button fit in a side rail',
+            (tester) async {
+              landscape(tester, size, scale: scale);
+              await tester.pumpWidget(wrapHome());
+              await tester.pumpAndSettle();
+
+              expect(find.byType(NavigationBar), findsNothing);
+              expect(find.byType(NavigationRail), findsOneWidget);
+              final appBarBottom = tester
+                  .getBottomLeft(find.byType(AppBar))
+                  .dy;
+              expect(
+                size.height - appBarBottom,
+                greaterThan(size.height * 0.75),
+              );
+              for (final target in [
+                find.byKey(const ValueKey('add-feed')),
+                inRail(find.byIcon(Icons.list)),
+                inRail(find.byIcon(Icons.folder_outlined)),
+                inRail(find.byIcon(Icons.bookmark_border)),
+                inRail(find.byIcon(Icons.settings_outlined)),
+              ]) {
+                expect(target, findsOneWidget);
+                expect(
+                  tester.getRect(target).bottom,
+                  lessThanOrEqualTo(size.height),
+                  reason: '$target is cut off',
+                );
+              }
+              expect(tester.takeException(), isNull);
+
+              // The add action leads the rail and still adds.
+              await tester.tap(find.byKey(const ValueKey('add-feed')));
+              await tester.pumpAndSettle();
+              expect(find.byType(AddFeedDialog), findsOneWidget);
+              Navigator.of(tester.element(find.byType(AddFeedDialog))).pop();
+              await tester.pumpAndSettle();
+
+              await tester.tap(inRail(find.byIcon(Icons.folder_outlined)));
+              await tester.pumpAndSettle();
+              expect(find.byKey(const ValueKey('add-folder')), findsOneWidget);
+              await tester.tap(inRail(find.byIcon(Icons.settings_outlined)));
+              await tester.pumpAndSettle();
+              expect(inRail(find.byIcon(Icons.settings)), findsOneWidget);
+              expect(tester.takeException(), isNull);
+            },
+          );
+        }
+      }
+
+      testWidgets('640x320: the rail scrolls instead of overflowing', (
+        tester,
+      ) async {
+        landscape(tester, const Size(640, 320), scale: 1.3);
+        await tester.pumpWidget(wrapHome());
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+        final settings = inRail(find.byIcon(Icons.settings_outlined));
+        await tester.ensureVisible(settings);
+        await tester.pumpAndSettle();
+        await tester.tap(settings);
+        await tester.pumpAndSettle();
+        expect(inRail(find.byIcon(Icons.settings)), findsOneWidget);
+        // The empty categories screen fits too.
+        final folders = inRail(find.byIcon(Icons.folder_outlined));
+        await tester.ensureVisible(folders);
+        await tester.pumpAndSettle();
+        await tester.tap(folders);
+        await tester.pumpAndSettle();
+        expect(tester.takeException(), isNull);
+      });
+
+      testWidgets('the rail names the add button and counts four tabs', (
+        tester,
+      ) async {
+        landscape(tester, const Size(732, 360));
         final semantics = tester.ensureSemantics();
         await tester.pumpWidget(wrapHome());
         await tester.pumpAndSettle();
         expect(find.bySemanticsLabel(RegExp(r'of 5')), findsNothing);
         expect(find.bySemanticsLabel(RegExp(r'Tab 4 of 4')), findsOneWidget);
+        // Named once: the tooltip adds no second "Add feed".
+        expect(find.bySemanticsLabel('Add feed'), findsOneWidget);
+        expect(
+          tester
+              .getSemantics(find.bySemanticsLabel('Add feed'))
+              .flagsCollection
+              .isButton,
+          isTrue,
+        );
         semantics.dispose();
       });
 
-      testWidgets('portrait phones keep the bottom bar', (tester) async {
-        tester.view.physicalSize = const Size(360, 732);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(wrapHome());
-        await tester.pumpAndSettle();
-        expect(find.byType(NavigationBar), findsOneWidget);
-        expect(find.byType(NavigationRail), findsNothing);
+      testWidgets('portrait phones keep the bottom bar, split screen too', (
+        tester,
+      ) async {
+        for (final size in const [Size(360, 732), Size(360, 380)]) {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+          await tester.pumpWidget(wrapHome());
+          await tester.pumpAndSettle();
+          expect(find.byType(NavigationBar), findsOneWidget, reason: '$size');
+          expect(find.byType(NavigationRail), findsNothing, reason: '$size');
+        }
       });
     });
 

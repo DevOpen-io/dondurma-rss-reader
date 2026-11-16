@@ -277,18 +277,23 @@ class _HomeScreenState extends State<HomeScreen> {
     final routeScroll = PrimaryScrollController.maybeOf(context);
     final feedTab = _selectedIndex == 0 || routeScroll == null;
     // A landscape phone has no height to spare for a bottom bar: the tabs
-    // and the add action move to a rail beside the content.
-    final useRail = MediaQuery.sizeOf(context).height < 480;
-    final addDestination = _selectedIndex == 1
+    // and the add action move to a rail beside the content. A portrait
+    // window in split screen keeps the bar.
+    final size = MediaQuery.sizeOf(context);
+    final useRail = size.height < 480 && size.width > size.height;
+    AddDestination addDestination({bool showLabel = true}) =>
+        _selectedIndex == 1
         ? AddDestination(
             key: const ValueKey('add-folder'),
             label: l10n.addFolder,
             onPressed: _showAddFolderDialog,
+            showLabel: showLabel,
           )
         : AddDestination(
             key: const ValueKey('add-feed'),
             label: l10n.addFeedButton,
             onPressed: _showAddFeedDialog,
+            showLabel: showLabel,
           );
     final scaffold = Scaffold(
       appBar: AppBar(
@@ -394,7 +399,7 @@ class _HomeScreenState extends State<HomeScreen> {
         onSavedSearch: _openSearch,
       ),
       body: _besideRail(
-        useRail ? addDestination : null,
+        useRail ? addDestination(showLabel: false) : null,
         _selectedIndex == 0
             ? Selector<FeedProvider, _FeedTabInputs>(
                 selector: (_, p) => (
@@ -493,7 +498,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Icons.folder,
                       l10n.foldersTab,
                     ),
-                    addDestination,
+                    addDestination(),
                     _tab(
                       2,
                       Icons.bookmark_border,
@@ -540,11 +545,11 @@ class _HomeScreenState extends State<HomeScreen> {
               child: IntrinsicHeight(
                 child: NavigationRail(
                   backgroundColor: cs.surfaceContainer,
-                  labelType: NavigationRailLabelType.all,
-                  leading: Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
-                    child: SizedBox(width: 80, height: 56, child: add),
-                  ),
+                  // Four labelled tabs and the add button do not fit the
+                  // height of a 360dp landscape phone; the selected tab
+                  // keeps its name, the others their icons and tooltips.
+                  labelType: NavigationRailLabelType.selected,
+                  leading: SizedBox(width: 80, height: 48, child: add),
                   selectedIndex: _selectedIndex,
                   onDestinationSelected: _onItemTapped,
                   destinations: [
