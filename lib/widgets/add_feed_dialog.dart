@@ -456,26 +456,21 @@ class _UrlCard extends StatelessWidget {
                 ),
               ),
               const Spacer(),
+              // Swapped without a cross-fade: typing flips it faster than a
+              // fade ends, and an AnimatedSwitcher then held two children
+              // with the same key (a red error screen on device).
               if (hasInput)
-                AnimatedSwitcher(
-                  duration: motionDuration(
-                    context,
-                    const Duration(milliseconds: 180),
-                  ),
-                  child: isValid
-                      ? Icon(
-                          Icons.check_circle_rounded,
-                          key: const ValueKey('ok'),
-                          color: cs.primary,
-                          size: 16,
-                        )
-                      : Icon(
-                          Icons.error_outline_rounded,
-                          key: const ValueKey('err'),
-                          color: cs.error,
-                          size: 16,
-                        ),
-                ),
+                isValid
+                    ? Icon(
+                        Icons.check_circle_rounded,
+                        color: cs.primary,
+                        size: 16,
+                      )
+                    : Icon(
+                        Icons.error_outline_rounded,
+                        color: cs.error,
+                        size: 16,
+                      ),
             ],
           ),
           const SizedBox(height: 10),

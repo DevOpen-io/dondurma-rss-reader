@@ -75,9 +75,7 @@ void main() {
     ),
   );
 
-  testWidgets('an open drawer claims back, and back closes it', (
-    tester,
-  ) async {
+  testWidgets('an open drawer claims back, and back closes it', (tester) async {
     tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
     await tester.pumpWidget(wrapHome());
     await tester.pumpAndSettle();
@@ -112,5 +110,23 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(Drawer), findsNothing);
     expect(handlesBack.last, isFalse);
+  });
+
+  // A title that returns while its fade-out still runs put two children
+  // with one key into the switcher (red error screen, 2026-11-16).
+  testWidgets('opening and closing search quickly never breaks the title', (
+    tester,
+  ) async {
+    await tester.pumpWidget(wrapHome());
+    await tester.pumpAndSettle();
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byTooltip('Open search'));
+      await tester.pump(const Duration(milliseconds: 50));
+      await tester.tap(find.byTooltip('Close search'));
+      await tester.pump(const Duration(milliseconds: 50));
+    }
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.text('My Feeds'), findsOneWidget);
   });
 }

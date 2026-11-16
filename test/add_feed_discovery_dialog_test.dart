@@ -180,6 +180,27 @@ void main() {
         await tester.pump(const Duration(seconds: 10));
       });
 
+  // On device, typing an address character by character flipped the
+  // validity icon back before the previous one had faded out: two icons
+  // with the same key, and a red error screen (2026-11-16).
+  dialogTest('typing fast, letter by letter, never breaks the dialog', (
+    tester,
+  ) async {
+    await submit(tester, '', name: null);
+    final field = find.widgetWithText(
+      TextField,
+      'e.g. https://techcrunch.com/feed/',
+    );
+    const typed = 'https://www.apartmenttherapy.com/main.rss';
+    for (var i = 1; i <= typed.length; i++) {
+      await tester.enterText(field, typed.substring(0, i));
+      await tester.pump(const Duration(milliseconds: 30));
+    }
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(tester.takeException(), isNull);
+    expect(find.byType(AddFeedDialog), findsOneWidget);
+  });
+
   dialogTest('an address typed without https:// and without a name is '
       'added, named after the site', (tester) async {
     await submit(tester, 'site.test/news', name: null);
