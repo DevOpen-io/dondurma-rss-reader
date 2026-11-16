@@ -195,6 +195,32 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get feedErrorNetwork => 'Couldn\'t connect';
+
+  @override
+  String get feedErrorGone => 'Feed not found';
+
+  @override
+  String get feedErrorBlocked => 'The site refused access';
+
+  @override
+  String feedErrorServer(Object code) {
+    return 'Server error ($code)';
+  }
+
+  @override
+  String get feedErrorNotFeed => 'The address is a web page, not a feed';
+
+  @override
+  String get feedErrorParse => 'The feed couldn\'t be read';
+
+  @override
+  String get feedErrorUnknown => 'Couldn\'t refresh';
+
+  @override
+  String get feedEmpty => 'No articles in this feed';
+
+  @override
   String get categories => 'Categories';
 
   @override

@@ -63,6 +63,14 @@
       "error": {}
     }
   },
+  "feedErrorNetwork": "Bağlanılamadı",
+  "feedErrorGone": "Kaynak bulunamadı",
+  "feedErrorBlocked": "Site erişimi reddetti",
+  "feedErrorServer": "Sunucu hatası ({code})",
+  "feedErrorNotFeed": "Adres bir web sayfası, kaynak değil",
+  "feedErrorParse": "Kaynak okunamadı",
+  "feedErrorUnknown": "Yenilenemedi",
+  "feedEmpty": "Bu kaynakta makale yok",
   "categories": "Kategoriler",
   "allNews": "Tüm Haberler",
   "allArticles": "Tüm Makaleler",

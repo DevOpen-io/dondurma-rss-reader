@@ -11,6 +11,27 @@ import 'feed_service.dart';
 import 'lifecycle_gate.dart';
 import 'observed_article_store.dart';
 
+/// Stored per-feed verdict for a feed that answered but has no articles.
+/// Not a failure: it never changes a pass's outcome.
+const String emptyFeedCode = 'empty';
+
+/// Short, stable reason stored for a failed fetch (`feedErrors`), mapped to
+/// localized text by the UI: `network`, `gone`, `blocked`, `http:<status>`,
+/// `http`, `notFeed`, `parse` or `other`. Values written by older versions
+/// are raw messages and read as an unknown reason.
+String feedErrorCode(Object error) {
+  if (error is! FeedFetchException) return 'other';
+  return switch (error.kind) {
+    FeedFetchErrorKind.connectivity => 'network',
+    FeedFetchErrorKind.gone => 'gone',
+    FeedFetchErrorKind.accessRestricted => 'blocked',
+    FeedFetchErrorKind.httpStatus =>
+      error.statusCode == null ? 'http' : 'http:${error.statusCode}',
+    FeedFetchErrorKind.parse => error.page != null ? 'notFeed' : 'parse',
+    FeedFetchErrorKind.other => 'other',
+  };
+}
+
 /// Result of one full refresh pass over all subscriptions.
 typedef FeedRefreshResult = ({
   /// The merged item list to replace the provider's `_items` with.
@@ -37,6 +58,9 @@ typedef FeedRefreshResult = ({
   /// (`feedUrl` → error description). Successful feeds never appear here;
   /// the caller clears their stored error.
   Map<String, String> feedErrors,
+
+  /// Feeds that answered (200 or 304) with no articles at all.
+  Set<String> emptyUrls,
 
   /// Feeds whose failure was connectivity-only while the whole pass was
   /// offline — the failure proves nothing about the feed, so a stored error
@@ -284,7 +308,7 @@ class FeedRefresher {
           dropValidator: false,
           finalUrl: null as String?,
           fetchUrl: fetchUrl,
-          error: e.toString(),
+          error: feedErrorCode(e),
           connectivity:
               e is FeedFetchException &&
               e.kind == FeedFetchErrorKind.connectivity,
@@ -392,6 +416,10 @@ class FeedRefresher {
       anyFreshBody: anyFreshBody,
       validators: newValidators,
       feedErrors: feedErrors,
+      emptyUrls: {
+        for (final o in outcomes)
+          if (o.succeeded && o.items.isEmpty) o.url,
+      },
       unprovenUrls: unprovenUrls,
       redirects: newRedirects,
     );

@@ -448,6 +448,54 @@ abstract class AppLocalizations {
   /// **'Last refresh failed: {error}'**
   String lastFetchFailed(Object error);
 
+  /// No description provided for @feedErrorNetwork.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect'**
+  String get feedErrorNetwork;
+
+  /// No description provided for @feedErrorGone.
+  ///
+  /// In en, this message translates to:
+  /// **'Feed not found'**
+  String get feedErrorGone;
+
+  /// No description provided for @feedErrorBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The site refused access'**
+  String get feedErrorBlocked;
+
+  /// No description provided for @feedErrorServer.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error ({code})'**
+  String feedErrorServer(Object code);
+
+  /// No description provided for @feedErrorNotFeed.
+  ///
+  /// In en, this message translates to:
+  /// **'The address is a web page, not a feed'**
+  String get feedErrorNotFeed;
+
+  /// No description provided for @feedErrorParse.
+  ///
+  /// In en, this message translates to:
+  /// **'The feed couldn\'t be read'**
+  String get feedErrorParse;
+
+  /// No description provided for @feedErrorUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t refresh'**
+  String get feedErrorUnknown;
+
+  /// No description provided for @feedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No articles in this feed'**
+  String get feedEmpty;
+
   /// No description provided for @categories.
   ///
   /// In en, this message translates to:

@@ -197,6 +197,32 @@ class AppLocalizationsTr extends AppLocalizations {
   }
 
   @override
+  String get feedErrorNetwork => 'Bağlanılamadı';
+
+  @override
+  String get feedErrorGone => 'Kaynak bulunamadı';
+
+  @override
+  String get feedErrorBlocked => 'Site erişimi reddetti';
+
+  @override
+  String feedErrorServer(Object code) {
+    return 'Sunucu hatası ($code)';
+  }
+
+  @override
+  String get feedErrorNotFeed => 'Adres bir web sayfası, kaynak değil';
+
+  @override
+  String get feedErrorParse => 'Kaynak okunamadı';
+
+  @override
+  String get feedErrorUnknown => 'Yenilenemedi';
+
+  @override
+  String get feedEmpty => 'Bu kaynakta makale yok';
+
+  @override
   String get categories => 'Kategoriler';
 
   @override

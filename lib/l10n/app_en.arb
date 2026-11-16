@@ -87,6 +87,19 @@
       "error": {}
     }
   },
+  "feedErrorNetwork": "Couldn't connect",
+  "feedErrorGone": "Feed not found",
+  "feedErrorBlocked": "The site refused access",
+  "feedErrorServer": "Server error ({code})",
+  "@feedErrorServer": {
+    "placeholders": {
+      "code": {}
+    }
+  },
+  "feedErrorNotFeed": "The address is a web page, not a feed",
+  "feedErrorParse": "The feed couldn't be read",
+  "feedErrorUnknown": "Couldn't refresh",
+  "feedEmpty": "No articles in this feed",
   "categories": "Categories",
   "allNews": "All News",
   "allArticles": "All Articles",

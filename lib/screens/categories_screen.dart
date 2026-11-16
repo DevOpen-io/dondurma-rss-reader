@@ -5,8 +5,10 @@ import '../l10n/app_localizations.dart';
 import '../models/feed_subscription.dart';
 import '../providers/feed_provider.dart';
 import '../providers/subscription_provider.dart';
+import '../services/feed_refresh.dart';
 import '../utils/platform_caps.dart';
 import '../widgets/category_icon.dart';
+import '../widgets/folders/feed_health.dart';
 import '../widgets/folders/folder_actions.dart';
 import '../widgets/constrained_width.dart';
 
@@ -253,6 +255,10 @@ class _FeedRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     final tt = Theme.of(context).textTheme;
+    final health = context.select<FeedProvider, String?>(
+      (feed) => feed.feedErrorFor(sub.url),
+    );
+    final failed = health != null && health != emptyFeedCode;
 
     return InkWell(
       onTap: onTap,
@@ -271,14 +277,39 @@ class _FeedRow extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    _domain(sub.url),
-                    style: tt.bodySmall?.copyWith(
-                      color: cs.onSurface.withValues(alpha: 0.45),
+                  // A feed in trouble says why in place of its domain.
+                  if (health == null)
+                    Text(
+                      _domain(sub.url),
+                      style: tt.bodySmall?.copyWith(
+                        color: cs.onSurface.withValues(alpha: 0.45),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    )
+                  else
+                    Row(
+                      children: [
+                        Icon(
+                          failed
+                              ? Icons.error_outline_rounded
+                              : Icons.info_outline_rounded,
+                          size: 13,
+                          color: failed ? cs.error : cs.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            feedHealthText(AppLocalizations.of(context), health),
+                            style: tt.bodySmall?.copyWith(
+                              color: failed ? cs.error : cs.onSurfaceVariant,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
                 ],
               ),
             ),

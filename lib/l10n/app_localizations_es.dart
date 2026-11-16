@@ -198,6 +198,32 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
+  String get feedErrorNetwork => 'No se pudo conectar';
+
+  @override
+  String get feedErrorGone => 'Feed no encontrado';
+
+  @override
+  String get feedErrorBlocked => 'El sitio denegó el acceso';
+
+  @override
+  String feedErrorServer(Object code) {
+    return 'Error del servidor ($code)';
+  }
+
+  @override
+  String get feedErrorNotFeed => 'La dirección es una página web, no un feed';
+
+  @override
+  String get feedErrorParse => 'No se pudo leer el feed';
+
+  @override
+  String get feedErrorUnknown => 'No se pudo actualizar';
+
+  @override
+  String get feedEmpty => 'Este feed no tiene artículos';
+
+  @override
   String get categories => 'Categorías';
 
   @override

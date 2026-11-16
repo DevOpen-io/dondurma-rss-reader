@@ -7,6 +7,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_ce/hive.dart';
 import 'package:ice_cream_rss_reader/models/feed_item.dart';
 import 'package:ice_cream_rss_reader/models/feed_subscription.dart';
+import 'package:ice_cream_rss_reader/models/refresh_progress.dart';
 import 'package:ice_cream_rss_reader/providers/bookmark_provider.dart';
 import 'package:ice_cream_rss_reader/providers/feed_provider.dart';
 import 'package:ice_cream_rss_reader/providers/settings_provider.dart';
@@ -1604,6 +1605,49 @@ void main() {
       providers.feed.dispose();
     },
   );
+
+  test('a feed failure is recorded as a reason code; an empty feed is '
+      'noted without failing the pass', () async {
+    final gone = server.url('/gone-feed.xml');
+    final page = server.url('/a-page/');
+    final empty = server.url('/empty-feed.xml');
+    final healthy = server.url('/healthy-feed.xml');
+    server.handlers['/gone-feed.xml'] = (request) async {
+      request.response.statusCode = HttpStatus.notFound;
+      await request.response.close();
+    };
+    server.handlers['/a-page/'] = (request) async {
+      request.response.headers.contentType = ContentType.html;
+      request.response.write('<html><body>hi</body></html>');
+      await request.response.close();
+    };
+    server.handlers['/empty-feed.xml'] = (request) =>
+        _respond200(request, _rss('Empty', const []));
+    server.handlers['/healthy-feed.xml'] = (request) =>
+        _respond200(request, _rss('Healthy', ['h1']));
+    await _seedSubscriptions([
+      for (final url in [gone, page, empty, healthy])
+        FeedSubscription(url: url, name: url, category: 'Test'),
+    ]);
+
+    final providers = _providers();
+    await _waitForRefresh(providers.feed);
+    expect(providers.feed.feedErrorFor(gone), 'gone');
+    expect(providers.feed.feedErrorFor(page), 'notFeed');
+    expect(providers.feed.feedErrorFor(empty), 'empty');
+    expect(providers.feed.feedErrorFor(healthy), isNull);
+    providers.feed.dispose();
+
+    // Only the empty feed left: the pass itself succeeded.
+    await _seedSubscriptions([
+      FeedSubscription(url: empty, name: 'Empty', category: 'Test'),
+    ]);
+    final again = _providers();
+    await _waitForRefresh(again.feed);
+    expect(again.feed.feedErrorFor(empty), 'empty');
+    expect(again.feed.refreshProgress.value.phase, RefreshPhase.completed);
+    again.feed.dispose();
+  });
 
   test(
     '429 response backs the feed off — no refetch until Retry-After passes',

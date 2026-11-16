@@ -888,7 +888,12 @@ class FeedProvider extends ChangeNotifier {
   /// are written, successes clear, and feeds in [unproven] (connectivity-only
   /// failures during a fully offline pass) keep whatever they had — a network
   /// outage neither indicts nor acquits a feed. Removed feeds are pruned.
-  void _updateFeedErrors(Map<String, String> passErrors, Set<String> unproven) {
+  /// Feeds in [empty] answered with no articles and read [emptyFeedCode].
+  void _updateFeedErrors(
+    Map<String, String> passErrors,
+    Set<String> unproven, {
+    Set<String> empty = const {},
+  }) {
     final urls =
         subscriptionProvider?.subscriptions.map((s) => s.url).toSet() ??
         const <String>{};
@@ -896,6 +901,8 @@ class FeedProvider extends ChangeNotifier {
     for (final url in urls) {
       if (passErrors.containsKey(url)) {
         next[url] = passErrors[url]!;
+      } else if (empty.contains(url)) {
+        next[url] = emptyFeedCode;
       } else if (unproven.contains(url) && _feedErrors.containsKey(url)) {
         next[url] = _feedErrors[url]!;
       }
@@ -1462,9 +1469,15 @@ class FeedProvider extends ChangeNotifier {
     );
 
     _isOffline = false;
-    // A successful add proves the feed is healthy — drop any stale error a
-    // delete-and-re-add cycle left behind.
-    if (_feedErrors.remove(subscription.url) != null) {
+    // A successful add proves the feed is reachable — drop any stale error a
+    // delete-and-re-add cycle left behind; note a feed with no articles.
+    final verdict = result.items.isEmpty ? emptyFeedCode : null;
+    if (_feedErrors[subscription.url] != verdict) {
+      if (verdict == null) {
+        _feedErrors.remove(subscription.url);
+      } else {
+        _feedErrors[subscription.url] = verdict;
+      }
       _box.put('feedErrors', _feedErrors);
     }
     _invalidateFilterCache();
@@ -1707,7 +1720,11 @@ class FeedProvider extends ChangeNotifier {
     _saveFeedValidators(result.validators);
     _saveFeedRedirects(result.redirects);
     _saveFeedBackoff();
-    _updateFeedErrors(result.feedErrors, result.unprovenUrls);
+    _updateFeedErrors(
+      result.feedErrors,
+      result.unprovenUrls,
+      empty: result.emptyUrls,
+    );
     // Reconcile against live subscriptions/bookmarks and any articles added
     // during this pass, not the stale inputs captured before HTTP started.
     _items = mergeCurrent();
